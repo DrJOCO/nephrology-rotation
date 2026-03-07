@@ -1,0 +1,232 @@
+import { db } from "./firebase";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
+
+// Key mapping: SHARED_KEYS string → Firestore field name
+const KEY_TO_FIELD = {
+  neph_shared_curriculum: "curriculum",
+  neph_shared_articles: "articles",
+  neph_shared_announcements: "announcements",
+  neph_shared_settings: "settings",
+};
+
+let rotationCode = localStorage.getItem("neph_rotationCode") || null;
+
+const store = {
+  // ─── Private storage (always localStorage) ───────────────────────
+  async get(key) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+    catch { return null; }
+  },
+  async set(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  },
+
+  // ─── Shared storage (Firestore when connected, localStorage fallback) ───
+  async getShared(key) {
+    if (!rotationCode) {
+      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+      catch { return null; }
+    }
+    try {
+      // Student data lives in subcollection
+      if (key.startsWith("neph_shared_student_")) {
+        const studentId = key.replace("neph_shared_student_", "");
+        const snap = await getDoc(doc(db, "rotations", rotationCode, "students", studentId));
+        return snap.exists() ? snap.data() : null;
+      }
+      // Rotation-level data
+      const field = KEY_TO_FIELD[key];
+      if (!field) return null;
+      const snap = await getDoc(doc(db, "rotations", rotationCode));
+      return snap.exists() ? (snap.data()[field] ?? null) : null;
+    } catch (e) {
+      console.warn("Firestore getShared failed, falling back to localStorage:", e);
+      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+      catch { return null; }
+    }
+  },
+
+  async setShared(key, val) {
+    if (!rotationCode) {
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+      return;
+    }
+    try {
+      // Student data goes to subcollection
+      if (key.startsWith("neph_shared_student_")) {
+        const studentId = key.replace("neph_shared_student_", "");
+        await setDoc(doc(db, "rotations", rotationCode, "students", studentId), val, { merge: true });
+        return;
+      }
+      // Rotation-level data
+      const field = KEY_TO_FIELD[key];
+      if (field) {
+        await updateDoc(doc(db, "rotations", rotationCode), { [field]: val });
+      }
+    } catch (e) {
+      console.warn("Firestore setShared failed, saving to localStorage:", e);
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    }
+  },
+
+  async listShared(prefix) {
+    if (!rotationCode) {
+      try { return Object.keys(localStorage).filter(k => k.startsWith(prefix)); }
+      catch { return []; }
+    }
+    try {
+      if (prefix === "neph_shared_student_") {
+        const snap = await getDocs(collection(db, "rotations", rotationCode, "students"));
+        return snap.docs.map(d => prefix + d.id);
+      }
+      return [];
+    } catch (e) {
+      console.warn("Firestore listShared failed:", e);
+      try { return Object.keys(localStorage).filter(k => k.startsWith(prefix)); }
+      catch { return []; }
+    }
+  },
+
+  // ─── Rotation code management ────────────────────────────────────
+  setRotationCode(code) {
+    rotationCode = code;
+    if (code) localStorage.setItem("neph_rotationCode", code);
+    else localStorage.removeItem("neph_rotationCode");
+  },
+  getRotationCode() {
+    return rotationCode;
+  },
+
+  // ─── Create a new rotation document ──────────────────────────────
+  async createRotation(code, data) {
+    await setDoc(doc(db, "rotations", code), {
+      ...data,
+      createdAt: new Date().toISOString(),
+    });
+    rotationCode = code;
+    localStorage.setItem("neph_rotationCode", code);
+  },
+
+  // ─── Validate a rotation code exists ─────────────────────────────
+  async validateRotationCode(code) {
+    try {
+      const snap = await getDoc(doc(db, "rotations", code));
+      return snap.exists();
+    } catch { return false; }
+  },
+
+  // ─── Real-time listener: all students in a rotation ──────────────
+  onStudentsChanged(callback) {
+    if (!rotationCode) return () => {};
+    return onSnapshot(collection(db, "rotations", rotationCode, "students"), (snap) => {
+      const students = snap.docs.map(d => ({ studentId: d.id, ...d.data() }));
+      callback(students);
+    }, (err) => {
+      console.warn("Students listener error:", err);
+    });
+  },
+
+  // ─── Real-time listener: rotation-level data ─────────────────────
+  onRotationChanged(callback) {
+    if (!rotationCode) return () => {};
+    return onSnapshot(doc(db, "rotations", rotationCode), (snap) => {
+      if (snap.exists()) callback(snap.data());
+    }, (err) => {
+      console.warn("Rotation listener error:", err);
+    });
+  },
+
+  // ─── Real-time listener: single student document ─────────────────
+  onStudentDataChanged(studentId, callback) {
+    if (!rotationCode || !studentId) return () => {};
+    return onSnapshot(doc(db, "rotations", rotationCode, "students", studentId), (snap) => {
+      if (snap.exists()) callback(snap.data());
+    }, (err) => {
+      console.warn("Student data listener error:", err);
+    });
+  },
+
+  // ─── Write student data to Firestore directly ────────────────────
+  async setStudentData(studentId, data) {
+    if (!rotationCode) return;
+    try {
+      await setDoc(doc(db, "rotations", rotationCode, "students", studentId), data, { merge: true });
+    } catch (e) {
+      console.warn("setStudentData failed:", e);
+    }
+  },
+
+  // ─── Read student data from Firestore (for login/restore) ────────
+  async getStudentData(studentId) {
+    if (!rotationCode) return null;
+    try {
+      const snap = await getDoc(doc(db, "rotations", rotationCode, "students", studentId));
+      return snap.exists() ? snap.data() : null;
+    } catch (e) {
+      console.warn("getStudentData failed:", e);
+      return null;
+    }
+  },
+
+  // ─── List all rotations ─────────────────────────────────────────
+  async listRotations() {
+    try {
+      const snap = await getDocs(collection(db, "rotations"));
+      const rotations = [];
+      for (const d of snap.docs) {
+        const data = d.data();
+        // Count students in subcollection
+        let studentCount = 0;
+        try {
+          const studentsSnap = await getDocs(collection(db, "rotations", d.id, "students"));
+          studentCount = studentsSnap.size;
+        } catch {}
+        rotations.push({
+          code: d.id,
+          name: data.name || "Untitled",
+          createdAt: data.createdAt || null,
+          location: data.location || "",
+          dates: data.dates || "",
+          studentCount,
+        });
+      }
+      rotations.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+      return rotations;
+    } catch (e) {
+      console.warn("listRotations failed:", e);
+      return [];
+    }
+  },
+
+  // ─── Update rotation metadata ───────────────────────────────────
+  async updateRotation(code, data) {
+    try {
+      await updateDoc(doc(db, "rotations", code), data);
+    } catch (e) {
+      console.warn("updateRotation failed:", e);
+    }
+  },
+
+  // ─── Delete rotation and its students ───────────────────────────
+  async deleteRotation(code) {
+    try {
+      // Delete all students in subcollection first
+      const studentsSnap = await getDocs(collection(db, "rotations", code, "students"));
+      for (const s of studentsSnap.docs) {
+        await deleteDoc(doc(db, "rotations", code, "students", s.id));
+      }
+      // Delete rotation doc
+      await deleteDoc(doc(db, "rotations", code));
+      // If this was the active rotation, disconnect
+      if (rotationCode === code) {
+        rotationCode = null;
+        localStorage.removeItem("neph_rotationCode");
+      }
+    } catch (e) {
+      console.warn("deleteRotation failed:", e);
+      throw e;
+    }
+  },
+};
+
+export default store;
