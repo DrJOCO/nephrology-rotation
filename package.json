@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "agent:loop": "node \"/Users/joncheng/Documents/Premier Nephrology/Codex_Claude_Testing/agent-loop.mjs\""
   },
   "dependencies": {
     "firebase": "^12.10.0",

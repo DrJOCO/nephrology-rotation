@@ -36,9 +36,21 @@ export function calculatePoints(state) {
   pts += streak * 3;
 
   // Completion tracking points (2 per article read, 3 per study sheet completed)
-  const completed = state.completedItems || { articles: {}, studySheets: {} };
+  const completed = state.completedItems || { articles: {}, studySheets: {}, cases: {} };
   pts += Object.keys(completed.articles || {}).length * 2;
   pts += Object.keys(completed.studySheets || {}).length * 3;
+
+  // Case-based learning points (15 per case, +5 bonus for ≥80%)
+  const cases = completed.cases || {};
+  Object.values(cases).forEach(c => {
+    pts += 15;
+    if (c.total > 0 && (c.score / c.total) >= 0.8) pts += 5;
+  });
+
+  // Spaced repetition review points (2 per review)
+  const srQueue = state.srQueue || {};
+  const srReviews = Object.values(srQueue).reduce((sum, item) => sum + item.repetitions, 0);
+  pts += srReviews * 2;
 
   return pts;
 }
@@ -77,6 +89,14 @@ function patientsWithNotes(state) {
   return (state.patients || []).filter(p => p.notes && p.notes.trim()).length;
 }
 
+function totalCasesCompleted(state) {
+  return Object.keys(state.completedItems?.cases || {}).length;
+}
+
+function totalSrReviewsDone(state) {
+  return Object.values(state.srQueue || {}).reduce((sum, item) => sum + item.repetitions, 0);
+}
+
 // Achievement definitions
 export const ACHIEVEMENTS = [
   { id: "first_patient", icon: "🏥", title: "First Consult", desc: "Logged your first patient",
@@ -106,6 +126,14 @@ export const ACHIEVEMENTS = [
     check: (s) => (s.gamification?.streaks?.currentDays || 0) >= 7 },
   { id: "note_taker", icon: "💡", title: "Teaching Pearls", desc: "Added notes to 5 patients",
     check: (s) => patientsWithNotes(s) >= 5 },
+  { id: "case_cracker", icon: "🧩", title: "Case Cracker", desc: "Completed your first clinical case",
+    check: (s) => totalCasesCompleted(s) >= 1 },
+  { id: "case_master", icon: "🧠", title: "Case Master", desc: "Completed 8+ clinical cases",
+    check: (s) => totalCasesCompleted(s) >= 8 },
+  { id: "sr_starter", icon: "🔄", title: "Memory Trainee", desc: "Completed 5 spaced repetition reviews",
+    check: (s) => totalSrReviewsDone(s) >= 5 },
+  { id: "sr_dedicated", icon: "🧲", title: "Retention Master", desc: "Completed 25 spaced repetition reviews",
+    check: (s) => totalSrReviewsDone(s) >= 25 },
 ];
 
 // Check which achievements are newly earned

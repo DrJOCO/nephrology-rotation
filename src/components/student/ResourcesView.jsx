@@ -1,0 +1,97 @@
+import { useState } from "react";
+import { T, RESOURCES } from "../../data/constants";
+import { backBtnStyle } from "./shared";
+
+export default function ResourcesView({ onBack }) {
+  const [activeTab, setActiveTab] = useState("podcasts");
+  const tabList = [
+    { id: "podcasts", label: "\uD83C\uDFA7 Podcasts", data: RESOURCES.podcasts },
+    { id: "websites", label: "\uD83C\uDF10 Websites", data: RESOURCES.websites },
+    { id: "guidelines", label: "\uD83D\uDCCB Guidelines", data: RESOURCES.guidelines },
+    { id: "tools", label: "\uD83D\uDEE0 Tools", data: RESOURCES.tools },
+  ];
+
+  const tagColors = {
+    "Must Listen": { bg: T.redBg, text: T.redDeep },
+    "Essential": { bg: T.redBg, text: T.redDeep },
+    "AKI": { bg: T.redBg, text: T.redDeep },
+    "Electrolytes": { bg: T.greenBg, text: T.greenDk },
+    "GN": { bg: T.purpleBg, text: T.purpleAccent },
+    "CKD": { bg: T.blueBg, text: T.med },
+    "Dialysis": { bg: T.yellowBg, text: T.goldText },
+    "Acid-Base": { bg: T.greenBg, text: T.greenDk },
+    "Medications": { bg: T.blueBg, text: T.med },
+    "Stones": { bg: T.yellowBg, text: T.goldText },
+    "Physiology": { bg: T.greenBg, text: T.greenDk },
+    "Guidelines": { bg: T.blueBg, text: T.med },
+    "Cases": { bg: T.yellowBg, text: T.goldText },
+    "Quick Hits": { bg: T.purpleBg, text: T.purpleAccent },
+    "Teaching": { bg: T.greenBg, text: T.greenDk },
+    "Practice Cases": { bg: T.yellowBg, text: T.goldText },
+    "Video Lectures": { bg: T.purpleBg, text: T.purpleAccent },
+    "Visuals": { bg: T.yellowBg, text: T.goldText },
+    "Review": { bg: T.blueBg, text: T.med },
+    "Fun Learning": { bg: T.greenBg, text: T.greenDk },
+    "App": { bg: T.purpleBg, text: T.purpleAccent },
+    "Calculators": { bg: T.blueBg, text: T.med },
+    "ICU": { bg: T.redBg, text: T.redDeep },
+    "HTN": { bg: T.redBg, text: T.redDeep },
+  };
+
+  const activeData = tabList.find(t => t.id === activeTab)?.data || [];
+
+  return (
+    <div style={{ padding: 16 }}>
+      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Resources</h2>
+      <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Curated links for your nephrology rotation</p>
+
+      {/* Tab bar */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto" }}>
+        {tabList.map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            style={{ padding: "8px 14px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+              background: activeTab === t.id ? T.navy : T.ice,
+              color: activeTab === t.id ? "white" : T.text }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Resource cards */}
+      {activeData.map((r, i) => {
+        const tc = tagColors[r.tag] || { bg: T.ice, text: T.med };
+        return (
+          <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
+            style={{ display: "block", background: T.card, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${T.line}`, textDecoration: "none", transition: "box-shadow 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                  <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{r.name}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{r.tag}</span>
+                </div>
+                <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45, wordBreak: "break-word" }}>{r.desc}</div>
+              </div>
+              <span style={{ color: T.muted, fontSize: 14, flexShrink: 0, marginTop: 2 }}>{"\u2197"}</span>
+            </div>
+          </a>
+        );
+      })}
+
+      {/* Bottom tip (podcasts tab only) */}
+      {activeTab === "podcasts" && (
+        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 6, borderLeft: `4px solid ${T.med}` }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: T.med, marginBottom: 4 }}>LISTENING TIP</div>
+          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+            Start with Curbsiders #226 (AKI) and REBOOT #48 (Hyponatremia) {"\u2014"} these cover the two most common consults you'll see. All Curbsiders nephrology episodes feature Joel Topf (@kidney_boy) and are outstanding. Listen during your commute {"\u2014"} 15 min/day adds up fast over 4 weeks.
+          </div>
+        </div>
+      )}
+
+      {/* Bottom back button */}
+      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 20, marginBottom: 0 }}>{"\u2190"} Back</button>
+    </div>
+  );
+}

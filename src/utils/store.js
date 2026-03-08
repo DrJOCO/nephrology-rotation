@@ -15,10 +15,10 @@ const store = {
   // ─── Private storage (always localStorage) ───────────────────────
   async get(key) {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
-    catch { return null; }
+    catch (e) { console.warn("store.get parse error:", e); return null; }
   },
   async set(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("store.set failed:", e); }
   },
 
   // ─── Shared storage (Firestore when connected, localStorage fallback) ───
@@ -48,7 +48,7 @@ const store = {
 
   async setShared(key, val) {
     if (!rotationCode) {
-      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("setShared localStorage fallback failed:", e); }
       return;
     }
     try {
@@ -65,7 +65,7 @@ const store = {
       }
     } catch (e) {
       console.warn("Firestore setShared failed, saving to localStorage:", e);
-      try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+      try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("setShared fallback failed:", e); }
     }
   },
 
@@ -105,6 +105,17 @@ const store = {
     });
     rotationCode = code;
     localStorage.setItem("neph_rotationCode", code);
+  },
+
+  // ─── Read full rotation document (for hydrating admin state) ─────
+  async getRotationData(code) {
+    try {
+      const snap = await getDoc(doc(db, "rotations", code || rotationCode));
+      return snap.exists() ? snap.data() : null;
+    } catch (e) {
+      console.warn("getRotationData failed:", e);
+      return null;
+    }
   },
 
   // ─── Validate a rotation code exists ─────────────────────────────
@@ -180,7 +191,7 @@ const store = {
         try {
           const studentsSnap = await getDocs(collection(db, "rotations", d.id, "students"));
           studentCount = studentsSnap.size;
-        } catch {}
+        } catch (e) { console.warn("Failed to count students for rotation:", e); }
         rotations.push({
           code: d.id,
           name: data.name || "Untitled",
