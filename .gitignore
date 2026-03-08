@@ -29,6 +29,11 @@ dist-ssr
 # Claude config
 .claude/
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 # Firebase cache
 .firebase/
 
