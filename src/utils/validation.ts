@@ -1,0 +1,157 @@
+// ═══════════════════════════════════════════════════════════════════════
+//  Input Validation — centralized validation for all forms
+// ═══════════════════════════════════════════════════════════════════════
+
+export interface PatientFormData {
+  initials: string;
+  room: string;
+  dx: string;
+  topics: string[];
+  notes: string;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: Record<string, string>;
+}
+
+export interface FollowUpValidation {
+  valid: boolean;
+  error: string | null;
+}
+
+// ── Field constraints ──────────────────────────────────────────────────
+export const LIMITS = {
+  INITIALS_MAX: 5,
+  ROOM_MAX: 10,
+  DIAGNOSIS_MAX: 200,
+  NOTES_MAX: 1000,
+  FOLLOWUP_MAX: 500,
+  NAME_MAX: 50,
+  ROTATION_CODE_MIN: 4,
+  ROTATION_CODE_MAX: 20,
+  PIN_LENGTH: 4,
+  ANNOUNCEMENT_TITLE_MAX: 100,
+  ANNOUNCEMENT_BODY_MAX: 500,
+  ARTICLE_TITLE_MAX: 200,
+  ARTICLE_URL_MAX: 500,
+};
+
+// ── Sanitization helpers ───────────────────────────────────────────────
+
+/** Trim whitespace and enforce max length */
+export function sanitize(text: string | undefined | null, maxLength: number): string {
+  if (typeof text !== "string") return "";
+  return text.trim().slice(0, maxLength);
+}
+
+/** Enforce max length on input change (for controlled inputs) */
+export function clampLength(text: string | undefined | null, maxLength: number): string {
+  if (typeof text !== "string") return "";
+  return text.slice(0, maxLength);
+}
+
+/** Check if a string looks like a valid URL */
+export function isValidUrl(str: string | undefined | null): boolean {
+  if (!str || typeof str !== "string") return false;
+  try {
+    const url = new URL(str);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+// ── Patient form validation ────────────────────────────────────────────
+
+/**
+ * Validate the patient form and return errors.
+ * @param {{ initials: string, room: string, dx: string, topics: string[], notes: string }} form
+ * @returns {{ valid: boolean, errors: Record<string, string> }}
+ */
+export function validatePatientForm(form: PatientFormData): ValidationResult {
+  const errors: Record<string, string> = {};
+
+  // Initials: required, max 5 chars, letters/periods/hyphens only
+  const initials = (form.initials || "").trim();
+  if (!initials) {
+    errors.initials = "Patient initials are required";
+  } else if (initials.length > LIMITS.INITIALS_MAX) {
+    errors.initials = `Max ${LIMITS.INITIALS_MAX} characters`;
+  } else if (!/^[A-Za-z.\-\s]+$/.test(initials)) {
+    errors.initials = "Letters, periods, and hyphens only";
+  }
+
+  // Room: optional, max 10, alphanumeric + dash
+  const room = (form.room || "").trim();
+  if (room && room.length > LIMITS.ROOM_MAX) {
+    errors.room = `Max ${LIMITS.ROOM_MAX} characters`;
+  } else if (room && !/^[A-Za-z0-9\-\s]+$/.test(room)) {
+    errors.room = "Letters, numbers, and hyphens only";
+  }
+
+  // Diagnosis: optional, max 200
+  const dx = (form.dx || "").trim();
+  if (dx.length > LIMITS.DIAGNOSIS_MAX) {
+    errors.dx = `Max ${LIMITS.DIAGNOSIS_MAX} characters`;
+  }
+
+  // Topics: at least one required
+  if (!form.topics || form.topics.length === 0) {
+    errors.topics = "Select at least one topic";
+  }
+
+  // Notes: optional, max 1000
+  const notes = (form.notes || "").trim();
+  if (notes.length > LIMITS.NOTES_MAX) {
+    errors.notes = `Max ${LIMITS.NOTES_MAX} characters`;
+  }
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
+/**
+ * Validate a follow-up note
+ * @param {string} text
+ * @returns {{ valid: boolean, error: string|null }}
+ */
+export function validateFollowUp(text: string | undefined | null): FollowUpValidation {
+  const trimmed = (text || "").trim();
+  if (!trimmed) return { valid: false, error: "Follow-up note cannot be empty" };
+  if (trimmed.length > LIMITS.FOLLOWUP_MAX) return { valid: false, error: `Max ${LIMITS.FOLLOWUP_MAX} characters` };
+  return { valid: true, error: null };
+}
+
+// ── Login form validation ──────────────────────────────────────────────
+
+/**
+ * Validate login form fields
+ * @param {{ name: string, pin: string, code: string }} fields
+ * @returns {{ valid: boolean, errors: Record<string, string> }}
+ */
+export function validateLoginForm({ name, pin, code }: { name: string; pin: string; code: string }): ValidationResult {
+  const errors: Record<string, string> = {};
+
+  const trimmedName = (name || "").trim();
+  if (!trimmedName) {
+    errors.name = "Name is required";
+  } else if (trimmedName.length > LIMITS.NAME_MAX) {
+    errors.name = `Max ${LIMITS.NAME_MAX} characters`;
+  }
+
+  if (pin && pin.length !== LIMITS.PIN_LENGTH) {
+    errors.pin = "PIN must be exactly 4 digits";
+  } else if (pin && !/^\d{4}$/.test(pin)) {
+    errors.pin = "PIN must be 4 digits";
+  }
+
+  if (code) {
+    if (code.length < LIMITS.ROTATION_CODE_MIN) {
+      errors.code = `At least ${LIMITS.ROTATION_CODE_MIN} characters`;
+    } else if (code.length > LIMITS.ROTATION_CODE_MAX) {
+      errors.code = `Max ${LIMITS.ROTATION_CODE_MAX} characters`;
+    }
+  }
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}

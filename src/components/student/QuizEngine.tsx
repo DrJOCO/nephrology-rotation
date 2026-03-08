@@ -20,14 +20,14 @@ function generateChoiceOrders(questions) {
 
 export default function QuizEngine({ questions, title, onBack, onFinish, questionCount }) {
   const [current, setCurrent] = useState(0);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [answers, setAnswers] = useState([]);
+  const [answers, setAnswers] = useState<any[]>([]);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [shuffledOrder, setShuffledOrder] = useState(null);
-  const [choiceOrders, setChoiceOrders] = useState(null);
+  const [shuffledOrder, setShuffledOrder] = useState<number[] | null>(null);
+  const [choiceOrders, setChoiceOrders] = useState<Record<number, number[]> | null>(null);
 
   // Quiz persistence
   const quizKey = "quiz_" + title.replace(/[^a-zA-Z0-9]/g, "_");
@@ -213,7 +213,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
 
       {/* Explanation */}
       {showResult && (() => {
-        const selectedOrigIdx = choiceMap[selected];
+        const selectedOrigIdx = choiceMap[selected!];
         const wasCorrect = selectedOrigIdx === q.answer;
         return (
           <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginTop: 16, borderLeft: `3px solid ${T.med}` }}>

@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, CSSProperties } from "react";
 import { T } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
+import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
+
+const caseImgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 12, border: `1px solid ${T.line}` };
+const caseCaptionStyle: CSSProperties = { fontSize: 11, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 };
 
 function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }) {
   const [phase, setPhase] = useState("read"); // read | quiz | results
   const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [answers, setAnswers] = useState<any[]>([]);
+  const [selected, setSelected] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showScenario, setShowScenario] = useState(true);
 
@@ -62,6 +66,8 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }) {
           <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, whiteSpace: "pre-line" }}>
             {caseData.scenario}
           </div>
+          {/* Scenario image */}
+          {(() => { const img = getCaseScenarioImage(caseData.id); return img ? (<div><img src={img.src} alt={img.alt || "Clinical scenario image"} style={caseImgStyle} />{img.caption && <p style={caseCaptionStyle}>{img.caption}</p>}</div>) : null; })()}
         </div>
 
         {done && (
@@ -169,6 +175,8 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }) {
         <div style={{ fontSize: 14, fontWeight: 600, color: T.text, lineHeight: 1.5, marginBottom: 16 }}>
           {q.q}
         </div>
+        {/* Question image */}
+        {(() => { const img = getCaseQuestionImage(caseData.id, currentQ); return img ? (<div style={{ marginBottom: 14 }}><img src={img.src} alt={img.alt || "Question reference image"} style={caseImgStyle} />{img.caption && <p style={caseCaptionStyle}>{img.caption}</p>}</div>) : null; })()}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.choices.map((choice, i) => {
             const isSelected = selected === i;
@@ -221,7 +229,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }) {
 }
 
 export default function CasesView({ week, onBack, completedItems, bookmarks, onToggleBookmark, onCaseComplete }) {
-  const [activeCase, setActiveCase] = useState(null);
+  const [activeCase, setActiveCase] = useState<any>(null);
   const cases = WEEKLY_CASES[week] || [];
 
   if (activeCase) {

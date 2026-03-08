@@ -1,4 +1,5 @@
 import { T } from "../../data/constants";
+import { LIMITS } from "../../utils/validation";
 
 export default function LoginScreen({ studentName, setStudentName, studentPin, setStudentPin, joinCode, setJoinCode, joinError, setJoinError, joining, onJoinRotation, onSkipRotation }) {
   const canJoin = studentName.trim() && studentPin.length === 4 && joinCode.length >= 4;
@@ -16,8 +17,8 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
         <div style={{ marginBottom: 14 }}>
           <label style={{ fontSize: 10, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Your Name</label>
           <input
-            type="text" placeholder="e.g. Glen Merulus"
-            value={studentName} onChange={e => setStudentName(e.target.value)}
+            type="text" placeholder="e.g. Glen Merulus" maxLength={LIMITS.NAME_MAX}
+            value={studentName} onChange={e => setStudentName(e.target.value.slice(0, LIMITS.NAME_MAX))}
             style={{ width: "100%", padding: "10px 12px", fontSize: 14, border: `2px solid ${T.pale}`, borderRadius: 8, outline: "none", boxSizing: "border-box", fontFamily: T.sans }}
             onFocus={e => e.target.style.borderColor = T.med}
             onBlur={e => e.target.style.borderColor = T.pale}
@@ -38,8 +39,8 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
           <div>
             <label style={{ fontSize: 10, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Rotation Code</label>
             <input
-              placeholder="e.g. CMC-MAR26"
-              value={joinCode} onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(""); }}
+              placeholder="e.g. CMC-MAR26" maxLength={LIMITS.ROTATION_CODE_MAX}
+              value={joinCode} onChange={e => { setJoinCode(e.target.value.toUpperCase().slice(0, LIMITS.ROTATION_CODE_MAX)); setJoinError(""); }}
               onKeyDown={e => { if (e.key === "Enter" && canJoin) onJoinRotation(); }}
               style={{ width: "100%", padding: "10px 12px", fontSize: 14, border: `2px solid ${joinError ? T.accent : T.pale}`, borderRadius: 8, outline: "none", boxSizing: "border-box", fontFamily: T.mono, textAlign: "center", letterSpacing: 3, textTransform: "uppercase" }}
               onFocus={e => e.target.style.borderColor = T.med}

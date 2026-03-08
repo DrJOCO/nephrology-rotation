@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { T, ARTICLES as DEFAULT_ARTICLES, ABBREVIATIONS, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { QUICK_REFS } from "../../data/guides";
+import { searchAll } from "../../utils/search";
 
 export default function GlobalSearchOverlay({ onClose, onNavigate, articles: liveArticles }) {
   const [query, setQuery] = useState("");
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
   useEffect(() => {
@@ -15,43 +16,17 @@ export default function GlobalSearchOverlay({ onClose, onNavigate, articles: liv
   }, [onClose]);
 
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = query.trim();
     if (q.length < 2) return null;
     const articleData = liveArticles || DEFAULT_ARTICLES;
-    const m = { trials: [], articles: [], cases: [], studySheets: [], abbreviations: [], quickRefs: [] };
-
-    ALL_LANDMARK_TRIALS.forEach(t => {
-      if ([t.name, t.category, t.full_title || "", t.takeaway].some(f => f.toLowerCase().includes(q)))
-        m.trials.push({ label: t.name, sub: t.category, icon: "\uD83D\uDCCB", nav: ["guide", { type: "trialLibrary" }] });
+    return searchAll(q, {
+      trials: ALL_LANDMARK_TRIALS,
+      articlesByWeek: articleData,
+      cases: WEEKLY_CASES,
+      studySheets: STUDY_SHEETS,
+      abbreviations: ABBREVIATIONS,
+      quickRefs: QUICK_REFS,
     });
-    [1,2,3,4].forEach(w => {
-      (articleData[w] || []).forEach(a => {
-        if ([a.title, a.journal || "", a.topic || ""].some(f => f.toLowerCase().includes(q)))
-          m.articles.push({ label: a.title, sub: `Week ${w} \u2022 ${a.type || "Article"}`, icon: "\uD83D\uDCF0", nav: ["home", { type: "articles", week: w }] });
-      });
-    });
-    [1,2,3,4].forEach(w => {
-      (WEEKLY_CASES[w] || []).forEach(c => {
-        if ([c.title, c.category].some(f => f.toLowerCase().includes(q)))
-          m.cases.push({ label: c.title, sub: `Week ${w} \u2022 ${c.difficulty}`, icon: "\uD83C\uDFE5", nav: ["home", { type: "cases", week: w }] });
-      });
-    });
-    [1,2,3,4].forEach(w => {
-      (STUDY_SHEETS[w] || []).forEach(s => {
-        const sectionText = (s.sections || []).map(sec => sec.heading).join(" ");
-        if ([s.title, s.subtitle || "", sectionText].some(f => f.toLowerCase().includes(q)))
-          m.studySheets.push({ label: s.title, sub: `Week ${w}`, icon: "\uD83D\uDCDD", nav: ["home", { type: "studySheets", week: w }] });
-      });
-    });
-    ABBREVIATIONS.forEach(a => {
-      if (a.abbr.toLowerCase().includes(q) || a.full.toLowerCase().includes(q))
-        m.abbreviations.push({ label: a.abbr, sub: a.full, icon: "\uD83D\uDD24", nav: ["home", { type: "abbreviations" }] });
-    });
-    QUICK_REFS.forEach(r => {
-      if ([r.title, r.desc].some(f => f.toLowerCase().includes(q)))
-        m.quickRefs.push({ label: r.title, sub: r.desc, icon: r.icon || "\u26A1", nav: ["refs", { type: "refDetail", id: r.id }] });
-    });
-    return m;
   }, [query, liveArticles]);
 
   const groups = results ? [

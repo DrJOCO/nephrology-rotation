@@ -1,28 +1,37 @@
 import { db } from "./firebase";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, onSnapshot, DocumentData } from "firebase/firestore";
+
+export interface RotationInfo {
+  code: string;
+  name: string;
+  createdAt: string | null;
+  location: string;
+  dates: string;
+  studentCount: number;
+}
 
 // Key mapping: SHARED_KEYS string → Firestore field name
-const KEY_TO_FIELD = {
+const KEY_TO_FIELD: Record<string, string> = {
   neph_shared_curriculum: "curriculum",
   neph_shared_articles: "articles",
   neph_shared_announcements: "announcements",
   neph_shared_settings: "settings",
 };
 
-let rotationCode = localStorage.getItem("neph_rotationCode") || null;
+let rotationCode: string | null = localStorage.getItem("neph_rotationCode") || null;
 
 const store = {
   // ─── Private storage (always localStorage) ───────────────────────
-  async get(key) {
+  async get(key: string): Promise<any> {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
     catch (e) { console.warn("store.get parse error:", e); return null; }
   },
-  async set(key, val) {
+  async set(key: string, val: any): Promise<void> {
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("store.set failed:", e); }
   },
 
   // ─── Shared storage (Firestore when connected, localStorage fallback) ───
-  async getShared(key) {
+  async getShared(key: string): Promise<any> {
     if (!rotationCode) {
       try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
       catch { return null; }
@@ -46,7 +55,7 @@ const store = {
     }
   },
 
-  async setShared(key, val) {
+  async setShared(key: string, val: any): Promise<void> {
     if (!rotationCode) {
       try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("setShared localStorage fallback failed:", e); }
       return;
@@ -69,7 +78,7 @@ const store = {
     }
   },
 
-  async listShared(prefix) {
+  async listShared(prefix: string): Promise<string[]> {
     if (!rotationCode) {
       try { return Object.keys(localStorage).filter(k => k.startsWith(prefix)); }
       catch { return []; }
@@ -88,17 +97,17 @@ const store = {
   },
 
   // ─── Rotation code management ────────────────────────────────────
-  setRotationCode(code) {
+  setRotationCode(code: string | null) {
     rotationCode = code;
     if (code) localStorage.setItem("neph_rotationCode", code);
     else localStorage.removeItem("neph_rotationCode");
   },
-  getRotationCode() {
+  getRotationCode(): string | null {
     return rotationCode;
   },
 
   // ─── Create a new rotation document ──────────────────────────────
-  async createRotation(code, data) {
+  async createRotation(code: string, data: Record<string, any>): Promise<void> {
     await setDoc(doc(db, "rotations", code), {
       ...data,
       createdAt: new Date().toISOString(),
@@ -108,9 +117,11 @@ const store = {
   },
 
   // ─── Read full rotation document (for hydrating admin state) ─────
-  async getRotationData(code) {
+  async getRotationData(code?: string | null): Promise<DocumentData | null> {
     try {
-      const snap = await getDoc(doc(db, "rotations", code || rotationCode));
+      const docId = code || rotationCode;
+      if (!docId) return null;
+      const snap = await getDoc(doc(db, "rotations", docId));
       return snap.exists() ? snap.data() : null;
     } catch (e) {
       console.warn("getRotationData failed:", e);
@@ -119,7 +130,7 @@ const store = {
   },
 
   // ─── Validate a rotation code exists ─────────────────────────────
-  async validateRotationCode(code) {
+  async validateRotationCode(code: string): Promise<boolean> {
     try {
       const snap = await getDoc(doc(db, "rotations", code));
       return snap.exists();
@@ -127,7 +138,7 @@ const store = {
   },
 
   // ─── Real-time listener: all students in a rotation ──────────────
-  onStudentsChanged(callback) {
+  onStudentsChanged(callback: (students: any[]) => void): () => void {
     if (!rotationCode) return () => {};
     return onSnapshot(collection(db, "rotations", rotationCode, "students"), (snap) => {
       const students = snap.docs.map(d => ({ studentId: d.id, ...d.data() }));
@@ -138,7 +149,7 @@ const store = {
   },
 
   // ─── Real-time listener: rotation-level data ─────────────────────
-  onRotationChanged(callback) {
+  onRotationChanged(callback: (data: DocumentData) => void): () => void {
     if (!rotationCode) return () => {};
     return onSnapshot(doc(db, "rotations", rotationCode), (snap) => {
       if (snap.exists()) callback(snap.data());
@@ -148,7 +159,7 @@ const store = {
   },
 
   // ─── Real-time listener: single student document ─────────────────
-  onStudentDataChanged(studentId, callback) {
+  onStudentDataChanged(studentId: string, callback: (data: DocumentData) => void): () => void {
     if (!rotationCode || !studentId) return () => {};
     return onSnapshot(doc(db, "rotations", rotationCode, "students", studentId), (snap) => {
       if (snap.exists()) callback(snap.data());
@@ -158,7 +169,7 @@ const store = {
   },
 
   // ─── Write student data to Firestore directly ────────────────────
-  async setStudentData(studentId, data) {
+  async setStudentData(studentId: string, data: Record<string, any>): Promise<void> {
     if (!rotationCode) return;
     try {
       await setDoc(doc(db, "rotations", rotationCode, "students", studentId), data, { merge: true });
@@ -168,7 +179,7 @@ const store = {
   },
 
   // ─── Read student data from Firestore (for login/restore) ────────
-  async getStudentData(studentId) {
+  async getStudentData(studentId: string): Promise<DocumentData | null> {
     if (!rotationCode) return null;
     try {
       const snap = await getDoc(doc(db, "rotations", rotationCode, "students", studentId));
@@ -180,10 +191,10 @@ const store = {
   },
 
   // ─── List all rotations ─────────────────────────────────────────
-  async listRotations() {
+  async listRotations(): Promise<RotationInfo[]> {
     try {
       const snap = await getDocs(collection(db, "rotations"));
-      const rotations = [];
+      const rotations: RotationInfo[] = [];
       for (const d of snap.docs) {
         const data = d.data();
         // Count students in subcollection
@@ -210,7 +221,7 @@ const store = {
   },
 
   // ─── Update rotation metadata ───────────────────────────────────
-  async updateRotation(code, data) {
+  async updateRotation(code: string, data: Record<string, any>): Promise<void> {
     try {
       await updateDoc(doc(db, "rotations", code), data);
     } catch (e) {
@@ -219,7 +230,7 @@ const store = {
   },
 
   // ─── Delete rotation and its students ───────────────────────────
-  async deleteRotation(code) {
+  async deleteRotation(code: string): Promise<void> {
     try {
       // Delete all students in subcollection first
       const studentsSnap = await getDocs(collection(db, "rotations", code, "students"));

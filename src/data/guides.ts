@@ -54,7 +54,7 @@ export const QUICK_REFS = [
     calculate: (v) => {
       const { ph, pco2, hco3, na, cl } = v;
       if (!ph || !pco2 || !hco3) return null;
-      const steps = [];
+      const steps: string[] = [];
       // Step 1: acidemia vs alkalemia
       if (ph < 7.35) steps.push("Step 1: pH " + ph + " → ACIDEMIA");
       else if (ph > 7.45) steps.push("Step 1: pH " + ph + " → ALKALEMIA");
@@ -69,7 +69,7 @@ export const QUICK_REFS = [
         else { primary = "Respiratory alkalosis (low pCO₂)"; steps.push("Step 2: pCO₂ " + pco2 + " (low) → PRIMARY RESPIRATORY ALKALOSIS"); }
       }
       // Step 3: compensation
-      const comp = [];
+      const comp: string[] = [];
       if (primary.includes("Metabolic acidosis")) {
         const exp = 1.5 * hco3 + 8;
         steps.push("Step 3: Winter's formula → Expected pCO₂ = 1.5(" + hco3 + ")+8 = " + exp.toFixed(1) + " ± 2");

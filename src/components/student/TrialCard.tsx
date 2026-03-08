@@ -39,8 +39,8 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
   );
 }
 
-export function CategoryGroupedTrials({ trials, categoryOrder, bookmarks, onToggleBookmark }) {
-  const [expandedTrial, setExpandedTrial] = useState(null);
+export function CategoryGroupedTrials({ trials, categoryOrder = TRIAL_CATEGORY_ORDER, bookmarks, onToggleBookmark }: { trials: any; categoryOrder?: any; bookmarks: any; onToggleBookmark: any }) {
+  const [expandedTrial, setExpandedTrial] = useState<any>(null);
   const [collapsedCats, setCollapsedCats] = useState({});
 
   // Group trials by category, preserving order from TRIAL_CATEGORY_ORDER

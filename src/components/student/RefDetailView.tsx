@@ -6,7 +6,7 @@ import { backBtnStyle } from "./shared";
 // ─── Calculator Component ──────────────────────────────────────
 function CalculatorView({ refData }) {
   const [values, setValues] = useState({});
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<any>(null);
 
   const updateVal = (key, val) => {
     const newVals = { ...values, [key]: val === "" ? "" : parseFloat(val) || "" };
@@ -111,7 +111,7 @@ function ReferenceCardView({ refData }) {
 // ─── Atlas View (Urine Sediment) ────────────────────────────────
 function AtlasView({ refData }) {
   const { sections } = refData.content;
-  const [expandedItem, setExpandedItem] = useState(null);
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   return (
     <div>

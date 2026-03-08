@@ -6,7 +6,70 @@
 //   Week 3-4 (~250 pts) → Nephrology Fellow  (end-of-rotation goal)
 //   Completionist (~380 pts) → Attending  (stretch goal)
 //
-export function calculatePoints(state) {
+
+export interface QuizAttempt {
+  correct: number;
+  total: number;
+  date?: string;
+}
+
+export interface CaseResult {
+  score: number;
+  total: number;
+}
+
+export interface SrItem {
+  questionKey: string;
+  easeFactor: number;
+  interval: number;
+  nextReviewDate: string;
+  repetitions: number;
+  lastReviewed: string;
+  addedDate: string;
+}
+
+export interface StreakData {
+  currentDays: number;
+  longestDays: number;
+  lastActiveDate: string | null;
+  activityLog?: string[];
+}
+
+export interface GamificationData {
+  achievements?: string[];
+  streaks?: StreakData;
+}
+
+export interface StudentState {
+  patients?: Array<{ topics?: string[]; notes?: string }>;
+  weeklyScores?: Record<string, QuizAttempt[]>;
+  preScore?: QuizAttempt | null;
+  postScore?: QuizAttempt | null;
+  srQueue?: Record<string, SrItem>;
+  completedItems?: {
+    articles?: Record<string, boolean>;
+    studySheets?: Record<string, boolean>;
+    cases?: Record<string, CaseResult>;
+  };
+  gamification?: GamificationData;
+}
+
+export interface LevelInfo {
+  name: string;
+  icon: string;
+  next: string | null;
+  nextAt: number | null;
+}
+
+export interface Achievement {
+  id: string;
+  icon: string;
+  title: string;
+  desc: string;
+  check: (s: StudentState) => boolean;
+}
+
+export function calculatePoints(state: StudentState): number {
   let pts = 0;
   const patients = state.patients || [];
 
@@ -56,7 +119,7 @@ export function calculatePoints(state) {
 }
 
 // Levels based on total points — designed so Fellow is reachable at end of a 4-week rotation
-export function getLevel(points) {
+export function getLevel(points: number): LevelInfo {
   if (points >= 350) return { name: "Attending", icon: "👨‍⚕️", next: null, nextAt: null };
   if (points >= 200) return { name: "Nephrology Fellow", icon: "⭐", next: "Attending", nextAt: 350 };
   if (points >= 75) return { name: "Resident", icon: "🩺", next: "Nephrology Fellow", nextAt: 200 };
@@ -64,41 +127,41 @@ export function getLevel(points) {
 }
 
 // Helper functions for achievement checks
-function uniqueTopics(state) {
+function uniqueTopics(state: StudentState): number {
   const topics = new Set();
   (state.patients || []).forEach(p => (p.topics || []).forEach(t => topics.add(t)));
   return topics.size;
 }
 
-function totalQuizzes(state) {
+function totalQuizzes(state: StudentState): number {
   const ws = state.weeklyScores || {};
   return Object.values(ws).flat().length;
 }
 
-function weeksWithQuizzes(state) {
+function weeksWithQuizzes(state: StudentState): number {
   const ws = state.weeklyScores || {};
   return Object.keys(ws).filter(k => ws[k] && ws[k].length > 0).length;
 }
 
-function hasPerfectQuiz(state) {
+function hasPerfectQuiz(state: StudentState): boolean {
   const ws = state.weeklyScores || {};
   return Object.values(ws).flat().some(a => a.total > 0 && a.correct === a.total);
 }
 
-function patientsWithNotes(state) {
+function patientsWithNotes(state: StudentState): number {
   return (state.patients || []).filter(p => p.notes && p.notes.trim()).length;
 }
 
-function totalCasesCompleted(state) {
+function totalCasesCompleted(state: StudentState): number {
   return Object.keys(state.completedItems?.cases || {}).length;
 }
 
-function totalSrReviewsDone(state) {
+function totalSrReviewsDone(state: StudentState): number {
   return Object.values(state.srQueue || {}).reduce((sum, item) => sum + item.repetitions, 0);
 }
 
 // Achievement definitions
-export const ACHIEVEMENTS = [
+export const ACHIEVEMENTS: Achievement[] = [
   { id: "first_patient", icon: "🏥", title: "First Consult", desc: "Logged your first patient",
     check: (s) => (s.patients || []).length >= 1 },
   { id: "five_patients", icon: "🏆", title: "High Census", desc: "Logged 5 patients",
@@ -116,10 +179,10 @@ export const ACHIEVEMENTS = [
   { id: "quiz_ace", icon: "💯", title: "Quiz Ace", desc: "Scored 100% on any quiz",
     check: (s) => hasPerfectQuiz(s) },
   { id: "pre_post", icon: "📊", title: "Full Circle", desc: "Completed both pre and post assessments",
-    check: (s) => s.preScore && s.postScore },
+    check: (s) => !!(s.preScore && s.postScore) },
   { id: "growth", icon: "🌱", title: "Growth Mindset", desc: "Improved from pre to post test",
-    check: (s) => s.preScore && s.postScore && s.preScore.total > 0 && s.postScore.total > 0 &&
-      (s.postScore.correct / s.postScore.total) > (s.preScore.correct / s.preScore.total) },
+    check: (s) => !!(s.preScore && s.postScore && s.preScore.total > 0 && s.postScore.total > 0 &&
+      (s.postScore.correct / s.postScore.total) > (s.preScore.correct / s.preScore.total)) },
   { id: "streak_3", icon: "🔥", title: "On a Roll", desc: "3-day activity streak",
     check: (s) => (s.gamification?.streaks?.currentDays || 0) >= 3 },
   { id: "streak_7", icon: "🔥", title: "Week Warrior", desc: "7-day activity streak",
@@ -137,9 +200,9 @@ export const ACHIEVEMENTS = [
 ];
 
 // Check which achievements are newly earned
-export function checkAchievements(state) {
+export function checkAchievements(state: StudentState): string[] {
   const earned = state.gamification?.achievements || [];
-  const newlyEarned = [];
+  const newlyEarned: string[] = [];
   for (const a of ACHIEVEMENTS) {
     if (!earned.includes(a.id) && a.check(state)) {
       newlyEarned.push(a.id);
@@ -149,7 +212,7 @@ export function checkAchievements(state) {
 }
 
 // Update daily streak + maintain activity log for calendar
-export function updateStreak(gamification) {
+export function updateStreak(gamification: GamificationData | undefined): StreakData {
   const streaks = gamification?.streaks || { currentDays: 0, longestDays: 0, lastActiveDate: null };
   const today = new Date().toISOString().slice(0, 10);
   const existingLog = streaks.activityLog || [];

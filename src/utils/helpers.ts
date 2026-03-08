@@ -1,6 +1,6 @@
 // Inject Google Fonts once into document.head (avoids re-inserting on every render)
 let _fontsLoaded = false;
-export function ensureGoogleFonts() {
+export function ensureGoogleFonts(): void {
   if (_fontsLoaded) return;
   _fontsLoaded = true;
   const link = document.createElement("link");
@@ -11,7 +11,7 @@ export function ensureGoogleFonts() {
 
 // Theme CSS custom properties — dark mode support
 let _themeInjected = false;
-export function ensureThemeStyles() {
+export function ensureThemeStyles(): void {
   if (_themeInjected) return;
   _themeInjected = true;
   const s = document.createElement("style");
@@ -53,7 +53,7 @@ export function ensureThemeStyles() {
 
 // Inject CSS keyframes for shake animation (admin PIN error)
 let _shakeInjected = false;
-export function ensureShakeAnimation() {
+export function ensureShakeAnimation(): void {
   if (_shakeInjected) return;
   _shakeInjected = true;
   const style = document.createElement("style");
@@ -63,7 +63,7 @@ export function ensureShakeAnimation() {
 
 // Inject layout CSS: keyframes for transitions, fadeIn, and utility classes
 let _layoutInjected = false;
-export function ensureLayoutStyles() {
+export function ensureLayoutStyles(): void {
   if (_layoutInjected) return;
   _layoutInjected = true;
   const style = document.createElement("style");
@@ -84,7 +84,7 @@ export function ensureLayoutStyles() {
   document.head.appendChild(style);
 }
 
-export const SHARED_KEYS = {
+export const SHARED_KEYS: Record<string, string> = {
   curriculum: "neph_shared_curriculum",
   articles: "neph_shared_articles",
   announcements: "neph_shared_announcements",
@@ -92,9 +92,9 @@ export const SHARED_KEYS = {
   studentPrefix: "neph_shared_student_",
 };
 
-export const createStudentId = () => `stu_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+export const createStudentId = (): string => `stu_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-export const createRotationCode = (location = "", dates = "") => {
+export const createRotationCode = (location: string = "", dates: string = ""): string => {
   // Build a meaningful code from location + date
   // e.g. "City Medical Center" + "Mar 1-28, 2026" → "CMC-MAR26"
 

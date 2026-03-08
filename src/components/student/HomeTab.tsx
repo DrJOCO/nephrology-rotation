@@ -3,8 +3,9 @@ import { T, WEEKLY, ARTICLES, ABBREVIATIONS, LANDMARK_TRIALS, STUDY_SHEETS } fro
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
+import { getRecommendations } from "../../utils/recommendations";
 
-export default function HomeTab({ navigate, preScore, postScore, curriculum, articles, announcements, currentWeek, weeklyScores, completedItems, bookmarks, srDueCount }) {
+export default function HomeTab({ navigate, preScore, postScore, curriculum, articles, announcements, currentWeek, weeklyScores, completedItems, bookmarks, srDueCount, patients, srQueue }) {
   const [expanded, setExpanded] = useState(currentWeek || null);
   // Pick a random tip on each mount (changes on every screen change)
   const [mountTime] = useState(() => Date.now());
@@ -191,6 +192,54 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
         )}
         <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
       </button>
+
+      {/* AI Recommendations — rule-based weak area detection */}
+      {(() => {
+        const recs = getRecommendations({ weeklyScores, preScore, postScore, srQueue: srQueue || {}, completedItems, patients: patients || [] });
+        if (!recs.stats.hasEnoughData) return null;
+        return (
+          <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 12, border: `1.5px solid ${T.purple}`, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, right: 0, background: T.purpleBg, padding: "4px 12px 4px 16px", borderBottomLeftRadius: 10, fontSize: 9, fontWeight: 700, color: T.purpleAccent, textTransform: "uppercase", letterSpacing: 0.5 }}>Smart Insights</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 20 }}>{"\uD83C\uDFAF"}</span>
+              <div>
+                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, fontFamily: T.serif }}>Focus Areas</div>
+                {recs.stats.avgScore !== null && <div style={{ fontSize: 11, color: T.sub }}>Average quiz score: {recs.stats.avgScore}%</div>}
+              </div>
+            </div>
+            {/* Focus area cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+              {recs.focusAreas.map(area => (
+                <div key={area.week} style={{ background: area.isWeak ? T.redBg : T.greenBg, borderRadius: 8, padding: 10, border: `1px solid ${area.isWeak ? T.redAlpha : T.greenAlpha}` }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.3 }}>Week {area.week}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, marginTop: 2 }}>{area.label}</div>
+                  <div style={{ fontSize: 10, color: area.isWeak ? T.accent : T.greenDk, marginTop: 3, fontWeight: 600 }}>
+                    {area.score !== null ? `${area.score}%` : "—"} {area.isWeak ? "⚠" : "✓"}
+                  </div>
+                  <div style={{ fontSize: 10, color: T.sub, marginTop: 1 }}>{area.reason}</div>
+                </div>
+              ))}
+            </div>
+            {/* Suggested actions */}
+            {recs.suggestedActions.length > 0 && (
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Suggested Next Steps</div>
+                {recs.suggestedActions.slice(0, 3).map((action, i) => (
+                  <button key={i} onClick={() => navigate(...action.nav)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: T.bg, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>{action.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{action.label}</div>
+                      <div style={{ fontSize: 10, color: T.muted }}>{action.detail}</div>
+                    </div>
+                    <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Pro Tip — rotates on each screen change */}
       <div style={{ background: T.ice, borderRadius: 10, padding: "10px 14px", marginTop: 10, marginBottom: 16, borderLeft: `3px solid ${T.med}`, display: "flex", gap: 10, alignItems: "flex-start" }}>

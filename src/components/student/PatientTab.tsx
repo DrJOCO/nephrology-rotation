@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useState, CSSProperties } from "react";
 import { T, TOPICS } from "../../data/constants";
 import { inputLabel, inputStyle } from "./shared";
+import { validatePatientForm, validateFollowUp, clampLength, LIMITS } from "../../utils/validation";
+
+const errorStyle: CSSProperties = { fontSize: 11, color: T.accent, marginTop: 3, fontWeight: 500 };
+const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 10, color: current > max * 0.9 ? T.accent : T.muted, textAlign: "right", marginTop: 2 });
+const inputErrorBorder = { borderColor: T.accent };
 
 function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }) {
   const [followUpText, setFollowUpText] = useState("");
+  const [followUpError, setFollowUpError] = useState<string | null>(null);
   const [showFollowUps, setShowFollowUps] = useState(false);
 
   // Backwards compat: old patients have p.topic (string), new have p.topics (array)
@@ -12,9 +18,11 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
   const primaryColor = topicColor(topics[0] || "Other");
 
   const handleAddFollowUp = () => {
-    if (!followUpText.trim()) return;
-    onAddFollowUp(p.id, followUpText);
+    const { valid, error } = validateFollowUp(followUpText);
+    if (!valid) { setFollowUpError(error); return; }
+    onAddFollowUp(p.id, followUpText.trim());
     setFollowUpText("");
+    setFollowUpError(null);
   };
 
   if (isEditing) {
@@ -24,16 +32,16 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
           <div>
             <label style={inputLabel}>Initials</label>
-            <input value={editForm.initials} onChange={e => onEditChange({...editForm, initials: e.target.value})} style={inputStyle} />
+            <input value={editForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => onEditChange({...editForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)})} style={inputStyle} />
           </div>
           <div>
             <label style={inputLabel}>Room #</label>
-            <input value={editForm.room} onChange={e => onEditChange({...editForm, room: e.target.value})} style={inputStyle} />
+            <input value={editForm.room} maxLength={LIMITS.ROOM_MAX} onChange={e => onEditChange({...editForm, room: clampLength(e.target.value, LIMITS.ROOM_MAX)})} style={inputStyle} />
           </div>
         </div>
         <div style={{ marginBottom: 10 }}>
           <label style={inputLabel}>Diagnosis</label>
-          <input value={editForm.dx} onChange={e => onEditChange({...editForm, dx: e.target.value})} style={inputStyle} />
+          <input value={editForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => onEditChange({...editForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)})} style={inputStyle} />
         </div>
         <div style={{ marginBottom: 10 }}>
           <label style={inputLabel}>Topics</label>
@@ -53,7 +61,8 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={inputLabel}>Notes</label>
-          <textarea value={editForm.notes} onChange={e => onEditChange({...editForm, notes: e.target.value})} rows={2} style={{...inputStyle, resize: "vertical"}} />
+          <textarea value={editForm.notes} maxLength={LIMITS.NOTES_MAX} onChange={e => onEditChange({...editForm, notes: clampLength(e.target.value, LIMITS.NOTES_MAX)})} rows={2} style={{...inputStyle, resize: "vertical"}} />
+          <div style={charCountStyle(editForm.notes.length, LIMITS.NOTES_MAX)}>{editForm.notes.length}/{LIMITS.NOTES_MAX}</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={onSaveEdit} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
@@ -113,13 +122,17 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
           </div>
         ))}
         {!dimmed && (
-          <div style={{ display: "flex", gap: 6, marginTop: followUps.length > 0 ? 6 : 0 }}>
-            <input value={followUpText} onChange={e => setFollowUpText(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
-              placeholder="Add follow-up note..."
-              style={{ flex: 1, padding: "6px 10px", fontSize: 12, border: `1px solid ${T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
-            <button onClick={handleAddFollowUp}
-              style={{ padding: "6px 12px", background: followUpText.trim() ? T.med : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: followUpText.trim() ? "pointer" : "default" }}>+</button>
+          <div style={{ marginTop: followUps.length > 0 ? 6 : 0 }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input value={followUpText} maxLength={LIMITS.FOLLOWUP_MAX}
+                onChange={e => { setFollowUpText(clampLength(e.target.value, LIMITS.FOLLOWUP_MAX)); setFollowUpError(null); }}
+                onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
+                placeholder="Add follow-up note..."
+                style={{ flex: 1, padding: "6px 10px", fontSize: 12, border: `1px solid ${followUpError ? T.accent : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
+              <button onClick={handleAddFollowUp}
+                style={{ padding: "6px 12px", background: followUpText.trim() ? T.med : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: followUpText.trim() ? "pointer" : "default" }}>+</button>
+            </div>
+            {followUpError && <div style={errorStyle}>{followUpError}</div>}
           </div>
         )}
       </div>
@@ -129,9 +142,10 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
 
 export default function PatientTab({ patients, setPatients }) {
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ initials: "", room: "", dx: "", topics: [], notes: "" });
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ initials: "", room: "", dx: "", topics: [], notes: "" });
+  const [form, setForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
 
   const toggleTopic = (t) => {
     setForm(prev => ({
@@ -148,9 +162,18 @@ export default function PatientTab({ patients, setPatients }) {
   };
 
   const addPatient = () => {
-    if (!form.initials.trim() || form.topics.length === 0) return;
-    setPatients(prev => [{ ...form, id: Date.now(), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
-    setForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
+    const { valid, errors } = validatePatientForm(form);
+    if (!valid) { setFormErrors(errors); return; }
+    const sanitized = {
+      initials: form.initials.trim(),
+      room: form.room.trim(),
+      dx: form.dx.trim(),
+      topics: form.topics,
+      notes: form.notes.trim(),
+    };
+    setPatients(prev => [{ ...sanitized, id: Date.now(), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
+    setForm({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+    setFormErrors({});
     setShowAdd(false);
   };
 
@@ -168,11 +191,19 @@ export default function PatientTab({ patients, setPatients }) {
     });
   };
 
-  const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [], notes: "" }); };
+  const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" }); };
 
   const saveEdit = () => {
-    if (!editForm.initials.trim() || editForm.topics.length === 0) return;
-    setPatients(prev => prev.map(p => p.id === editingId ? { ...p, ...editForm } : p));
+    const { valid } = validatePatientForm(editForm);
+    if (!valid) return;
+    const sanitized = {
+      initials: editForm.initials.trim(),
+      room: editForm.room.trim(),
+      dx: editForm.dx.trim(),
+      topics: editForm.topics,
+      notes: editForm.notes.trim(),
+    };
+    setPatients(prev => prev.map(p => p.id === editingId ? { ...p, ...sanitized } : p));
     cancelEdit();
   };
 
@@ -216,16 +247,25 @@ export default function PatientTab({ patients, setPatients }) {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
               <label style={inputLabel}>Patient Initials</label>
-              <input value={form.initials} onChange={e => setForm({...form, initials: e.target.value})} placeholder="e.g. J.S." style={inputStyle} />
+              <input value={form.initials} maxLength={LIMITS.INITIALS_MAX}
+                onChange={e => { setForm({...form, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setFormErrors(prev => ({...prev, initials: undefined})); }}
+                placeholder="e.g. J.S." style={{...inputStyle, ...(formErrors.initials ? inputErrorBorder : {})}} />
+              {formErrors.initials && <div style={errorStyle}>{formErrors.initials}</div>}
             </div>
             <div>
               <label style={inputLabel}>Room #</label>
-              <input value={form.room} onChange={e => setForm({...form, room: e.target.value})} placeholder="e.g. 4B-12" style={inputStyle} />
+              <input value={form.room} maxLength={LIMITS.ROOM_MAX}
+                onChange={e => { setForm({...form, room: clampLength(e.target.value, LIMITS.ROOM_MAX)}); setFormErrors(prev => ({...prev, room: undefined})); }}
+                placeholder="e.g. 4B-12" style={{...inputStyle, ...(formErrors.room ? inputErrorBorder : {})}} />
+              {formErrors.room && <div style={errorStyle}>{formErrors.room}</div>}
             </div>
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={inputLabel}>Consult Reason / Diagnosis</label>
-            <input value={form.dx} onChange={e => setForm({...form, dx: e.target.value})} placeholder="e.g. AKI in setting of sepsis" style={inputStyle} />
+            <input value={form.dx} maxLength={LIMITS.DIAGNOSIS_MAX}
+              onChange={e => { setForm({...form, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setFormErrors(prev => ({...prev, dx: undefined})); }}
+              placeholder="e.g. AKI in setting of sepsis" style={{...inputStyle, ...(formErrors.dx ? inputErrorBorder : {})}} />
+            {formErrors.dx && <div style={errorStyle}>{formErrors.dx}</div>}
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={inputLabel}>Nephrology Topics (select all that apply)</label>
@@ -242,12 +282,18 @@ export default function PatientTab({ patients, setPatients }) {
                 );
               })}
             </div>
-            {form.topics.length === 0 && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>Select at least one topic</div>}
+            {(form.topics.length === 0 || formErrors.topics) && <div style={errorStyle}>{formErrors.topics || "Select at least one topic"}</div>}
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={inputLabel}>Teaching Notes (optional)</label>
-            <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} placeholder="Key learning point..."
-              rows={2} style={{...inputStyle, resize: "vertical"}} />
+            <textarea value={form.notes} maxLength={LIMITS.NOTES_MAX}
+              onChange={e => { setForm({...form, notes: clampLength(e.target.value, LIMITS.NOTES_MAX)}); setFormErrors(prev => ({...prev, notes: undefined})); }}
+              placeholder="Key learning point..."
+              rows={2} style={{...inputStyle, resize: "vertical", ...(formErrors.notes ? inputErrorBorder : {})}} />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {formErrors.notes ? <div style={errorStyle}>{formErrors.notes}</div> : <div />}
+              <div style={charCountStyle(form.notes.length, LIMITS.NOTES_MAX)}>{form.notes.length}/{LIMITS.NOTES_MAX}</div>
+            </div>
           </div>
           <button onClick={addPatient} style={{ width: "100%", padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             Add to List

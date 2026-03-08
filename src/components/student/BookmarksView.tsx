@@ -6,11 +6,11 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
   const bk = bookmarks || {};
   const articleData = liveArticles || DEFAULT_ARTICLES;
   const bookmarkedTrials = ALL_LANDMARK_TRIALS.filter(t => (bk.trials || []).includes(t.name));
-  const bookmarkedArticles = [];
+  const bookmarkedArticles: any[] = [];
   [1,2,3,4].forEach(w => (articleData[w] || []).forEach(a => { if ((bk.articles || []).includes(a.url)) bookmarkedArticles.push({ ...a, _week: w }); }));
-  const bookmarkedCases = [];
+  const bookmarkedCases: any[] = [];
   [1,2,3,4].forEach(w => (WEEKLY_CASES[w] || []).forEach(c => { if ((bk.cases || []).includes(c.id)) bookmarkedCases.push({ ...c, _week: w }); }));
-  const bookmarkedSheets = [];
+  const bookmarkedSheets: any[] = [];
   [1,2,3,4].forEach(w => (STUDY_SHEETS[w] || []).forEach(s => { if ((bk.studySheets || []).includes(s.id)) bookmarkedSheets.push({ ...s, _week: w }); }));
 
   const total = bookmarkedTrials.length + bookmarkedArticles.length + bookmarkedCases.length + bookmarkedSheets.length;

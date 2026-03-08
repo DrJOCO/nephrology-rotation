@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, CSSProperties } from "react";
 import { T, WEEKLY, STUDY_SHEETS } from "../../data/constants";
 import { backBtnStyle } from "./shared";
+import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
+
+const imgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 10, marginBottom: 6, border: `1px solid ${T.line}` };
+const captionStyle: CSSProperties = { fontSize: 11, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.4 };
 
 export default function StudySheetsView({ week, onBack, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const sheets = STUDY_SHEETS[week] || [];
   const wk = WEEKLY[week];
-  const [expanded, setExpanded] = useState(null);
+  const [expanded, setExpanded] = useState<number | null>(null);
   const doneCount = sheets.filter(s => (completedItems?.studySheets || {})[s.id]).length;
 
   return (
@@ -40,12 +44,18 @@ export default function StudySheetsView({ week, onBack, completedItems, bookmark
             {/* Sheet Content */}
             {isOpen && (
               <div style={{ padding: "4px 16px 20px" }}>
+                {/* Hero image */}
+                {(() => { const hero = getStudySheetHero(sheet.id); return hero ? <img src={hero} alt={`${sheet.title} overview`} style={{ ...imgStyle, marginTop: 12 }} /> : null; })()}
+
                 {sheet.sections.map((section, secIdx) => (
                   <div key={secIdx} style={{ marginBottom: 20 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: T.purpleAccent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 3, height: 12, background: T.purpleSoft, borderRadius: 2 }} />
                       {section.heading}
                     </div>
+                    {/* Section image */}
+                    {(() => { const img = getStudySheetSectionImage(sheet.id, section.heading); return img ? (<div><img src={img.src} alt={img.alt || section.heading} style={imgStyle} />{img.caption && <p style={captionStyle}>{img.caption}</p>}</div>) : null; })()}
+
                     <div style={{ background: T.grayBg, borderRadius: 10, padding: "12px 14px" }}>
                       {section.items.map((item, itemIdx) => (
                         <div key={itemIdx} style={{ fontSize: 13, color: T.text, lineHeight: 1.6, marginBottom: itemIdx < section.items.length - 1 ? 12 : 0, paddingLeft: 14, position: "relative" }}>

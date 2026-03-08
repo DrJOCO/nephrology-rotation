@@ -4,9 +4,9 @@ import store from "../../utils/store";
 import { calculatePoints, getLevel } from "../../utils/gamification";
 
 export default function TeamTab({ currentStudentId }) {
-  const [teammates, setTeammates] = useState([]);
+  const [teammates, setTeammates] = useState<any[]>([]);
   const [teamLoading, setTeamLoading] = useState(() => !!store.getRotationCode());
-  const [expandedStudent, setExpandedStudent] = useState(null);
+  const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
 
   useEffect(() => {
     if (!store.getRotationCode()) return;

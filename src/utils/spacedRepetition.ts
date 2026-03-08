@@ -3,10 +3,30 @@
 // Each SR item: { questionKey, easeFactor, interval, nextReviewDate, repetitions, lastReviewed, addedDate }
 // questionKey format: "weekly_1_3" = weekly quiz, week 1, question index 3
 
-const today = () => new Date().toISOString().slice(0, 10);
+export interface SrItem {
+  questionKey: string;
+  easeFactor: number;
+  interval: number;
+  nextReviewDate: string;
+  repetitions: number;
+  lastReviewed: string;
+  addedDate: string;
+}
+
+export interface QuizAnswer {
+  qIdx: number;
+  correct: boolean;
+}
+
+export interface ReviewAnswer {
+  questionKey: string;
+  correct: boolean;
+}
+
+const today = (): string => new Date().toISOString().slice(0, 10);
 
 // Update a single SR item based on whether the answer was correct
-export function updateSrItem(item, wasCorrect) {
+export function updateSrItem(item: SrItem, wasCorrect: boolean): SrItem {
   const now = today();
   if (wasCorrect) {
     const reps = item.repetitions + 1;
@@ -43,16 +63,16 @@ export function updateSrItem(item, wasCorrect) {
 }
 
 // Get all items that are due for review (nextReviewDate <= today)
-export function getDueItems(srQueue) {
+export function getDueItems(srQueue: Record<string, SrItem> | undefined): string[] {
   const now = today();
   return Object.keys(srQueue || {}).filter(key => {
-    const item = srQueue[key];
+    const item = srQueue![key];
     return item.nextReviewDate <= now;
   });
 }
 
 // Process quiz results — add missed questions to SR queue, advance correct ones already in queue
-export function processQuizResults(answers, source, week, existingSrQueue) {
+export function processQuizResults(answers: QuizAnswer[], source: string, week: number, existingSrQueue: Record<string, SrItem>): Record<string, SrItem> {
   const queue = { ...existingSrQueue };
   const now = today();
 
@@ -86,7 +106,7 @@ export function processQuizResults(answers, source, week, existingSrQueue) {
 }
 
 // Process SR review session results — each answer has { questionKey, correct }
-export function processReviewResults(reviewAnswers, existingSrQueue) {
+export function processReviewResults(reviewAnswers: ReviewAnswer[], existingSrQueue: Record<string, SrItem>): Record<string, SrItem> {
   const queue = { ...existingSrQueue };
 
   for (const a of reviewAnswers) {
@@ -99,6 +119,6 @@ export function processReviewResults(reviewAnswers, existingSrQueue) {
 }
 
 // Count total SR reviews (sum of all repetitions across queue items)
-export function totalSrReviews(srQueue) {
+export function totalSrReviews(srQueue: Record<string, SrItem> | undefined): number {
   return Object.values(srQueue || {}).reduce((sum, item) => sum + item.repetitions, 0);
 }

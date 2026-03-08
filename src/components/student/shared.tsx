@@ -1,14 +1,15 @@
+import { CSSProperties } from "react";
 import { T } from "../../data/constants";
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Shared styles used across multiple student components
 // ═══════════════════════════════════════════════════════════════════════
 
-export const backBtnStyle = { background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 };
+export const backBtnStyle: CSSProperties = { background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 };
 
-export const inputLabel = { fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
+export const inputLabel: CSSProperties = { fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 
-export const inputStyle = { width: "100%", padding: "10px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", fontFamily: "-apple-system, sans-serif", outline: "none" };
+export const inputStyle: CSSProperties = { width: "100%", padding: "10px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", fontFamily: "-apple-system, sans-serif", outline: "none" };
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Pro Tips — Nephrology clinical pearls
@@ -136,3 +137,20 @@ export const PRE_QUIZ_WEEK_MAP = [
   ...Array(6).fill(3),  // indices 14-19
   ...Array(5).fill(4),  // indices 20-24
 ];
+
+// Map POST_QUIZ question indices → week numbers (same structure as pre)
+// W1: 0-6 (7 Qs), W2: 7-13 (7 Qs), W3: 14-19 (6 Qs), W4: 20-24 (5 Qs)
+export const POST_QUIZ_WEEK_MAP = [
+  ...Array(7).fill(1),  // indices 0-6
+  ...Array(7).fill(2),  // indices 7-13
+  ...Array(6).fill(3),  // indices 14-19
+  ...Array(5).fill(4),  // indices 20-24
+];
+
+// Week → topic area mapping for recommendation engine
+export const WEEK_TOPIC_MAP = {
+  1: { label: "AKI & Foundations", topics: ["AKI", "Urinalysis", "CKD"] },
+  2: { label: "Electrolytes & Acid-Base", topics: ["Hyponatremia", "Hypernatremia", "Hyperkalemia", "Hypokalemia", "Acid-Base", "Calcium/Phosphorus"] },
+  3: { label: "Glomerular Disease & CKD", topics: ["Glomerulonephritis", "Nephrotic Syndrome", "CKD", "Hypertension", "Proteinuria"] },
+  4: { label: "Dialysis & Therapeutics", topics: ["Dialysis", "Transplant", "Kidney Stones", "AIN", "Diuretics"] },
+};

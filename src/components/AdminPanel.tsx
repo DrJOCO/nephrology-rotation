@@ -37,17 +37,17 @@ function AdminThemeToggle() {
 
 function AdminPanel({ onExit }) {
   const [tab, setTab] = useState("dashboard");
-  const [subView, setSubView] = useState(null);
+  const [subView, setSubView] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
 
   // Admin data
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [articles, setArticles] = useState(ARTICLES);
   const [curriculum, setCurriculum] = useState(WEEKLY);
-  const [announcements, setAnnouncements] = useState([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const [settings, setSettings] = useState({ attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "" });
   const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
 
@@ -345,7 +345,7 @@ function AdminPanel({ onExit }) {
 // ═══════════════════════════════════════════════════════════════════════
 
 function DashboardTab({ students, setStudents, navigate, rotationCode }) {
-  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const activeStudents = students.filter(s => s.status === "active");
   const totalPatients = students.reduce((sum, s) => sum + (s.patients || []).length, 0);
   const avgPre = activeStudents.filter(s => s.preScore).length > 0
@@ -1017,7 +1017,7 @@ function ArticleEditor({ week, articles, setArticles, onBack }) {
   const weekArticles = articles[week] || [];
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ title: "", journal: "", year: "", url: "", topic: "", type: "Review" });
-  const [editIdx, setEditIdx] = useState(null);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const save = () => {
     if (!form.title.trim() || !form.url.trim()) return;
@@ -1130,7 +1130,7 @@ function ArticleEditor({ week, articles, setArticles, onBack }) {
 
 // ─── Curriculum Editor ──────────────────────────────────────────────
 function CurriculumEditor({ curriculum, setCurriculum, onBack }) {
-  const [editWeek, setEditWeek] = useState(null);
+  const [editWeek, setEditWeek] = useState<number | null>(null);
   const [form, setForm] = useState({ title: "", sub: "", topicsStr: "" });
 
   const startEdit = (w) => {
@@ -1291,7 +1291,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
   const [rejoinCode, setRejoinCode] = useState("");
   const [rejoinError, setRejoinError] = useState("");
   const [rejoining, setRejoining] = useState(false);
-  const [rotationHistory, setRotationHistory] = useState([]);
+  const [rotationHistory, setRotationHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [newDates, setNewDates] = useState("");
   const [newLocation, setNewLocation] = useState("");

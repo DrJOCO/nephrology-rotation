@@ -39,3 +39,6 @@ dist-ssr
 
 # Legacy combined file
 nephrology_combined.jsx
+
+# Agent loop transcripts
+.agent-loop/

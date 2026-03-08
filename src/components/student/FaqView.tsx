@@ -3,7 +3,7 @@ import { T, RESOURCES } from "../../data/constants";
 import { backBtnStyle } from "./shared";
 
 export default function FaqView({ onBack }) {
-  const [openFaq, setOpenFaq] = useState(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const faqs = RESOURCES.faq || [];
 
   return (

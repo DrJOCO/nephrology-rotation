@@ -33,11 +33,11 @@ import ProgressTab from "./student/ProgressTab";
 
 function StudentApp({ onAdminToggle }) {
   const [tab, setTab] = useState("home");
-  const [subView, setSubView] = useState(null); // for quiz week, quick ref id, article week, etc.
-  const [patients, setPatients] = useState([]);
-  const [weeklyScores, setWeeklyScores] = useState({});
-  const [preScore, setPreScore] = useState(null);
-  const [postScore, setPostScore] = useState(null);
+  const [subView, setSubView] = useState<any>(null); // for quiz week, quick ref id, article week, etc.
+  const [patients, setPatients] = useState<any[]>([]);
+  const [weeklyScores, setWeeklyScores] = useState<Record<string, any[]>>({});
+  const [preScore, setPreScore] = useState<any>(null);
+  const [postScore, setPostScore] = useState<any>(null);
   const [studentName, setStudentName] = useState("");
   const [studentPin, setStudentPin] = useState("");
   const [nameSet, setNameSet] = useState(false);
@@ -45,22 +45,22 @@ function StudentApp({ onAdminToggle }) {
   const [studentId, setStudentId] = useState("");
   const [curriculum, setCurriculum] = useState(WEEKLY);
   const [articles, setArticles] = useState(ARTICLES);
-  const [announcements, setAnnouncements] = useState([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
   const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState("");
   const [joining, setJoining] = useState(false);
   const [gamification, setGamification] = useState({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
-  const [toast, setToast] = useState(null);
-  const [sharedSettings, setSharedSettings] = useState(null);
+  const [toast, setToast] = useState<any>(null);
+  const [sharedSettings, setSharedSettings] = useState<any>(null);
   const [completedItems, setCompletedItems] = useState({ articles: {}, studySheets: {}, cases: {} });
   const [searchOpen, setSearchOpen] = useState(false);
   const [bookmarks, setBookmarks] = useState({ trials: [], articles: [], cases: [], studySheets: [] });
   const [srQueue, setSrQueue] = useState({});
-  const [activityLog, setActivityLog] = useState([]);
-  const syncTimerRef = useRef(null);
-  const lastLocalWriteRef = useRef(0);
+  const [activityLog, setActivityLog] = useState<any[]>([]);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastLocalWriteRef = useRef<number>(0);
 
   const logActivity = (type, label, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
@@ -404,7 +404,7 @@ function StudentApp({ onAdminToggle }) {
 
       {/* Content Area */}
       <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
-        {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} />}
+        {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
         {tab === "home" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
             onBack={() => navigate("home")}
