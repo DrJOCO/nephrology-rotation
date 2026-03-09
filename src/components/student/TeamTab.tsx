@@ -2,16 +2,17 @@ import { useState, useEffect } from "react";
 import { T, TOPICS } from "../../data/constants";
 import store from "../../utils/store";
 import { calculatePoints, getLevel } from "../../utils/gamification";
+import type { AdminStudent } from "../../types";
 
-export default function TeamTab({ currentStudentId }) {
-  const [teammates, setTeammates] = useState<any[]>([]);
+export default function TeamTab({ currentStudentId }: { currentStudentId: string }) {
+  const [teammates, setTeammates] = useState<AdminStudent[]>([]);
   const [teamLoading, setTeamLoading] = useState(() => !!store.getRotationCode());
   const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
 
   useEffect(() => {
     if (!store.getRotationCode()) return;
     const unsub = store.onStudentsChanged((students) => {
-      setTeammates(students);
+      setTeammates(students as AdminStudent[]);
       setTeamLoading(false);
     });
     return () => unsub();

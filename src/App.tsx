@@ -1,7 +1,7 @@
-import { useState, Component, ErrorInfo, ReactNode } from "react";
+import { useState, lazy, Suspense, Component, ErrorInfo, ReactNode } from "react";
 import { T } from "./data/constants";
 import StudentApp from "./components/StudentApp";
-import AdminPanel from "./components/AdminPanel";
+const AdminPanel = lazy(() => import("./components/AdminPanel"));
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -50,7 +50,11 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
 function AppInner() {
   const [mode, setMode] = useState("student");
-  if (mode === "admin") return <AdminPanel onExit={() => setMode("student")} />;
+  if (mode === "admin") return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: T.sub, fontFamily: T.serif, fontSize: 16 }}>Loading Admin...</div></div>}>
+      <AdminPanel onExit={() => setMode("student")} />
+    </Suspense>
+  );
   return <StudentApp onAdminToggle={() => setMode("admin")} />;
 }
 

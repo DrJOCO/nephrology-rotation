@@ -1,7 +1,16 @@
 import { T } from "../../data/constants";
 import { LIMITS } from "../../utils/validation";
 
-export default function LoginScreen({ studentName, setStudentName, studentPin, setStudentPin, joinCode, setJoinCode, joinError, setJoinError, joining, onJoinRotation, onSkipRotation }) {
+export default function LoginScreen({ studentName, setStudentName, studentPin, setStudentPin, joinCode, setJoinCode, joinError, setJoinError, joining, onJoinRotation, onSkipRotation, onAdminToggle }: {
+  studentName: string; setStudentName: (v: string) => void;
+  studentPin: string; setStudentPin: (v: string) => void;
+  joinCode: string; setJoinCode: (v: string) => void;
+  joinError: string; setJoinError: (v: string) => void;
+  joining: boolean;
+  onJoinRotation: () => void;
+  onSkipRotation: () => void;
+  onAdminToggle?: () => void;
+}) {
   const canJoin = studentName.trim() && studentPin.length === 4 && joinCode.length >= 4;
   const canSkip = studentName.trim();
   return (
@@ -67,6 +76,14 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
           style={{ width: "100%", background: "none", border: "none", color: T.sub, fontSize: 12, cursor: canSkip ? "pointer" : "default", textDecoration: "underline", padding: "8px 0" }}>
           Use without rotation (offline only)
         </button>
+
+        {onAdminToggle && (
+          <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 16, paddingTop: 12, textAlign: "center" }}>
+            <button onClick={onAdminToggle} style={{ background: "none", border: "none", color: T.muted, fontSize: 11, cursor: "pointer", padding: "4px 8px" }}>
+              Admin Login
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

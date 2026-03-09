@@ -1,6 +1,7 @@
 import { T } from "../../data/constants";
+import type { LineChartPoint, HistogramBin, FunnelStage, BarChartItem } from "../../types";
 
-export function MiniLineChart({ data, width = 280, height = 120, color }) {
+export function MiniLineChart({ data, width = 280, height = 120, color }: { data: LineChartPoint[]; width?: number; height?: number; color?: string }) {
   const lineColor = color || T.med;
   if (!data || data.length < 2) return null;
   const pad = { top: 12, right: 10, bottom: 22, left: 32 };
@@ -24,7 +25,7 @@ export function MiniLineChart({ data, width = 280, height = 120, color }) {
   );
 }
 
-export function HistogramChart({ bins, width = 300, height = 160, label }) {
+export function HistogramChart({ bins, width = 300, height = 160, label }: { bins: HistogramBin[]; width?: number; height?: number; label?: string }) {
   // bins: [{ label, values: [{ value, color }] }]
   if (!bins || !bins.length) return null;
   const pad = { top: 20, right: 10, bottom: 28, left: 36 };
@@ -56,7 +57,7 @@ export function HistogramChart({ bins, width = 300, height = 160, label }) {
   );
 }
 
-export function FunnelChart({ stages, width = 300, height }) {
+export function FunnelChart({ stages, width = 300, height }: { stages: FunnelStage[]; width?: number; height?: number }) {
   // stages: [{ label, value, total, color }]
   if (!stages || !stages.length) return null;
   const h = height || stages.length * 36 + 20;
@@ -80,14 +81,14 @@ export function FunnelChart({ stages, width = 300, height }) {
   );
 }
 
-export function HeatmapChart({ rows, columns, data, width = 300, height }) {
+export function HeatmapChart({ rows, columns, data, width = 300, height }: { rows: string[]; columns: string[]; data: (number | null)[][]; width?: number; height?: number }) {
   // rows: string[], columns: string[], data: number[][] (rows x cols, 0-100 scale)
   if (!rows?.length || !columns?.length) return null;
   const pad = { top: 24, left: 80, right: 10, bottom: 10 };
   const cellW = Math.min(50, (width - pad.left - pad.right) / columns.length);
   const cellH = 28;
   const h = height || pad.top + rows.length * cellH + pad.bottom;
-  const colorScale = (v) => {
+  const colorScale = (v: number | null | undefined) => {
     if (v === null || v === undefined) return T.grayBg;
     if (v >= 80) return "#27ae60";
     if (v >= 60) return "#f1c40f";
@@ -115,7 +116,7 @@ export function HeatmapChart({ rows, columns, data, width = 300, height }) {
   );
 }
 
-export function MiniBarChart({ data, width = 280, height = 130 }) {
+export function MiniBarChart({ data, width = 280, height = 130 }: { data: BarChartItem[]; width?: number; height?: number }) {
   if (!data || !data.length) return null;
   const pad = { top: 16, right: 10, bottom: 22, left: 10 };
   const w = width - pad.left - pad.right;

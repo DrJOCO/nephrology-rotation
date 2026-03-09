@@ -3,7 +3,7 @@ import { T, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { GUIDE_SECTIONS, GUIDE_DATA } from "../../data/guides";
 import { backBtnStyle } from "./shared";
 
-function GuideDetailView({ sectionId, onBack }) {
+function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () => void }) {
   const [openCat, setOpenCat] = useState(0);
   const section = GUIDE_SECTIONS.find(s => s.id === sectionId);
   const data = GUIDE_DATA[sectionId];
@@ -78,14 +78,14 @@ function GuideDetailView({ sectionId, onBack }) {
   );
 }
 
-export default function GuideTab({ navigate, subView }) {
+export default function GuideTab({ navigate, subView }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null }) {
   const [guideSearch, setGuideSearch] = useState("");
 
   if (subView?.type === "guideDetail") {
-    return <GuideDetailView sectionId={subView.id} onBack={() => navigate("guide")} />;
+    return <GuideDetailView sectionId={subView.id as string} onBack={() => navigate("guide")} />;
   }
 
-  const highlightMatch = (text, query) => {
+  const highlightMatch = (text: string, query: string) => {
     if (!query.trim()) return text;
     const idx = text.toLowerCase().indexOf(query.toLowerCase());
     if (idx === -1) return text;
@@ -96,13 +96,14 @@ export default function GuideTab({ navigate, subView }) {
 
   const searchResults = guideSearch.trim() ? (() => {
     const q = guideSearch.trim().toLowerCase();
-    const results = [];
+    interface SearchMatch { category: string; emoji: string; item: string; color: string }
+    const results: { section: typeof GUIDE_SECTIONS[0]; matchingItems: SearchMatch[] }[] = [];
     GUIDE_SECTIONS.forEach(sec => {
       const data = GUIDE_DATA[sec.id];
       if (!data) return;
       const sectionMatch = sec.title.toLowerCase().includes(q) || sec.sub.toLowerCase().includes(q);
       const introMatch = data.intro?.toLowerCase().includes(q);
-      const matchingItems = [];
+      const matchingItems: SearchMatch[] = [];
       (data.categories || []).forEach(cat => {
         const catTitleMatch = cat.title.toLowerCase().includes(q);
         (cat.items || []).forEach(item => {

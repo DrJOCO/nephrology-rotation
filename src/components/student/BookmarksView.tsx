@@ -1,21 +1,22 @@
 import { T, ARTICLES as DEFAULT_ARTICLES, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { backBtnStyle } from "./shared";
+import type { Bookmarks, SubView } from "../../types";
 
-export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleBookmark, articles: liveArticles }) {
+export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleBookmark, articles: liveArticles }: { bookmarks: Bookmarks; onBack: () => void; onNavigate: (tab: string, sv?: SubView) => void; onToggleBookmark: (type: keyof Bookmarks, id: string) => void; articles: typeof DEFAULT_ARTICLES }) {
   const bk = bookmarks || {};
   const articleData = liveArticles || DEFAULT_ARTICLES;
   const bookmarkedTrials = ALL_LANDMARK_TRIALS.filter(t => (bk.trials || []).includes(t.name));
-  const bookmarkedArticles: any[] = [];
+  const bookmarkedArticles: (typeof DEFAULT_ARTICLES[1][0] & { _week: number })[] = [];
   [1,2,3,4].forEach(w => (articleData[w] || []).forEach(a => { if ((bk.articles || []).includes(a.url)) bookmarkedArticles.push({ ...a, _week: w }); }));
-  const bookmarkedCases: any[] = [];
+  const bookmarkedCases: (typeof WEEKLY_CASES[1][0] & { _week: number })[] = [];
   [1,2,3,4].forEach(w => (WEEKLY_CASES[w] || []).forEach(c => { if ((bk.cases || []).includes(c.id)) bookmarkedCases.push({ ...c, _week: w }); }));
-  const bookmarkedSheets: any[] = [];
+  const bookmarkedSheets: (typeof STUDY_SHEETS[1][0] & { _week: number })[] = [];
   [1,2,3,4].forEach(w => (STUDY_SHEETS[w] || []).forEach(s => { if ((bk.studySheets || []).includes(s.id)) bookmarkedSheets.push({ ...s, _week: w }); }));
 
   const total = bookmarkedTrials.length + bookmarkedArticles.length + bookmarkedCases.length + bookmarkedSheets.length;
 
-  const renderSection = (title, items, renderItem) => items.length > 0 && (
+  const renderSection = <I,>(title: string, items: I[], renderItem: (item: I, index: number) => React.ReactNode) => items.length > 0 && (
     <div style={{ marginBottom: 16 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>{title} ({items.length})</div>
       {items.map(renderItem)}

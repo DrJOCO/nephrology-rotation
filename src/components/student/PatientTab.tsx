@@ -2,12 +2,21 @@ import { useState, CSSProperties } from "react";
 import { T, TOPICS } from "../../data/constants";
 import { inputLabel, inputStyle } from "./shared";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS } from "../../utils/validation";
+import type { Patient } from "../../types";
 
 const errorStyle: CSSProperties = { fontSize: 11, color: T.accent, marginTop: 3, fontWeight: 500 };
 const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 10, color: current > max * 0.9 ? T.accent : T.muted, textAlign: "right", marginTop: 2 });
 const inputErrorBorder = { borderColor: T.accent };
 
-function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }) {
+interface PatientForm {
+  initials: string;
+  room: string;
+  dx: string;
+  topics: string[];
+  notes: string;
+}
+
+function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; topicColor: (topic: string) => string; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: number, note: string) => void; onRemoveFollowUp: (patientId: number, followUpId: number) => void }) {
   const [followUpText, setFollowUpText] = useState("");
   const [followUpError, setFollowUpError] = useState<string | null>(null);
   const [showFollowUps, setShowFollowUps] = useState(false);
@@ -140,21 +149,21 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
   );
 }
 
-export default function PatientTab({ patients, setPatients }) {
+export default function PatientTab({ patients, setPatients }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>> }) {
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+  const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
+  const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
 
-  const toggleTopic = (t) => {
+  const toggleTopic = (t: string) => {
     setForm(prev => ({
       ...prev,
       topics: prev.topics.includes(t) ? prev.topics.filter(x => x !== t) : [...prev.topics, t],
     }));
   };
 
-  const editToggleTopic = (t) => {
+  const editToggleTopic = (t: string) => {
     setEditForm(prev => ({
       ...prev,
       topics: prev.topics.includes(t) ? prev.topics.filter(x => x !== t) : [...prev.topics, t],
@@ -172,15 +181,15 @@ export default function PatientTab({ patients, setPatients }) {
       notes: form.notes.trim(),
     };
     setPatients(prev => [{ ...sanitized, id: Date.now(), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
-    setForm({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+    setForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
     setFormErrors({});
     setShowAdd(false);
   };
 
-  const toggle = (id) => setPatients(prev => prev.map(p => p.id === id ? { ...p, status: p.status === "active" ? "discharged" : "active" } : p));
-  const remove = (id) => setPatients(prev => prev.filter(p => p.id !== id));
+  const toggle = (id: number) => setPatients(prev => prev.map(p => p.id === id ? { ...p, status: p.status === "active" ? "discharged" : "active" } : p));
+  const remove = (id: number) => setPatients(prev => prev.filter(p => p.id !== id));
 
-  const startEdit = (patient) => {
+  const startEdit = (patient: Patient) => {
     setEditingId(patient.id);
     setEditForm({
       initials: patient.initials || "",
@@ -191,7 +200,7 @@ export default function PatientTab({ patients, setPatients }) {
     });
   };
 
-  const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" }); };
+  const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [], notes: "" }); };
 
   const saveEdit = () => {
     const { valid } = validatePatientForm(editForm);
@@ -207,7 +216,7 @@ export default function PatientTab({ patients, setPatients }) {
     cancelEdit();
   };
 
-  const addFollowUp = (patientId, noteText) => {
+  const addFollowUp = (patientId: number, noteText: string) => {
     if (!noteText.trim()) return;
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
@@ -215,7 +224,7 @@ export default function PatientTab({ patients, setPatients }) {
     } : p));
   };
 
-  const removeFollowUp = (patientId, followUpId) => {
+  const removeFollowUp = (patientId: number, followUpId: number) => {
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
       followUps: (p.followUps || []).filter(f => f.id !== followUpId)
@@ -225,7 +234,7 @@ export default function PatientTab({ patients, setPatients }) {
   const active = patients.filter(p => p.status === "active");
   const discharged = patients.filter(p => p.status === "discharged");
 
-  const topicColor = (topic) => {
+  const topicColor = (topic: string): string => {
     const map = { AKI: T.accent, CKD: T.purple, Hyponatremia: T.med, Hyperkalemia: T.orange,
       "Acid-Base": T.greenDk, Glomerulonephritis: T.redDeep, "Nephrotic Syndrome": T.orange,
       Dialysis: T.dark, Transplant: T.green, Hypertension: T.purpleAccent };

@@ -2,14 +2,23 @@ import { useState, CSSProperties } from "react";
 import { T } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
+import type { CompletedItems, Bookmarks } from "../../types";
 
 const caseImgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 12, border: `1px solid ${T.line}` };
 const caseCaptionStyle: CSSProperties = { fontSize: 11, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 };
 
-function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }) {
+interface CaseAnswer {
+  questionIdx: number;
+  selected: number;
+  correct: boolean;
+}
+
+type CaseData = typeof WEEKLY_CASES[1][0];
+
+function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { caseData: CaseData; onBack: () => void; completedItems: CompletedItems; onCaseComplete: (caseId: string, result: { score: number; total: number }) => void }) {
   const [phase, setPhase] = useState("read"); // read | quiz | results
   const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState<any[]>([]);
+  const [answers, setAnswers] = useState<CaseAnswer[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showScenario, setShowScenario] = useState(true);
@@ -17,7 +26,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }) {
   const questions = caseData.questions;
   const done = (completedItems?.cases || {})[caseData.id];
 
-  const handleSelect = (choiceIdx) => {
+  const handleSelect = (choiceIdx: number) => {
     if (showExplanation) return; // already answered
     setSelected(choiceIdx);
     setShowExplanation(true);
@@ -228,8 +237,8 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }) {
   );
 }
 
-export default function CasesView({ week, onBack, completedItems, bookmarks, onToggleBookmark, onCaseComplete }) {
-  const [activeCase, setActiveCase] = useState<any>(null);
+export default function CasesView({ week, onBack, completedItems, bookmarks, onToggleBookmark, onCaseComplete }: { week: number; onBack: () => void; completedItems: CompletedItems; bookmarks: Bookmarks; onToggleBookmark: (id: string) => void; onCaseComplete: (caseId: string, result: { score: number; total: number }) => void }) {
+  const [activeCase, setActiveCase] = useState<CaseData | null>(null);
   const cases = WEEKLY_CASES[week] || [];
 
   if (activeCase) {

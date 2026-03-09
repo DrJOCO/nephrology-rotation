@@ -1,9 +1,10 @@
 import { T, TOPICS, WEEKLY } from "../../data/constants";
 import { getLevel, ACHIEVEMENTS } from "../../utils/gamification";
 import { MiniLineChart, MiniBarChart } from "./charts";
+import type { Patient, WeeklyScores, QuizScore, Gamification, LineChartPoint, BarChartItem } from "../../types";
 
-export default function ProgressTab({ patients, weeklyScores, preScore, postScore, curriculum, gamification }) {
-  const topicCounts = {};
+export default function ProgressTab({ patients, weeklyScores, preScore, postScore, curriculum, gamification }: { patients: Patient[]; weeklyScores: WeeklyScores; preScore: QuizScore | null; postScore: QuizScore | null; curriculum: typeof WEEKLY; gamification: Gamification }) {
+  const topicCounts: Record<string, number> = {};
   patients.forEach(p => {
     const topics = p.topics || (p.topic ? [p.topic] : []);
     topics.forEach(t => { topicCounts[t] = (topicCounts[t] || 0) + 1; });
@@ -31,7 +32,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
               <span>{getLevel(gamification?.points || 0).next} ({getLevel(gamification?.points || 0).nextAt} pts)</span>
             </div>
             <div style={{ background: T.pale, borderRadius: 6, height: 8, overflow: "hidden" }}>
-              <div style={{ background: T.med, height: "100%", borderRadius: 6, width: `${Math.min(100, ((gamification?.points || 0) / getLevel(gamification?.points || 0).nextAt) * 100)}%`, transition: "width 0.5s ease" }} />
+              <div style={{ background: T.med, height: "100%", borderRadius: 6, width: `${Math.min(100, ((gamification?.points || 0) / (getLevel(gamification?.points || 0).nextAt || 1)) * 100)}%`, transition: "width 0.5s ease" }} />
             </div>
           </div>
         )}
@@ -73,7 +74,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
           const todayStr = today.toISOString().slice(0, 10);
 
           // Build activity log set (with backfill for users without log)
-          let logSet = new Set(gamification?.streaks?.activityLog || []);
+          let logSet = new Set<string>(gamification?.streaks?.activityLog || []);
           if (logSet.size === 0 && gamification?.streaks?.lastActiveDate && gamification?.streaks?.currentDays > 0) {
             const last = new Date(gamification.streaks.lastActiveDate + "T00:00:00");
             for (let i = 0; i < gamification.streaks.currentDays; i++) {
@@ -83,7 +84,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
           }
 
           // Generate 28 days ending today
-          const days = [];
+          const days: string[] = [];
           for (let i = 27; i >= 0; i--) {
             const d = new Date(today.getTime() - i * 86400000);
             days.push(d.toISOString().slice(0, 10));
@@ -218,7 +219,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
 
       {/* Analytics — Quiz Score Trend */}
       {(() => {
-        const allAttempts = [];
+        const allAttempts: (LineChartPoint & { date: string })[] = [];
         Object.entries(weeklyScores).forEach(([week, attempts]) => {
           (attempts || []).forEach(a => {
             if (a.total > 0) allAttempts.push({ label: a.date ? new Date(a.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : `W${week}`, value: Math.round((a.correct / a.total) * 100), date: a.date || "" });
@@ -240,7 +241,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
               <div style={{ background: T.card, borderRadius: 14, padding: 18, marginBottom: 12, border: `1px solid ${T.line}` }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 10 }}>Quiz Score Trend</div>
                 <div style={{ overflowX: "auto" }}>
-                  <MiniLineChart data={allAttempts} width={Math.max(280, allAttempts.length * 60)} />
+                  <MiniLineChart data={allAttempts} width={Math.max(280, allAttempts.length * 60)} color={T.med} />
                 </div>
               </div>
             )}

@@ -1,4 +1,6 @@
-export const QUICK_REFS = [
+import type { QuickRef } from "../types";
+
+export const QUICK_REFS: QuickRef[] = [
   {
     id: "fena", icon: "🧪", title: "FENa Calculator", desc: "Pre-renal vs ATN",
     type: "calculator",

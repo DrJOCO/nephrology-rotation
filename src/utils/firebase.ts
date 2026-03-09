@@ -1,6 +1,3 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -10,6 +7,21 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Avoid duplicate-app error during Vite HMR
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-export const db = getFirestore(app);
+async function loadFirebase() {
+  const [{ initializeApp, getApps }, fs] = await Promise.all([
+    import("firebase/app"),
+    import("firebase/firestore"),
+  ]);
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  return { db: fs.getFirestore(app), fs };
+}
+
+let _promise: ReturnType<typeof loadFirebase> | null = null;
+
+/** Lazily loads Firebase SDK on first use — keeps it out of the initial bundle */
+export function getFirebase() {
+  if (!_promise) {
+    _promise = loadFirebase();
+  }
+  return _promise;
+}

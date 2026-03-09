@@ -2,22 +2,23 @@ import { useState } from "react";
 import { T } from "../../data/constants";
 import { QUICK_REFS } from "../../data/guides";
 import { backBtnStyle } from "./shared";
+import type { QuickRefCalculator, QuickRefReference, QuickRefAtlas, CalcResult } from "../../types";
 
 // ─── Calculator Component ──────────────────────────────────────
-function CalculatorView({ refData }) {
-  const [values, setValues] = useState({});
-  const [result, setResult] = useState<any>(null);
+function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [result, setResult] = useState<CalcResult | null>(null);
 
-  const updateVal = (key, val) => {
-    const newVals = { ...values, [key]: val === "" ? "" : parseFloat(val) || "" };
+  const updateVal = (key: string, val: string) => {
+    const newVals = { ...values, [key]: val };
     setValues(newVals);
     // Auto-calculate when all required fields filled
     const allFilled = refData.inputs.every(inp => {
       const v = newVals[inp.key];
-      return v !== "" && v !== undefined && !isNaN(v);
+      return v !== "" && v !== undefined && !isNaN(Number(v));
     });
     if (allFilled) {
-      const numVals = {};
+      const numVals: Record<string, number> = {};
       refData.inputs.forEach(inp => { numVals[inp.key] = parseFloat(newVals[inp.key]); });
       setResult(refData.calculate(numVals));
     } else {
@@ -46,7 +47,7 @@ function CalculatorView({ refData }) {
         </div>
 
         <button onClick={() => {
-          const numVals = {};
+          const numVals: Record<string, number> = {};
           refData.inputs.forEach(inp => { numVals[inp.key] = parseFloat(values[inp.key]) || 0; });
           setResult(refData.calculate(numVals));
         }} style={{ width: "100%", marginTop: 16, padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
@@ -70,7 +71,7 @@ function CalculatorView({ refData }) {
 }
 
 // ─── Reference Card Component ──────────────────────────────────
-function ReferenceCardView({ refData }) {
+function ReferenceCardView({ refData }: { refData: QuickRefReference }) {
   const { sections } = refData.content;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -109,7 +110,7 @@ function ReferenceCardView({ refData }) {
 }
 
 // ─── Atlas View (Urine Sediment) ────────────────────────────────
-function AtlasView({ refData }) {
+function AtlasView({ refData }: { refData: QuickRefAtlas }) {
   const { sections } = refData.content;
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
@@ -166,7 +167,7 @@ function AtlasView({ refData }) {
 }
 
 // ─── Detail View (dispatches to Calculator, Reference, or Atlas) ───
-export default function RefDetailView({ refId, onBack }) {
+export default function RefDetailView({ refId, onBack }: { refId: string; onBack: () => void }) {
   const ref = QUICK_REFS.find(r => r.id === refId);
   if (!ref) return <div style={{ padding: 16 }}>Reference not found.</div>;
 

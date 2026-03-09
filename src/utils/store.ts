@@ -1,5 +1,7 @@
-import { db } from "./firebase";
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, onSnapshot, DocumentData } from "firebase/firestore";
+import { getFirebase } from "./firebase";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FirestoreData = Record<string, any>;
 
 export interface RotationInfo {
   code: string;
@@ -22,32 +24,33 @@ let rotationCode: string | null = localStorage.getItem("neph_rotationCode") || n
 
 const store = {
   // ─── Private storage (always localStorage) ───────────────────────
-  async get(key: string): Promise<any> {
+  async get<T = unknown>(key: string): Promise<T | null> {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
     catch (e) { console.warn("store.get parse error:", e); return null; }
   },
-  async set(key: string, val: any): Promise<void> {
+  async set(key: string, val: unknown): Promise<void> {
     try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("store.set failed:", e); }
   },
 
   // ─── Shared storage (Firestore when connected, localStorage fallback) ───
-  async getShared(key: string): Promise<any> {
+  async getShared<T = unknown>(key: string): Promise<T | null> {
     if (!rotationCode) {
       try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
       catch { return null; }
     }
     try {
+      const { db, fs } = await getFirebase();
       // Student data lives in subcollection
       if (key.startsWith("neph_shared_student_")) {
         const studentId = key.replace("neph_shared_student_", "");
-        const snap = await getDoc(doc(db, "rotations", rotationCode, "students", studentId));
-        return snap.exists() ? snap.data() : null;
+        const snap = await fs.getDoc(fs.doc(db, "rotations", rotationCode, "students", studentId));
+        return snap.exists() ? (snap.data() as T) : null;
       }
       // Rotation-level data
       const field = KEY_TO_FIELD[key];
       if (!field) return null;
-      const snap = await getDoc(doc(db, "rotations", rotationCode));
-      return snap.exists() ? (snap.data()[field] ?? null) : null;
+      const snap = await fs.getDoc(fs.doc(db, "rotations", rotationCode));
+      return snap.exists() ? ((snap.data()[field] as T) ?? null) : null;
     } catch (e) {
       console.warn("Firestore getShared failed, falling back to localStorage:", e);
       try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
@@ -55,22 +58,23 @@ const store = {
     }
   },
 
-  async setShared(key: string, val: any): Promise<void> {
+  async setShared(key: string, val: FirestoreData): Promise<void> {
     if (!rotationCode) {
       try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("setShared localStorage fallback failed:", e); }
       return;
     }
     try {
+      const { db, fs } = await getFirebase();
       // Student data goes to subcollection
       if (key.startsWith("neph_shared_student_")) {
         const studentId = key.replace("neph_shared_student_", "");
-        await setDoc(doc(db, "rotations", rotationCode, "students", studentId), val, { merge: true });
+        await fs.setDoc(fs.doc(db, "rotations", rotationCode, "students", studentId), val, { merge: true });
         return;
       }
       // Rotation-level data
       const field = KEY_TO_FIELD[key];
       if (field) {
-        await updateDoc(doc(db, "rotations", rotationCode), { [field]: val });
+        await fs.updateDoc(fs.doc(db, "rotations", rotationCode), { [field]: val });
       }
     } catch (e) {
       console.warn("Firestore setShared failed, saving to localStorage:", e);
@@ -84,8 +88,9 @@ const store = {
       catch { return []; }
     }
     try {
+      const { db, fs } = await getFirebase();
       if (prefix === "neph_shared_student_") {
-        const snap = await getDocs(collection(db, "rotations", rotationCode, "students"));
+        const snap = await fs.getDocs(fs.collection(db, "rotations", rotationCode, "students"));
         return snap.docs.map(d => prefix + d.id);
       }
       return [];
@@ -107,8 +112,9 @@ const store = {
   },
 
   // ─── Create a new rotation document ──────────────────────────────
-  async createRotation(code: string, data: Record<string, any>): Promise<void> {
-    await setDoc(doc(db, "rotations", code), {
+  async createRotation(code: string, data: Record<string, unknown>): Promise<void> {
+    const { db, fs } = await getFirebase();
+    await fs.setDoc(fs.doc(db, "rotations", code), {
       ...data,
       createdAt: new Date().toISOString(),
     });
@@ -117,11 +123,12 @@ const store = {
   },
 
   // ─── Read full rotation document (for hydrating admin state) ─────
-  async getRotationData(code?: string | null): Promise<DocumentData | null> {
+  async getRotationData(code?: string | null): Promise<FirestoreData | null> {
     try {
       const docId = code || rotationCode;
       if (!docId) return null;
-      const snap = await getDoc(doc(db, "rotations", docId));
+      const { db, fs } = await getFirebase();
+      const snap = await fs.getDoc(fs.doc(db, "rotations", docId));
       return snap.exists() ? snap.data() : null;
     } catch (e) {
       console.warn("getRotationData failed:", e);
@@ -132,57 +139,75 @@ const store = {
   // ─── Validate a rotation code exists ─────────────────────────────
   async validateRotationCode(code: string): Promise<boolean> {
     try {
-      const snap = await getDoc(doc(db, "rotations", code));
+      const { db, fs } = await getFirebase();
+      const snap = await fs.getDoc(fs.doc(db, "rotations", code));
       return snap.exists();
     } catch { return false; }
   },
 
   // ─── Real-time listener: all students in a rotation ──────────────
-  onStudentsChanged(callback: (students: any[]) => void): () => void {
+  onStudentsChanged(callback: (students: FirestoreData[]) => void): () => void {
     if (!rotationCode) return () => {};
-    return onSnapshot(collection(db, "rotations", rotationCode, "students"), (snap) => {
-      const students = snap.docs.map(d => ({ studentId: d.id, ...d.data() }));
-      callback(students);
-    }, (err) => {
-      console.warn("Students listener error:", err);
+    let unsub: (() => void) | null = null;
+    const code = rotationCode;
+    getFirebase().then(({ db, fs }) => {
+      unsub = fs.onSnapshot(fs.collection(db, "rotations", code, "students"), (snap) => {
+        const students = snap.docs.map(d => ({ studentId: d.id, ...d.data() }));
+        callback(students);
+      }, (err) => {
+        console.warn("Students listener error:", err);
+      });
     });
+    return () => { unsub?.(); };
   },
 
   // ─── Real-time listener: rotation-level data ─────────────────────
-  onRotationChanged(callback: (data: DocumentData) => void): () => void {
+  onRotationChanged(callback: (data: FirestoreData) => void): () => void {
     if (!rotationCode) return () => {};
-    return onSnapshot(doc(db, "rotations", rotationCode), (snap) => {
-      if (snap.exists()) callback(snap.data());
-    }, (err) => {
-      console.warn("Rotation listener error:", err);
+    let unsub: (() => void) | null = null;
+    const code = rotationCode;
+    getFirebase().then(({ db, fs }) => {
+      unsub = fs.onSnapshot(fs.doc(db, "rotations", code), (snap) => {
+        if (snap.exists()) callback(snap.data());
+      }, (err) => {
+        console.warn("Rotation listener error:", err);
+      });
     });
+    return () => { unsub?.(); };
   },
 
   // ─── Real-time listener: single student document ─────────────────
-  onStudentDataChanged(studentId: string, callback: (data: DocumentData) => void): () => void {
+  onStudentDataChanged(studentId: string, callback: (data: FirestoreData) => void): () => void {
     if (!rotationCode || !studentId) return () => {};
-    return onSnapshot(doc(db, "rotations", rotationCode, "students", studentId), (snap) => {
-      if (snap.exists()) callback(snap.data());
-    }, (err) => {
-      console.warn("Student data listener error:", err);
+    let unsub: (() => void) | null = null;
+    const code = rotationCode;
+    getFirebase().then(({ db, fs }) => {
+      unsub = fs.onSnapshot(fs.doc(db, "rotations", code, "students", studentId), (snap) => {
+        if (snap.exists()) callback(snap.data());
+      }, (err) => {
+        console.warn("Student data listener error:", err);
+      });
     });
+    return () => { unsub?.(); };
   },
 
   // ─── Write student data to Firestore directly ────────────────────
-  async setStudentData(studentId: string, data: Record<string, any>): Promise<void> {
+  async setStudentData(studentId: string, data: Record<string, unknown>): Promise<void> {
     if (!rotationCode) return;
     try {
-      await setDoc(doc(db, "rotations", rotationCode, "students", studentId), data, { merge: true });
+      const { db, fs } = await getFirebase();
+      await fs.setDoc(fs.doc(db, "rotations", rotationCode, "students", studentId), data, { merge: true });
     } catch (e) {
       console.warn("setStudentData failed:", e);
     }
   },
 
   // ─── Read student data from Firestore (for login/restore) ────────
-  async getStudentData(studentId: string): Promise<DocumentData | null> {
+  async getStudentData(studentId: string): Promise<FirestoreData | null> {
     if (!rotationCode) return null;
     try {
-      const snap = await getDoc(doc(db, "rotations", rotationCode, "students", studentId));
+      const { db, fs } = await getFirebase();
+      const snap = await fs.getDoc(fs.doc(db, "rotations", rotationCode, "students", studentId));
       return snap.exists() ? snap.data() : null;
     } catch (e) {
       console.warn("getStudentData failed:", e);
@@ -193,14 +218,15 @@ const store = {
   // ─── List all rotations ─────────────────────────────────────────
   async listRotations(): Promise<RotationInfo[]> {
     try {
-      const snap = await getDocs(collection(db, "rotations"));
+      const { db, fs } = await getFirebase();
+      const snap = await fs.getDocs(fs.collection(db, "rotations"));
       const rotations: RotationInfo[] = [];
       for (const d of snap.docs) {
         const data = d.data();
         // Count students in subcollection
         let studentCount = 0;
         try {
-          const studentsSnap = await getDocs(collection(db, "rotations", d.id, "students"));
+          const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", d.id, "students"));
           studentCount = studentsSnap.size;
         } catch (e) { console.warn("Failed to count students for rotation:", e); }
         rotations.push({
@@ -221,9 +247,10 @@ const store = {
   },
 
   // ─── Update rotation metadata ───────────────────────────────────
-  async updateRotation(code: string, data: Record<string, any>): Promise<void> {
+  async updateRotation(code: string, data: Record<string, unknown>): Promise<void> {
     try {
-      await updateDoc(doc(db, "rotations", code), data);
+      const { db, fs } = await getFirebase();
+      await fs.updateDoc(fs.doc(db, "rotations", code), data);
     } catch (e) {
       console.warn("updateRotation failed:", e);
     }
@@ -232,13 +259,14 @@ const store = {
   // ─── Delete rotation and its students ───────────────────────────
   async deleteRotation(code: string): Promise<void> {
     try {
+      const { db, fs } = await getFirebase();
       // Delete all students in subcollection first
-      const studentsSnap = await getDocs(collection(db, "rotations", code, "students"));
+      const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", code, "students"));
       for (const s of studentsSnap.docs) {
-        await deleteDoc(doc(db, "rotations", code, "students", s.id));
+        await fs.deleteDoc(fs.doc(db, "rotations", code, "students", s.id));
       }
       // Delete rotation doc
-      await deleteDoc(doc(db, "rotations", code));
+      await fs.deleteDoc(fs.doc(db, "rotations", code));
       // If this was the active rotation, disconnect
       if (rotationCode === code) {
         rotationCode = null;

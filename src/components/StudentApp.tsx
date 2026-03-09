@@ -1,43 +1,52 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems } from "../utils/spacedRepetition";
 import store from "../utils/store";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints, getLevel, checkAchievements, updateStreak, ACHIEVEMENTS } from "../utils/gamification";
+import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks } from "../types";
 
-// Extracted sub-components
+// Critical-path components (eager)
 import ThemeToggle from "./student/ThemeToggle";
 import OnboardingOverlay from "./student/OnboardingOverlay";
 import LoginScreen from "./student/LoginScreen";
 import GlobalSearchOverlay from "./student/GlobalSearchOverlay";
-import BookmarksView from "./student/BookmarksView";
 import HomeTab from "./student/HomeTab";
-import PreTestResultsView from "./student/PreTestResultsView";
-import ArticlesView from "./student/ArticlesView";
-import LandmarkTrialsView from "./student/LandmarkTrialsView";
-import TrialLibraryView from "./student/TrialLibraryView";
-import StudySheetsView from "./student/StudySheetsView";
-import CasesView from "./student/CasesView";
-import ResourcesView from "./student/ResourcesView";
-import AbbreviationsView from "./student/AbbreviationsView";
-import FaqView from "./student/FaqView";
-import QuizEngine from "./student/QuizEngine";
-import RefsTab from "./student/RefsTab";
-import RefDetailView from "./student/RefDetailView";
-import GuideTab from "./student/GuideTab";
-import PatientTab from "./student/PatientTab";
-import TeamTab from "./student/TeamTab";
-import ProgressTab from "./student/ProgressTab";
+
+// Lazy-loaded sub-views
+const BookmarksView = lazy(() => import("./student/BookmarksView"));
+const PreTestResultsView = lazy(() => import("./student/PreTestResultsView"));
+const ArticlesView = lazy(() => import("./student/ArticlesView"));
+const LandmarkTrialsView = lazy(() => import("./student/LandmarkTrialsView"));
+const TrialLibraryView = lazy(() => import("./student/TrialLibraryView"));
+const StudySheetsView = lazy(() => import("./student/StudySheetsView"));
+const CasesView = lazy(() => import("./student/CasesView"));
+const ResourcesView = lazy(() => import("./student/ResourcesView"));
+const AbbreviationsView = lazy(() => import("./student/AbbreviationsView"));
+const FaqView = lazy(() => import("./student/FaqView"));
+const QuizEngine = lazy(() => import("./student/QuizEngine"));
+const RefsTab = lazy(() => import("./student/RefsTab"));
+const RefDetailView = lazy(() => import("./student/RefDetailView"));
+const GuideTab = lazy(() => import("./student/GuideTab"));
+const PatientTab = lazy(() => import("./student/PatientTab"));
+const TeamTab = lazy(() => import("./student/TeamTab"));
+const ProgressTab = lazy(() => import("./student/ProgressTab"));
+
+const LazyFallback = () => (
+  <div style={{ padding: 40, textAlign: "center" }}>
+    <div style={{ color: T.sub, fontFamily: T.serif, fontSize: 14 }}>Loading...</div>
+  </div>
+);
 
 
-function StudentApp({ onAdminToggle }) {
+function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [tab, setTab] = useState("home");
-  const [subView, setSubView] = useState<any>(null); // for quiz week, quick ref id, article week, etc.
-  const [patients, setPatients] = useState<any[]>([]);
-  const [weeklyScores, setWeeklyScores] = useState<Record<string, any[]>>({});
-  const [preScore, setPreScore] = useState<any>(null);
-  const [postScore, setPostScore] = useState<any>(null);
+  const [subView, setSubView] = useState<SubView>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [weeklyScores, setWeeklyScores] = useState<WeeklyScores>({});
+  const [preScore, setPreScore] = useState<QuizScore | null>(null);
+  const [postScore, setPostScore] = useState<QuizScore | null>(null);
   const [studentName, setStudentName] = useState("");
   const [studentPin, setStudentPin] = useState("");
   const [nameSet, setNameSet] = useState(false);
@@ -45,29 +54,29 @@ function StudentApp({ onAdminToggle }) {
   const [studentId, setStudentId] = useState("");
   const [curriculum, setCurriculum] = useState(WEEKLY);
   const [articles, setArticles] = useState(ARTICLES);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
   const [joinCode, setJoinCode] = useState("");
   const [joinError, setJoinError] = useState("");
   const [joining, setJoining] = useState(false);
-  const [gamification, setGamification] = useState({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
-  const [toast, setToast] = useState<any>(null);
-  const [sharedSettings, setSharedSettings] = useState<any>(null);
-  const [completedItems, setCompletedItems] = useState({ articles: {}, studySheets: {}, cases: {} });
+  const [gamification, setGamification] = useState<Gamification>({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
+  const [toast, setToast] = useState<string | null>(null);
+  const [sharedSettings, setSharedSettings] = useState<SharedSettings | null>(null);
+  const [completedItems, setCompletedItems] = useState<CompletedItems>({ articles: {}, studySheets: {}, cases: {} });
   const [searchOpen, setSearchOpen] = useState(false);
-  const [bookmarks, setBookmarks] = useState({ trials: [], articles: [], cases: [], studySheets: [] });
-  const [srQueue, setSrQueue] = useState({});
-  const [activityLog, setActivityLog] = useState<any[]>([]);
+  const [bookmarks, setBookmarks] = useState<Bookmarks>({ trials: [], articles: [], cases: [], studySheets: [] });
+  const [srQueue, setSrQueue] = useState<SrQueue>({});
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLocalWriteRef = useRef<number>(0);
 
-  const logActivity = (type, label, detail = "") => {
+  const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
   };
 
   // Deterministic student ID from name + PIN
-  const makeStudentId = (name, pin) => {
+  const makeStudentId = (name: string, pin: string) => {
     const normalized = name.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
     return `stu_${normalized}_${pin}`;
   };
@@ -78,18 +87,18 @@ function StudentApp({ onAdminToggle }) {
     ensureLayoutStyles();
     ensureThemeStyles();
     (async () => {
-      const name = await store.get("neph_name");
-      const pin = await store.get("neph_pin");
-      const sidFromStore = await store.get("neph_studentId");
-      const pts = await store.get("neph_patients");
-      const ws = await store.get("neph_weeklyScores");
-      const pre = await store.get("neph_preScore");
-      const post = await store.get("neph_postScore");
+      const name = await store.get<string>("neph_name");
+      const pin = await store.get<string>("neph_pin");
+      const sidFromStore = await store.get<string>("neph_studentId");
+      const pts = await store.get<Patient[]>("neph_patients");
+      const ws = await store.get<WeeklyScores>("neph_weeklyScores");
+      const pre = await store.get<QuizScore>("neph_preScore");
+      const post = await store.get<QuizScore>("neph_postScore");
 
-      const sharedCurriculum = await store.getShared(SHARED_KEYS.curriculum);
-      const sharedArticles = await store.getShared(SHARED_KEYS.articles);
-      const sharedAnnouncements = await store.getShared(SHARED_KEYS.announcements);
-      const sharedSettingsData = await store.getShared(SHARED_KEYS.settings);
+      const sharedCurriculum = await store.getShared<typeof WEEKLY>(SHARED_KEYS.curriculum);
+      const sharedArticles = await store.getShared<typeof ARTICLES>(SHARED_KEYS.articles);
+      const sharedAnnouncements = await store.getShared<Announcement[]>(SHARED_KEYS.announcements);
+      const sharedSettingsData = await store.getShared<SharedSettings>(SHARED_KEYS.settings);
 
       if (sidFromStore) setStudentId(sidFromStore);
       if (name) { setStudentName(name); setNameSet(true); }
@@ -102,15 +111,15 @@ function StudentApp({ onAdminToggle }) {
       if (sharedArticles) setArticles(sharedArticles);
       if (sharedAnnouncements) setAnnouncements(sharedAnnouncements);
       if (sharedSettingsData) setSharedSettings(sharedSettingsData);
-      const completed = await store.get("neph_completedItems");
+      const completed = await store.get<CompletedItems>("neph_completedItems");
       if (completed) setCompletedItems(completed);
-      const savedBookmarks = await store.get("neph_bookmarks");
+      const savedBookmarks = await store.get<Bookmarks>("neph_bookmarks");
       if (savedBookmarks) setBookmarks(savedBookmarks);
-      const savedSrQueue = await store.get("neph_srQueue");
+      const savedSrQueue = await store.get<SrQueue>("neph_srQueue");
       if (savedSrQueue) setSrQueue(savedSrQueue);
-      const savedLog = await store.get("neph_activityLog");
+      const savedLog = await store.get<ActivityLogEntry[]>("neph_activityLog");
       if (savedLog) setActivityLog(savedLog);
-      const savedGamification = await store.get("neph_gamification");
+      const savedGamification = await store.get<Gamification>("neph_gamification");
       if (savedGamification) setGamification(savedGamification);
       setLoading(false);
     })();
@@ -132,7 +141,7 @@ function StudentApp({ onAdminToggle }) {
 
     // Auto-sync to Firestore (debounced)
     if (store.getRotationCode()) {
-      clearTimeout(syncTimerRef.current);
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(() => {
         lastLocalWriteRef.current = Date.now();
         store.setStudentData(studentId, {
@@ -211,9 +220,9 @@ function StudentApp({ onAdminToggle }) {
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
 
-  const navigate = (t, sv = null) => { setTab(t); setSubView(sv); };
+  const navigate = (t: string, sv: SubView = null) => { setTab(t); setSubView(sv); };
 
-  const toggleBookmark = (type, itemId) => {
+  const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
     setBookmarks(prev => {
       const arr = prev[type] || [];
       const exists = arr.includes(itemId);
@@ -293,7 +302,7 @@ function StudentApp({ onAdminToggle }) {
 
   const handleLogout = () => {
     // Clear all local data
-    clearTimeout(syncTimerRef.current);
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     ["neph_name", "neph_pin", "neph_studentId", "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog"].forEach(k => localStorage.removeItem(k));
     store.setRotationCode(null);
     // Reset all state
@@ -335,6 +344,7 @@ function StudentApp({ onAdminToggle }) {
         joining={joining}
         onJoinRotation={handleJoinRotation}
         onSkipRotation={handleSkipRotation}
+        onAdminToggle={onAdminToggle}
       />
     );
   }
@@ -355,7 +365,7 @@ function StudentApp({ onAdminToggle }) {
     const start = new Date(sharedSettings.rotationStart + "T00:00:00");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays < 0) return null;
     const week = Math.floor(diffDays / 7) + 1;
     const totalWeeks = parseInt(sharedSettings.duration || "4", 10);
@@ -405,6 +415,7 @@ function StudentApp({ onAdminToggle }) {
       {/* Content Area */}
       <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
         {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
+        <Suspense fallback={<LazyFallback />}>
         {tab === "home" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
             onBack={() => navigate("home")}
@@ -560,10 +571,11 @@ function StudentApp({ onAdminToggle }) {
         {tab === "guide" && subView?.type === "trialLibrary" && (
           <TrialLibraryView onBack={() => navigate("guide")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
-        {tab === "guide" && subView?.type !== "trialLibrary" && <GuideTab navigate={navigate} subView={subView} />}
+        {tab === "guide" && subView?.type !== "trialLibrary" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "progress" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} />}
+        </Suspense>
       </div>
 
       {/* Bottom Nav */}

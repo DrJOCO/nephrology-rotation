@@ -9,6 +9,8 @@
 //    Field weight multiplier      → title=3x, name=3x, category=2x, other=1x
 // ═══════════════════════════════════════════════════════════════════════
 
+import type { SearchDataSources } from "../types";
+
 export interface SearchField {
   value: string;
   weight: number;
@@ -140,7 +142,7 @@ export function scoreItem(query: string, fields: SearchField[]): number {
  * @param {Object} dataSources - { trials, articles, cases, studySheets, abbreviations, quickRefs }
  * @returns {{ trials: [], articles: [], cases: [], studySheets: [], abbreviations: [], quickRefs: [] }}
  */
-export function searchAll(query: string, { trials, articlesByWeek, cases, studySheets, abbreviations, quickRefs }: Record<string, any>): SearchResults | null {
+export function searchAll(query: string, { trials, articlesByWeek, cases, studySheets, abbreviations, quickRefs }: SearchDataSources): SearchResults | null {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return null;
 
@@ -237,7 +239,7 @@ export function searchAll(query: string, { trials, articlesByWeek, cases, studyS
   });
 
   // Sort each category by score (highest first)
-  for (const key of Object.keys(results)) {
+  for (const key of Object.keys(results) as (keyof SearchResults)[]) {
     results[key].sort((a, b) => b.score - a.score);
   }
 

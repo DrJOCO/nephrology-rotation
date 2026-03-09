@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { T, TRIAL_CATEGORY_ORDER } from "../../data/constants";
+import type { Trial, Bookmarks } from "../../types";
 
-export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookmark }) {
+export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookmark }: { trial: Trial; isOpen: boolean; onToggle: () => void; isBookmarked: boolean; onToggleBookmark?: (name: string) => void }) {
   return (
     <div style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.gold : T.line}`, overflow: "hidden", transition: "border 0.2s" }}>
       <button onClick={onToggle}
@@ -39,21 +40,21 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
   );
 }
 
-export function CategoryGroupedTrials({ trials, categoryOrder = TRIAL_CATEGORY_ORDER, bookmarks, onToggleBookmark }: { trials: any; categoryOrder?: any; bookmarks: any; onToggleBookmark: any }) {
-  const [expandedTrial, setExpandedTrial] = useState<any>(null);
-  const [collapsedCats, setCollapsedCats] = useState({});
+export function CategoryGroupedTrials({ trials, categoryOrder = TRIAL_CATEGORY_ORDER, bookmarks, onToggleBookmark }: { trials: Trial[]; categoryOrder?: string[]; bookmarks: Bookmarks; onToggleBookmark: (name: string) => void }) {
+  const [expandedTrial, setExpandedTrial] = useState<string | null>(null);
+  const [collapsedCats, setCollapsedCats] = useState<Record<string, boolean>>({});
 
   // Group trials by category, preserving order from TRIAL_CATEGORY_ORDER
-  const grouped = {};
+  const grouped: Record<string, Trial[]> = {};
   trials.forEach(t => {
     if (!grouped[t.category]) grouped[t.category] = [];
     grouped[t.category].push(t);
   });
   const orderedCategories = (categoryOrder || TRIAL_CATEGORY_ORDER).filter(c => grouped[c]);
-  // Include any categories not in the order list
+  // Include categories not in the order list
   Object.keys(grouped).forEach(c => { if (!orderedCategories.includes(c)) orderedCategories.push(c); });
 
-  const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
+  const toggleCat = (cat: string) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
 
   return orderedCategories.map(cat => {
     const catTrials = grouped[cat];

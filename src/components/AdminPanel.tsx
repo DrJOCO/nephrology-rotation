@@ -1,11 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { T, TOPICS, WEEKLY, ARTICLES } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
 import { QUICK_REFS } from "../data/guides";
-import store from "../utils/store";
+import store, { RotationInfo } from "../utils/store";
 import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, createRotationCode } from "../utils/helpers";
 import { calculatePoints, getLevel, ACHIEVEMENTS } from "../utils/gamification";
 import { HistogramChart, FunnelChart, HeatmapChart } from "./student/charts";
+import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, Patient, QuizScore, WeeklyScores, Gamification } from "../types";
+
+type NavigateFn = (t: string, sv?: AdminSubView) => void;
+type WeeklyData = typeof WEEKLY;
+type ArticlesData = typeof ARTICLES;
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Theme Toggle (Dark Mode)
@@ -35,20 +40,20 @@ function AdminThemeToggle() {
 //  Admin Panel (main component)
 // ═══════════════════════════════════════════════════════════════════════
 
-function AdminPanel({ onExit }) {
+function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [tab, setTab] = useState("dashboard");
-  const [subView, setSubView] = useState<any>(null);
+  const [subView, setSubView] = useState<AdminSubView>(null);
   const [loading, setLoading] = useState(true);
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
 
   // Admin data
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<AdminStudent[]>([]);
   const [articles, setArticles] = useState(ARTICLES);
   const [curriculum, setCurriculum] = useState(WEEKLY);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [settings, setSettings] = useState({ attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "" });
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [settings, setSettings] = useState<SharedSettings>({ attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "" });
   const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
 
   // Load — when connected to a rotation, hydrate from Firestore first to avoid
@@ -60,7 +65,7 @@ function AdminPanel({ onExit }) {
     ensureThemeStyles();
     (async () => {
       // Always load local settings (PIN, name, etc. are local-only)
-      const st = await store.get("admin_settings");
+      const st = await store.get<SharedSettings>("admin_settings");
       if (st) setSettings(st);
 
       // If connected to a rotation, read shared data from Firestore first
@@ -82,10 +87,10 @@ function AdminPanel({ onExit }) {
       }
 
       // No rotation or hydrate failed — use localStorage (safe: no rotation connected)
-      const s = await store.get("admin_students");
-      const a = await store.get("admin_articles");
-      const c = await store.get("admin_curriculum");
-      const an = await store.get("admin_announcements");
+      const s = await store.get<AdminStudent[]>("admin_students");
+      const a = await store.get<ArticlesData>("admin_articles");
+      const c = await store.get<WeeklyData>("admin_curriculum");
+      const an = await store.get<Announcement[]>("admin_announcements");
       if (s) setStudents(s);
       if (a) setArticles(a);
       if (c) setCurriculum(c);
@@ -146,7 +151,7 @@ function AdminPanel({ onExit }) {
   }, [rotationCode]);
 
   // Write student edits back to Firestore
-  const writeStudentToFirestore = useCallback((studentId, data) => {
+  const writeStudentToFirestore = useCallback((studentId: string, data: Record<string, unknown>) => {
     if (!rotationCode || !studentId) return;
     store.setStudentData(studentId, {
       ...data,
@@ -154,7 +159,7 @@ function AdminPanel({ onExit }) {
     });
   }, [rotationCode]);
 
-  const navigate = (t, sv = null) => { setTab(t); setSubView(sv); };
+  const navigate = (t: string, sv: AdminSubView = null) => { setTab(t); setSubView(sv); };
   const activePin = (settings?.adminPin || "1234").trim();
 
   const handlePinSubmit = () => {
@@ -174,10 +179,10 @@ function AdminPanel({ onExit }) {
       return;
     }
 
-    const snapshots = [];
+    const snapshots: (Partial<AdminStudent> & { studentId: string; updatedAt?: string })[] = [];
     for (const key of keys) {
-      const snap = await store.getShared(key);
-      if (snap?.studentId) snapshots.push(snap);
+      const snap = await store.getShared<Partial<AdminStudent> & { studentId?: string; updatedAt?: string }>(key);
+      if (snap?.studentId) snapshots.push(snap as Partial<AdminStudent> & { studentId: string; updatedAt?: string });
     }
 
     if (!snapshots.length) {
@@ -195,15 +200,15 @@ function AdminPanel({ onExit }) {
       snapshots.forEach((snap, idx) => {
         const existing = byStudentId.get(snap.studentId);
         if (existing) {
-          const merged = {
+          const merged: AdminStudent = {
             ...existing,
             name: snap.name || existing.name,
-            patients: Array.isArray(snap.patients) ? snap.patients : (existing.patients || []),
-            weeklyScores: snap.weeklyScores || existing.weeklyScores || {},
-            preScore: snap.preScore || existing.preScore || null,
-            postScore: snap.postScore || existing.postScore || null,
-            srQueue: snap.srQueue || existing.srQueue || {},
-            activityLog: snap.activityLog || existing.activityLog || [],
+            patients: Array.isArray(snap.patients) ? snap.patients as Patient[] : (existing.patients || []),
+            weeklyScores: (snap.weeklyScores || existing.weeklyScores || {}) as WeeklyScores,
+            preScore: (snap.preScore || existing.preScore || null) as QuizScore | null,
+            postScore: (snap.postScore || existing.postScore || null) as QuizScore | null,
+            srQueue: (snap.srQueue || existing.srQueue || {}) as AdminStudent["srQueue"],
+            activityLog: (snap.activityLog || existing.activityLog || []) as AdminStudent["activityLog"],
             lastSyncedAt: snap.updatedAt || new Date().toISOString(),
           };
           const pos = result.findIndex(s => s.id === existing.id);
@@ -224,11 +229,11 @@ function AdminPanel({ onExit }) {
           weeklyScores: snap.weeklyScores || {},
           preScore: snap.preScore || null,
           postScore: snap.postScore || null,
+          gamification: undefined,
           srQueue: snap.srQueue || {},
           activityLog: snap.activityLog || [],
-          notes: "",
           lastSyncedAt: snap.updatedAt || new Date().toISOString(),
-        });
+        } as AdminStudent);
         created += 1;
       });
       return result;
@@ -306,11 +311,11 @@ function AdminPanel({ onExit }) {
 
       {/* Content */}
       <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
-        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} settings={settings} rotationCode={rotationCode} />}
+        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} onBack={() => navigate("dashboard")} />}
         {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} />}
-        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => s.id === subView.id)} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} navigate={navigate} />}
-        {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => s.id === subView.id)} students={students} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
+        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} navigate={navigate} />}
+        {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "analytics" && <AnalyticsTab students={students} />}
         {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} />}
         {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} />}
@@ -344,15 +349,15 @@ function AdminPanel({ onExit }) {
 //  Dashboard Tab
 // ═══════════════════════════════════════════════════════════════════════
 
-function DashboardTab({ students, setStudents, navigate, rotationCode }) {
+function DashboardTab({ students, setStudents, navigate, rotationCode }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string }) {
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const activeStudents = students.filter(s => s.status === "active");
   const totalPatients = students.reduce((sum, s) => sum + (s.patients || []).length, 0);
   const avgPre = activeStudents.filter(s => s.preScore).length > 0
-    ? Math.round(activeStudents.filter(s => s.preScore).reduce((sum, s) => sum + (s.preScore.correct / s.preScore.total) * 100, 0) / activeStudents.filter(s => s.preScore).length)
+    ? Math.round(activeStudents.filter(s => s.preScore).reduce((sum, s) => sum + (s.preScore!.correct / s.preScore!.total) * 100, 0) / activeStudents.filter(s => s.preScore).length)
     : null;
   const avgPost = activeStudents.filter(s => s.postScore).length > 0
-    ? Math.round(activeStudents.filter(s => s.postScore).reduce((sum, s) => sum + (s.postScore.correct / s.postScore.total) * 100, 0) / activeStudents.filter(s => s.postScore).length)
+    ? Math.round(activeStudents.filter(s => s.postScore).reduce((sum, s) => sum + (s.postScore!.correct / s.postScore!.total) * 100, 0) / activeStudents.filter(s => s.postScore).length)
     : null;
 
   return (
@@ -416,11 +421,11 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }) {
               const pre = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : "";
               const post = s.postScore ? Math.round((s.postScore.correct / s.postScore.total) * 100) : "";
               const ws = s.weeklyScores || {};
-              const wb = (w) => { const a = ws[w] || []; return a.length > 0 ? Math.max(...a.map(x => Math.round((x.correct / x.total) * 100))) : ""; };
-              const pts = s.gamification ? s.gamification.points : calculatePoints(s);
+              const wb = (w: number) => { const a = ws[w] || []; return a.length > 0 ? Math.max(...a.map((x: QuizScore) => Math.round((x.correct / x.total) * 100))) : ""; };
+              const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
               const sr = s.srQueue || {};
               const srItems = Object.keys(sr).length;
-              const srMastered = Object.values(sr).filter(i => i.interval > 21).length;
+              const srMastered = Object.values(sr).filter((i: SrItem) => i.interval > 21).length;
               return [s.name, s.year||"", s.status||"active", (s.patients||[]).length, pre, post, pre && post ? post-pre : "", wb(1), wb(2), wb(3), wb(4), Object.values(ws).flat().length, pts, getLevel(pts).name, srItems, srMastered, (s.activityLog||[]).length];
             });
             const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
@@ -528,10 +533,10 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }) {
             const postPct = s.postScore ? Math.round((s.postScore.correct / s.postScore.total) * 100) : null;
             const wkScores = s.weeklyScores || {};
             const quizzesDone = Object.values(wkScores).flat().length;
-            const pts = s.gamification ? s.gamification.points : calculatePoints(s);
+            const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
             const lvl = getLevel(pts);
             return (
-              <button key={s.id} onClick={() => navigate("students", { type: "studentDetail", id: s.id })}
+              <button key={s.id} onClick={() => navigate("students", { type: "studentDetail", id: String(s.id) })}
                 style={{ display: "block", width: "100%", background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
@@ -568,12 +573,12 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }) {
       {/* Recent Activity Feed */}
       {(() => {
         const allActivity = students.flatMap(s => (s.activityLog || []).map(a => ({ ...a, studentName: s.name })));
-        allActivity.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        allActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         const recent = allActivity.slice(0, 15);
         if (recent.length === 0) return null;
 
         const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄" };
-        const formatTime = (ts) => {
+        const formatTime = (ts: string) => {
           const d = new Date(ts);
           const month = d.getMonth() + 1;
           const day = d.getDate();
@@ -612,7 +617,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }) {
   );
 }
 
-function StatCard({ value, label, color, icon }) {
+function StatCard({ value, label, color, icon }: { value: string | number; label: string; color: string; icon: string }) {
   return (
     <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 10, right: 12, fontSize: 24, opacity: 0.15 }}>{icon}</div>
@@ -623,7 +628,7 @@ function StatCard({ value, label, color, icon }) {
 }
 
 // ─── Mini Bar Chart (SVG) ────────────────────────────────────────────
-function MiniBarChart({ data, width = 280, height = 130 }) {
+function MiniBarChart({ data, width = 280, height = 130 }: { data: { label: string; value: number; color?: string }[]; width?: number; height?: number }) {
   if (!data || !data.length) return null;
   const pad = { top: 16, right: 10, bottom: 22, left: 10 };
   const w = width - pad.left - pad.right;
@@ -650,18 +655,18 @@ function MiniBarChart({ data, width = 280, height = 130 }) {
 //  Analytics Tab
 // ═══════════════════════════════════════════════════════════════════════
 
-function AnalyticsTab({ students }) {
+function AnalyticsTab({ students }: { students: AdminStudent[] }) {
   const active = students.filter(s => s.status === "active" || s.status === "completed");
   const withPre = active.filter(s => s.preScore);
   const withPost = active.filter(s => s.postScore);
 
   // Score Distribution — group pre and post scores into 5 bins
   const binLabels = ["0-20%", "21-40%", "41-60%", "61-80%", "81-100%"];
-  const toBin = (pct) => pct <= 20 ? 0 : pct <= 40 ? 1 : pct <= 60 ? 2 : pct <= 80 ? 3 : 4;
+  const toBin = (pct: number) => pct <= 20 ? 0 : pct <= 40 ? 1 : pct <= 60 ? 2 : pct <= 80 ? 3 : 4;
   const preBins = [0,0,0,0,0];
   const postBins = [0,0,0,0,0];
-  withPre.forEach(s => { preBins[toBin(Math.round((s.preScore.correct / s.preScore.total) * 100))]++; });
-  withPost.forEach(s => { postBins[toBin(Math.round((s.postScore.correct / s.postScore.total) * 100))]++; });
+  withPre.forEach(s => { preBins[toBin(Math.round((s.preScore!.correct / s.preScore!.total) * 100))]++; });
+  withPost.forEach(s => { postBins[toBin(Math.round((s.postScore!.correct / s.postScore!.total) * 100))]++; });
   const histData = binLabels.map((label, i) => ({
     label,
     values: [
@@ -706,7 +711,7 @@ function AnalyticsTab({ students }) {
 
   // SR aggregate
   const srTotal = active.reduce((sum, s) => sum + Object.keys(s.srQueue || {}).length, 0);
-  const srMastered = active.reduce((sum, s) => sum + Object.values(s.srQueue || {}).filter(i => i.interval > 21).length, 0);
+  const srMastered = active.reduce((sum, s) => sum + Object.values(s.srQueue || {}).filter((i: SrItem) => i.interval > 21).length, 0);
 
   const cardStyle = { background: T.card, borderRadius: 14, padding: 18, marginBottom: 16, border: `1px solid ${T.line}` };
   const titleStyle = { fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 4 };
@@ -794,28 +799,28 @@ function AnalyticsTab({ students }) {
 //  Students Tab & Student Roster
 // ═══════════════════════════════════════════════════════════════════════
 
-function StudentsTab({ students, setStudents, navigate, rotationCode }) {
+function StudentsTab({ students, setStudents, navigate, rotationCode }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", year: "MS3", startDate: "" });
   const isConnected = !!rotationCode;
 
   const addStudent = () => {
     if (!form.name.trim()) return;
-    const s = {
-      ...form, id: Date.now(), status: "active", addedDate: new Date().toISOString(),
-      patients: [], weeklyScores: {}, preScore: null, postScore: null, srQueue: {},
+    const s: AdminStudent = {
+      ...form, id: Date.now(), studentId: String(Date.now()), status: "active", addedDate: new Date().toISOString(),
+      patients: [], weeklyScores: {}, preScore: null, postScore: null, gamification: undefined, srQueue: {}, activityLog: [],
     };
     setStudents(prev => [...prev, s]);
     setForm({ name: "", email: "", year: "MS3", startDate: "" });
     setShowAdd(false);
   };
 
-  const removeStudent = (id) => {
+  const removeStudent = (id: number | string) => {
     if (!confirm("Remove this student? Their data will be lost.")) return;
     setStudents(prev => prev.filter(s => s.id !== id));
   };
 
-  const toggleStatus = (id) => {
+  const toggleStatus = (id: number | string) => {
     setStudents(prev => prev.map(s => s.id === id ? { ...s, status: s.status === "active" ? "completed" : "active" } : s));
   };
 
@@ -901,21 +906,21 @@ function StudentsTab({ students, setStudents, navigate, rotationCode }) {
   );
 }
 
-function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }) {
+function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }: { student: AdminStudent; navigate: (t: string, sv?: AdminSubView) => void; onToggle: (() => void) | null; onRemove: (() => void) | null; dimmed?: boolean }) {
   const prePct = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : null;
   const postPct = s.postScore ? Math.round((s.postScore.correct / s.postScore.total) * 100) : null;
 
   return (
     <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, opacity: dimmed ? 0.6 : 1 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <button onClick={() => navigate("students", { type: "studentDetail", id: s.id })}
+        <button onClick={() => navigate("students", { type: "studentDetail", id: String(s.id) })}
           style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
             <span style={{ fontSize: 10, color: "white", background: T.med, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{s.year}</span>
           </div>
           <div style={{ fontSize: 12, color: T.sub }}>
-            {(s.patients || []).length} patients • Started {s.startDate || new Date(s.addedDate).toLocaleDateString()}
+            {(s.patients || []).length} patients • Started {(s as AdminStudent & { startDate?: string }).startDate || new Date(s.addedDate).toLocaleDateString()}
           </div>
           {/* Score bars */}
           <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
@@ -956,14 +961,14 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }) {
   );
 }
 
-const adminLabel = { fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
-const adminInput = { width: "100%", padding: "10px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", fontFamily: T.sans, outline: "none", background: T.card, color: T.text };
+const adminLabel: React.CSSProperties = { fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
+const adminInput: React.CSSProperties = { width: "100%", padding: "10px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", fontFamily: T.sans, outline: "none", background: T.card, color: T.text };
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Content Management: Articles, Curriculum, Announcements
 // ═══════════════════════════════════════════════════════════════════════
 
-function ContentTab({ navigate, articles, curriculum }) {
+function ContentTab({ navigate, articles, curriculum }: { navigate: NavigateFn; articles: ArticlesData; curriculum: WeeklyData }) {
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Manage Content</h2>
@@ -1013,7 +1018,7 @@ function ContentTab({ navigate, articles, curriculum }) {
 }
 
 // ─── Article Editor ─────────────────────────────────────────────────
-function ArticleEditor({ week, articles, setArticles, onBack }) {
+function ArticleEditor({ week, articles, setArticles, onBack }: { week: number; articles: ArticlesData; setArticles: React.Dispatch<React.SetStateAction<ArticlesData>>; onBack: () => void }) {
   const weekArticles = articles[week] || [];
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ title: "", journal: "", year: "", url: "", topic: "", type: "Review" });
@@ -1035,15 +1040,15 @@ function ArticleEditor({ week, articles, setArticles, onBack }) {
     setEditIdx(null);
   };
 
-  const remove = (idx) => {
+  const remove = (idx: number) => {
     setArticles(prev => {
       const copy = { ...prev };
-      copy[week] = (copy[week] || []).filter((_, i) => i !== idx);
+      copy[week] = (copy[week] || []).filter((_: unknown, i: number) => i !== idx);
       return copy;
     });
   };
 
-  const startEdit = (idx) => {
+  const startEdit = (idx: number) => {
     const a = weekArticles[idx];
     setForm({ title: a.title, journal: a.journal, year: a.year.toString(), url: a.url, topic: a.topic, type: a.type });
     setEditIdx(idx);
@@ -1129,18 +1134,18 @@ function ArticleEditor({ week, articles, setArticles, onBack }) {
 }
 
 // ─── Curriculum Editor ──────────────────────────────────────────────
-function CurriculumEditor({ curriculum, setCurriculum, onBack }) {
+function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curriculum: WeeklyData; setCurriculum: React.Dispatch<React.SetStateAction<WeeklyData>>; onBack: () => void }) {
   const [editWeek, setEditWeek] = useState<number | null>(null);
   const [form, setForm] = useState({ title: "", sub: "", topicsStr: "" });
 
-  const startEdit = (w) => {
+  const startEdit = (w: number) => {
     const wk = curriculum[w] || WEEKLY[w];
     setForm({ title: wk.title, sub: wk.sub, topicsStr: wk.topics.join(", ") });
     setEditWeek(w);
   };
 
   const saveEdit = () => {
-    if (!form.title.trim()) return;
+    if (!form.title.trim() || editWeek === null) return;
     setCurriculum(prev => ({
       ...prev,
       [editWeek]: { title: form.title, sub: form.sub, topics: form.topicsStr.split(",").map(t => t.trim()).filter(Boolean) }
@@ -1203,9 +1208,9 @@ function CurriculumEditor({ curriculum, setCurriculum, onBack }) {
 }
 
 // ─── Announcements ──────────────────────────────────────────────────
-function AnnouncementsEditor({ announcements, setAnnouncements, onBack }) {
+function AnnouncementsEditor({ announcements, setAnnouncements, onBack }: { announcements: Announcement[]; setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>>; onBack: () => void }) {
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ title: "", body: "", priority: "normal" });
+  const [form, setForm] = useState<{ title: string; body: string; priority: Announcement["priority"] }>({ title: "", body: "", priority: "normal" });
 
   const add = () => {
     if (!form.title.trim()) return;
@@ -1214,7 +1219,7 @@ function AnnouncementsEditor({ announcements, setAnnouncements, onBack }) {
     setShowAdd(false);
   };
 
-  const remove = (id) => setAnnouncements(prev => prev.filter(a => a.id !== id));
+  const remove = (id: number) => setAnnouncements(prev => prev.filter(a => a.id !== id));
 
   return (
     <div style={{ padding: 16 }}>
@@ -1239,7 +1244,7 @@ function AnnouncementsEditor({ announcements, setAnnouncements, onBack }) {
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={adminLabel}>Priority</label>
-            <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})} style={adminInput}>
+            <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value as Announcement["priority"]})} style={adminInput}>
               <option value="normal">Normal</option>
               <option value="important">Important</option>
               <option value="urgent">Urgent</option>
@@ -1286,16 +1291,16 @@ const tinyBtn = { background: "none", border: `1px solid ${T.line}`, borderRadiu
 //  Settings Tab
 // ═══════════════════════════════════════════════════════════════════════
 
-function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCode, setRotationCodeState, curriculum, articles, announcements, setCurriculum, setArticles, setAnnouncements }) {
+function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCode, setRotationCodeState, curriculum, articles, announcements, setCurriculum, setArticles, setAnnouncements }: { settings: SharedSettings; setSettings: React.Dispatch<React.SetStateAction<SharedSettings>>; onImportStudentUpdates: () => Promise<void>; rotationCode: string; setRotationCodeState: React.Dispatch<React.SetStateAction<string>>; curriculum: WeeklyData; articles: ArticlesData; announcements: Announcement[]; setCurriculum: React.Dispatch<React.SetStateAction<WeeklyData>>; setArticles: React.Dispatch<React.SetStateAction<ArticlesData>>; setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>> }) {
   const [creating, setCreating] = useState(false);
   const [rejoinCode, setRejoinCode] = useState("");
   const [rejoinError, setRejoinError] = useState("");
   const [rejoining, setRejoining] = useState(false);
-  const [rotationHistory, setRotationHistory] = useState<any[]>([]);
+  const [rotationHistory, setRotationHistory] = useState<RotationInfo[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [newDates, setNewDates] = useState("");
   const [newLocation, setNewLocation] = useState("");
-  const update = (key, val) => setSettings(prev => ({ ...prev, [key]: val }));
+  const update = (key: string, val: string) => setSettings(prev => ({ ...prev, [key]: val }));
 
   // Load rotation history on mount
   useEffect(() => {
@@ -1339,7 +1344,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
     setCreating(false);
   };
 
-  const handleDeleteRotation = async (code) => {
+  const handleDeleteRotation = async (code: string) => {
     if (!confirm(`Delete rotation ${code}? All student data in this rotation will be permanently lost.`)) return;
     try {
       await store.deleteRotation(code);
@@ -1350,7 +1355,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
     }
   };
 
-  const handleConnectRotation = async (code) => {
+  const handleConnectRotation = async (code: string) => {
     // Hydrate from Firestore before setting rotation code, so the save
     // effect doesn't overwrite shared state with stale local data
     const remote = await store.getRotationData(code);
@@ -1366,7 +1371,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
     setRotationCodeState(code);
   };
 
-  const handleUpdateRotationField = async (code, field, value) => {
+  const handleUpdateRotationField = async (code: string, field: string, value: string) => {
     await store.updateRotation(code, { [field]: value });
     setRotationHistory(prev => prev.map(r => r.code === code ? { ...r, [field]: value } : r));
   };
@@ -1604,14 +1609,14 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
 //  Student Detail View (with score entry & patient logging)
 // ═══════════════════════════════════════════════════════════════════════
 
-function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFirestore, navigate }) {
+function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFirestore, navigate }: { student: AdminStudent | undefined; onBack: () => void; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; navigate: NavigateFn }) {
   const [showScoreEntry, setShowScoreEntry] = useState(false);
   const [scoreType, setScoreType] = useState("pre"); // pre, post, weekly
   const [scoreWeek, setScoreWeek] = useState(1);
   const [scoreForm, setScoreForm] = useState({ correct: "", total: "" });
   const [showAddPatient, setShowAddPatient] = useState(false);
-  const [patForm, setPatForm] = useState({ initials: "", room: "", dx: "", topics: [], notes: "" });
-  const togglePatTopic = (t) => setPatForm(prev => ({ ...prev, topics: prev.topics.includes(t) ? prev.topics.filter(x => x !== t) : [...prev.topics, t] }));
+  const [patForm, setPatForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+  const togglePatTopic = (t: string) => setPatForm(prev => ({ ...prev, topics: prev.topics.includes(t) ? prev.topics.filter((x: string) => x !== t) : [...prev.topics, t] }));
   if (!s) return <div style={{ padding: 16 }}>Student not found.</div>;
 
   const prePct = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : null;
@@ -1619,7 +1624,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
   const wkScores = s.weeklyScores || {};
   const patients = s.patients || [];
 
-  const updateStudent = (updates) => {
+  const updateStudent = (updates: Partial<AdminStudent>) => {
     setStudents(prev => prev.map(st => st.id === s.id ? { ...st, ...updates } : st));
     // Write back to Firestore so student sees admin edits
     if (writeStudentToFirestore && s.studentId) {
@@ -1640,7 +1645,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
     const correct = parseInt(scoreForm.correct);
     const total = parseInt(scoreForm.total);
     if (isNaN(correct) || isNaN(total) || total === 0) return;
-    const entry = { correct, total, date: new Date().toISOString() };
+    const entry: QuizScore = { correct, total, date: new Date().toISOString(), answers: [] };
 
     if (scoreType === "pre") {
       updateStudent({ preScore: entry });
@@ -1657,13 +1662,13 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
 
   const addPatient = () => {
     if (!patForm.initials.trim() || patForm.topics.length === 0) return;
-    const p = { ...patForm, id: crypto.randomUUID(), date: new Date().toISOString(), status: "active" };
+    const p = { ...patForm, id: crypto.randomUUID(), date: new Date().toISOString(), status: "active" as const, followUps: [] } as unknown as Patient;
     updateStudent({ patients: [...patients, p] });
     setPatForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
     setShowAddPatient(false);
   };
 
-  const topicCounts = {};
+  const topicCounts: Record<string, number> = {};
   patients.forEach(p => {
     const ts = p.topics || (p.topic ? [p.topic] : []);
     ts.forEach(t => { topicCounts[t] = (topicCounts[t] || 0) + 1; });
@@ -1687,7 +1692,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
         {/* Gamification Summary */}
         {(() => {
           const gam = s.gamification;
-          const pts = gam ? gam.points : calculatePoints(s);
+          const pts = gam ? gam.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
           const level = getLevel(pts);
           const earnedCount = gam?.achievements?.length || 0;
           return (
@@ -1704,7 +1709,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
                 <span style={{ fontWeight: 700, color: T.green, fontSize: 14 }}>{earnedCount}</span>
                 <span style={{ fontSize: 11, color: T.sub, marginLeft: 4 }}>/{ACHIEVEMENTS.length} badges</span>
               </div>
-              {gam?.streaks?.currentDays > 0 && (
+              {gam && gam.streaks && gam.streaks.currentDays > 0 && (
                 <div style={{ background: T.redBg, borderRadius: 10, padding: "6px 14px" }}>
                   <span style={{ fontSize: 14 }}>🔥</span>
                   <span style={{ fontWeight: 700, color: T.accent, fontSize: 14, marginLeft: 4 }}>{gam.streaks.currentDays}d</span>
@@ -1723,7 +1728,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
             style={{ fontSize: 11, color: T.green, background: "rgba(26,188,156,0.1)", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             + Log Patient
           </button>
-          <button onClick={() => navigate("students", { type: "printStudent", id: s.id })}
+          <button onClick={() => navigate("students", { type: "printStudent", id: String(s.id) })}
             style={{ fontSize: 11, color: T.med, background: T.blueBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             Print Report
           </button>
@@ -1879,7 +1884,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
 //  Printable Report (Cohort & Individual)
 // ═══════════════════════════════════════════════════════════════════════
 
-function PrintableReport({ mode, students, student, settings, onBack }) {
+function PrintableReport({ mode, students, student, settings, onBack }: { mode: string; students: AdminStudent[]; student?: AdminStudent; settings: SharedSettings & { hospitalName?: string }; onBack: () => void }) {
   const reportDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const rotationName = settings?.attendingName || "Nephrology Rotation";
   const hospitalName = settings?.hospitalName || "";
@@ -1909,15 +1914,15 @@ function PrintableReport({ mode, students, student, settings, onBack }) {
     </div>
   );
 
-  const pct = (score) => score && score.total > 0 ? Math.round((score.correct / score.total) * 100) : null;
+  const pct = (score: QuizScore | null) => score && score.total > 0 ? Math.round((score.correct / score.total) * 100) : null;
 
   if (mode === "cohort") {
     const activeStudents = students.filter(s => s.status === "active");
     const avgPre = activeStudents.filter(s => s.preScore).length > 0
-      ? Math.round(activeStudents.filter(s => s.preScore).reduce((sum, s) => sum + pct(s.preScore), 0) / activeStudents.filter(s => s.preScore).length)
+      ? Math.round(activeStudents.filter(s => s.preScore).reduce((sum, s) => sum + pct(s.preScore)!, 0) / activeStudents.filter(s => s.preScore).length)
       : null;
     const avgPost = activeStudents.filter(s => s.postScore).length > 0
-      ? Math.round(activeStudents.filter(s => s.postScore).reduce((sum, s) => sum + pct(s.postScore), 0) / activeStudents.filter(s => s.postScore).length)
+      ? Math.round(activeStudents.filter(s => s.postScore).reduce((sum, s) => sum + pct(s.postScore)!, 0) / activeStudents.filter(s => s.postScore).length)
       : null;
 
     return (
@@ -1973,7 +1978,7 @@ function PrintableReport({ mode, students, student, settings, onBack }) {
                 const growth = pre !== null && post !== null ? post - pre : null;
                 const wkScores = s.weeklyScores || {};
                 const quizCount = Object.values(wkScores).flat().length;
-                const pts = s.gamification ? s.gamification.points : calculatePoints(s);
+                const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
                 const lvl = getLevel(pts);
                 return (
                   <tr key={s.id || i} style={{ borderBottom: "1px solid #D5DBDB", background: i % 2 === 0 ? "white" : "#F8F9FA" }}>
@@ -2006,13 +2011,13 @@ function PrintableReport({ mode, students, student, settings, onBack }) {
   const growth = pre !== null && post !== null ? post - pre : null;
   const wkScores = s.weeklyScores || {};
   const patients = s.patients || [];
-  const pts = s.gamification ? s.gamification.points : calculatePoints(s);
+  const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
   const lvl = getLevel(pts);
   const earned = s.gamification?.achievements || [];
   const earnedBadges = ACHIEVEMENTS.filter(a => earned.includes(a.id));
 
   // Topic distribution
-  const topicCounts = {};
+  const topicCounts: Record<string, number> = {};
   patients.forEach(p => {
     const ts = p.topics || (p.topic ? [p.topic] : []);
     ts.forEach(t => { topicCounts[t] = (topicCounts[t] || 0) + 1; });
@@ -2148,7 +2153,7 @@ function PrintableReport({ mode, students, student, settings, onBack }) {
   );
 }
 
-const thStyle = { padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
+const thStyle: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
 const tdStyle = { padding: "8px 10px" };
 
 export default AdminPanel;

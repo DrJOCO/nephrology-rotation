@@ -2,9 +2,22 @@ import { useState, useEffect } from "react";
 import { T } from "../../data/constants";
 import store from "../../utils/store";
 import { backBtnStyle } from "./shared";
+import type { QuizQuestion, QuizScore, QuizAnswer } from "../../types";
+
+interface SavedQuizProgress {
+  fingerprint: string;
+  shuffledOrder: number[];
+  current: number;
+  selected: number | null;
+  answered: QuizAnswer[];
+  score: number;
+  done: boolean;
+  showExplanation: boolean;
+  choiceOrders: Record<number, number[]>;
+}
 
 // Fisher-Yates shuffle — returns array of shuffled indices
-function shuffleIndices(length) {
+function shuffleIndices(length: number) {
   const arr = Array.from({ length }, (_, i) => i);
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -14,17 +27,17 @@ function shuffleIndices(length) {
 }
 
 // Generate shuffled choice orders for each question
-function generateChoiceOrders(questions) {
+function generateChoiceOrders(questions: QuizQuestion[]) {
   return questions.map(q => shuffleIndices(q.choices.length));
 }
 
-export default function QuizEngine({ questions, title, onBack, onFinish, questionCount }) {
+export default function QuizEngine({ questions, title, onBack, onFinish, questionCount }: { questions: QuizQuestion[]; title: string; onBack: () => void; onFinish: (score: QuizScore) => void; questionCount?: number }) {
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [answers, setAnswers] = useState<any[]>([]);
+  const [answers, setAnswers] = useState<QuizAnswer[]>([]);
   const [showExplanation, setShowExplanation] = useState(false);
   const [shuffledOrder, setShuffledOrder] = useState<number[] | null>(null);
   const [choiceOrders, setChoiceOrders] = useState<Record<number, number[]> | null>(null);
@@ -40,7 +53,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
   // Restore saved progress on mount, or create new shuffled order + choice orders
   useEffect(() => {
     (async () => {
-      const saved = await store.get(quizKey);
+      const saved = await store.get<SavedQuizProgress>(quizKey);
       // Validate saved progress: indices must be in-bounds AND the question
       // set must be the same (fingerprint match).  This guards against dynamic
       // quizzes whose content changes between sessions.
@@ -75,7 +88,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
     store.set(quizKey, { current, selected, answered: answers, score: correctCount, done: finished, showExplanation, shuffledOrder, choiceOrders, fingerprint: questionsFingerprint });
   }, [current, selected, answers, correctCount, finished, showExplanation, restored, quizKey, shuffledOrder, choiceOrders, questionsFingerprint]);
 
-  const handleSelect = (displayIdx) => {
+  const handleSelect = (displayIdx: number) => {
     if (showResult || !shuffledOrder || !choiceOrders) return;
     setSelected(displayIdx);
     setShowResult(true);
