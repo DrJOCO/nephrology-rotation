@@ -1,9 +1,10 @@
 import { T, TOPICS, WEEKLY } from "../../data/constants";
 import { getLevel, ACHIEVEMENTS } from "../../utils/gamification";
 import { MiniLineChart, MiniBarChart } from "./charts";
-import type { Patient, WeeklyScores, QuizScore, Gamification, LineChartPoint, BarChartItem } from "../../types";
+import { getTopicExposures, getUnstudiedTopics, getUnseenTopics } from "../../utils/topicExposure";
+import type { Patient, WeeklyScores, QuizScore, Gamification, CompletedItems, LineChartPoint, BarChartItem } from "../../types";
 
-export default function ProgressTab({ patients, weeklyScores, preScore, postScore, curriculum, gamification }: { patients: Patient[]; weeklyScores: WeeklyScores; preScore: QuizScore | null; postScore: QuizScore | null; curriculum: typeof WEEKLY; gamification: Gamification }) {
+export default function ProgressTab({ patients, weeklyScores, preScore, postScore, curriculum, gamification, completedItems }: { patients: Patient[]; weeklyScores: WeeklyScores; preScore: QuizScore | null; postScore: QuizScore | null; curriculum: typeof WEEKLY; gamification: Gamification; completedItems?: CompletedItems }) {
   const topicCounts: Record<string, number> = {};
   patients.forEach(p => {
     const topics = p.topics || (p.topic ? [p.topic] : []);
@@ -186,36 +187,71 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
         );
       })}
 
-      {/* Topic Exposure */}
-      <h3 style={{ color: T.navy, fontSize: 15, margin: "16px 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Topic Exposure</h3>
-      <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
-        {TOPICS.slice(0, 16).map(t => {
-          const count = topicCounts[t] || 0;
-          const maxCount = Math.max(...Object.values(topicCounts), 1);
-          return (
-            <div key={t} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <div style={{ width: 120, fontSize: 11, color: T.text, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t}</div>
-              <div style={{ flex: 1, height: 14, background: T.grayBg, borderRadius: 7, overflow: "hidden" }}>
-                <div style={{ width: count > 0 ? `${Math.max((count / maxCount) * 100, 8)}%` : 0, height: "100%", background: count > 0 ? T.med : "transparent", borderRadius: 7, transition: "width 0.3s" }} />
-              </div>
-              <div style={{ width: 20, fontSize: 12, fontWeight: 600, color: count > 0 ? T.navy : T.muted, textAlign: "right", fontFamily: T.mono }}>{count}</div>
-            </div>
-          );
-        })}
-        {topicsCovered === 0 && (
-          <div style={{ textAlign: "center", padding: 16, color: T.muted, fontSize: 13 }}>Start adding patients to see topic coverage</div>
-        )}
-      </div>
+      {/* Clinical Topic Exposure */}
+      <h3 style={{ color: T.navy, fontSize: 15, margin: "16px 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Clinical Topic Exposure</h3>
+      {(() => {
+        const exposures = getTopicExposures(patients, completedItems);
+        const maxPatientCount = Math.max(...exposures.map(e => e.patientCount), 1);
+        const unstudied = getUnstudiedTopics(exposures);
+        const unseen = getUnseenTopics(exposures);
 
-      {/* Gaps */}
-      {topicsCovered > 0 && topicsCovered < 10 && (
-        <div style={{ background: T.yellowBg, borderRadius: 12, padding: 14, marginTop: 12, borderLeft: `3px solid ${T.gold}` }}>
-          <div style={{ fontWeight: 700, color: T.text, fontSize: 13, marginBottom: 4 }}>Topics Not Yet Seen:</div>
-          <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.6 }}>
-            {TOPICS.filter(t => !topicCounts[t]).slice(0, 10).join(", ")}
-          </div>
-        </div>
-      )}
+        return (
+          <>
+            <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
+              {exposures.map(e => {
+                const hasClinical = e.patientCount > 0;
+                const hasStudied = e.contentCompleted > 0;
+                return (
+                  <div key={e.topic} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <div style={{ width: 130, fontSize: 11, color: T.text, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.topic}</div>
+                    <div style={{ flex: 1, height: 14, background: T.grayBg, borderRadius: 7, overflow: "hidden", position: "relative" }}>
+                      {/* Clinical exposure bar */}
+                      <div style={{ width: hasClinical ? `${Math.max((e.patientCount / maxPatientCount) * 100, 8)}%` : 0, height: "100%", background: hasClinical ? T.med : "transparent", borderRadius: 7, transition: "width 0.3s" }} />
+                    </div>
+                    <div style={{ width: 20, fontSize: 12, fontWeight: 600, color: hasClinical ? T.navy : T.muted, textAlign: "right", fontFamily: T.mono }}>{e.patientCount}</div>
+                    {/* Content completion indicator */}
+                    <div style={{ width: 36, fontSize: 9, color: hasStudied ? T.greenDk : T.muted, fontWeight: 600, textAlign: "right" }}>
+                      {e.contentTotal > 0 ? `${e.contentCompleted}/${e.contentTotal}` : ""}
+                    </div>
+                  </div>
+                );
+              })}
+              {topicsCovered === 0 && (
+                <div style={{ textAlign: "center", padding: 16, color: T.muted, fontSize: 13 }}>Start adding patients to see topic coverage</div>
+              )}
+            </div>
+            {/* Legend */}
+            <div style={{ display: "flex", gap: 16, marginTop: 8, marginBottom: 8, fontSize: 10, color: T.sub }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 3, background: T.med }} /> Patients seen
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontWeight: 600, color: T.greenDk }}>n/n</span> Content completed
+              </div>
+            </div>
+
+            {/* Study gaps for clinically seen topics */}
+            {unstudied.length > 0 && (
+              <div style={{ background: T.yellowBg, borderRadius: 12, padding: 14, marginTop: 8, borderLeft: `3px solid ${T.gold}` }}>
+                <div style={{ fontWeight: 700, color: T.text, fontSize: 13, marginBottom: 4 }}>Seen but not fully studied:</div>
+                <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.6 }}>
+                  {unstudied.map(e => e.topic).join(", ")}
+                </div>
+              </div>
+            )}
+
+            {/* Never-seen topics */}
+            {unseen.length > 0 && unseen.length < TOPICS.length - 1 && (
+              <div style={{ background: T.blueBg, borderRadius: 12, padding: 14, marginTop: 8, borderLeft: `3px solid ${T.med}` }}>
+                <div style={{ fontWeight: 700, color: T.text, fontSize: 13, marginBottom: 4 }}>Topics not yet encountered:</div>
+                <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.6 }}>
+                  {unseen.slice(0, 12).join(", ")}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Analytics — Quiz Score Trend */}
       {(() => {

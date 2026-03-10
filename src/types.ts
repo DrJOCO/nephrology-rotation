@@ -53,15 +53,21 @@ export type SubView =
   | { type: "practiceQuiz" }
   | { type: "refDetail"; id: string }
   | { type: "trialLibrary" }
+  | { type: "browseByTopic" }
+  | { type: "topicDetail"; topic: string }
+  | { type: "clinicGuide"; date: string }
+  | { type: "clinicGuideHistory" }
   | null;
 
 export type AdminSubView =
   | { type: "printCohort" }
   | { type: "studentDetail"; id: string }
   | { type: "printStudent"; id: string }
+  | { type: "exportPdf"; id: string }
   | { type: "editArticles"; week: number }
   | { type: "editCurriculum" }
   | { type: "announcements" }
+  | { type: "clinicGuides" }
   | null;
 
 export interface Announcement {
@@ -134,10 +140,25 @@ export interface Bookmarks {
   studySheets: string[];
 }
 
+export interface ClinicGuideRecord {
+  id: string;
+  date: string;
+  topic: string;
+  generatedAt: string;
+  isOverride: boolean;
+}
+
+export interface FeedbackTag {
+  tag: string;
+  date: string;
+  note?: string;
+}
+
 export interface AdminStudent {
   id: number;
   studentId: string;
   name: string;
+  loginPin?: string;
   year?: string;
   email?: string;
   status: "active" | "completed";
@@ -151,6 +172,7 @@ export interface AdminStudent {
   activityLog: ActivityLogEntry[];
   completedItems?: CompletedItems;
   bookmarks?: Bookmarks;
+  feedbackTags?: FeedbackTag[];
   lastSyncedAt?: string | null;
 }
 
@@ -164,6 +186,7 @@ export interface Trial {
   takeaway: string;
   details: string;
   significance: string;
+  topics?: string[];
 }
 
 // Chart data shapes
@@ -218,6 +241,7 @@ export interface ClinicalCase {
   difficulty: string;
   scenario: string;
   questions: QuizQuestion[];
+  topics?: string[];
 }
 
 export interface StudySheetSection {
@@ -232,6 +256,7 @@ export interface StudySheet {
   subtitle: string;
   sections: StudySheetSection[];
   trialCallouts?: { trial: string; pearl: string }[];
+  topics?: string[];
 }
 
 export interface Abbreviation {
@@ -286,6 +311,36 @@ export interface QuickRefAtlas extends QuickRefBase {
 }
 
 export type QuickRef = QuickRefCalculator | QuickRefReference | QuickRefAtlas;
+
+// ─── Topic-based models ─────────────────────────────────────────
+
+/** Result from the topic-based recommendation engine */
+export interface TopicRecommendation {
+  topic: string;
+  studySheets: string[];
+  articles: string[];
+  cases: string[];
+  quizWeeks: number[];
+  reason: string;
+  priority: number;
+}
+
+/** Topic exposure summary for a student (clinical + learning) */
+export interface TopicExposure {
+  topic: string;
+  patientCount: number;
+  lastSeen: string | null;
+  contentCompleted: number;
+  contentTotal: number;
+}
+
+/** Mapping from a topic to all associated content across weeks */
+export interface TopicContentIndex {
+  studySheets: { week: number; id: string }[];
+  articles: { week: number; url: string }[];
+  cases: { week: number; id: string }[];
+  quizWeeks: number[];
+}
 
 // ─── Search data sources ──────────────────────────────────────────
 

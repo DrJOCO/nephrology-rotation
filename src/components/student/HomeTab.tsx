@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { T, WEEKLY, ARTICLES, ABBREVIATIONS, LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
 import { getRecommendations } from "../../utils/recommendations";
+import { getPatientSuggestedActions } from "../../utils/patientRecommendations";
 
 export default function HomeTab({ navigate, preScore, postScore, curriculum, articles, announcements, currentWeek, weeklyScores, completedItems, bookmarks, srDueCount, patients, srQueue }) {
   const [expanded, setExpanded] = useState(currentWeek || null);
@@ -32,8 +33,85 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
     return `${days}d ago`;
   };
 
+  // Today's Priorities computation
+  const activePatientCount = (patients || []).filter(p => p.status === "active").length;
+
+  const unreadAnnouncementCount = useMemo(() => {
+    const lastSeen = localStorage.getItem("neph_lastAnnouncementSeen");
+    const lastSeenTime = lastSeen ? new Date(lastSeen).getTime() : 0;
+    return announcements.filter(a => a.date && new Date(a.date).getTime() > lastSeenTime).length;
+  }, [announcements]);
+
+  // Mark announcements as seen on mount
+  useEffect(() => {
+    if (announcements.length > 0) {
+      localStorage.setItem("neph_lastAnnouncementSeen", new Date().toISOString());
+    }
+  }, [announcements]);
+
+  const incompleteWeekTasks = useMemo(() => {
+    if (!currentWeek) return 0;
+    const wkArticles = (articles[currentWeek] || []).length;
+    const readArticles = (articles[currentWeek] || []).filter(a => (completedItems?.articles || {})[a.url]).length;
+    const wkSheets = (STUDY_SHEETS[currentWeek] || []).length;
+    const doneSheets = (STUDY_SHEETS[currentWeek] || []).filter(s => (completedItems?.studySheets || {})[s.id]).length;
+    const wkCases = (WEEKLY_CASES[currentWeek] || []).length;
+    const doneCases = (WEEKLY_CASES[currentWeek] || []).filter(c => (completedItems?.cases || {})[c.id]).length;
+    return (wkArticles - readArticles) + (wkSheets - doneSheets) + (wkCases - doneCases);
+  }, [currentWeek, articles, completedItems]);
+
+  const hasPriorities = srDueCount > 0 || unreadAnnouncementCount > 0 || incompleteWeekTasks > 0 || activePatientCount > 0;
+
   return (
     <div style={{ padding: 16 }}>
+      {/* Today's Priorities */}
+      {hasPriorities && (
+        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `1.5px solid ${T.med}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 10 }}>Today's Priorities</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {srDueCount > 0 && (
+              <button onClick={() => navigate("home", { type: "srReview" })}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: T.yellowBg, border: `1px solid ${T.goldAlpha}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 16 }}>🔄</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.orange }}>{srDueCount}</div>
+                  <div style={{ fontSize: 10, color: T.sub }}>SR due</div>
+                </div>
+              </button>
+            )}
+            {unreadAnnouncementCount > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: T.redBg, border: `1px solid ${T.redAlpha}`, borderRadius: 8 }}>
+                <span style={{ fontSize: 16 }}>📢</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.accent }}>{unreadAnnouncementCount}</div>
+                  <div style={{ fontSize: 10, color: T.sub }}>New announcements</div>
+                </div>
+              </div>
+            )}
+            {incompleteWeekTasks > 0 && currentWeek && (
+              <button onClick={() => navigate("home")}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: T.blueBg, border: `1px solid ${T.med}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 16 }}>📋</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.med }}>{incompleteWeekTasks}</div>
+                  <div style={{ fontSize: 10, color: T.sub }}>Week {currentWeek} tasks</div>
+                </div>
+              </button>
+            )}
+            {activePatientCount > 0 && (
+              <button onClick={() => navigate("patients")}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: T.greenBg, border: `1px solid ${T.greenAlpha}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
+                <span style={{ fontSize: 16 }}>🏥</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.greenDk }}>{activePatientCount}</div>
+                  <div style={{ fontSize: 10, color: T.sub }}>Active patients</div>
+                </div>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Pre/Post Rotation Assessment Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
         <button onClick={() => navigate("home", { type: preScore ? "preResults" : "preQuiz" })}
@@ -94,7 +172,13 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
           </div>
         </div>
       )}
-      <h2 style={{ color: T.text, fontSize: 16, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Weekly Curriculum</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>This Week's Focus</h2>
+        <button onClick={() => navigate("home", { type: "browseByTopic" })}
+          style={{ background: T.purpleBg, color: T.purpleAccent, border: `1px solid ${T.purpleSoft}`, borderRadius: 8, padding: "4px 10px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+          Browse by Topic
+        </button>
+      </div>
       {[1,2,3,4].map(w => {
         const wk = curriculum[w] || WEEKLY[w];
         const isOpen = expanded === w;
@@ -176,6 +260,42 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
           </div>
         );
       })}
+
+      {/* ── From Your Current Patients ─────────────────────────────── */}
+      {(() => {
+        const patientActions = getPatientSuggestedActions(patients || [], completedItems);
+        const activeCount = (patients || []).filter(p => p.status === "active").length;
+        return (
+          <div style={{ marginTop: 16, marginBottom: 16 }}>
+            <h2 style={{ color: T.text, fontSize: 16, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>From Your Current Patients</h2>
+            {patientActions.length > 0 ? (
+              <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1.5px solid ${T.green}` }}>
+                <div style={{ fontSize: 11, color: T.sub, marginBottom: 10 }}>
+                  Based on your {activeCount} active consult{activeCount !== 1 ? "s" : ""}
+                </div>
+                {patientActions.map((action, i) => (
+                  <button key={i} onClick={() => navigate(...action.nav)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: T.bg, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                    <span style={{ fontSize: 16, flexShrink: 0 }}>{action.icon}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{action.label}</div>
+                      <div style={{ fontSize: 10, color: T.muted }}>{action.detail}</div>
+                    </div>
+                    <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px dashed ${T.line}`, textAlign: "center" }}>
+                <div style={{ fontSize: 12, color: T.muted }}>Log patients in the Rounds tab to get consult-driven suggestions</div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Due for Review ─────────────────────────────────────────── */}
+      <h2 style={{ color: T.text, fontSize: 16, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Due for Review</h2>
 
       {/* Extra Practice */}
       <button onClick={() => navigate("home", { type: "extraPractice" })}

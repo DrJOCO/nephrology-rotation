@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { T, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { GUIDE_SECTIONS, GUIDE_DATA } from "../../data/guides";
+import { CLINIC_GUIDES, type ClinicGuideTopic } from "../../data/clinicGuides";
+import { getCurrentOrNextFriday, getClinicTopicForDate } from "../../utils/clinicRotation";
 import { backBtnStyle } from "./shared";
+import type { ClinicGuideRecord } from "../../types";
 
 function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () => void }) {
   const [openCat, setOpenCat] = useState(0);
@@ -78,7 +81,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
   );
 }
 
-export default function GuideTab({ navigate, subView }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null }) {
+export default function GuideTab({ navigate, subView, clinicGuides }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null; clinicGuides?: ClinicGuideRecord[] }) {
   const [guideSearch, setGuideSearch] = useState("");
 
   if (subView?.type === "guideDetail") {
@@ -125,6 +128,38 @@ export default function GuideTab({ navigate, subView }: { navigate: (tab: string
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 12px", lineHeight: 1.4 }}>
         Practical tips for consults, rounding, notes, and presentations
       </p>
+
+      {/* Friday Clinic Guide */}
+      {(() => {
+        const friday = getCurrentOrNextFriday(new Date());
+        const dateStr = friday.toISOString().split("T")[0];
+        const record = (clinicGuides || []).find(g => g.date === dateStr);
+        const topic = (record?.topic || getClinicTopicForDate(friday)) as ClinicGuideTopic;
+        const template = CLINIC_GUIDES[topic];
+        const dayLabel = new Date().getDay() === 5 ? "Today" : friday.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+        return template ? (
+          <div style={{ marginBottom: 14 }}>
+            <button onClick={() => navigate("guide", { type: "clinicGuide", date: dateStr })}
+              style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
+                background: `linear-gradient(135deg, ${T.greenBg} 0%, ${T.blueBg} 100%)`, borderRadius: 14,
+                border: `1.5px solid ${T.green}`, cursor: "pointer", textAlign: "left",
+                boxShadow: "0 2px 8px rgba(26,188,156,0.15)" }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, border: `1px solid ${T.greenAlpha}` }}>
+                {template.icon}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Friday Clinic Guide</div>
+                <div style={{ fontSize: 12, color: T.greenDk, marginTop: 2 }}>{dayLabel}: {topic} Clinic</div>
+              </div>
+              <span style={{ color: T.greenDk, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
+            </button>
+            <button onClick={() => navigate("guide", { type: "clinicGuideHistory" })}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 0 0", fontSize: 12, color: T.med, fontWeight: 600 }}>
+              View past clinic guides
+            </button>
+          </div>
+        ) : null;
+      })()}
 
       {/* Trial Library Button */}
       <button onClick={() => navigate("guide", { type: "trialLibrary" })}

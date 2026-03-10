@@ -1,8 +1,8 @@
-import { useState, CSSProperties } from "react";
-import { T, TOPICS } from "../../data/constants";
+import { useState, useEffect, CSSProperties } from "react";
+import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS } from "../../data/constants";
 import { inputLabel, inputStyle } from "./shared";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS } from "../../utils/validation";
-import type { Patient } from "../../types";
+import type { Patient, SubView } from "../../types";
 
 const errorStyle: CSSProperties = { fontSize: 11, color: T.accent, marginTop: 3, fontWeight: 500 };
 const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 10, color: current > max * 0.9 ? T.accent : T.muted, textAlign: "right", marginTop: 2 });
@@ -149,12 +149,27 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
   );
 }
 
-export default function PatientTab({ patients, setPatients }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>> }) {
+interface TopicSuggestion {
+  label: string;
+  type: "studySheet" | "quiz";
+  nav: [string, SubView];
+}
+
+export default function PatientTab({ patients, setPatients, navigate }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
   const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
+  const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Auto-dismiss suggestions after 12s
+  useEffect(() => {
+    if (!showSuggestions) return;
+    const timer = setTimeout(() => setShowSuggestions(false), 12000);
+    return () => clearTimeout(timer);
+  }, [showSuggestions]);
 
   const toggleTopic = (t: string) => {
     setForm(prev => ({
@@ -181,6 +196,39 @@ export default function PatientTab({ patients, setPatients }: { patients: Patien
       notes: form.notes.trim(),
     };
     setPatients(prev => [{ ...sanitized, id: Date.now(), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
+
+    // Compute topic suggestions
+    if (navigate) {
+      const newSuggestions: TopicSuggestion[] = [];
+      const seenSheets = new Set<string>();
+      const seenWeeks = new Set<number>();
+      for (const topic of form.topics) {
+        const mapping = TOPIC_RESOURCE_MAP[topic];
+        if (!mapping) continue;
+        for (const sheetId of mapping.studySheets) {
+          if (seenSheets.has(sheetId)) continue;
+          seenSheets.add(sheetId);
+          // Find the week and title for this sheet
+          for (const [wk, sheets] of Object.entries(STUDY_SHEETS)) {
+            const sheet = (sheets as { id: string; title: string }[]).find(s => s.id === sheetId);
+            if (sheet) {
+              newSuggestions.push({ label: sheet.title, type: "studySheet", nav: ["home", { type: "studySheets", week: Number(wk) }] });
+              break;
+            }
+          }
+        }
+        for (const week of mapping.quizWeeks) {
+          if (seenWeeks.has(week)) continue;
+          seenWeeks.add(week);
+          newSuggestions.push({ label: `Week ${week} Quiz`, type: "quiz", nav: ["home", { type: "weeklyQuiz", week }] });
+        }
+      }
+      if (newSuggestions.length > 0) {
+        setSuggestions(newSuggestions);
+        setShowSuggestions(true);
+      }
+    }
+
     setForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
     setFormErrors({});
     setShowAdd(false);
@@ -307,6 +355,27 @@ export default function PatientTab({ patients, setPatients }: { patients: Patien
           <button onClick={addPatient} style={{ width: "100%", padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             Add to List
           </button>
+        </div>
+      )}
+
+      {/* Topic Auto-Link Suggestions */}
+      {showSuggestions && suggestions.length > 0 && navigate && (
+        <div style={{ background: T.purpleBg, borderRadius: 12, padding: 14, marginBottom: 14, border: `1.5px solid ${T.purpleSoft}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: T.purpleAccent }}>Based on this patient, check out:</div>
+            <button onClick={() => setShowSuggestions(false)} style={{ background: "none", border: "none", color: T.muted, fontSize: 14, cursor: "pointer", padding: 0, lineHeight: 1 }}>x</button>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {suggestions.map((s, i) => (
+              <button key={i} onClick={() => { navigate(...s.nav); setShowSuggestions(false); }}
+                style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  background: s.type === "studySheet" ? T.card : T.ice,
+                  color: s.type === "studySheet" ? T.purpleAccent : T.med,
+                  border: `1px solid ${s.type === "studySheet" ? T.purpleSoft : T.med}` }}>
+                {s.type === "studySheet" ? "📋" : "📝"} {s.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

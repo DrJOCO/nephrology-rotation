@@ -40,7 +40,7 @@ export const QUICK_REFS: QuickRef[] = [
       else if (fe <= 50) interp = "35-50% → Indeterminate";
       else interp = "> 50% → Suggests INTRINSIC renal disease (ATN)";
       return { value: fe.toFixed(1) + "%", interpretation: interp,
-        caveat: "✅ Reliable even on diuretics (urea reabsorption is not affected by loop/thiazide diuretics)." };
+        caveat: "✅ Often more useful than FENa when diuretics are on board, but still interpret in clinical context rather than in isolation." };
     },
   },
   {
@@ -139,7 +139,8 @@ export const QUICK_REFS: QuickRef[] = [
       const { weight, na, tbwFactor } = v;
       if (!weight || !na || !tbwFactor || weight <= 0 || na <= 0 || tbwFactor <= 0 || tbwFactor > 1) return null;
       const tbw = weight * tbwFactor;
-      const fwd = tbw * (1 - (140 / na));
+      // Standard clinical estimate used for hypernatremia correction planning.
+      const fwd = tbw * ((na / 140) - 1);
       let interp = "";
       if (na <= 145) {
         interp = "Na⁺ is within or near normal range — no significant free water deficit.";
@@ -226,7 +227,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "A — Acidosis",
           items: ["Severe metabolic acidosis (pH <7.1) refractory to bicarbonate therapy"] },
         { heading: "E — Electrolytes",
-          items: ["Refractory hyperkalemia (K⁺ >6.5 with ECG changes, not responding to medical Rx)", "Remember: calcium → insulin/glucose → albuterol → kayexalate. If K⁺ still ↑ → dialysis"] },
+          items: ["Refractory hyperkalemia (K⁺ >6.5 with ECG changes, not responding to medical Rx)", "Remember: calcium → insulin/glucose → albuterol ± bicarbonate (if acidotic) → binder/diuretic if appropriate. If K⁺ remains dangerous or the patient is oliguric/anuric → dialysis"] },
         { heading: "I — Ingestions",
           items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium (level >4, or >2.5 with symptoms)", "Salicylates (severe poisoning with altered mental status)"] },
         { heading: "O — Overload",
@@ -250,7 +251,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "Step 4: SHIFT K⁺ intracellularly",
           items: ["Regular insulin 10 units IV + D50 25g (onset 15-30 min, lasts 4-6h)", "Albuterol 10-20 mg nebulized (onset 15-30 min)", "Sodium bicarbonate if concurrent acidosis (less effective alone)"] },
         { heading: "Step 5: REMOVE K⁺ from body",
-          items: ["Furosemide (if not anuric) — takes hours", "Sodium zirconium cyclosilicate (Lokelma) or patiromer (Veltassa) — newer K⁺ binders", "Kayexalate (less preferred — slower, GI side effects)", "HEMODIALYSIS — definitive treatment if refractory"] },
+          items: ["Furosemide (if not anuric) — takes hours", "Sodium zirconium cyclosilicate (Lokelma) or patiromer (Veltassa) — adjuncts for removing K⁺ over hours", "Sodium polystyrene sulfonate (Kayexalate) is slower and generally not first-line when immediate K⁺ lowering is needed", "HEMODIALYSIS — definitive treatment if refractory or if the patient cannot excrete potassium"] },
       ],
     },
   },
@@ -299,17 +300,17 @@ export const QUICK_REFS: QuickRef[] = [
           ]},
         { heading: "When to Use What",
           items: [
-            "Volume resuscitation: LR or PlasmaLyte preferred (SMART trial) — NS okay for hyperK⁺",
+            "Volume resuscitation: LR or PlasmaLyte preferred (SMART trial); severe hyperkalemia alone is not a reason to default to NS",
             "Maintenance fluids: D5-½NS + 20 mEq KCl/L is classic maintenance",
             "Hypovolemic hyponatremia: NS (restores volume → suppresses ADH)",
             "Severe symptomatic hyponatremia: 3% saline 100 mL bolus over 10 min, repeat ×2 if needed",
             "Hypernatremia / free water deficit: D5W or ½NS",
-            "DKA: NS initially → switch to ½NS + dextrose as glucose falls",
+            "DKA: balanced crystalloids or NS are both reasonable initially → add dextrose-containing fluid as glucose falls",
           ]},
         { heading: "Pearls",
           items: [
             "Excessive NS → hyperchloremic non-AG metabolic acidosis",
-            "Avoid LR/PlasmaLyte in hyperkalemia (contain K⁺)",
+            "The small K⁺ content in balanced crystalloids is usually less important than the chloride load in NS",
             "D5W distributes as free water — only 1/12 stays intravascular",
             "1L NS expands plasma volume by ~250 mL (1/4 stays intravascular)",
           ]},
@@ -367,8 +368,7 @@ export const QUICK_REFS: QuickRef[] = [
     type: "atlas",
     imageLinks: [
       { name: "Renal Fellow — Urine Sediment of the Month", url: "https://www.renalfellow.org/category/urine-sediment/" },
-      { name: "UKidney — Urine Microscopy Gallery", url: "https://ukidney.com/nephrology-resources/urine-microscopy" },
-      { name: "AJKD — Urinalysis Teaching Cases", url: "https://ajkdblog.org/category/urinalysis/" },
+      { name: "AJKD — Urinalysis Teaching Cases", url: "https://ajkdblog.org/tag/urinalysis/" },
     ],
     content: {
       sections: [
@@ -565,7 +565,7 @@ export const GUIDE_DATA = {
           "Urine output — oliguric?",
           "Any tissue breakdown: rhabdo, tumor lysis, hemolysis, GI bleed?",
           "Acidosis? (K⁺ shifts out of cells with acidemia)",
-          "Insulin/dextrose given? Calcium gluconate? Kayexalate? Patiromer?",
+          "Insulin/dextrose given? Calcium gluconate? Albuterol? Potassium binder or dialysis?",
           "Does patient need emergent dialysis?",
         ],
       },

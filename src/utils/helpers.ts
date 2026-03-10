@@ -89,6 +89,7 @@ export const SHARED_KEYS: Record<string, string> = {
   articles: "neph_shared_articles",
   announcements: "neph_shared_announcements",
   settings: "neph_shared_settings",
+  clinicGuides: "neph_shared_clinicGuides",
   studentPrefix: "neph_shared_student_",
 };
 

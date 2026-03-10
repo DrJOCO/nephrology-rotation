@@ -18,6 +18,7 @@ const KEY_TO_FIELD: Record<string, string> = {
   neph_shared_articles: "articles",
   neph_shared_announcements: "announcements",
   neph_shared_settings: "settings",
+  neph_shared_clinicGuides: "clinicGuides",
 };
 
 let rotationCode: string | null = localStorage.getItem("neph_rotationCode") || null;

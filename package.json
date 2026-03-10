@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
+    "check:links": "node scripts/check-links.mjs",
     "test:watch": "vitest",
     "preview": "vite preview",
     "agent:loop": "node \"/Users/joncheng/Documents/Premier Nephrology/Codex_Claude_Testing/agent-loop.mjs\""

@@ -5,7 +5,8 @@ import { processQuizResults, processReviewResults, getDueItems } from "../utils/
 import store from "../utils/store";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints, getLevel, checkAchievements, updateStreak, ACHIEVEMENTS } from "../utils/gamification";
-import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks } from "../types";
+import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
+import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord } from "../types";
 
 // Critical-path components (eager)
 import ThemeToggle from "./student/ThemeToggle";
@@ -32,6 +33,9 @@ const GuideTab = lazy(() => import("./student/GuideTab"));
 const PatientTab = lazy(() => import("./student/PatientTab"));
 const TeamTab = lazy(() => import("./student/TeamTab"));
 const ProgressTab = lazy(() => import("./student/ProgressTab"));
+const TopicBrowseView = lazy(() => import("./student/TopicBrowseView"));
+const ClinicGuideView = lazy(() => import("./student/ClinicGuideView"));
+const ClinicGuideHistoryView = lazy(() => import("./student/ClinicGuideHistoryView"));
 
 const LazyFallback = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -68,6 +72,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [bookmarks, setBookmarks] = useState<Bookmarks>({ trials: [], articles: [], cases: [], studySheets: [] });
   const [srQueue, setSrQueue] = useState<SrQueue>({});
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
+  const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLocalWriteRef = useRef<number>(0);
 
@@ -111,6 +116,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (sharedArticles) setArticles(sharedArticles);
       if (sharedAnnouncements) setAnnouncements(sharedAnnouncements);
       if (sharedSettingsData) setSharedSettings(sharedSettingsData);
+      const sharedClinicGuides = await store.getShared<ClinicGuideRecord[]>(SHARED_KEYS.clinicGuides);
+      const loadedGuides = sharedClinicGuides || [];
+      const { guides: updatedGuides, newGuide } = ensureCurrentClinicGuide(loadedGuides);
+      setClinicGuides(updatedGuides);
+      if (newGuide) store.setShared(SHARED_KEYS.clinicGuides, updatedGuides);
       const completed = await store.get<CompletedItems>("neph_completedItems");
       if (completed) setCompletedItems(completed);
       const savedBookmarks = await store.get<Bookmarks>("neph_bookmarks");
@@ -146,6 +156,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         lastLocalWriteRef.current = Date.now();
         store.setStudentData(studentId, {
           name: studentName,
+          loginPin: studentPin,
           patients,
           weeklyScores,
           preScore,
@@ -196,6 +207,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (data.articles) setArticles(data.articles);
       if (data.announcements) setAnnouncements(data.announcements);
       if (data.settings) setSharedSettings(data.settings);
+      if (data.clinicGuides) setClinicGuides(data.clinicGuides);
     });
     return () => unsub();
   }, [rotationCode]);
@@ -489,6 +501,9 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "home" && subView?.type === "bookmarks" && (
           <BookmarksView bookmarks={bookmarks} onBack={() => navigate("home")} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} />
         )}
+        {tab === "home" && subView?.type === "browseByTopic" && (
+          <TopicBrowseView onBack={() => navigate("home")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} />
+        )}
         {tab === "home" && subView?.type === "extraPractice" && (() => {
           const dueKeys = getDueItems(srQueue);
           const allWeeklyQs = [1,2,3,4].flatMap(w => (WEEKLY_QUIZZES[w] || []).map((q, i) => ({ ...q, _key: `weekly_${w}_${i}` })));
@@ -571,10 +586,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "guide" && subView?.type === "trialLibrary" && (
           <TrialLibraryView onBack={() => navigate("guide")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
-        {tab === "guide" && subView?.type !== "trialLibrary" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} />}
-        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} />}
+        {tab === "guide" && subView?.type === "clinicGuide" && (
+          <ClinicGuideView date={subView.date} topic={clinicGuides.find(g => g.date === subView.date)?.topic || "CKD"} isOverride={clinicGuides.find(g => g.date === subView.date)?.isOverride} onBack={() => navigate("guide")} />
+        )}
+        {tab === "guide" && subView?.type === "clinicGuideHistory" && (
+          <ClinicGuideHistoryView guides={clinicGuides} onSelect={(date) => navigate("guide", { type: "clinicGuide", date })} onBack={() => navigate("guide")} />
+        )}
+        {tab === "guide" && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
+        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
-        {tab === "progress" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} />}
+        {tab === "progress" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} completedItems={completedItems} />}
         </Suspense>
       </div>
 

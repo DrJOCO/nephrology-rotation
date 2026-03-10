@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { T, TOPICS, WEEKLY, ARTICLES } from "../data/constants";
+import { T, TOPICS, WEEKLY, ARTICLES, STUDY_SHEETS, FEEDBACK_TAGS } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
 import { QUICK_REFS } from "../data/guides";
 import store, { RotationInfo } from "../utils/store";
 import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, createRotationCode } from "../utils/helpers";
 import { calculatePoints, getLevel, ACHIEVEMENTS } from "../utils/gamification";
 import { HistogramChart, FunnelChart, HeatmapChart } from "./student/charts";
-import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, Patient, QuizScore, WeeklyScores, Gamification } from "../types";
+import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../data/clinicGuides";
+import { getCurrentOrNextFriday, getClinicTopicForDate, ensureCurrentClinicGuide, overrideClinicGuide, regenerateClinicGuide } from "../utils/clinicRotation";
+import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, Patient, QuizScore, WeeklyScores, Gamification, FeedbackTag, ClinicGuideRecord } from "../types";
 
 type NavigateFn = (t: string, sv?: AdminSubView) => void;
 type WeeklyData = typeof WEEKLY;
@@ -54,6 +56,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [curriculum, setCurriculum] = useState(WEEKLY);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [settings, setSettings] = useState<SharedSettings>({ attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "" });
+  const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
 
   // Load — when connected to a rotation, hydrate from Firestore first to avoid
@@ -77,6 +80,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
           if (remote.articles) setArticles(remote.articles);
           if (remote.announcements) setAnnouncements(remote.announcements);
           if (remote.settings) setSettings(prev => ({ ...prev, ...remote.settings }));
+          if (remote.clinicGuides) setClinicGuides(remote.clinicGuides);
           setLoading(false);
           return;
         }
@@ -133,6 +137,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         id: s.studentId,
         studentId: s.studentId,
         name: s.name || "Unknown",
+        loginPin: s.loginPin,
         year: s.year || "MS3/MS4",
         email: s.email || "",
         status: s.status || "active",
@@ -144,6 +149,9 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         gamification: s.gamification || null,
         srQueue: s.srQueue || {},
         activityLog: s.activityLog || [],
+        feedbackTags: s.feedbackTags || [],
+        completedItems: s.completedItems || undefined,
+        bookmarks: s.bookmarks || undefined,
         lastSyncedAt: s.updatedAt || null,
       })));
     });
@@ -316,11 +324,13 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} />}
         {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} navigate={navigate} />}
         {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
+        {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "analytics" && <AnalyticsTab students={students} />}
-        {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} />}
+        {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} />}
         {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "announcements" && <AnnouncementsEditor announcements={announcements} setAnnouncements={setAnnouncements} onBack={() => navigate("content")} />}
+        {tab === "content" && subView?.type === "clinicGuides" && <ClinicGuidesEditor clinicGuides={clinicGuides} setClinicGuides={setClinicGuides} onBack={() => navigate("content")} />}
         {tab === "settings" && <SettingsTab settings={settings} setSettings={setSettings} onImportStudentUpdates={importStudentUpdates} rotationCode={rotationCode} setRotationCodeState={setRotationCodeState} curriculum={curriculum} articles={articles} announcements={announcements} setCurriculum={setCurriculum} setArticles={setArticles} setAnnouncements={setAnnouncements} />}
       </div>
 
@@ -435,7 +445,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
             URL.revokeObjectURL(url);
           }},
           { label: "Mark All Completed", icon: "✅", desc: "Set all students to completed", action: () => setConfirmAction("complete") },
-          { label: "Reset All Progress", icon: "🔄", desc: "Clear all scores & patients", action: () => setConfirmAction("reset") },
+          { label: "Reset Options", icon: "🔄", desc: "Granular reset tools", action: () => setConfirmAction("resetOptions") },
           { label: "Archive Rotation", icon: "📦", desc: "Mark rotation as archived", action: () => setConfirmAction("archive"), disabled: !rotationCode },
         ].map((a, i) => (
           <button key={i} onClick={a.action} disabled={a.disabled}
@@ -469,21 +479,55 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
           </div>
         </div>
       )}
-      {confirmAction === "reset" && (
+      {confirmAction === "resetOptions" && (
         <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.overlay, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div style={{ background: T.card, borderRadius: 16, maxWidth: 360, width: "100%", padding: "24px 20px", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
-            <h3 style={{ color: T.navy, fontFamily: T.serif, fontSize: 18, margin: "0 0 8px", fontWeight: 700 }}>Reset All Progress</h3>
-            <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px", lineHeight: 1.5 }}>This will clear ALL quiz scores, patients, and achievements for {students.length} students. This cannot be undone.</p>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <button onClick={() => setConfirmAction(null)} style={{ padding: "10px 20px", background: "none", border: `1px solid ${T.line}`, borderRadius: 10, color: T.sub, fontSize: 13, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-              <button onClick={() => {
-                const reset = { patients: [], weeklyScores: {}, preScore: null, postScore: null, gamification: { points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } }, completedItems: { articles: {}, studySheets: {}, cases: {} }, srQueue: {}, activityLog: [] };
-                setStudents(prev => prev.map(s => ({ ...s, ...reset })));
-                students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
-                setConfirmAction(null);
-              }} style={{ padding: "10px 24px", background: T.accent, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Reset All</button>
+          <div style={{ background: T.card, borderRadius: 16, maxWidth: 420, width: "100%", padding: "24px 20px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🔄</div>
+              <h3 style={{ color: T.navy, fontFamily: T.serif, fontSize: 18, margin: "0 0 4px", fontWeight: 700 }}>Reset Options</h3>
+              <p style={{ color: T.sub, fontSize: 12, margin: 0 }}>Choose what to reset for all {students.length} students</p>
             </div>
+            {[
+              { key: "resetQuizzes", label: "Reset Quizzes Only", desc: "Clears pre/post tests and weekly quiz scores. Keeps patients, SR, and achievements.", icon: "📝", color: T.orange,
+                action: () => {
+                  const reset = { weeklyScores: {}, preScore: null, postScore: null };
+                  setStudents(prev => prev.map(s => ({ ...s, ...reset })));
+                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                }},
+              { key: "resetSR", label: "Reset Spaced Repetition Only", desc: "Clears the SR queue. Keeps quizzes, patients, and achievements.", icon: "🔁", color: T.purple,
+                action: () => {
+                  const reset = { srQueue: {} };
+                  setStudents(prev => prev.map(s => ({ ...s, ...reset })));
+                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                }},
+              { key: "resetPatients", label: "Reset Patients Only", desc: "Clears the patient log. Keeps quizzes, SR, and achievements.", icon: "🏥", color: T.med,
+                action: () => {
+                  const reset = { patients: [] };
+                  setStudents(prev => prev.map(s => ({ ...s, ...reset })));
+                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                }},
+              { key: "resetAll", label: "Reset Everything", desc: "Clears ALL progress: quizzes, patients, SR, achievements, and activity.", icon: "⚠️", color: T.accent,
+                action: () => {
+                  const reset = { patients: [], weeklyScores: {}, preScore: null, postScore: null, gamification: { points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } }, completedItems: { articles: {}, studySheets: {}, cases: {} }, srQueue: {}, activityLog: [] };
+                  setStudents(prev => prev.map(s => ({ ...s, ...reset })));
+                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                }},
+            ].map(opt => (
+              <button key={opt.key} onClick={() => {
+                if (confirm(`Are you sure? This will ${opt.desc.toLowerCase()} This cannot be undone.`)) {
+                  opt.action();
+                  setConfirmAction(null);
+                }
+              }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, cursor: "pointer", textAlign: "left", marginBottom: 8 }}>
+                <span style={{ fontSize: 22, flexShrink: 0 }}>{opt.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>{opt.label}</div>
+                  <div style={{ fontSize: 11, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>{opt.desc}</div>
+                </div>
+              </button>
+            ))}
+            <button onClick={() => setConfirmAction(null)} style={{ width: "100%", padding: "10px 0", background: "none", border: `1px solid ${T.line}`, borderRadius: 10, color: T.sub, fontSize: 13, cursor: "pointer", fontWeight: 600, marginTop: 4 }}>Cancel</button>
           </div>
         </div>
       )}
@@ -542,6 +586,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
+                      {s.loginPin && <span style={{ fontSize: 10, background: T.yellowBg, color: T.orange, padding: "1px 6px", borderRadius: 6, fontWeight: 700, fontFamily: T.mono, letterSpacing: 1 }}>PIN {s.loginPin}</span>}
                       <span style={{ fontSize: 11, background: T.ice, padding: "1px 8px", borderRadius: 8, fontWeight: 600, color: T.navy }}>{lvl.icon} {pts}pts</span>
                     </div>
                     <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>
@@ -569,6 +614,73 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
           })}
         </>
       )}
+
+      {/* Topic Insights for Attending */}
+      {activeStudents.length > 0 && (() => {
+        // Aggregate topics across all students' patients
+        const topicCounts: Record<string, number> = {};
+        activeStudents.forEach(s => {
+          (s.patients || []).forEach(p => {
+            const topics = p.topics?.length ? p.topics : p.topic ? [p.topic] : [];
+            topics.forEach(t => { topicCounts[t] = (topicCounts[t] || 0) + 1; });
+          });
+        });
+        const seenTopics = Object.entries(topicCounts).sort((a, b) => b[1] - a[1]);
+        const allTopicsExceptOther = TOPICS.filter(t => t !== "Other");
+        const neverSeen = allTopicsExceptOther.filter(t => !topicCounts[t]);
+
+        // Check PKD and APOL1 specifically
+        const pkdSeen = topicCounts["Polycystic Kidney Disease"] || 0;
+        const apol1Seen = topicCounts["APOL1-Associated Kidney Disease"] || 0;
+
+        return (
+          <div style={{ marginBottom: 20 }}>
+            <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Clinical Topic Insights</h3>
+            <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+              {/* Most seen topics */}
+              {seenTopics.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Most Seen on Service</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {seenTopics.slice(0, 8).map(([topic, count]) => (
+                      <span key={topic} style={{ background: T.ice, color: T.navy, fontSize: 11, padding: "4px 10px", borderRadius: 10, fontWeight: 500 }}>
+                        {topic} <span style={{ fontWeight: 700, color: T.med, fontFamily: T.mono }}>({count})</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Never seen */}
+              {neverSeen.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Not Yet Encountered</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {neverSeen.slice(0, 10).map(topic => (
+                      <span key={topic} style={{ background: T.yellowBg, color: T.goldText, fontSize: 11, padding: "4px 10px", borderRadius: 10, fontWeight: 500 }}>
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* PKD / APOL1 status */}
+              <div style={{ background: T.bg, borderRadius: 10, padding: 10, marginTop: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Key Topic Coverage</div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ flex: 1, background: pkdSeen > 0 ? T.greenBg : T.yellowBg, borderRadius: 8, padding: "8px 10px", border: `1px solid ${pkdSeen > 0 ? T.greenAlpha : T.goldAlpha}` }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: T.text }}>PKD</div>
+                    <div style={{ fontSize: 10, color: pkdSeen > 0 ? T.greenDk : T.muted }}>{pkdSeen > 0 ? `${pkdSeen} patient${pkdSeen !== 1 ? "s" : ""}` : "Not yet seen"}</div>
+                  </div>
+                  <div style={{ flex: 1, background: apol1Seen > 0 ? T.greenBg : T.yellowBg, borderRadius: 8, padding: "8px 10px", border: `1px solid ${apol1Seen > 0 ? T.greenAlpha : T.goldAlpha}` }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: T.text }}>APOL1</div>
+                    <div style={{ fontSize: 10, color: apol1Seen > 0 ? T.greenDk : T.muted }}>{apol1Seen > 0 ? `${apol1Seen} patient${apol1Seen !== 1 ? "s" : ""}` : "Not yet seen"}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Recent Activity Feed */}
       {(() => {
@@ -918,6 +1030,7 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }: { stud
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
             <span style={{ fontSize: 10, color: "white", background: T.med, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{s.year}</span>
+            {s.loginPin && <span style={{ fontSize: 10, background: T.yellowBg, color: T.orange, padding: "2px 8px", borderRadius: 10, fontWeight: 700, fontFamily: T.mono, letterSpacing: 1 }}>PIN {s.loginPin}</span>}
           </div>
           <div style={{ fontSize: 12, color: T.sub }}>
             {(s.patients || []).length} patients • Started {(s as AdminStudent & { startDate?: string }).startDate || new Date(s.addedDate).toLocaleDateString()}
@@ -968,7 +1081,7 @@ const adminInput: React.CSSProperties = { width: "100%", padding: "10px 12px", b
 //  Content Management: Articles, Curriculum, Announcements
 // ═══════════════════════════════════════════════════════════════════════
 
-function ContentTab({ navigate, articles, curriculum }: { navigate: NavigateFn; articles: ArticlesData; curriculum: WeeklyData }) {
+function ContentTab({ navigate, articles, curriculum, clinicGuides }: { navigate: NavigateFn; articles: ArticlesData; curriculum: WeeklyData; clinicGuides: ClinicGuideRecord[] }) {
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Manage Content</h2>
@@ -1009,6 +1122,19 @@ function ContentTab({ navigate, articles, curriculum }: { navigate: NavigateFn; 
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Announcements</div>
             <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>Post notes or reminders for students</div>
+          </div>
+          <span style={{ color: T.muted, fontSize: 16 }}>›</span>
+        </div>
+      </button>
+
+      {/* Friday Clinic Guides */}
+      <button onClick={() => navigate("content", { type: "clinicGuides" })}
+        style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 18, marginTop: 12, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🩺</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Friday Clinic Guides</div>
+            <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>Manage weekly outpatient clinic teaching guides ({clinicGuides.length} generated)</div>
           </div>
           <span style={{ color: T.muted, fontSize: 16 }}>›</span>
         </div>
@@ -1286,6 +1412,123 @@ function AnnouncementsEditor({ announcements, setAnnouncements, onBack }: { anno
 
 const backBtn = { background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 };
 const tinyBtn = { background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: "pointer" };
+
+// ═══════════════════════════════════════════════════════════════════════
+//  Clinic Guides Editor
+// ═══════════════════════════════════════════════════════════════════════
+
+function ClinicGuidesEditor({ clinicGuides, setClinicGuides, onBack }: { clinicGuides: ClinicGuideRecord[]; setClinicGuides: React.Dispatch<React.SetStateAction<ClinicGuideRecord[]>>; onBack: () => void }) {
+  const [overrideTopic, setOverrideTopic] = useState<ClinicGuideTopic>("CKD");
+
+  const friday = getCurrentOrNextFriday(new Date());
+  const dateStr = friday.toISOString().split("T")[0];
+  const fridayLabel = friday.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const rotationTopic = getClinicTopicForDate(friday);
+  const currentRecord = clinicGuides.find(g => g.date === dateStr);
+  const activeTopic = currentRecord?.topic || rotationTopic;
+  const template = CLINIC_GUIDES[activeTopic as ClinicGuideTopic];
+  const sorted = [...clinicGuides].sort((a, b) => b.date.localeCompare(a.date));
+
+  const handleEnsure = () => {
+    const { guides, newGuide } = ensureCurrentClinicGuide(clinicGuides);
+    if (newGuide) {
+      setClinicGuides(guides);
+      store.setShared(SHARED_KEYS.clinicGuides, guides);
+    }
+  };
+
+  const handleRegenerate = () => {
+    const updated = regenerateClinicGuide(clinicGuides, dateStr);
+    setClinicGuides(updated);
+    store.setShared(SHARED_KEYS.clinicGuides, updated);
+  };
+
+  const handleOverride = () => {
+    const updated = overrideClinicGuide(clinicGuides, dateStr, overrideTopic);
+    setClinicGuides(updated);
+    store.setShared(SHARED_KEYS.clinicGuides, updated);
+  };
+
+  return (
+    <div style={{ padding: 16 }}>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
+
+      <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Friday Clinic Guides</h2>
+      <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.4 }}>
+        Manage weekly outpatient nephrology clinic teaching guides. Rotation: CKD → Transplant → Hypertension.
+      </p>
+
+      {/* Current / next Friday status */}
+      <div style={{ background: T.greenBg, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.green}40` }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: T.greenDk, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 8 }}>This Friday</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: T.card, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+            {template?.icon || "📋"}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{activeTopic}</div>
+            <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{fridayLabel}</div>
+            {currentRecord?.isOverride && <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", marginTop: 4, display: "inline-block" }}>Override</span>}
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: T.sub, marginTop: 8 }}>Rotation default: {rotationTopic}</div>
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {!currentRecord && (
+          <button onClick={handleEnsure} style={{ padding: "8px 16px", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            Generate Guide
+          </button>
+        )}
+        {currentRecord && (
+          <button onClick={handleRegenerate} style={{ padding: "8px 16px", background: T.card, color: T.med, border: `1.5px solid ${T.med}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            Regenerate (Reset to Rotation)
+          </button>
+        )}
+      </div>
+
+      {/* Override controls */}
+      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
+        <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8 }}>Override Topic</div>
+        <div style={{ fontSize: 12, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>
+          Change this Friday's topic without affecting the rotation sequence for future weeks.
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select value={overrideTopic} onChange={(e) => setOverrideTopic(e.target.value as ClinicGuideTopic)}
+            style={{ flex: 1, padding: "8px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, background: T.card, color: T.text }}>
+            {CLINIC_GUIDE_TOPICS.map(t => (
+              <option key={t} value={t}>{CLINIC_GUIDES[t].icon} {t}</option>
+            ))}
+          </select>
+          <button onClick={handleOverride} style={{ padding: "8px 16px", background: T.orange, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+            Apply Override
+          </button>
+        </div>
+      </div>
+
+      {/* History */}
+      <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Generated Guides ({sorted.length})</h3>
+      {sorted.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 20, color: T.muted, fontSize: 13 }}>No guides generated yet.</div>
+      ) : (
+        sorted.map(g => {
+          const t = CLINIC_GUIDES[g.topic as ClinicGuideTopic];
+          return (
+            <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${T.line}` }}>
+              <span style={{ fontSize: 20 }}>{t?.icon || "📋"}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>{g.topic}</div>
+                <div style={{ fontSize: 11, color: T.sub }}>{new Date(g.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+              </div>
+              {g.isOverride && <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px" }}>Override</span>}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Settings Tab
@@ -1616,6 +1859,8 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
   const [scoreForm, setScoreForm] = useState({ correct: "", total: "" });
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [patForm, setPatForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+  const [showAddFeedback, setShowAddFeedback] = useState(false);
+  const [feedbackNote, setFeedbackNote] = useState("");
   const togglePatTopic = (t: string) => setPatForm(prev => ({ ...prev, topics: prev.topics.includes(t) ? prev.topics.filter((x: string) => x !== t) : [...prev.topics, t] }));
   if (!s) return <div style={{ padding: 16 }}>Student not found.</div>;
 
@@ -1637,6 +1882,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
         postScore: merged.postScore,
         srQueue: merged.srQueue || {},
         status: merged.status,
+        feedbackTags: merged.feedbackTags || [],
       });
     }
   };
@@ -1684,6 +1930,12 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
           <div>
             <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>{s.name}</h2>
             <div style={{ fontSize: 13, color: T.sub }}>{s.year} • {s.email || "No email"}</div>
+            {s.loginPin && (
+              <div style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 6, background: T.yellowBg, padding: "4px 10px", borderRadius: 8 }}>
+                <span style={{ fontSize: 11, color: T.sub, fontWeight: 600 }}>Login PIN:</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: T.orange, fontFamily: T.mono, letterSpacing: 2 }}>{s.loginPin}</span>
+              </div>
+            )}
           </div>
           <div style={{ fontSize: 10, fontWeight: 700, color: s.status === "active" ? T.green : T.muted, background: s.status === "active" ? "rgba(26,188,156,0.1)" : T.bg, padding: "4px 10px", borderRadius: 8, textTransform: "uppercase" }}>
             {s.status}
@@ -1732,7 +1984,71 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
             style={{ fontSize: 11, color: T.med, background: T.blueBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             Print Report
           </button>
+          <button onClick={() => navigate("students", { type: "exportPdf", id: String(s.id) })}
+            style={{ fontSize: 11, color: T.purpleAccent, background: T.purpleBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            Export PDF
+          </button>
         </div>
+      </div>
+
+      {/* Feedback Tags */}
+      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif }}>Attending Feedback</div>
+          <button onClick={() => setShowAddFeedback(!showAddFeedback)}
+            style={{ fontSize: 11, color: T.purpleAccent, background: T.purpleBg, border: "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            {showAddFeedback ? "Cancel" : "+ Add"}
+          </button>
+        </div>
+        {(s.feedbackTags || []).length > 0 ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: showAddFeedback ? 12 : 0 }}>
+            {(s.feedbackTags || []).map((ft, i) => (
+              <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: T.purpleBg, padding: "4px 10px", borderRadius: 8, border: `1px solid ${T.purpleSoft}` }}>
+                <span style={{ fontSize: 11, color: T.purpleAccent, fontWeight: 600 }}>{ft.tag}</span>
+                {ft.note && <span style={{ fontSize: 10, color: T.muted }}>— {ft.note}</span>}
+                <span style={{ fontSize: 9, color: T.muted }}>{new Date(ft.date).toLocaleDateString()}</span>
+                <button onClick={() => {
+                  const updated = (s.feedbackTags || []).filter((_, idx) => idx !== i);
+                  updateStudent({ feedbackTags: updated });
+                }} style={{ background: "none", border: "none", color: T.muted, fontSize: 12, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>x</button>
+              </div>
+            ))}
+          </div>
+        ) : !showAddFeedback && (
+          <div style={{ fontSize: 12, color: T.muted, fontStyle: "italic" }}>No feedback yet</div>
+        )}
+        {showAddFeedback && (
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Quick Tags</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+              {FEEDBACK_TAGS.map(tag => (
+                <button key={tag} onClick={() => {
+                  const newTag: FeedbackTag = { tag, date: new Date().toISOString(), note: feedbackNote.trim() || undefined };
+                  updateStudent({ feedbackTags: [...(s.feedbackTags || []), newTag] });
+                  setFeedbackNote("");
+                  setShowAddFeedback(false);
+                }}
+                  style={{ padding: "6px 12px", borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: "pointer", background: T.card, color: T.text, border: `1px solid ${T.line}` }}>
+                  {tag}
+                </button>
+              ))}
+            </div>
+            <input value={feedbackNote} onChange={e => setFeedbackNote(e.target.value)} placeholder="Optional note (e.g. specific topic)"
+              style={{ width: "100%", padding: "8px 10px", fontSize: 12, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box", marginBottom: 8 }} />
+            <input
+              placeholder="Or type a custom tag and press Enter"
+              onKeyDown={e => {
+                if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
+                  const newTag: FeedbackTag = { tag: (e.target as HTMLInputElement).value.trim(), date: new Date().toISOString(), note: feedbackNote.trim() || undefined };
+                  updateStudent({ feedbackTags: [...(s.feedbackTags || []), newTag] });
+                  (e.target as HTMLInputElement).value = "";
+                  setFeedbackNote("");
+                  setShowAddFeedback(false);
+                }
+              }}
+              style={{ width: "100%", padding: "8px 10px", fontSize: 12, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box" }} />
+          </div>
+        )}
       </div>
 
       {/* Score Entry */}
@@ -1876,6 +2192,241 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  Rotation-End Summary (Enhanced PDF Export)
+// ═══════════════════════════════════════════════════════════════════════
+
+function RotationSummaryReport({ student: s, settings, onBack }: { student?: AdminStudent; settings: SharedSettings & { hospitalName?: string }; onBack: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(() => window.print(), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!s) return <div style={{ padding: 16 }}>Student not found.</div>;
+
+  const reportDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const rotationName = settings?.attendingName || "Nephrology Rotation";
+  const pct = (score: QuizScore | null) => score && score.total > 0 ? Math.round((score.correct / score.total) * 100) : null;
+  const pre = pct(s.preScore);
+  const post = pct(s.postScore);
+  const growth = pre !== null && post !== null ? post - pre : null;
+  const wkScores = s.weeklyScores || {};
+  const patients = s.patients || [];
+  const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
+  const lvl = getLevel(pts);
+  const earned = s.gamification?.achievements || [];
+  const earnedBadges = ACHIEVEMENTS.filter(a => earned.includes(a.id));
+  const completed = s.completedItems || { articles: {}, studySheets: {}, cases: {} };
+
+  // Topic distribution
+  const topicCounts: Record<string, number> = {};
+  patients.forEach(p => {
+    const ts = p.topics || (p.topic ? [p.topic] : []);
+    ts.forEach(t => { topicCounts[t] = (topicCounts[t] || 0) + 1; });
+  });
+
+  // Completed items per week
+  const weeklyCompletion = [1, 2, 3, 4].map(w => {
+    const arts = (ARTICLES[w] || []).length;
+    const artsDone = (ARTICLES[w] || []).filter(a => completed.articles[a.url]).length;
+    const sheets = (STUDY_SHEETS[w] || []).length;
+    const sheetsDone = (STUDY_SHEETS[w] || []).filter(sh => completed.studySheets[sh.id]).length;
+    return { week: w, articles: { done: artsDone, total: arts }, sheets: { done: sheetsDone, total: sheets } };
+  });
+
+  // SR stats
+  const srQueue = s.srQueue || {};
+  const srTotal = Object.keys(srQueue).length;
+  const srMastered = Object.values(srQueue).filter(i => i.interval > 21).length;
+
+  const hdr: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" };
+  const tblTh: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
+  const tblTd: React.CSSProperties = { padding: "8px 10px" };
+
+  return (
+    <div>
+      <button onClick={onBack} style={{ ...backBtn, marginBottom: 12 }}>← Back to Student</button>
+      <div className="printable-report" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", color: "#2C3E50", lineHeight: 1.5, padding: 20, background: "white" }}>
+        {/* Header */}
+        <div style={{ borderBottom: "2px solid #0F2B3C", paddingBottom: 12, marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>Rotation Summary Report</div>
+              <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 2 }}>{rotationName}{settings?.dates ? ` — ${settings.dates}` : ""}</div>
+            </div>
+            <div style={{ textAlign: "right", fontSize: 11, color: "#5D6D7E" }}>
+              <div>Generated {reportDate}</div>
+              <div style={{ marginTop: 2, fontSize: 10, color: "#ABB2B9" }}>&copy; Jonathan Cheng, MD MPH</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Student Info */}
+        <div className="print-no-break" style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>{s.name}</div>
+          <div style={{ fontSize: 13, color: "#5D6D7E" }}>{s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {lvl.icon} {lvl.name} ({pts} pts)</div>
+        </div>
+
+        {/* Score Summary */}
+        <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+          <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#ABB2B9", textTransform: "uppercase" }}>Pre-Test</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#E67E22", fontFamily: "'JetBrains Mono', monospace" }}>{pre !== null ? pre + "%" : "—"}</div>
+          </div>
+          <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Post-Test</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>{post !== null ? post + "%" : "—"}</div>
+          </div>
+          {growth !== null && (
+            <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: "#E8F8F5" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Growth</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
+            </div>
+          )}
+        </div>
+
+        {/* Weekly Quiz Breakdown */}
+        <div className="print-no-break" style={{ marginBottom: 20 }}>
+          <div style={hdr}>Weekly Quiz Scores</div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+              <th style={tblTh}>Week</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Attempts</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Best Score</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Last Score</th>
+            </tr></thead>
+            <tbody>{[1, 2, 3, 4].map(w => {
+              const ws = wkScores[w] || [];
+              const best = ws.length > 0 ? Math.max(...ws.map(x => Math.round((x.correct / x.total) * 100))) : null;
+              const last = ws.length > 0 ? Math.round((ws[ws.length - 1].correct / ws[ws.length - 1].total) * 100) : null;
+              return (
+                <tr key={w} style={{ borderBottom: "1px solid #D5DBDB" }}>
+                  <td style={tblTd}>Week {w}</td>
+                  <td style={{ ...tblTd, textAlign: "center" }}>{ws.length}</td>
+                  <td style={{ ...tblTd, textAlign: "center", fontWeight: 600, color: best !== null && best >= 80 ? "#1ABC9C" : best !== null ? "#E67E22" : "#ABB2B9" }}>{best !== null ? best + "%" : "—"}</td>
+                  <td style={{ ...tblTd, textAlign: "center" }}>{last !== null ? last + "%" : "—"}</td>
+                </tr>
+              );
+            })}</tbody>
+          </table>
+        </div>
+
+        {/* Curriculum Completion */}
+        <div className="print-no-break" style={{ marginBottom: 20 }}>
+          <div style={hdr}>Curriculum Completion</div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+              <th style={tblTh}>Week</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Articles</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Study Sheets</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Quiz Taken</th>
+            </tr></thead>
+            <tbody>{weeklyCompletion.map(wc => (
+              <tr key={wc.week} style={{ borderBottom: "1px solid #D5DBDB" }}>
+                <td style={tblTd}>Week {wc.week}</td>
+                <td style={{ ...tblTd, textAlign: "center" }}>{wc.articles.done}/{wc.articles.total}</td>
+                <td style={{ ...tblTd, textAlign: "center" }}>{wc.sheets.done}/{wc.sheets.total}</td>
+                <td style={{ ...tblTd, textAlign: "center" }}>{(wkScores[wc.week] || []).length > 0 ? "Yes" : "—"}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+
+        {/* Patient Log */}
+        <div className="print-no-break" style={{ marginBottom: 20 }}>
+          <div style={hdr}>Patient Log ({patients.length} patient{patients.length !== 1 ? "s" : ""})</div>
+          {patients.length > 0 ? (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+              <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+                <th style={tblTh}>Patient</th><th style={tblTh}>Diagnosis</th><th style={tblTh}>Topics</th><th style={tblTh}>Date</th><th style={tblTh}>Status</th>
+              </tr></thead>
+              <tbody>{patients.map((p, i) => {
+                const ts = p.topics || (p.topic ? [p.topic] : []);
+                return (
+                  <tr key={i} style={{ borderBottom: "1px solid #D5DBDB" }}>
+                    <td style={tblTd}>{p.initials}</td>
+                    <td style={tblTd}>{p.dx || "—"}</td>
+                    <td style={tblTd}>{ts.join(", ")}</td>
+                    <td style={tblTd}>{new Date(p.date).toLocaleDateString()}</td>
+                    <td style={tblTd}>{p.status}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          ) : <div style={{ fontSize: 12, color: "#ABB2B9", fontStyle: "italic" }}>No patients logged</div>}
+        </div>
+
+        {/* Topic Distribution */}
+        {Object.keys(topicCounts).length > 0 && (
+          <div className="print-no-break" style={{ marginBottom: 20 }}>
+            <div style={hdr}>Topic Distribution</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).map(([topic, count]) => (
+                <span key={topic} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 12, border: "1px solid #D5DBDB", color: "#2C3E50" }}>{topic} ({count})</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SR Progress */}
+        {srTotal > 0 && (
+          <div className="print-no-break" style={{ marginBottom: 20 }}>
+            <div style={hdr}>Spaced Repetition Progress</div>
+            <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ textAlign: "center", padding: 10, border: "1px solid #D5DBDB", borderRadius: 8, flex: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#2980B9" }}>{srTotal}</div>
+                <div style={{ fontSize: 10, color: "#5D6D7E" }}>Total in Queue</div>
+              </div>
+              <div style={{ textAlign: "center", padding: 10, border: "1px solid #D5DBDB", borderRadius: 8, flex: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#1ABC9C" }}>{srMastered}</div>
+                <div style={{ fontSize: 10, color: "#5D6D7E" }}>Mastered (&gt;21d)</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Achievements */}
+        {earnedBadges.length > 0 && (
+          <div className="print-no-break" style={{ marginBottom: 20 }}>
+            <div style={hdr}>Achievements ({earnedBadges.length}/{ACHIEVEMENTS.length})</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {earnedBadges.map(a => (
+                <span key={a.id} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>{a.icon} {a.title}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Feedback Tags */}
+        {(s.feedbackTags || []).length > 0 && (
+          <div className="print-no-break" style={{ marginBottom: 20 }}>
+            <div style={hdr}>Attending Feedback</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {s.feedbackTags!.map((ft, i) => (
+                <span key={i} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
+                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 10 }}>({new Date(ft.date).toLocaleDateString()})</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Milestones */}
+        <div className="print-no-break" style={{ marginBottom: 20 }}>
+          <div style={hdr}>Milestones</div>
+          <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+            {s.addedDate && <div>Joined rotation: {new Date(s.addedDate).toLocaleDateString()}</div>}
+            {s.preScore?.date && <div>Pre-test completed: {new Date(s.preScore.date).toLocaleDateString()} ({pre}%)</div>}
+            {patients.length > 0 && <div>First patient logged: {new Date(patients[patients.length - 1].date).toLocaleDateString()}</div>}
+            {Object.keys(wkScores).length > 0 && <div>Quizzes taken: {Object.values(wkScores).flat().length} across {Object.keys(wkScores).length} week(s)</div>}
+            {s.postScore?.date && <div>Post-test completed: {new Date(s.postScore.date).toLocaleDateString()} ({post}%){growth !== null && growth > 0 ? ` — +${growth}% improvement` : ""}</div>}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -2143,6 +2694,20 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
               {earnedBadges.map(a => (
                 <span key={a.id} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
                   {a.icon} {a.title}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Attending Feedback */}
+        {(s.feedbackTags || []).length > 0 && (
+          <div className="print-no-break" style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Attending Feedback ({s.feedbackTags!.length})</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {s.feedbackTags!.map((ft, i) => (
+                <span key={i} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
+                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 10 }}>({new Date(ft.date).toLocaleDateString()})</span>
                 </span>
               ))}
             </div>

@@ -11,6 +11,7 @@ export const WEEKLY_CASES = {
       title: "AKI in Sepsis",
       category: "Acute Kidney Injury",
       difficulty: "Beginner",
+      topics: ["AKI", "Fluid Management"],
       scenario: `A 68-year-old man with a history of diabetes and hypertension presents to the emergency department with fever (39.2°C), chills, and right flank pain for two days. He has been taking less fluids orally due to nausea.
 
 On exam, he is tachycardic (HR 112), hypotensive (BP 88/54), and has right costovertebral angle tenderness. Urinalysis shows pyuria and bacteriuria. Blood cultures are drawn.
@@ -68,6 +69,7 @@ Labs: Cr 3.8 mg/dL (baseline 1.1), BUN 62 mg/dL, K+ 5.1 mEq/L, bicarb 18 mEq/L, 
       title: "Contrast-Induced AKI Prevention",
       category: "Acute Kidney Injury",
       difficulty: "Intermediate",
+      topics: ["AKI", "CKD"],
       scenario: `A 72-year-old woman with CKD stage 3b (baseline Cr 2.1, eGFR 28) and diabetes is admitted for an acute NSTEMI. Cardiology plans urgent cardiac catheterization with possible PCI.
 
 Her current medications include metformin, lisinopril, and furosemide. She weighs 70 kg. Her morning labs show Cr 2.3, K+ 4.8, bicarb 20.
@@ -113,6 +115,7 @@ The cardiology fellow asks for your recommendations on preventing contrast-induc
       id: "w1c3",
       title: "Post-Surgical Oliguria",
       category: "Acute Kidney Injury",
+      topics: ["AKI", "Urinalysis"],
       difficulty: "Beginner",
       scenario: `A 55-year-old man underwent elective open abdominal aortic aneurysm repair 18 hours ago. He has been in the surgical ICU and the nurse calls you because his urine output has been 15 mL/hr for the past 4 hours (total 60 mL).
 
@@ -174,6 +177,7 @@ His Foley catheter was just flushed and is patent. Current IVF: D5 0.45% NaCl at
       id: "w2c1",
       title: "Severe Hyponatremia",
       category: "Electrolytes",
+      topics: ["Hyponatremia", "Fluid Management"],
       difficulty: "Intermediate",
       scenario: `A 45-year-old woman with a history of depression presents with confusion, nausea, and a witnessed seizure. She was recently started on an SSRI (sertraline) three weeks ago. She reports increased water intake because she "heard staying hydrated is healthy."
 
@@ -231,6 +235,7 @@ Physical exam: Appears euvolemic, no edema, JVP normal, mucous membranes moist.`
       id: "w2c2",
       title: "Hyperkalemia Emergency",
       category: "Electrolytes",
+      topics: ["Hyperkalemia"],
       difficulty: "Beginner",
       scenario: `A 72-year-old man with CKD stage 4 (eGFR 22), heart failure, and type 2 diabetes presents to the ED with generalized weakness and "heart fluttering." He ran out of his furosemide one week ago but continued taking lisinopril, spironolactone, and his potassium-containing salt substitute.
 
@@ -276,6 +281,7 @@ ECG shows wide QRS complexes, peaked T waves, and loss of P waves.`,
       id: "w2c3",
       title: "Complex Acid-Base Disorder",
       category: "Acid-Base",
+      topics: ["Acid-Base"],
       difficulty: "Advanced",
       scenario: `A 58-year-old man with a history of alcoholism is brought in by EMS after being found unresponsive. He smells strongly of alcohol and has evidence of vomiting.
 
@@ -339,6 +345,7 @@ Urine ketones: positive`,
       id: "w3c1",
       title: "Nephrotic Syndrome Workup",
       category: "Glomerular Disease",
+      topics: ["Nephrotic Syndrome", "Proteinuria", "APOL1-Associated Kidney Disease"],
       difficulty: "Intermediate",
       scenario: `A 52-year-old man with type 2 diabetes (A1c 9.2%) presents with progressive bilateral lower extremity edema over 6 weeks and "foamy urine." He has no history of kidney disease.
 
@@ -397,6 +404,7 @@ Renal ultrasound shows bilateral 12 cm kidneys with increased cortical echogenic
       id: "w3c2",
       title: "ANCA Vasculitis with RPGN",
       category: "Glomerular Disease",
+      topics: ["Glomerulonephritis"],
       difficulty: "Advanced",
       scenario: `A 65-year-old woman presents with 3 weeks of fatigue, myalgias, and dark ("cola-colored") urine. She also reports a 2-week history of worsening cough with occasional hemoptysis.
 
@@ -454,6 +462,7 @@ CXR shows bilateral pulmonary infiltrates. Anti-MPO (p-ANCA) is strongly positiv
       id: "w3c3",
       title: "CKD Management and SGLT2 Inhibitors",
       category: "CKD",
+      topics: ["CKD", "Hypertension", "Proteinuria"],
       difficulty: "Intermediate",
       scenario: `A 60-year-old man with type 2 diabetes, hypertension, and CKD stage 3b (eGFR 38 mL/min, UACR 650 mg/g) is seen in nephrology clinic. He is on metformin 500 mg BID, losartan 100 mg daily, and amlodipine 5 mg daily. BP today: 138/82. A1c: 7.4%.
 
@@ -502,6 +511,7 @@ His renal function has been stable over the past year. He asks about "new kidney
       id: "w4c1",
       title: "Dialysis Initiation Decision",
       category: "Dialysis",
+      topics: ["Dialysis", "CKD"],
       difficulty: "Intermediate",
       scenario: `A 58-year-old man with CKD stage 5 from diabetic nephropathy (eGFR 8 mL/min) is seen in pre-dialysis clinic. He reports progressive fatigue, poor appetite, morning nausea, difficulty concentrating, and a "metallic taste" in his mouth for the past month. He has lost 5 kg.
 
@@ -558,6 +568,7 @@ Exam: BP 158/92, bilateral 2+ pitting edema. AV fistula was placed 3 months ago 
       id: "w4c2",
       title: "Kidney Transplant Rejection",
       category: "Transplant",
+      topics: ["Transplant"],
       difficulty: "Advanced",
       scenario: `A 45-year-old woman who received a deceased-donor kidney transplant 8 months ago presents with rising creatinine. Her baseline post-transplant Cr was 1.2, and today it is 2.1. She is on tacrolimus, mycophenolate, and prednisone.
 
@@ -604,6 +615,7 @@ Tacrolimus trough level: 3.2 ng/mL (goal: 6-10). Urinalysis: trace protein, no b
       id: "w4c3",
       title: "Recurrent Kidney Stones",
       category: "Kidney Stones",
+      topics: ["Kidney Stones"],
       difficulty: "Beginner",
       scenario: `A 38-year-old man presents to the ED with acute-onset left flank pain radiating to the groin, with nausea and hematuria. He has had two prior episodes of kidney stones in the past 5 years, but never had a metabolic workup.
 
