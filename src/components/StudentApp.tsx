@@ -75,6 +75,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLocalWriteRef = useRef<number>(0);
+  const loginAttemptsRef = useRef<{ count: number; lockedUntil: number }>({ count: 0, lockedUntil: 0 });
 
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
@@ -244,15 +245,35 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const handleJoinRotation = async () => {
     if (!studentName.trim() || studentPin.length !== 4 || joinCode.length < 4) return;
+
+    // Rate limiting: block after 5 failed attempts for 30 seconds
+    const now = Date.now();
+    const attempts = loginAttemptsRef.current;
+    if (attempts.lockedUntil > now) {
+      const secsLeft = Math.ceil((attempts.lockedUntil - now) / 1000);
+      setJoinError(`Too many attempts. Try again in ${secsLeft}s.`);
+      return;
+    }
+
     setJoining(true);
     setJoinError("");
     try {
       const exists = await store.validateRotationCode(joinCode);
       if (!exists) {
-        setJoinError("Rotation not found. Check the code and try again.");
+        attempts.count++;
+        if (attempts.count >= 5) {
+          attempts.lockedUntil = Date.now() + 30_000;
+          attempts.count = 0;
+          setJoinError("Too many failed attempts. Locked for 30 seconds.");
+        } else {
+          setJoinError("Rotation not found. Check the code and try again.");
+        }
         setJoining(false);
         return;
       }
+      // Reset attempts on successful validation
+      attempts.count = 0;
+      attempts.lockedUntil = 0;
       // Set rotation code first so store methods work
       store.setRotationCode(joinCode);
       setRotationCodeState(joinCode);

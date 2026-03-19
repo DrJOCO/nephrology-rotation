@@ -197,7 +197,15 @@ const store = {
     if (!rotationCode) return;
     try {
       const { db, fs } = await getFirebase();
-      await fs.setDoc(fs.doc(db, "rotations", rotationCode, "students", studentId), data, { merge: true });
+      const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
+      // Check if this is a new student (for count denormalization)
+      const existing = await fs.getDoc(studentRef);
+      await fs.setDoc(studentRef, data, { merge: true });
+      // If first time writing this student doc, bump the rotation's studentCount
+      if (!existing.exists()) {
+        const rotRef = fs.doc(db, "rotations", rotationCode);
+        await fs.updateDoc(rotRef, { studentCount: fs.increment(1) });
+      }
     } catch (e) {
       console.warn("setStudentData failed:", e);
     }
@@ -221,24 +229,17 @@ const store = {
     try {
       const { db, fs } = await getFirebase();
       const snap = await fs.getDocs(fs.collection(db, "rotations"));
-      const rotations: RotationInfo[] = [];
-      for (const d of snap.docs) {
+      const rotations: RotationInfo[] = snap.docs.map(d => {
         const data = d.data();
-        // Count students in subcollection
-        let studentCount = 0;
-        try {
-          const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", d.id, "students"));
-          studentCount = studentsSnap.size;
-        } catch (e) { console.warn("Failed to count students for rotation:", e); }
-        rotations.push({
+        return {
           code: d.id,
           name: data.name || "Untitled",
           createdAt: data.createdAt || null,
           location: data.location || "",
           dates: data.dates || "",
-          studentCount,
-        });
-      }
+          studentCount: data.studentCount ?? 0,
+        };
+      });
       rotations.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
       return rotations;
     } catch (e) {
