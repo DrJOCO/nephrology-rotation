@@ -278,6 +278,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         // New student — create their Firestore doc
         await store.setStudentData(sid, {
           name: studentName,
+          loginPin: studentPin,
           patients,
           weeklyScores,
           preScore,

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { T, WEEKLY, ARTICLES, ABBREVIATIONS, LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
@@ -42,12 +42,21 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
     return announcements.filter(a => a.date && new Date(a.date).getTime() > lastSeenTime).length;
   }, [announcements]);
 
-  // Mark announcements as seen on mount
+  // Keep a ref to the latest announcements so the unmount cleanup can read it
+  // without adding announcements to the effect's dependency array.
+  const announcementsRef = useRef(announcements);
+  announcementsRef.current = announcements;
+
+  // Mark announcements as seen only on true unmount (empty deps),
+  // so the badge stays visible even if new announcements arrive while on this tab.
   useEffect(() => {
-    if (announcements.length > 0) {
-      localStorage.setItem("neph_lastAnnouncementSeen", new Date().toISOString());
-    }
-  }, [announcements]);
+    return () => {
+      if (announcementsRef.current.length > 0) {
+        localStorage.setItem("neph_lastAnnouncementSeen", new Date().toISOString());
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const incompleteWeekTasks = useMemo(() => {
     if (!currentWeek) return 0;
