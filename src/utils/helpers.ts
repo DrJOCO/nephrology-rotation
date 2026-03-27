@@ -31,6 +31,10 @@ export function ensureThemeStyles(): void {
       --c-gold-text:#B7950B;--c-purple-accent:#7D3C98;--c-purple-soft:#BB8FCE;
       --c-red-deep:#C0392B;--c-overlay:rgba(0,0,0,0.65);
     }
+    html, body {
+      background: var(--c-bg);
+      margin: 0;
+    }
     @media screen {
       [data-theme="dark"] {
         --c-navy:#C9D1D9;--c-deep:#B0BAC5;--c-med:#539BD4;--c-sky:#6EB0DC;
