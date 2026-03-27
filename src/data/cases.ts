@@ -211,12 +211,12 @@ Physical exam: Appears euvolemic, no edema, JVP normal, mucous membranes moist.`
           q: "What is the maximum safe rate of sodium correction to avoid osmotic demyelination syndrome (ODS)?",
           choices: [
             "4-6 mEq/L per 24 hours",
-            "8-10 mEq/L per 24 hours",
+            "6-8 mEq/L per 24 hours",
             "12-14 mEq/L per 24 hours",
             "No limit if the patient is symptomatic"
           ],
           answer: 1,
-          explanation: "Current guidelines recommend limiting sodium correction to 8-10 mEq/L in any 24-hour period (some experts suggest ≤8 for high-risk patients). Overcorrection risks osmotic demyelination syndrome (ODS, formerly central pontine myelinolysis), which can cause devastating neurological injury. Risk factors for ODS include chronic hyponatremia (>48h duration), liver disease, alcoholism, malnutrition, and hypokalemia. If overcorrection occurs, D5W or DDAVP can be used to re-lower sodium."
+          explanation: "Current guidelines recommend limiting sodium correction to ≤8 mEq/L in any 24-hour period, with ≤6 mEq/L preferred for high-risk patients (liver disease, alcoholism, malnutrition, hypokalemia, chronic hyponatremia >48h). Overcorrection risks osmotic demyelination syndrome (ODS, formerly central pontine myelinolysis), which can cause devastating neurological injury. If overcorrection occurs, D5W or DDAVP can be used to re-lower sodium."
         },
         {
           q: "After initial stabilization, which long-term management strategy is most appropriate for this patient?",
@@ -310,8 +310,8 @@ Urine ketones: positive`,
             "Delta-delta < 1.0 — concurrent non-anion gap metabolic acidosis (NAGMA)",
             "Cannot be calculated without baseline bicarbonate"
           ],
-          answer: 1,
-          explanation: "Delta AG = corrected AG - 12 = 32 - 12 = 20. Delta HCO3 = 24 - 9 = 15. Delta-delta = 20/15 = 1.33. Wait — let's recalculate using the uncorrected: Delta AG = 29 - 12 = 17. Delta-delta = 17/15 = 1.13 — closer to pure AGMA. With correction: 20/15 = 1.33 — still within the range of 1-2. However, the clinical picture (alcoholism with vomiting) strongly suggests a concurrent metabolic alkalosis from vomiting, which is raising the HCO3 from what it would otherwise be. The delta-delta of >1 with concurrent vomiting supports a mixed AGMA + metabolic alkalosis."
+          answer: 0,
+          explanation: "Delta AG = corrected AG - 12 = 32 - 12 = 20. Delta HCO3 = 24 - 9 = 15. Delta-delta = 20/15 = 1.33. Using uncorrected AG: 17/15 = 1.13. Both values fall in the 1-2 range, indicating a pure AGMA by the numbers. However, the clinical picture (alcoholism with vomiting) suggests a concurrent metabolic alkalosis from vomiting may be masking an even lower HCO3 — the delta-delta would be >2 if the 'true' HCO3 were lower. Always integrate the math with clinical context."
         },
         {
           q: "What is the osmolal gap, and what does it suggest?",
@@ -499,7 +499,7 @@ His renal function has been stable over the past year. He asks about "new kidney
             "Start erythropoietin-stimulating agent prophylactically"
           ],
           answer: 1,
-          explanation: "Finerenone, a non-steroidal mineralocorticoid receptor antagonist, showed significant kidney and cardiovascular benefit in the FIDELIO-DKD and FIGARO-DKD trials in patients with diabetic kidney disease already on RAAS blockade. KDIGO now recommends the combination of ACEi/ARB + SGLT2i + finerenone as optimal nephroprotective therapy in DKD. BP target for CKD with albuminuria is <130/80. Protein restriction to 0.8 g/kg/day (not 0.6) is reasonable. ESAs are for established anemia, not prophylaxis."
+          explanation: "Finerenone, a non-steroidal mineralocorticoid receptor antagonist, showed significant kidney and cardiovascular benefit in the FIDELIO-DKD and FIGARO-DKD trials in patients with diabetic kidney disease already on RAAS blockade. KDIGO now recommends the combination of ACEi/ARB + SGLT2i + finerenone as optimal nephroprotective therapy in DKD. KDIGO 2021 recommends targeting systolic BP <120 mmHg when tolerated in CKD with albuminuria (based on SPRINT). Protein restriction to 0.8 g/kg/day (not 0.6) is reasonable. ESAs are for established anemia, not prophylaxis."
         }
       ]
     }

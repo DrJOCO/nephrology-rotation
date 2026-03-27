@@ -59,7 +59,7 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
         </div>
 
         <p style={{ fontSize: 11, color: T.muted, margin: "0 0 12px", lineHeight: 1.5 }}>
-          Choose a PIN if new. Use your existing PIN to resume your progress on any device.
+          Choose a PIN if new. Use your existing PIN to resume your progress on this phone.
         </p>
 
         {joinError && <p style={{ color: T.accent, fontSize: 12, margin: "0 0 12px", fontWeight: 600, textAlign: "center" }}>{joinError}</p>}

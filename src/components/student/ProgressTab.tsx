@@ -4,7 +4,7 @@ import { MiniLineChart, MiniBarChart } from "./charts";
 import { getTopicExposures, getUnstudiedTopics, getUnseenTopics } from "../../utils/topicExposure";
 import type { Patient, WeeklyScores, QuizScore, Gamification, CompletedItems, LineChartPoint, BarChartItem } from "../../types";
 
-export default function ProgressTab({ patients, weeklyScores, preScore, postScore, curriculum, gamification, completedItems }: { patients: Patient[]; weeklyScores: WeeklyScores; preScore: QuizScore | null; postScore: QuizScore | null; curriculum: typeof WEEKLY; gamification: Gamification; completedItems?: CompletedItems }) {
+export default function ProgressTab({ patients, weeklyScores, preScore, postScore, curriculum, gamification, completedItems, totalWeeks = 4 }: { patients: Patient[]; weeklyScores: WeeklyScores; preScore: QuizScore | null; postScore: QuizScore | null; curriculum: typeof WEEKLY; gamification: Gamification; completedItems?: CompletedItems; totalWeeks?: number }) {
   const topicCounts: Record<string, number> = {};
   patients.forEach(p => {
     const topics = p.topics || (p.topic ? [p.topic] : []);
@@ -169,7 +169,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
 
       {/* Weekly Quiz Scores */}
       <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Weekly Quiz Scores</h3>
-      {[1,2,3,4].map(w => {
+      {[1,2,3,4].filter(w => w <= totalWeeks || (weeklyScores[w] || []).length > 0).map(w => {
         const ws = weeklyScores[w] || [];
         const best = ws.length > 0 ? Math.max(...ws.map(s => Math.round((s.correct/s.total)*100))) : null;
         return (
@@ -263,7 +263,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
         });
         allAttempts.sort((a, b) => a.date.localeCompare(b.date));
 
-        const weeklyBest = [1,2,3,4].map(w => {
+        const weeklyBest = [1,2,3,4].filter(w => w <= totalWeeks || (weeklyScores[w] || []).length > 0).map(w => {
           const ws = weeklyScores[w] || [];
           const best = ws.length > 0 ? Math.max(...ws.map(s => Math.round((s.correct / s.total) * 100))) : 0;
           return { label: `W${w}`, value: best, color: best >= 80 ? T.green : best >= 60 ? T.gold : best > 0 ? T.accent : T.line };

@@ -3,6 +3,7 @@ import { T, WEEKLY, ARTICLES } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems } from "../utils/spacedRepetition";
 import store from "../utils/store";
+import { ensureStudentSession } from "../utils/firebase";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints, getLevel, checkAchievements, updateStreak, ACHIEVEMENTS } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
@@ -36,6 +37,8 @@ const ProgressTab = lazy(() => import("./student/ProgressTab"));
 const TopicBrowseView = lazy(() => import("./student/TopicBrowseView"));
 const ClinicGuideView = lazy(() => import("./student/ClinicGuideView"));
 const ClinicGuideHistoryView = lazy(() => import("./student/ClinicGuideHistoryView"));
+const InpatientGuideView = lazy(() => import("./student/InpatientGuideView"));
+const RotationGuideView = lazy(() => import("./student/RotationGuideView"));
 
 const LazyFallback = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -81,18 +84,22 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
   };
 
-  // Deterministic student ID from name + PIN
-  const makeStudentId = (name: string, pin: string) => {
-    const normalized = name.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    return `stu_${normalized}_${pin}`;
-  };
-
   // Load from storage on mount
   useEffect(() => {
     ensureGoogleFonts();
     ensureLayoutStyles();
     ensureThemeStyles();
     (async () => {
+      let sessionStudentId = "";
+      try {
+        const user = await ensureStudentSession();
+        sessionStudentId = user.uid;
+        setStudentId(user.uid);
+        await store.set("neph_studentId", user.uid);
+      } catch (e) {
+        console.warn("Student session init failed:", e);
+      }
+
       const name = await store.get<string>("neph_name");
       const pin = await store.get<string>("neph_pin");
       const sidFromStore = await store.get<string>("neph_studentId");
@@ -106,7 +113,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       const sharedAnnouncements = await store.getShared<Announcement[]>(SHARED_KEYS.announcements);
       const sharedSettingsData = await store.getShared<SharedSettings>(SHARED_KEYS.settings);
 
-      if (sidFromStore) setStudentId(sidFromStore);
+      if (!sessionStudentId && sidFromStore) setStudentId(sidFromStore);
       if (name) { setStudentName(name); setNameSet(true); }
       if (pin) setStudentPin(pin);
       if (pts) setPatients(pts);
@@ -151,7 +158,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     store.set("neph_gamification", gamification);
 
     // Auto-sync to Firestore (debounced)
-    if (store.getRotationCode()) {
+    if (store.getRotationCode() && studentId) {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(() => {
         lastLocalWriteRef.current = Date.now();
@@ -258,6 +265,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setJoining(true);
     setJoinError("");
     try {
+      const user = await ensureStudentSession();
+      const sid = user.uid;
       const exists = await store.validateRotationCode(joinCode);
       if (!exists) {
         attempts.count++;
@@ -277,14 +286,25 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       // Set rotation code first so store methods work
       store.setRotationCode(joinCode);
       setRotationCodeState(joinCode);
-
-      // Compute deterministic student ID
-      const sid = makeStudentId(studentName, studentPin);
       setStudentId(sid);
 
       // Check if this student already exists (returning student)
       const existingData = await store.getStudentData(sid);
       if (existingData) {
+        if (existingData.loginPin && existingData.loginPin !== studentPin) {
+          attempts.count++;
+          if (attempts.count >= 5) {
+            attempts.lockedUntil = Date.now() + 30_000;
+            attempts.count = 0;
+            setJoinError("Too many failed attempts. Locked for 30 seconds.");
+          } else {
+            setJoinError("Incorrect PIN for this phone. Use the PIN you set on this device.");
+          }
+          store.setRotationCode(null);
+          setRotationCodeState("");
+          setJoining(false);
+          return;
+        }
         // Restore their data
         if (existingData.patients) setPatients(existingData.patients);
         if (existingData.weeklyScores) setWeeklyScores(existingData.weeklyScores);
@@ -295,6 +315,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         if (existingData.bookmarks) setBookmarks(existingData.bookmarks);
         if (existingData.srQueue) setSrQueue(existingData.srQueue);
         if (existingData.activityLog) setActivityLog(existingData.activityLog);
+        await store.setStudentData(sid, {
+          name: studentName,
+          loginPin: studentPin,
+          updatedAt: new Date().toISOString(),
+        });
       } else {
         // New student — create their Firestore doc
         await store.setStudentData(sid, {
@@ -316,16 +341,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       await store.set("neph_name", studentName);
       await store.set("neph_pin", studentPin);
       await store.set("neph_studentId", sid);
-    } catch {
-      setJoinError("Connection error. Check your internet and try again.");
+    } catch (e) {
+      console.error("Join rotation error:", e);
+      setJoinError("Unable to start the secure student session. Check Firebase Auth and your internet connection.");
     }
     setJoining(false);
   };
 
   const handleSkipRotation = () => {
     if (!studentName.trim()) return;
-    // Offline mode: generate a simple ID, no PIN needed
-    const sid = `stu_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const sid = studentId || `stu_local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     setStudentId(sid);
     setRotationCodeState("_skip");
     setNameSet(true);
@@ -406,6 +431,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     if (week > totalWeeks) return null;
     return Math.min(week, 4);
   })();
+  const totalWeeks = parseInt(sharedSettings?.duration || "4", 10);
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.sans }}>
@@ -448,7 +474,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       {/* Content Area */}
       <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
-        {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
+        {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "home" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
@@ -614,10 +640,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "guide" && subView?.type === "clinicGuideHistory" && (
           <ClinicGuideHistoryView guides={clinicGuides} onSelect={(date) => navigate("guide", { type: "clinicGuide", date })} onBack={() => navigate("guide")} />
         )}
-        {tab === "guide" && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
+        {tab === "guide" && subView?.type === "inpatientGuide" && (
+          <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={() => navigate("guide")} />
+        )}
+        {tab === "guide" && subView?.type === "rotationGuide" && (
+          <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("guide")} />
+        )}
+        {tab === "guide" && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
-        {tab === "progress" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} completedItems={completedItems} />}
+        {tab === "progress" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} completedItems={completedItems} totalWeeks={totalWeeks} />}
         </Suspense>
       </div>
 

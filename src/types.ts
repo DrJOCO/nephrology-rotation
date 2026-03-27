@@ -57,6 +57,8 @@ export type SubView =
   | { type: "topicDetail"; topic: string }
   | { type: "clinicGuide"; date: string }
   | { type: "clinicGuideHistory" }
+  | { type: "inpatientGuide"; topic: string }
+  | { type: "rotationGuide"; guideId: string }
   | null;
 
 export type AdminSubView =

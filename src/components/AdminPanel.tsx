@@ -3,6 +3,7 @@ import { T, TOPICS, WEEKLY, ARTICLES, STUDY_SHEETS, FEEDBACK_TAGS } from "../dat
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
 import { QUICK_REFS } from "../data/guides";
 import store, { RotationInfo } from "../utils/store";
+import { getCurrentAdminUser, signInAdmin, signOutFirebase } from "../utils/firebase";
 import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, createRotationCode } from "../utils/helpers";
 import { calculatePoints, getLevel, ACHIEVEMENTS } from "../utils/gamification";
 import { HistogramChart, FunnelChart, HeatmapChart } from "./student/charts";
@@ -13,6 +14,22 @@ import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, 
 type NavigateFn = (t: string, sv?: AdminSubView) => void;
 type WeeklyData = typeof WEEKLY;
 type ArticlesData = typeof ARTICLES;
+type AdminSession = { uid: string; email: string };
+
+function getAdminAuthErrorMessage(error: unknown) {
+  const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: unknown }).code) : "";
+  const message = error instanceof Error ? error.message : "";
+  if (message === "admin/unauthorized") {
+    return "This Firebase account is not listed in the Firestore admins collection.";
+  }
+  if (code === "auth/invalid-email") return "Enter a valid admin email address.";
+  if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+    return "Email or password incorrect.";
+  }
+  if (code === "auth/too-many-requests") return "Too many sign-in attempts. Try again later.";
+  if (code === "auth/operation-not-allowed") return "Enable Email/Password sign-in in Firebase Authentication.";
+  return "Admin sign-in failed. Check Firebase Auth and your admin setup.";
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Theme Toggle (Dark Mode)
@@ -46,9 +63,14 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [tab, setTab] = useState("dashboard");
   const [subView, setSubView] = useState<AdminSubView>(null);
   const [loading, setLoading] = useState(true);
+  const [firebaseAdmin, setFirebaseAdmin] = useState<AdminSession | null>(null);
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState(false);
+  const [authEmail, setAuthEmail] = useState(() => localStorage.getItem("neph_adminEmail") || "");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   // Admin data
   const [students, setStudents] = useState<AdminStudent[]>([]);
@@ -58,6 +80,28 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [settings, setSettings] = useState<SharedSettings>({ attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "" });
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
+
+  const loadLocalAdminData = useCallback(async () => {
+    const s = await store.get<AdminStudent[]>("admin_students");
+    const a = await store.get<ArticlesData>("admin_articles");
+    const c = await store.get<WeeklyData>("admin_curriculum");
+    const an = await store.get<Announcement[]>("admin_announcements");
+    if (s) setStudents(s);
+    if (a) setArticles(a);
+    if (c) setCurriculum(c);
+    if (an) setAnnouncements(an);
+  }, []);
+
+  const hydrateRotationData = useCallback(async (code: string) => {
+    const remote = await store.getRotationData(code);
+    if (!remote) return false;
+    if (remote.curriculum) setCurriculum(remote.curriculum);
+    if (remote.articles) setArticles(remote.articles);
+    if (remote.announcements) setAnnouncements(remote.announcements);
+    if (remote.settings) setSettings(prev => ({ ...prev, ...remote.settings }));
+    if (remote.clinicGuides) setClinicGuides(remote.clinicGuides);
+    return true;
+  }, []);
 
   // Load — when connected to a rotation, hydrate from Firestore first to avoid
   // overwriting shared state with stale local defaults
@@ -71,37 +115,28 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
       const st = await store.get<SharedSettings>("admin_settings");
       if (st) setSettings(st);
 
-      // If connected to a rotation, read shared data from Firestore first
+      const adminUser = await getCurrentAdminUser();
       const code = store.getRotationCode();
-      if (code) {
-        const remote = await store.getRotationData(code);
-        if (remote) {
-          if (remote.curriculum) setCurriculum(remote.curriculum);
-          if (remote.articles) setArticles(remote.articles);
-          if (remote.announcements) setAnnouncements(remote.announcements);
-          if (remote.settings) setSettings(prev => ({ ...prev, ...remote.settings }));
-          if (remote.clinicGuides) setClinicGuides(remote.clinicGuides);
-          setLoading(false);
-          return;
+      if (adminUser) {
+        if (code) {
+          const hydrated = await hydrateRotationData(code);
+          if (!hydrated) {
+            console.warn("Could not read rotation data for", code, "— disconnecting to prevent stale overwrite");
+            store.setRotationCode(null);
+            setRotationCodeState("");
+          }
+        } else {
+          await loadLocalAdminData();
         }
-        // Hydrate failed — disconnect so save effect can't write stale data
-        console.warn("Could not read rotation data for", code, "— disconnecting to prevent stale overwrite");
-        store.setRotationCode(null);
-        setRotationCodeState("");
+        setFirebaseAdmin({ uid: adminUser.uid, email: adminUser.email || "" });
+        setLoading(false);
+        return;
       }
 
-      // No rotation or hydrate failed — use localStorage (safe: no rotation connected)
-      const s = await store.get<AdminStudent[]>("admin_students");
-      const a = await store.get<ArticlesData>("admin_articles");
-      const c = await store.get<WeeklyData>("admin_curriculum");
-      const an = await store.get<Announcement[]>("admin_announcements");
-      if (s) setStudents(s);
-      if (a) setArticles(a);
-      if (c) setCurriculum(c);
-      if (an) setAnnouncements(an);
+      await loadLocalAdminData();
       setLoading(false);
     })();
-  }, []);
+  }, [hydrateRotationData, loadLocalAdminData]);
 
   // Save local state
   useEffect(() => {
@@ -119,19 +154,20 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     }
   }, [articles, curriculum, announcements, settings, loading]);
 
-  // Save shared state (consolidated)
+  // Save shared state (consolidated) — strip adminPin before publishing
   useEffect(() => {
-    if (!loading) {
+    if (!loading && firebaseAdmin) {
       store.setShared(SHARED_KEYS.curriculum, curriculum);
       store.setShared(SHARED_KEYS.articles, articles);
       store.setShared(SHARED_KEYS.announcements, announcements);
-      store.setShared(SHARED_KEYS.settings, settings);
+      const { adminPin: _pin, ...publicSettings } = settings;
+      store.setShared(SHARED_KEYS.settings, publicSettings);
     }
-  }, [curriculum, articles, announcements, settings, loading]);
+  }, [curriculum, articles, announcements, settings, loading, firebaseAdmin]);
 
   // Real-time listener: students auto-appear when connected to a rotation
   useEffect(() => {
-    if (!rotationCode) return;
+    if (!firebaseAdmin || !rotationCode) return;
     const unsub = store.onStudentsChanged((firestoreStudents) => {
       setStudents(firestoreStudents.map(s => ({
         id: s.studentId,
@@ -156,19 +192,54 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
       })));
     });
     return () => unsub();
-  }, [rotationCode]);
+  }, [rotationCode, firebaseAdmin]);
 
   // Write student edits back to Firestore
   const writeStudentToFirestore = useCallback((studentId: string, data: Record<string, unknown>) => {
-    if (!rotationCode || !studentId) return;
+    if (!firebaseAdmin || !rotationCode || !studentId) return;
     store.setStudentData(studentId, {
       ...data,
       updatedAt: new Date().toISOString(),
     });
-  }, [rotationCode]);
+  }, [rotationCode, firebaseAdmin]);
 
   const navigate = (t: string, sv: AdminSubView = null) => { setTab(t); setSubView(sv); };
   const activePin = (settings?.adminPin || "1234").trim();
+
+  const handleAdminSignIn = async () => {
+    if (!authEmail.trim() || !authPassword) return;
+    setAuthSubmitting(true);
+    setAuthError("");
+    try {
+      const user = await signInAdmin(authEmail.trim(), authPassword);
+      const code = store.getRotationCode();
+      if (code) {
+        const hydrated = await hydrateRotationData(code);
+        if (!hydrated) {
+          store.setRotationCode(null);
+          setRotationCodeState("");
+        }
+      }
+      localStorage.setItem("neph_adminEmail", authEmail.trim());
+      setFirebaseAdmin({ uid: user.uid, email: user.email || authEmail.trim() });
+      setAuthPassword("");
+      setAuthed(false);
+      setPin("");
+    } catch (e) {
+      console.error("Admin sign-in failed:", e);
+      setAuthError(getAdminAuthErrorMessage(e));
+    }
+    setAuthSubmitting(false);
+  };
+
+  const handleAdminSignOut = async () => {
+    await signOutFirebase();
+    setFirebaseAdmin(null);
+    setAuthed(false);
+    setPin("");
+    setAuthPassword("");
+    setAuthError("");
+  };
 
   const handlePinSubmit = () => {
     if (pin === activePin) {
@@ -256,6 +327,50 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     </div>
   );
 
+  if (!firebaseAdmin) {
+    return (
+      <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${T.dark} 0%, ${T.navy} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
+        <div style={{ background: T.card, borderRadius: 20, padding: 36, maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
+          <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🔐</div>
+          <h1 style={{ color: T.navy, fontFamily: T.serif, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>Admin Sign-In</h1>
+          <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px" }}>Use your Firebase admin account before unlocking the panel PIN.</p>
+          <div style={{ textAlign: "left", marginBottom: 12 }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4 }}>Admin Email</label>
+            <input
+              type="email"
+              value={authEmail}
+              onChange={e => { setAuthEmail(e.target.value); setAuthError(""); }}
+              onKeyDown={e => { if (e.key === "Enter" && authPassword) handleAdminSignIn(); }}
+              placeholder="you@example.com"
+              style={{ width: "100%", padding: "12px 14px", border: `2px solid ${T.pale}`, borderRadius: 10, outline: "none", boxSizing: "border-box", fontSize: 14 }}
+            />
+          </div>
+          <div style={{ textAlign: "left", marginBottom: 14 }}>
+            <label style={{ fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4 }}>Password</label>
+            <input
+              type="password"
+              value={authPassword}
+              onChange={e => { setAuthPassword(e.target.value); setAuthError(""); }}
+              onKeyDown={e => { if (e.key === "Enter" && authEmail.trim()) handleAdminSignIn(); }}
+              placeholder="Firebase Auth password"
+              style={{ width: "100%", padding: "12px 14px", border: `2px solid ${T.pale}`, borderRadius: 10, outline: "none", boxSizing: "border-box", fontSize: 14 }}
+            />
+          </div>
+          {authError && <p style={{ color: T.accent, fontSize: 12, margin: "0 0 14px", fontWeight: 600 }}>{authError}</p>}
+          <button
+            onClick={handleAdminSignIn}
+            disabled={!authEmail.trim() || !authPassword || authSubmitting}
+            style={{ width: "100%", padding: "14px 0", background: authEmail.trim() && authPassword && !authSubmitting ? T.med : T.muted, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: authEmail.trim() && authPassword && !authSubmitting ? "pointer" : "default", opacity: authEmail.trim() && authPassword && !authSubmitting ? 1 : 0.7 }}
+          >
+            {authSubmitting ? "Signing In..." : "Sign In"}
+          </button>
+          <p style={{ color: T.muted, fontSize: 11, marginTop: 12 }}>Enable Email/Password auth in Firebase and add your UID to Firestore `admins/{'{uid}'}`.</p>
+          {onExit && <button onClick={onExit} style={{ marginTop: 14, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>← Back to Student App</button>}
+        </div>
+      </div>
+    );
+  }
+
   // Simple PIN gate
   if (!authed) {
     return (
@@ -276,7 +391,8 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             style={{ width: "100%", padding: "14px 0", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
             Enter
           </button>
-          <p style={{ color: T.muted, fontSize: 11, marginTop: 12 }}>Set or change your PIN in Settings.</p>
+          <p style={{ color: T.muted, fontSize: 11, marginTop: 12 }}>Signed in as {firebaseAdmin.email || "admin user"}. Set or change your PIN in Settings.</p>
+          <button onClick={handleAdminSignOut} style={{ marginTop: 12, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>Sign Out</button>
           {onExit && <button onClick={onExit} style={{ marginTop: 14, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>← Back to Student App</button>}
         </div>
       </div>
@@ -312,6 +428,10 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             <button onClick={() => { setAuthed(false); }}
               style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 11, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>
               Lock 🔒
+            </button>
+            <button onClick={handleAdminSignOut}
+              style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 11, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>
+              Sign Out
             </button>
           </div>
         </div>
@@ -1564,10 +1684,11 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
         const suffix = Math.random().toString(36).slice(2, 5).toUpperCase();
         code = `${code}-${suffix}`;
       }
+      const updatedSettings = { ...settings, duration: settings.duration || "4" };
+      const { adminPin: _pin, ...sharedSettings } = updatedSettings;
       await store.createRotation(code, {
-        name: settings.attendingName || "Nephrology Rotation",
-        adminPin: settings.adminPin || "1234",
-        settings,
+        name: updatedSettings.attendingName || "Nephrology Rotation",
+        settings: sharedSettings,
         curriculum,
         articles,
         announcements,
@@ -1594,7 +1715,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
       setRotationHistory(prev => prev.filter(r => r.code !== code));
       if (rotationCode === code) setRotationCodeState("");
     } catch {
-      alert("Failed to delete rotation.");
+      alert("Failed to delete rotation. Check your admin access and Firebase rules.");
     }
   };
 
@@ -1676,10 +1797,22 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
               <input value={newDates} onChange={e => setNewDates(e.target.value)} placeholder="e.g. Mar 1–28, 2026"
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
             </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Location (optional)</label>
-              <input value={newLocation} onChange={e => setNewLocation(e.target.value)} placeholder="e.g. City Medical Center"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Location (optional)</label>
+                <input value={newLocation} onChange={e => setNewLocation(e.target.value)} placeholder="e.g. Good Samaritan"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Duration</label>
+                <select value={settings.duration || "4"} onChange={e => update("duration", e.target.value)}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box", appearance: "none" }}>
+                  <option value="1" style={{ color: "#000" }}>1 week</option>
+                  <option value="2" style={{ color: "#000" }}>2 weeks</option>
+                  <option value="3" style={{ color: "#000" }}>3 weeks</option>
+                  <option value="4" style={{ color: "#000" }}>4 weeks</option>
+                </select>
+              </div>
             </div>
             <button onClick={handleCreateRotation} disabled={creating}
               style={{ width: "100%", padding: "14px 0", background: T.orange, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: creating ? "wait" : "pointer", opacity: creating ? 0.7 : 1, marginBottom: 16 }}>
@@ -1775,6 +1908,30 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
             ))}
           </div>
         )}
+      </div>
+
+      {/* Rotation Schedule */}
+      <div style={{ background: T.card, borderRadius: 14, padding: 18, marginBottom: 16, border: `1px solid ${T.line}` }}>
+        <h3 style={{ fontFamily: T.serif, color: T.navy, fontSize: 16, margin: "0 0 14px", fontWeight: 700 }}>Rotation Schedule</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+          <div>
+            <label style={adminLabel}>Start Date</label>
+            <input type="date" value={settings.rotationStart || ""} onChange={e => update("rotationStart", e.target.value)} style={adminInput} />
+          </div>
+          <div>
+            <label style={adminLabel}>Duration</label>
+            <select value={settings.duration || "4"} onChange={e => update("duration", e.target.value)}
+              style={{ ...adminInput, appearance: "none" }}>
+              <option value="1">1 week</option>
+              <option value="2">2 weeks</option>
+              <option value="3">3 weeks</option>
+              <option value="4">4 weeks</option>
+            </select>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: T.muted }}>
+          Sets the "current week" indicator for students. All content remains accessible regardless of duration.
+        </div>
       </div>
 
       {/* Attending Info */}

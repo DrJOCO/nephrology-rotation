@@ -6,7 +6,7 @@ import { PRO_TIPS } from "./shared";
 import { getRecommendations } from "../../utils/recommendations";
 import { getPatientSuggestedActions } from "../../utils/patientRecommendations";
 
-export default function HomeTab({ navigate, preScore, postScore, curriculum, articles, announcements, currentWeek, weeklyScores, completedItems, bookmarks, srDueCount, patients, srQueue }) {
+export default function HomeTab({ navigate, preScore, postScore, curriculum, articles, announcements, currentWeek, totalWeeks = 4, weeklyScores, completedItems, bookmarks, srDueCount, patients, srQueue }) {
   const [expanded, setExpanded] = useState(currentWeek || null);
   // Pick a random tip on each mount (changes on every screen change)
   const [mountTime] = useState(() => Date.now());
@@ -176,7 +176,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
         <div style={{ background: T.ice, borderRadius: 10, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 8, border: `1.5px solid ${T.pale}` }}>
           <span style={{ fontSize: 16 }}>{"\uD83D\uDCCD"}</span>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>You are in Week {currentWeek}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>You are in Week {currentWeek}{totalWeeks < 4 ? ` of ${totalWeeks}` : ""}</div>
             <div style={{ fontSize: 11, color: T.sub }}>{(curriculum[currentWeek] || WEEKLY[currentWeek])?.title}</div>
           </div>
         </div>

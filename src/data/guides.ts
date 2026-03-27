@@ -247,7 +247,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "Step 2: Get ECG immediately if K⁺ > 6.0",
           items: ["Peaked T-waves → Prolonged PR → Wide QRS → Sine wave → VF/asystole", "ECG changes do NOT correlate perfectly with K⁺ level — treat the patient"] },
         { heading: "Step 3: STABILIZE (if ECG changes present)",
-          items: ["IV Calcium gluconate 10% — 10 mL over 2-3 min (stabilizes membrane, does NOT lower K⁺)", "Onset: 1-3 minutes. Can repeat in 5 min if ECG unchanged."] },
+          items: ["IV Calcium gluconate 10% — 10-20 mL (1-2g) over 2-3 min (stabilizes membrane, does NOT lower K⁺)", "Onset: 1-3 minutes. Can repeat in 5 min if ECG unchanged."] },
         { heading: "Step 4: SHIFT K⁺ intracellularly",
           items: ["Regular insulin 10 units IV + D50 25g (onset 15-30 min, lasts 4-6h)", "Albuterol 10-20 mg nebulized (onset 15-30 min)", "Sodium bicarbonate if concurrent acidosis (less effective alone)"] },
         { heading: "Step 5: REMOVE K⁺ from body",

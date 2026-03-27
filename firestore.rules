@@ -2,39 +2,57 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isStudentOwner(studentId) {
+      return isSignedIn() && request.auth.uid == studentId;
+    }
+
+    function hasValidStudentName() {
+      return request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 50;
+    }
+
+    match /admins/{uid} {
+      allow get: if isSignedIn() && request.auth.uid == uid;
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
 
     // ─── Rotation documents ────────────────────────────────────────
     match /rotations/{rotationCode} {
-      // Anyone authenticated or anonymous can read rotation metadata
-      // (needed to validate rotation codes and load shared curriculum)
-      allow read: if true;
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
 
-      // Only admin writes (from the admin panel) — currently no Firebase Auth,
-      // so restrict to field-level validation instead of auth checks.
-      // When Firebase Auth is added, tighten to: request.auth != null && request.auth.token.admin == true
-      allow create: if request.resource.data.keys().hasAll(['name', 'createdAt']);
-      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+      allow create: if isAdmin()
+                    && request.resource.data.keys().hasAll(['name', 'createdAt']);
+
+      allow update: if isAdmin()
+                    && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['curriculum', 'articles', 'announcements', 'settings',
-                                 'clinicGuides', 'name', 'location', 'dates', 'studentCount']);
-      allow delete: if true; // Admin deletes — tighten with auth later
+                                 'clinicGuides', 'name', 'location', 'dates',
+                                 'archived', 'archivedAt']);
+
+      allow delete: if isAdmin();
 
       // ─── Student subcollection ─────────────────────────────────
       match /students/{studentId} {
-        // Students can read their own doc; admin can read all
-        allow read: if true;
-
-        // Students can create/update their own doc with required fields
-        allow create: if request.resource.data.keys().hasAll(['name'])
-                      && request.resource.data.name is string
-                      && request.resource.data.name.size() > 0
-                      && request.resource.data.name.size() <= 50;
-
-        allow update: if request.resource.data.name is string
-                      && request.resource.data.name.size() > 0
-                      && request.resource.data.name.size() <= 50;
-
-        // Only admin should delete students — tighten with auth later
-        allow delete: if true;
+        allow get: if isAdmin() || isStudentOwner(studentId);
+        allow list: if isAdmin();
+        allow create: if (isAdmin() || isStudentOwner(studentId))
+                      && request.resource.data.keys().hasAll(['name'])
+                      && hasValidStudentName();
+        allow update: if (isAdmin() || isStudentOwner(studentId))
+                      && hasValidStudentName();
+        allow delete: if isAdmin();
       }
     }
 
