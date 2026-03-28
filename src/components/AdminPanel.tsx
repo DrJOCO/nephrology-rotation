@@ -529,7 +529,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
         {[
           { label: "Add Student", icon: "➕", action: () => navigate("students") },
-          { label: "Edit Content", icon: "📝", action: () => navigate("content") },
+          { label: rotationCode ? "Rotation Code" : "New Rotation", icon: "📡", action: () => navigate("settings") },
           { label: "Announcements", icon: "📢", action: () => navigate("content", { type: "announcements" }) },
           { label: "Export Report", icon: "🖨️", action: () => navigate("dashboard", { type: "printCohort" }) },
         ].map((a, i) => (
