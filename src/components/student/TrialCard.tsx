@@ -12,7 +12,7 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 2, flex: 1 }}>{trial.name}</div>
-              {onToggleBookmark && <span onClick={(e) => { e.stopPropagation(); onToggleBookmark(trial.name); }} style={{ fontSize: 16, color: isBookmarked ? T.gold : T.muted, cursor: "pointer", flexShrink: 0 }}>{isBookmarked ? "\u2605" : "\u2606"}</span>}
+              {onToggleBookmark && <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(trial.name); }} style={{ background: "none", border: "none", fontSize: 16, color: isBookmarked ? T.gold : T.muted, cursor: "pointer", flexShrink: 0, padding: "8px", margin: "-8px", lineHeight: 1 }}>{isBookmarked ? "\u2605" : "\u2606"}</button>}
             </div>
             <div style={{ fontSize: 11, color: T.sub }}>{trial.journal} ({trial.year})</div>
             <div style={{ fontSize: 12, color: T.text, marginTop: 5, lineHeight: 1.45, fontStyle: "italic" }}>{trial.takeaway}</div>

@@ -38,6 +38,33 @@ describe("topicMapping", () => {
       expect(content.cases[0]).toHaveProperty("id");
     });
 
+    it("returns content for newly added consult topics", () => {
+      const biopsy = getTopicContent("Kidney Biopsy");
+      const access = getTopicContent("Dialysis Access");
+      const postRenal = getTopicContent("Post-Renal AKI");
+      const anemia = getTopicContent("Anemia of CKD");
+      const ckdMbd = getTopicContent("CKD-MBD");
+
+      expect(biopsy.studySheets.length).toBeGreaterThan(0);
+      expect(biopsy.cases.length).toBeGreaterThan(0);
+      expect(biopsy.quizWeeks).toContain(3);
+
+      expect(access.studySheets.length).toBeGreaterThan(0);
+      expect(access.cases.length).toBeGreaterThan(0);
+      expect(access.quizWeeks).toContain(4);
+
+      expect(postRenal.studySheets.length).toBeGreaterThan(0);
+      expect(postRenal.cases.length).toBeGreaterThan(0);
+      expect(postRenal.quizWeeks).toContain(1);
+
+      expect(anemia.studySheets.length).toBeGreaterThan(0);
+      expect(anemia.cases.length).toBeGreaterThan(0);
+
+      expect(ckdMbd.studySheets.length).toBeGreaterThan(0);
+      expect(ckdMbd.cases.length).toBeGreaterThan(0);
+      expect(ckdMbd.quizWeeks).toContain(2);
+    });
+
     it("returns empty results for non-existent topic", () => {
       const content = getTopicContent("Nonexistent Topic");
       expect(content.studySheets).toEqual([]);
@@ -46,10 +73,10 @@ describe("topicMapping", () => {
       expect(content.quizWeeks).toEqual([]);
     });
 
-    it("returns empty arrays for Other topic", () => {
+    it("returns study sheet for Other topic (Special Topics)", () => {
       const content = getTopicContent("Other");
-      expect(content.studySheets).toEqual([]);
-      expect(content.quizWeeks).toEqual([]);
+      expect(content.studySheets.length).toBeGreaterThan(0);
+      expect(content.studySheets[0].id).toBe("special-topics-cheatsheet");
     });
   });
 
@@ -69,10 +96,15 @@ describe("topicMapping", () => {
       expect(topicHasContent("CKD")).toBe(true);
       expect(topicHasContent("Polycystic Kidney Disease")).toBe(true);
       expect(topicHasContent("APOL1-Associated Kidney Disease")).toBe(true);
+      expect(topicHasContent("Kidney Biopsy")).toBe(true);
+      expect(topicHasContent("Dialysis Access")).toBe(true);
+      expect(topicHasContent("Post-Renal AKI")).toBe(true);
+      expect(topicHasContent("Anemia of CKD")).toBe(true);
+      expect(topicHasContent("CKD-MBD")).toBe(true);
     });
 
-    it("returns false for Other", () => {
-      expect(topicHasContent("Other")).toBe(false);
+    it("returns true for Other (has Special Topics study sheet)", () => {
+      expect(topicHasContent("Other")).toBe(true);
     });
   });
 });

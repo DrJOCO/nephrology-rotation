@@ -115,7 +115,7 @@ The cardiology fellow asks for your recommendations on preventing contrast-induc
       id: "w1c3",
       title: "Post-Surgical Oliguria",
       category: "Acute Kidney Injury",
-      topics: ["AKI", "Urinalysis"],
+      topics: ["AKI", "Post-Renal AKI", "Urinalysis"],
       difficulty: "Beginner",
       scenario: `A 55-year-old man underwent elective open abdominal aortic aneurysm repair 18 hours ago. He has been in the surgical ICU and the nurse calls you because his urine output has been 15 mL/hr for the past 4 hours (total 60 mL).
 
@@ -168,6 +168,113 @@ His Foley catheter was just flushed and is patent. Current IVF: D5 0.45% NaCl at
           explanation: "The classic indications for emergent dialysis can be remembered with the mnemonic AEIOU: Acidosis (refractory), Electrolytes (hyperkalemia), Ingestion (toxic), Overload (volume/pulmonary edema), and Uremia (symptoms like pericarditis, encephalopathy, bleeding). An elevated BUN alone, without uremic symptoms, is not an indication for emergent dialysis. BUN >100 or the presence of uremic symptoms would warrant consideration."
         }
       ]
+    },
+    {
+      id: "w1c4",
+      title: "AKI in Decompensated Cirrhosis",
+      category: "Hepatorenal Syndrome",
+      difficulty: "Intermediate",
+      topics: ["Hepatorenal Syndrome", "AKI"],
+      scenario: `A 62-year-old man with alcohol-related cirrhosis (Child-Pugh C, MELD 28) and refractory ascites is admitted with confusion and worsening abdominal distension. He underwent large-volume paracentesis (6L) two days ago without albumin replacement. His home medications include furosemide 40mg daily and spironolactone 100mg daily.
+
+On exam, he is afebrile, BP 88/52, HR 104. He has jaundice, spider angiomata, tense ascites, and asterixis. There is no peripheral edema.
+
+Labs: Cr 3.8 mg/dL (baseline 1.0 three months ago), BUN 48, Na 126 mEq/L, K 4.8 mEq/L. UA shows no protein, no blood, bland sediment. Urine Na 4 mEq/L. Renal ultrasound shows normal-sized kidneys without hydronephrosis.
+
+A diagnostic paracentesis shows 380 PMNs/\u03bcL in the ascitic fluid.`,
+      questions: [
+        {
+          q: "What is the most likely precipitant of this patient's AKI?",
+          choices: [
+            "Contrast-induced nephropathy",
+            "Spontaneous bacterial peritonitis (SBP) and large-volume paracentesis without albumin",
+            "Obstructive uropathy",
+            "ATN from aminoglycoside exposure",
+          ],
+          answer: 1,
+          explanation: "The ascitic fluid PMN count >250/\u03bcL confirms SBP, which is the most common precipitant of HRS-AKI. Additionally, large-volume paracentesis without albumin replacement causes effective hypovolemia and is another known HRS trigger. Always perform a diagnostic paracentesis in cirrhotic patients with AKI \u2014 even if they appear asymptomatic.",
+        },
+        {
+          q: "After treating the SBP with ceftriaxone and starting IV albumin 1 g/kg/day for 2 days, the Cr remains at 3.5 mg/dL. Diuretics have been held. What criteria have been met?",
+          choices: [
+            "KDIGO Stage 1 AKI only \u2014 too early to diagnose HRS",
+            "ICA diagnostic criteria for HRS-AKI",
+            "Acute tubular necrosis based on the urine Na",
+            "Post-renal AKI requiring urologic intervention",
+          ],
+          answer: 1,
+          explanation: "This patient now meets all ICA criteria for HRS-AKI: (1) Cirrhosis + ascites, (2) AKI by KDIGO criteria (Cr 1.0\u21923.8, >3\u00d7 baseline = Stage 3), (3) No shock, nephrotoxins, obstruction, or glomerular disease, (4) No improvement after 2 days of IV albumin with diuretic withdrawal. The very low urine Na (4 mEq/L) and bland sediment are characteristic but not required.",
+        },
+        {
+          q: "What is the most appropriate next step in management?",
+          choices: [
+            "Start norepinephrine drip for vasopressor support",
+            "Initiate hemodialysis via tunneled catheter",
+            "Start terlipressin plus continue IV albumin",
+            "Increase the IV albumin dose and wait another 48 hours",
+          ],
+          answer: 2,
+          explanation: "Terlipressin + albumin is the standard treatment for HRS-AKI (CONFIRM trial: 32% vs 17% HRS reversal). Terlipressin causes splanchnic vasoconstriction, counteracting the vasodilation that drives HRS pathophysiology. Important caveat: assess for volume overload before starting terlipressin (respiratory failure risk). Norepinephrine + albumin is an alternative if terlipressin is unavailable. Dialysis is reserved for standard indications (AEIOU). Liver transplant remains the definitive treatment.",
+        },
+        {
+          q: "The patient's MELD score is 28. Why is this relevant to HRS management?",
+          choices: [
+            "MELD determines which diuretic to use",
+            "MELD incorporates creatinine and affects liver transplant priority \u2014 HRS-AKI is ultimately treated by transplant",
+            "MELD determines the dose of terlipressin",
+            "MELD is used to calculate the FENa",
+          ],
+          answer: 1,
+          explanation: "The MELD score incorporates creatinine, bilirubin, and INR to predict 90-day mortality in cirrhosis. Rising Cr from HRS increases MELD, which raises liver transplant priority. This is critically important because liver transplant is the only definitive treatment for HRS \u2014 medical therapy with terlipressin is a bridge. All HRS-AKI patients should be evaluated for transplant candidacy.",
+        },
+      ],
+    },
+    {
+      id: "w1c5",
+      title: "Found Down with Muscle Injury",
+      category: "Rhabdomyolysis",
+      difficulty: "Beginner",
+      topics: ["Rhabdomyolysis", "AKI"],
+      scenario: `A 34-year-old man is brought to the ED by EMS after being found unresponsive in his apartment. His roommate reports he went out drinking two nights ago and was not seen until now. There is no known trauma. He has no significant medical history and takes no medications. A toxicology screen is positive for alcohol and benzodiazepines.
+
+On exam, he is drowsy but arousable. BP 100/60, HR 110, T 37.8\u00b0C. His right thigh and buttock are swollen and tender. His urine is dark brown.
+
+Labs: CK 82,000 U/L, Cr 4.2 mg/dL (baseline unknown, assumed normal), BUN 52, K+ 6.4 mEq/L, Ca\u00b2+ 6.8 mg/dL, Phosphorus 7.2 mg/dL, pH 7.28, HCO\u2083 16 mEq/L. UA: Heme 3+, RBCs 0-1/HPF. ECG shows peaked T waves.`,
+      questions: [
+        {
+          q: "What does the urine dipstick result (heme 3+ with <3 RBCs/HPF) indicate?",
+          choices: [
+            "Glomerulonephritis with RBC casts",
+            "Myoglobinuria from rhabdomyolysis",
+            "Hemoglobinuria from hemolytic anemia",
+            "False positive from UTI",
+          ],
+          answer: 1,
+          explanation: "Heme-positive urine with few/no RBCs on microscopy = myoglobinuria (or hemoglobinuria). In this clinical context (CK 82,000, swollen limb, found down), myoglobinuria from rhabdomyolysis is the diagnosis. The urine dipstick detects the heme moiety in both hemoglobin and myoglobin \u2014 microscopy distinguishes them by looking for RBCs.",
+        },
+        {
+          q: "The K+ is 6.4 mEq/L with peaked T waves on ECG. What is the FIRST intervention?",
+          choices: [
+            "IV insulin + D50 to shift potassium intracellularly",
+            "IV calcium gluconate for cardiac membrane stabilization",
+            "Oral kayexalate to remove potassium",
+            "IV normal saline at 500 mL/h to enhance renal K+ excretion",
+          ],
+          answer: 1,
+          explanation: "With ECG changes (peaked T waves), the first step is ALWAYS IV calcium gluconate \u2014 it stabilizes the cardiac membrane within minutes, protecting against arrhythmia. It does NOT lower K+ levels. After calcium, give insulin + D50 (shifts K+ into cells in 15-30 min), then consider albuterol nebs. K+ removal (kayexalate, furosemide, or dialysis) is step 3. Fluids help but are not the immediate priority when ECG is abnormal.",
+        },
+        {
+          q: "What is the target urine output for IV fluid resuscitation in rhabdomyolysis?",
+          choices: [
+            "0.5 mL/kg/h (standard AKI target)",
+            "1 mL/kg/h",
+            "200-300 mL/h (aggressive volume resuscitation)",
+            "Urine output doesn't matter \u2014 just replace the fluid deficit",
+          ],
+          answer: 2,
+          explanation: "The target UOP in rhabdomyolysis is 200-300 mL/h \u2014 much more aggressive than typical AKI management. The goal is to dilute myoglobin in the tubules and prevent cast formation. Use isotonic crystalloid (NS or LR). There is no proven benefit to IV bicarbonate or mannitol over crystalloid alone. Monitor closely for volume overload, especially if the patient develops oliguric AKI.",
+        },
+      ],
     }
   ],
 
@@ -336,6 +443,55 @@ Urine ketones: positive`,
           explanation: "This patient has two concurrent causes of AGMA: (1) Alcoholic ketoacidosis (AKA) — history of alcoholism, positive urine ketones, and starvation from poor oral intake. AKA occurs after binge drinking with decreased food intake. Glucose is normal (unlike DKA). (2) Lactic acidosis — lactate 4.5, likely from dehydration, poor perfusion, and hepatic dysfunction. Treatment is IV fluids (D5NS), thiamine, and electrolyte repletion. Insulin is NOT needed for AKA (unlike DKA) because glucose is normal."
         }
       ]
+    },
+    {
+      id: "w2c4",
+      title: "Rising Creatinine During HF Diuresis",
+      category: "Cardiorenal Syndrome",
+      difficulty: "Intermediate",
+      topics: ["Cardiorenal Syndrome", "Fluid Management", "Diuretics"],
+      scenario: `A 71-year-old woman with HFrEF (EF 20%), type 2 diabetes, and CKD stage 3b (baseline eGFR 38, Cr 1.5) is admitted with 3 weeks of progressive dyspnea, orthopnea, and leg swelling. She has gained 8 kg above her dry weight. Her home medications include lisinopril 20mg, carvedilol 25mg BID, and furosemide 40mg PO daily.
+
+On exam: BP 132/78, HR 88. JVP is elevated to 14 cm H\u2082O. Bilateral crackles at the lung bases. 3+ pitting edema to the thighs. Weight 86 kg (dry weight 78 kg).
+
+She is started on IV furosemide 80mg BID. By day 3, she has lost 4 kg with good urine output (~2.5 L/day). However, her Cr has risen from 1.5 to 2.1 mg/dL. NT-proBNP has decreased from 12,000 to 6,500 pg/mL. Her hematocrit has risen from 32% to 37%.
+
+The primary team pages nephrology because they are concerned about "acute kidney injury" and want to decrease the furosemide.`,
+      questions: [
+        {
+          q: "How should you interpret this patient's rising creatinine?",
+          choices: [
+            "This is acute kidney injury from over-diuresis \u2014 decrease furosemide immediately",
+            "This is likely hemodynamic from effective decongestion \u2014 the improving BNP and hemoconcentration are reassuring",
+            "This requires urgent renal ultrasound to rule out obstruction",
+            "This represents contrast-induced nephropathy from a recent CT scan",
+          ],
+          answer: 1,
+          explanation: "The Cr rise is occurring in the context of effective decongestion: weight down 4 kg, NT-proBNP improving (12,000\u21926,500), and hemoconcentration (Hct 32\u219237%). Multiple studies show that a Cr rise with concomitant decongestion is NOT associated with worse outcomes \u2014 it's hemodynamic, not true kidney injury. Stopping diuretics here would be harmful because the patient is still 4 kg above dry weight.",
+        },
+        {
+          q: "The patient is still 4 kg above dry weight with JVP of 12 cm and 2+ edema. By day 5, urine output has dropped to 1L/day despite furosemide 80mg IV BID. Cr is now 2.4 mg/dL. Serum chloride is 88 mEq/L (low). What is the best next step?",
+          choices: [
+            "Stop all diuretics and give IV normal saline",
+            "Add metolazone 5mg PO before the furosemide dose (sequential nephron blockade)",
+            "Start ultrafiltration at 200 mL/h",
+            "Discontinue lisinopril to improve renal perfusion",
+          ],
+          answer: 1,
+          explanation: "This is diuretic resistance with persistent volume overload. Sequential nephron blockade (adding a thiazide like metolazone to a loop diuretic) is the standard escalation strategy. The hypochloremia (Cl 88) is contributing to diuretic resistance and metabolic alkalosis. Stopping diuretics would worsen congestion. Ultrafiltration is reserved for truly refractory cases (CARRESS-HF showed diuretics are better). Don't stop ACEi/ARB unless there's hypotension or severe AKI.",
+        },
+        {
+          q: "What is the most important hemodynamic driver of kidney dysfunction in this patient?",
+          choices: [
+            "Low cardiac output causing decreased renal blood flow",
+            "Elevated central venous pressure causing increased renal venous pressure",
+            "Atherosclerotic renal artery stenosis",
+            "NSAID-induced afferent arteriolar vasoconstriction",
+          ],
+          answer: 1,
+          explanation: "Studies from the ESCAPE trial and others consistently show that elevated CVP (venous congestion) is more strongly associated with worsening kidney function in HF than low cardiac output. Elevated CVP increases renal venous pressure, which directly reduces the transrenal pressure gradient and GFR. This is why aggressive decongestion (reducing CVP) often IMPROVES kidney function, even though it may transiently raise Cr.",
+        },
+      ],
     }
   ],
 
@@ -345,7 +501,7 @@ Urine ketones: positive`,
       id: "w3c1",
       title: "Nephrotic Syndrome Workup",
       category: "Glomerular Disease",
-      topics: ["Nephrotic Syndrome", "Proteinuria", "APOL1-Associated Kidney Disease"],
+      topics: ["Nephrotic Syndrome", "Proteinuria", "Kidney Biopsy", "APOL1-Associated Kidney Disease"],
       difficulty: "Intermediate",
       scenario: `A 52-year-old man with type 2 diabetes (A1c 9.2%) presents with progressive bilateral lower extremity edema over 6 weeks and "foamy urine." He has no history of kidney disease.
 
@@ -404,7 +560,7 @@ Renal ultrasound shows bilateral 12 cm kidneys with increased cortical echogenic
       id: "w3c2",
       title: "ANCA Vasculitis with RPGN",
       category: "Glomerular Disease",
-      topics: ["Glomerulonephritis"],
+      topics: ["Glomerulonephritis", "Kidney Biopsy"],
       difficulty: "Advanced",
       scenario: `A 65-year-old woman presents with 3 weeks of fatigue, myalgias, and dark ("cola-colored") urine. She also reports a 2-week history of worsening cough with occasional hemoptysis.
 
@@ -502,6 +658,69 @@ His renal function has been stable over the past year. He asks about "new kidney
           explanation: "Finerenone, a non-steroidal mineralocorticoid receptor antagonist, showed significant kidney and cardiovascular benefit in the FIDELIO-DKD and FIGARO-DKD trials in patients with diabetic kidney disease already on RAAS blockade. KDIGO now recommends the combination of ACEi/ARB + SGLT2i + finerenone as optimal nephroprotective therapy in DKD. KDIGO 2021 recommends targeting systolic BP <120 mmHg when tolerated in CKD with albuminuria (based on SPRINT). Protein restriction to 0.8 g/kg/day (not 0.6) is reasonable. ESAs are for established anemia, not prophylaxis."
         }
       ]
+    },
+    {
+      id: "w3c4",
+      title: "Progressive Proteinuria in Diabetes",
+      category: "Diabetic Kidney Disease",
+      difficulty: "Intermediate",
+      topics: ["Diabetic Kidney Disease", "SGLT2 Inhibitors", "CKD"],
+      scenario: `A 55-year-old woman with type 2 diabetes for 18 years, hypertension, and obesity (BMI 34) is referred to nephrology clinic for progressive CKD. She has known diabetic retinopathy (laser-treated 3 years ago).
+
+Her labs over the past 2 years:
+- 2 years ago: eGFR 62, UACR 180 mg/g
+- 1 year ago: eGFR 52, UACR 350 mg/g
+- Today: eGFR 42, UACR 520 mg/g
+
+Current medications: Metformin 1000mg BID, lisinopril 40mg daily (max dose), amlodipine 10mg, atorvastatin 40mg, insulin glargine 30 units at bedtime. HbA1c 7.4%. BP today 128/76. UA is bland with no hematuria.
+
+She has not been started on an SGLT2 inhibitor, finerenone, or GLP-1 RA.`,
+      questions: [
+        {
+          q: "Is this patient's kidney disease consistent with diabetic kidney disease (DKD)?",
+          choices: [
+            "No \u2014 DKD doesn't cause proteinuria this severe",
+            "Yes \u2014 longstanding diabetes, progressive albuminuria, retinopathy, and bland sediment are classic for DKD",
+            "No \u2014 the eGFR decline is too rapid for DKD",
+            "Cannot determine without a kidney biopsy",
+          ],
+          answer: 1,
+          explanation: "This is classic DKD: 18-year diabetes history, progressive albuminuria (A2\u2192A3), declining eGFR (~10 mL/min/year \u2014 aggressive but not atypical for unoptimized DKD), diabetic retinopathy (strongly supports DKD), and bland UA without hematuria. A biopsy is not required when the clinical picture is this consistent. Red flags that would prompt biopsy: active sediment, no retinopathy, very rapid decline, or onset <5 years after T1DM.",
+        },
+        {
+          q: "She is already on max-dose lisinopril (Pillar 1). What should be started NEXT?",
+          choices: [
+            "Finerenone \u2014 start the third pillar before the second",
+            "An SGLT2 inhibitor (dapagliflozin or empagliflozin) \u2014 the second pillar of DKD therapy",
+            "Hydrochlorothiazide for additional BP control",
+            "Cyclophosphamide for immunosuppression of the proteinuria",
+          ],
+          answer: 1,
+          explanation: "SGLT2i is the second pillar and should be started next. DAPA-CKD showed a 39% reduction in kidney events (including non-diabetics). EMPA-KIDNEY confirmed benefits down to eGFR 20. With her eGFR of 42, she is an excellent candidate. After starting SGLT2i, consider adding finerenone (Pillar 3, per FIDELIO-DKD) and semaglutide (Pillar 4, per FLOW trial). Each pillar adds incremental benefit on top of the others.",
+        },
+        {
+          q: "Two weeks after starting empagliflozin, her eGFR drops from 42 to 38. She feels fine. Her K+ is 4.6 and BP is 120/72. What do you tell the patient?",
+          choices: [
+            "\"We need to stop this medication \u2014 your kidney function is getting worse\"",
+            "\"This small dip is expected and actually means the medication is working. It protects your kidneys by reducing pressure inside the filters\"",
+            "\"We need to add IV fluids to prevent further damage\"",
+            "\"You should increase your salt intake to compensate\"",
+          ],
+          answer: 1,
+          explanation: "The initial eGFR dip of 3-5 mL/min with SGLT2i is hemodynamic \u2014 it reflects reduced intraglomerular pressure from restored tubuloglomerular feedback. This is the SAME mechanism that provides long-term nephroprotection (analogous to the ACEi/ARB dip). eGFR typically stabilizes by 3 months and then declines MORE SLOWLY than without the drug. Stopping the medication would remove this protection. Counsel patients about this expected dip at the time of prescribing.",
+        },
+        {
+          q: "After optimizing ACEi/ARB + SGLT2i, what additional agents should be considered for this patient's DKD?",
+          choices: [
+            "Cyclophosphamide and rituximab",
+            "Finerenone (non-steroidal MRA) and semaglutide (GLP-1 RA) \u2014 Pillars 3 and 4",
+            "Spironolactone and hydrochlorothiazide",
+            "IV iron and erythropoietin",
+          ],
+          answer: 1,
+          explanation: "The 4 pillars of DKD therapy (2024): (1) ACEi/ARB \u2014 max dose \u2713, (2) SGLT2i \u2713, (3) Finerenone \u2014 FIDELIO-DKD showed 18% kidney risk reduction on top of ACEi/ARB, with less hyperkalemia than spironolactone, (4) GLP-1 RA (semaglutide) \u2014 FLOW trial showed 24% kidney risk reduction. Each pillar provides additive benefit. This patient should be started on finerenone (check K+ first \u2014 must be \u22644.8) and discussed for semaglutide (also helps with weight and HbA1c).",
+        },
+      ],
     }
   ],
 
@@ -511,7 +730,7 @@ His renal function has been stable over the past year. He asks about "new kidney
       id: "w4c1",
       title: "Dialysis Initiation Decision",
       category: "Dialysis",
-      topics: ["Dialysis", "CKD"],
+      topics: ["Dialysis", "Dialysis Access", "CKD", "Anemia of CKD", "CKD-MBD"],
       difficulty: "Intermediate",
       scenario: `A 58-year-old man with CKD stage 5 from diabetic nephropathy (eGFR 8 mL/min) is seen in pre-dialysis clinic. He reports progressive fatigue, poor appetite, morning nausea, difficulty concentrating, and a "metallic taste" in his mouth for the past month. He has lost 5 kg.
 
@@ -568,7 +787,7 @@ Exam: BP 158/92, bilateral 2+ pitting edema. AV fistula was placed 3 months ago 
       id: "w4c2",
       title: "Kidney Transplant Rejection",
       category: "Transplant",
-      topics: ["Transplant"],
+      topics: ["Transplant", "Kidney Biopsy"],
       difficulty: "Advanced",
       scenario: `A 45-year-old woman who received a deceased-donor kidney transplant 8 months ago presents with rising creatinine. Her baseline post-transplant Cr was 1.2, and today it is 2.1. She is on tacrolimus, mycophenolate, and prednisone.
 
@@ -657,6 +876,53 @@ Vitals: BP 142/88 (likely pain), HR 92, temp 37.0°C. Labs: Cr 1.0, Ca2+ 10.8 (s
           explanation: "Comprehensive stone prevention requires addressing all abnormalities: (1) Increase fluid intake (goal >2.5 L/day urine output — most important single intervention), (2) Thiazide diuretic (hydrochlorothiazide or chlorthalidone) — reduces urinary calcium excretion by enhancing proximal tubule calcium reabsorption, (3) Potassium citrate — corrects hypocitraturia (citrate inhibits calcium stone crystallization), (4) Refer for parathyroidectomy evaluation — PHPT is a surgical disease causing recurrent stones. Importantly, do NOT restrict dietary calcium — this paradoxically increases stone risk by allowing more oxalate absorption."
         }
       ]
+    },
+    {
+      id: "w4c4",
+      title: "PD Patient with Cloudy Effluent",
+      category: "Peritoneal Dialysis",
+      difficulty: "Beginner",
+      topics: ["Peritoneal Dialysis", "Dialysis"],
+      scenario: `A 48-year-old woman with ESKD from lupus nephritis has been on automated peritoneal dialysis (APD) for 2 years via a Tenckhoff catheter. She calls the PD clinic reporting that her effluent bags have been cloudy for the past 12 hours. She has mild diffuse abdominal pain and feels "achy." She denies fever, nausea, vomiting, or diarrhea. She reports no recent contamination events or breaks in sterile technique.
+
+On exam in the ED: T 37.9\u00b0C, BP 128/78, HR 92. Abdomen is mildly tender diffusely without rebound or guarding. The PD catheter exit site is clean with no erythema, drainage, or tunnel tenderness.
+
+She drains 2L of cloudy effluent. Effluent studies: WBC 650/\u03bcL with 90% PMNs. Gram stain shows gram-positive cocci in clusters. Cultures are pending. Her labs: WBC 9.2, Cr 8.4 (her usual baseline on PD), K+ 4.8, Albumin 3.0.`,
+      questions: [
+        {
+          q: "Does this patient meet the diagnostic criteria for PD peritonitis?",
+          choices: [
+            "No \u2014 she needs a CT scan first to confirm the diagnosis",
+            "No \u2014 peritonitis requires fever >38.5\u00b0C to diagnose",
+            "Yes \u2014 cloudy effluent with WBC >100/\u03bcL and >50% PMNs meets criteria",
+            "Yes \u2014 but only if the gram stain is positive",
+          ],
+          answer: 2,
+          explanation: "PD peritonitis is diagnosed when the effluent WBC is >100/\u03bcL with >50% PMNs. This patient has WBC 650 with 90% PMNs \u2014 clearly meets criteria. Cloudy effluent is the most reliable clinical sign. Fever is NOT required (many PD peritonitis patients are afebrile). Gram stain positivity is helpful but not required \u2014 it's positive in only ~40% of cases. Culture-negative peritonitis (~15% of cases) is still treated as peritonitis.",
+        },
+        {
+          q: "What is the BEST initial antibiotic regimen?",
+          choices: [
+            "IV vancomycin 1g + IV ceftriaxone 2g",
+            "Intraperitoneal (IP) vancomycin + IP gentamicin per ISPD guidelines",
+            "Oral amoxicillin-clavulanate 875mg BID for 14 days",
+            "IP fluconazole empirically to cover fungal peritonitis",
+          ],
+          answer: 1,
+          explanation: "ISPD 2022 guidelines recommend empiric IP vancomycin (for gram-positive coverage) + IP gentamicin or ceftazidime (for gram-negative coverage). IP administration is essential because IV antibiotics alone do NOT achieve adequate concentrations in the peritoneal cavity. The gram-positive cocci in clusters suggest S. aureus or S. epidermidis \u2014 vancomycin provides excellent coverage. Tailor antibiotics when culture and sensitivity results return at 48-72 hours.",
+        },
+        {
+          q: "After 5 days of appropriate IP antibiotics, the effluent remains cloudy and cultures now grow Candida albicans. What is the next step?",
+          choices: [
+            "Add IP amphotericin B and continue current antibiotics",
+            "Switch to IP fluconazole and continue for 21 days",
+            "Remove the PD catheter, start systemic antifungals, and transition to hemodialysis",
+            "Increase the dwell volume and frequency to improve drug delivery",
+          ],
+          answer: 2,
+          explanation: "Fungal peritonitis is an ABSOLUTE indication for PD catheter removal per ISPD guidelines. Outcomes with catheter retention are very poor. The catheter should be removed promptly, systemic antifungal therapy started (fluconazole or echinocandin based on species and sensitivities), and the patient transitioned to hemodialysis via a temporary HD catheter. PD may potentially be resumed with a new catheter after adequate antifungal treatment (typically \u22652 weeks after catheter removal).",
+        },
+      ],
     }
   ]
 };

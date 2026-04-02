@@ -3,10 +3,11 @@ import { T, WEEKLY, ARTICLES } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems } from "../utils/spacedRepetition";
 import store from "../utils/store";
-import { ensureStudentSession } from "../utils/firebase";
-import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
+import { ensureStudentSession, signOutFirebase } from "../utils/firebase";
+import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, useIsMobile } from "../utils/helpers";
 import { calculatePoints, getLevel, checkAchievements, updateStreak, ACHIEVEMENTS } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
+import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord } from "../types";
 
 // Critical-path components (eager)
@@ -48,6 +49,13 @@ const LazyFallback = () => (
 
 
 function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
+  const isMobile = useIsMobile();
+  const adminTapRef = useRef<number[]>([]);
+  const handleTitleTap = () => {
+    const now = Date.now();
+    adminTapRef.current = [...adminTapRef.current.filter(t => now - t < 800), now];
+    if (adminTapRef.current.length >= 5 && onAdminToggle) { adminTapRef.current = []; onAdminToggle(); }
+  };
   const [tab, setTab] = useState("home");
   const [subView, setSubView] = useState<SubView>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -158,9 +166,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     store.set("neph_gamification", gamification);
 
     // Auto-sync to Firestore (debounced)
-    if (store.getRotationCode() && studentId) {
+    if (store.getRotationCode() && studentId && nameSet && studentName.trim()) {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(() => {
+        const updatedAt = new Date().toISOString();
+        const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
         lastLocalWriteRef.current = Date.now();
         store.setStudentData(studentId, {
           name: studentName,
@@ -174,8 +184,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           bookmarks,
           srQueue,
           activityLog,
-          updatedAt: new Date().toISOString(),
+          updatedAt,
         });
+        store.setTeamSnapshot(studentId, buildTeamSnapshot({
+          studentId,
+          name: studentName,
+          patients,
+          points,
+          updatedAt,
+        }));
       }, 2000);
     }
   }, [patients, weeklyScores, preScore, postScore, studentName, nameSet, loading, completedItems, bookmarks, srQueue, activityLog, gamification, studentId]);
@@ -240,7 +257,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
 
-  const navigate = (t: string, sv: SubView = null) => { setTab(t); setSubView(sv); };
+  const navigate = (t: string, sv: SubView = null) => { setTab(t); setSubView(sv); window.scrollTo(0, 0); };
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
     setBookmarks(prev => {
@@ -248,6 +265,38 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       const exists = arr.includes(itemId);
       return { ...prev, [type]: exists ? arr.filter(id => id !== itemId) : [...arr, itemId] };
     });
+  };
+
+  const flushStudentSync = async () => {
+    if (!store.getRotationCode() || !studentId || !nameSet || !studentName.trim()) return;
+
+    const updatedAt = new Date().toISOString();
+    const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
+    lastLocalWriteRef.current = Date.now();
+
+    await Promise.all([
+      store.setStudentData(studentId, {
+        name: studentName,
+        loginPin: studentPin,
+        patients,
+        weeklyScores,
+        preScore,
+        postScore,
+        gamification,
+        completedItems,
+        bookmarks,
+        srQueue,
+        activityLog,
+        updatedAt,
+      }),
+      store.setTeamSnapshot(studentId, buildTeamSnapshot({
+        studentId,
+        name: studentName,
+        patients,
+        points,
+        updatedAt,
+      })),
+    ]);
   };
 
   const handleJoinRotation = async () => {
@@ -266,7 +315,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setJoinError("");
     try {
       const user = await ensureStudentSession();
-      const sid = user.uid;
       const exists = await store.validateRotationCode(joinCode);
       if (!exists) {
         attempts.count++;
@@ -286,26 +334,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       // Set rotation code first so store methods work
       store.setRotationCode(joinCode);
       setRotationCodeState(joinCode);
+
+      // Student records are owned by the anonymous auth UID for this device/session.
+      // If this same device has already joined before, restore that existing doc.
+      const sid = user.uid;
       setStudentId(sid);
 
-      // Check if this student already exists (returning student)
       const existingData = await store.getStudentData(sid);
       if (existingData) {
-        if (existingData.loginPin && existingData.loginPin !== studentPin) {
-          attempts.count++;
-          if (attempts.count >= 5) {
-            attempts.lockedUntil = Date.now() + 30_000;
-            attempts.count = 0;
-            setJoinError("Too many failed attempts. Locked for 30 seconds.");
-          } else {
-            setJoinError("Incorrect PIN for this phone. Use the PIN you set on this device.");
-          }
-          store.setRotationCode(null);
-          setRotationCodeState("");
-          setJoining(false);
-          return;
-        }
-        // Restore their data
+        // Returning student on the same device/session — restore their data
         if (existingData.patients) setPatients(existingData.patients);
         if (existingData.weeklyScores) setWeeklyScores(existingData.weeklyScores);
         if (existingData.preScore) setPreScore(existingData.preScore);
@@ -321,7 +358,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           updatedAt: new Date().toISOString(),
         });
       } else {
-        // New student — create their Firestore doc
+        // New device/session — create a new student Firestore doc owned by this UID
         await store.setStudentData(sid, {
           name: studentName,
           loginPin: studentPin,
@@ -359,9 +396,20 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     store.set("neph_studentId", sid);
   };
 
-  const handleLogout = () => {
-    // Clear all local data
+  const handleLogout = async () => {
+    const confirmed = window.confirm(
+      "End this student session on this device? You will start a new secure session next time you join, and an attending can recover older progress if needed."
+    );
+    if (!confirmed) return;
+
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    await flushStudentSync();
+    try {
+      await signOutFirebase();
+    } catch (e) {
+      console.warn("Student sign-out failed:", e);
+    }
+
     ["neph_name", "neph_pin", "neph_studentId", "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog"].forEach(k => localStorage.removeItem(k));
     store.setRotationCode(null);
     // Reset all state
@@ -432,6 +480,14 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     return Math.min(week, 4);
   })();
   const totalWeeks = parseInt(sharedSettings?.duration || "4", 10);
+  const rotationEnded = (() => {
+    if (!sharedSettings?.rotationStart) return false;
+    const start = new Date(sharedSettings.rotationStart + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.floor(diffDays / 7) + 1 > totalWeeks;
+  })();
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.sans }}>
@@ -440,41 +496,38 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           {toast}
         </div>
       )}
-      {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} />}
+      {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("guide", { type: "guideDetail", id: "firstday" }); }} />}
       {searchOpen && <GlobalSearchOverlay onClose={() => setSearchOpen(false)} onNavigate={(t, sv) => { navigate(t, sv); setSearchOpen(false); }} articles={articles} />}
       {/* Header */}
       <div style={{ background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, padding: `calc(10px + env(safe-area-inset-top, 0px)) 16px 10px`, position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ color: "white", fontFamily: T.serif, fontSize: 17, fontWeight: 700 }}>Nephrology Rotation</span>
+          <div style={{ minWidth: 0, flex: 1, marginRight: 8 }}>
+            <span onClick={handleTitleTap} style={{ color: "white", fontFamily: T.serif, fontSize: isMobile ? 15 : 17, fontWeight: 700, cursor: "default", WebkitUserSelect: "none", userSelect: "none" }}>Nephrology Rotation</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {studentName}
+              </span>
+              {rotationCode && <span style={{ fontSize: 10, background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)", padding: "2px 8px", borderRadius: 6, fontFamily: T.mono, letterSpacing: 1, flexShrink: 0 }}>{rotationCode}</span>}
               {gamification.points > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.goldAlpha, padding: "2px 8px", borderRadius: 12 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.goldAlpha, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>
                   {getLevel(gamification.points).icon} {gamification.points}
                 </span>
               )}
-            </div>
-            <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {studentName}
-              {rotationCode && <span style={{ marginLeft: 8, fontSize: 10, background: "rgba(255,255,255,0.15)", padding: "2px 8px", borderRadius: 6, fontFamily: T.mono, letterSpacing: 1 }}>{rotationCode}</span>}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <button onClick={() => setSearchOpen(true)} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 14, lineHeight: 1, color: "white", display: "flex", alignItems: "center" }} title="Search">🔍</button>
             <ThemeToggle />
-            {onAdminToggle && (
-              <button onClick={onAdminToggle} style={{ background: "rgba(255,255,255,0.12)", border: "none", color: "white", fontSize: 11, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontWeight: 600 }} title="Admin">⚙</button>
-            )}
-            <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 10, padding: "5px 8px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
-              Sign Out
+<button onClick={() => void handleLogout()} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 10, padding: "5px 8px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+              End Session
             </button>
           </div>
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
-        {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
+      <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + env(safe-area-inset-bottom, 0px))` }}>
+        {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "home" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
@@ -519,7 +572,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <LandmarkTrialsView week={subView.week} onBack={() => navigate("home")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
         {tab === "home" && subView?.type === "studySheets" && (
-          <StudySheetsView week={subView.week} onBack={() => navigate("home")} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
+          <StudySheetsView week={subView.week} onBack={() => navigate("home")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
             setCompletedItems(prev => {
               const next = { ...prev, studySheets: { ...prev.studySheets } };
               if (next.studySheets[sheetId]) delete next.studySheets[sheetId];
@@ -631,8 +684,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "refs" && subView?.type === "refDetail" && (
           <RefDetailView refId={subView.id} onBack={() => navigate("refs")} />
         )}
+        {tab === "refs" && subView?.type === "abbreviations" && (
+          <AbbreviationsView onBack={() => navigate("refs")} />
+        )}
         {tab === "guide" && subView?.type === "trialLibrary" && (
-          <TrialLibraryView onBack={() => navigate("guide")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
+          <TrialLibraryView onBack={() => navigate("guide")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} initialSearch={subView?.searchTrial as string | undefined} />
         )}
         {tab === "guide" && subView?.type === "clinicGuide" && (
           <ClinicGuideView date={subView.date} topic={clinicGuides.find(g => g.date === subView.date)?.topic || "CKD"} isOverride={clinicGuides.find(g => g.date === subView.date)?.isOverride} onBack={() => navigate("guide")} />
@@ -646,7 +702,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "guide" && subView?.type === "rotationGuide" && (
           <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("guide")} />
         )}
-        {tab === "guide" && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
+        {tab === "guide" && subView?.type === "faq" && (
+          <FaqView onBack={() => navigate("guide")} />
+        )}
+        {tab === "guide" && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "progress" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} completedItems={completedItems} totalWeeks={totalWeeks} />}

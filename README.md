@@ -57,3 +57,7 @@ Notes:
 - The default workspace is `/Users/joncheng/Documents/Premier Nephrology/Codex_Claude_Testing`
 - The project defaults to the current workspace folder name, or you can override it with `--project`
 - In this workspace, `codex` is installed but `claude` was not on `PATH` when this was added, so you may need to pass `--claude-cmd` with the full binary path
+
+## Planning Docs
+
+- App Store readiness checklist: [docs/app-store-readiness.md](docs/app-store-readiness.md)

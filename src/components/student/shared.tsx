@@ -5,7 +5,7 @@ import { T } from "../../data/constants";
 //  Shared styles used across multiple student components
 // ═══════════════════════════════════════════════════════════════════════
 
-export const backBtnStyle: CSSProperties = { background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 };
+export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1.5px solid ${T.line}`, color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", fontWeight: 600, minHeight: 44, borderRadius: 22, boxShadow: "0 2px 12px rgba(0,0,0,0.12)", zIndex: 99 };
 
 export const inputLabel: CSSProperties = { fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 
@@ -149,8 +149,8 @@ export const POST_QUIZ_WEEK_MAP = [
 
 // Week → topic area mapping for recommendation engine
 export const WEEK_TOPIC_MAP = {
-  1: { label: "AKI & Foundations", topics: ["AKI", "Urinalysis", "CKD"] },
-  2: { label: "Electrolytes & Acid-Base", topics: ["Hyponatremia", "Hypernatremia", "Hyperkalemia", "Hypokalemia", "Acid-Base", "Calcium/Phosphorus"] },
-  3: { label: "Glomerular Disease & CKD", topics: ["Glomerulonephritis", "Nephrotic Syndrome", "CKD", "Hypertension", "Proteinuria"] },
-  4: { label: "Dialysis & Therapeutics", topics: ["Dialysis", "Transplant", "Kidney Stones", "AIN", "Diuretics"] },
+  1: { label: "AKI & Foundations", topics: ["AKI", "Post-Renal AKI", "Urinalysis", "CKD"] },
+  2: { label: "Electrolytes & Acid-Base", topics: ["Hyponatremia", "Hypernatremia", "Hyperkalemia", "Hypokalemia", "Acid-Base", "Calcium/Phosphorus", "CKD-MBD"] },
+  3: { label: "Glomerular Disease & CKD", topics: ["Glomerulonephritis", "Nephrotic Syndrome", "Kidney Biopsy", "CKD", "Anemia of CKD", "Hypertension", "Proteinuria"] },
+  4: { label: "Dialysis & Therapeutics", topics: ["Dialysis", "Dialysis Access", "Transplant", "Kidney Stones", "AIN", "Diuretics"] },
 };

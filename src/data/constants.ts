@@ -26,22 +26,40 @@ export const T = {
 };
 
 export const TOPICS = [
-  "AKI","CKD","Hyponatremia","Hypernatremia","Hyperkalemia","Hypokalemia",
-  "Acid-Base","Glomerulonephritis","Nephrotic Syndrome","Dialysis","Transplant",
+  "AKI","Post-Renal AKI","CKD","Anemia of CKD","CKD-MBD","Hyponatremia","Hypernatremia","Hyperkalemia","Hypokalemia",
+  "Acid-Base","Glomerulonephritis","Nephrotic Syndrome","Kidney Biopsy","Dialysis","Dialysis Access","Transplant",
   "Kidney Stones","AIN","Urinalysis","Hypertension","Diuretics","Fluid Management",
   "Calcium/Phosphorus","Proteinuria","Polycystic Kidney Disease",
-  "APOL1-Associated Kidney Disease","Other"
+  "APOL1-Associated Kidney Disease","Hepatorenal Syndrome","Contrast-Associated AKI","Rhabdomyolysis","Cardiorenal Syndrome","Diabetic Kidney Disease","SGLT2 Inhibitors","Peritoneal Dialysis","Other"
 ];
 
+export const COMMON_PATIENT_TOPICS = [
+  "AKI",
+  "CKD",
+  "Hyponatremia",
+  "Hyperkalemia",
+  "Acid-Base",
+  "Fluid Management",
+  "Dialysis",
+  "Transplant",
+  "Hepatorenal Syndrome",
+  "Contrast-Associated AKI",
+  "Rhabdomyolysis",
+  "Cardiorenal Syndrome",
+  "Diabetic Kidney Disease",
+];
+
+export const ADDITIONAL_PATIENT_TOPICS = TOPICS.filter(topic => !COMMON_PATIENT_TOPICS.includes(topic));
+
 export const WEEKLY = {
-  1: { title: "Foundations", sub: "Anatomy, GFR, Urinalysis, AKI",
-    topics: ["Nephron Physiology","GFR Assessment","Urinalysis","AKI"] },
-  2: { title: "Electrolytes & Acid-Base", sub: "Na\u207a, K\u207a, Acid-Base, IV Fluids, Ca\u00b2\u207a/PO\u2084",
-    topics: ["Hyponatremia","Hypernatremia","Hyperkalemia","Hypokalemia","Acid-Base","IV Fluids","Calcium/Phosphorus"] },
-  3: { title: "Glomerular Disease & CKD", sub: "GN, Nephrotic, CKD, HTN, Biopsy",
-    topics: ["Nephrotic Syndrome","Glomerulonephritis","CKD","Hypertension","Kidney Biopsy"] },
-  4: { title: "Therapeutics & Integration", sub: "Dialysis, Transplant, Stones, Drugs",
-    topics: ["Dialysis","Transplant","Kidney Stones","AIN","Diuretics","Nephrotoxins"] },
+  1: { title: "Foundations", sub: "Anatomy, GFR, Urinalysis, AKI, HRS, Contrast AKI, Rhabdomyolysis",
+    topics: ["Nephron Physiology","GFR Assessment","Urinalysis","AKI","Post-Renal AKI","Hepatorenal Syndrome","Contrast-Associated AKI","Rhabdomyolysis"] },
+  2: { title: "Electrolytes & Acid-Base", sub: "Na\u207a, K\u207a, Acid-Base, Fluid Management, Ca\u00b2\u207a/PO\u2084, Cardiorenal Syndrome",
+    topics: ["Hyponatremia","Hypernatremia","Hyperkalemia","Hypokalemia","Acid-Base","Fluid Management","Calcium/Phosphorus","CKD-MBD","Cardiorenal Syndrome"] },
+  3: { title: "Glomerular Disease & CKD", sub: "GN, Nephrotic, CKD, HTN, Biopsy, DKD, SGLT2i",
+    topics: ["Nephrotic Syndrome","Glomerulonephritis","CKD","Anemia of CKD","Hypertension","Kidney Biopsy","Diabetic Kidney Disease","SGLT2 Inhibitors"] },
+  4: { title: "Therapeutics & Integration", sub: "Dialysis, Transplant, Stones, Drugs, PD",
+    topics: ["Dialysis","Dialysis Access","Transplant","Kidney Stones","AIN","Diuretics","Nephrotoxins","Peritoneal Dialysis"] },
 };
 
 export const ARTICLES = {
@@ -58,6 +76,11 @@ export const ARTICLES = {
       journal: "CJASN", year: 2022,
       url: "https://journals.lww.com/cjasn/fulltext/2022/05000/overview_of_diagnostic_criteria_and_epidemiology.14.aspx",
       topic: "AKI", type: "Review" },
+    { title: "Hepatorenal Syndrome in Cirrhosis", journal: "NEJM", year: 2023, url: "https://www.nejm.org/doi/full/10.1056/NEJMra2215136", topic: "Hepatorenal Syndrome", type: "Review" },
+    { title: "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)", journal: "NEJM", year: 2021, url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2034323", topic: "Hepatorenal Syndrome", type: "Landmark Study" },
+    { title: "Prevention of Contrast-Associated AKI Related to Angiography (PRESERVE)", journal: "NEJM", year: 2018, url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1710933", topic: "Contrast-Associated AKI", type: "Landmark Study" },
+    { title: "Use of IV Contrast in Patients with Kidney Disease: Consensus from ACR and NKF", journal: "Radiology", year: 2020, url: "https://pubs.rsna.org/doi/10.1148/radiol.2019192094", topic: "Contrast-Associated AKI", type: "Guideline" },
+    { title: "Rhabdomyolysis and Acute Kidney Injury", journal: "NEJM", year: 2009, url: "https://www.nejm.org/doi/full/10.1056/NEJMra0801327", topic: "Rhabdomyolysis", type: "Review" },
   ],
   2: [
     { title: "Diagnosis and Management of Hyponatremia: A Review",
@@ -75,7 +98,10 @@ export const ARTICLES = {
     { title: "Choosing IV Fluids \u2014 Saline vs. Balanced Crystalloids (SMART Trial)",
       journal: "NEJM", year: 2018,
       url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1711584",
-      topic: "IV Fluids", type: "Landmark Study" },
+      topic: "Fluid Management", type: "Landmark Study" },
+    { title: "Cardiorenal Syndrome in the Hospital", journal: "CJASN", year: 2023, url: "https://journals.lww.com/cjasn/fulltext/2023/07000/cardiorenal_syndrome_in_the_hospital.15.aspx", topic: "Cardiorenal Syndrome", type: "Review" },
+    { title: "DOSE Trial: Diuretic Strategies in Patients with Acute Decompensated Heart Failure", journal: "NEJM", year: 2011, url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1005419", topic: "Cardiorenal Syndrome", type: "Landmark Study" },
+    { title: "Ultrafiltration vs IV Diuretics for Decompensated HF (CARRESS-HF)", journal: "NEJM", year: 2012, url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1210357", topic: "Cardiorenal Syndrome", type: "Landmark Study" },
   ],
   3: [
     { title: "DAPA-CKD: Dapagliflozin in CKD",
@@ -98,6 +124,9 @@ export const ARTICLES = {
       journal: "NEJM", year: 2012,
       url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1205511",
       topic: "Polycystic Kidney Disease", type: "Landmark Study" },
+    { title: "Diabetic Kidney Disease: Core Curriculum 2024", journal: "AJKD", year: 2024, url: "https://www.ajkd.org/article/S0272-6386(24)00542-0/fulltext", topic: "Diabetic Kidney Disease", type: "Review" },
+    { title: "SGLT2 Inhibitors for CKD \u2014 A Practical Guide", journal: "CJASN", year: 2023, url: "https://journals.lww.com/cjasn/fulltext/2023/01000/sglt2_inhibitors_for_ckd.17.aspx", topic: "SGLT2 Inhibitors", type: "Review" },
+    { title: "Finerenone in Type 2 Diabetes and CKD (FIDELIO-DKD)", journal: "NEJM", year: 2020, url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2025845", topic: "Diabetic Kidney Disease", type: "Landmark Study" },
   ],
   4: [
     { title: "IDEAL Trial: Early vs Late Initiation of Dialysis",
@@ -120,6 +149,8 @@ export const ARTICLES = {
       journal: "CJASN", year: 2022,
       url: "https://journals.lww.com/cjasn/fulltext/2022/08000/drug_induced_acute_kidney_injury.19.aspx",
       topic: "Nephrotoxins", type: "Review" },
+    { title: "ISPD Peritonitis Guideline Recommendations (2022 Update)", journal: "Perit Dial Int", year: 2022, url: "https://journals.sagepub.com/doi/10.1177/08968608221080586", topic: "Peritoneal Dialysis", type: "Guideline" },
+    { title: "Peritoneal Dialysis \u2014 First-Choice Modality", journal: "NEJM", year: 2021, url: "https://www.nejm.org/doi/full/10.1056/NEJMra2104748", topic: "Peritoneal Dialysis", type: "Review" },
   ],
 };
 
@@ -414,7 +445,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1F525}",
       title: "AKI in 5 Minutes",
       subtitle: "The bread & butter of nephrology consults",
-      topics: ["AKI", "AIN"],
+      topics: ["AKI", "Post-Renal AKI", "AIN"],
       sections: [
         {
           heading: "KDIGO AKI Staging",
@@ -500,6 +531,52 @@ export const STUDY_SHEETS = {
         { trial: "CKD-EPI 2021", pearl: "New race-free equation \u2014 now standard for all patients. Know this exists and that it replaced the 2009 equation." },
       ],
     },
+    {
+      id: "hrs-contrast-rhabdo-cheatsheet",
+      icon: "\u{1FAC0}",
+      title: "HRS, Contrast AKI & Rhabdo",
+      subtitle: "Three AKI subtypes you'll see on consults",
+      topics: ["Hepatorenal Syndrome", "Contrast-Associated AKI", "Rhabdomyolysis"],
+      sections: [
+        {
+          heading: "Hepatorenal Syndrome (HRS-AKI)",
+          items: [
+            "Diagnosis of exclusion in cirrhosis + ascites: AKI + no shock + no nephrotoxins + no obstruction + no improvement after 2 days of IV albumin (1 g/kg/day, max 100 g/day)",
+            "Old classification (Type 1/2) is retired \u2192 now HRS-AKI per ICA/ADQI 2024",
+            "Pathophysiology: Splanchnic vasodilation \u2192 \u2193 effective arterial volume \u2192 \u2191 RAAS/SNS \u2192 renal vasoconstriction",
+            "Treatment: Terlipressin + albumin (CONFIRM trial) \u2014 FDA-approved 2022. Alternative: norepinephrine + albumin or midodrine/octreotide + albumin",
+            "Key pearl: Always rule out SBP first (do a diagnostic paracentesis even if asymptomatic)",
+            "Definitive treatment is liver transplant \u2014 HRS is a marker of end-stage liver disease",
+          ],
+        },
+        {
+          heading: "Contrast-Associated AKI (CA-AKI)",
+          items: [
+            "CA-AKI vs CI-AKI: CA-AKI = any AKI after contrast (may be coincidental). CI-AKI = AKI causally linked to contrast after excluding other causes",
+            "True CI-AKI risk is much lower than historically thought \u2014 large propensity-matched studies show many cases are coincidental",
+            "Risk factors: CKD (eGFR <30), diabetes + CKD, high contrast volume, hemodynamic instability, concurrent nephrotoxins",
+            "Prevention: IV isotonic crystalloid hydration (PRESERVE showed NAC and bicarb are useless). Minimize contrast volume",
+            "Timeline: Cr rises within 24-48h, peaks day 3-5, usually returns to baseline within 7 days",
+            "Don\u2019t withhold life-saving contrast studies (CT angiogram for PE, emergent cardiac cath) \u2014 the risk of NOT imaging is often greater",
+          ],
+        },
+        {
+          heading: "Rhabdomyolysis",
+          items: [
+            "Classic triad: Myalgias + weakness + dark (tea/cola-colored) urine \u2014 but full triad present in \u226410% of cases",
+            "Diagnosis: CK >5,000 U/L (often >10,000) + heme-positive urine with <3 RBCs/HPF (= myoglobinuria, not hematuria)",
+            "AKI in 15-50% of cases: From myoglobin pigment casts, direct tubular toxicity, and volume depletion (third-spacing into injured muscle)",
+            "Electrolyte emergencies: Hyperkalemia (can be severe/rapid), hyperphosphatemia, hypocalcemia (early), hypercalcemia (late/recovery)",
+            "Treatment: AGGRESSIVE IV fluid resuscitation (target UOP 200-300 mL/h). No proven benefit to bicarbonate or mannitol over isotonic crystalloid alone",
+            "Common causes: Crush injury, immobilization (found down), statins, drugs/alcohol, seizures, extreme exertion, hypokalemia, infections",
+          ],
+        },
+      ],
+      trialCallouts: [
+        { trial: "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)", pearl: "Terlipressin + albumin improved HRS-AKI reversal vs albumin alone (32% vs 17%). FDA-approved 2022 but watch for respiratory failure in volume-overloaded patients." },
+        { trial: "PRESERVE", pearl: "NAC and IV sodium bicarbonate did NOT prevent contrast-AKI. Simple IV hydration is all you need." },
+      ],
+    },
   ],
   2: [
     {
@@ -547,7 +624,7 @@ export const STUDY_SHEETS = {
       icon: "\u26A1",
       title: "K\u207a & Acid-Base Quick Hits",
       subtitle: "Don\u2019t let these kill your patient (or your presentation)",
-      topics: ["Hyperkalemia", "Hypokalemia", "Acid-Base", "Calcium/Phosphorus"],
+      topics: ["Hyperkalemia", "Hypokalemia", "Acid-Base", "Calcium/Phosphorus", "CKD-MBD"],
       sections: [
         {
           heading: "Hyperkalemia Emergency Protocol",
@@ -585,10 +662,62 @@ export const STUDY_SHEETS = {
             "Ratio >2: Mixed HAGMA + metabolic alkalosis (e.g., DKA + vomiting)",
           ],
         },
+        {
+          heading: "CKD-MBD in 60 Seconds",
+          items: [
+            "CKD causes phosphate retention and lower calcitriol activation. The usual pattern is high phosphorus, low-normal calcium, and rising PTH.",
+            "Track calcium, phosphorus, PTH, and vitamin D together \u2014 one lab by itself is rarely enough.",
+            "Renal osteodystrophy is the bone-biopsy manifestation; CKD-MBD is the broader mineral, bone, and vascular disorder.",
+            "High-yield management ideas: lower phosphorus burden, use binders when needed, and treat secondary hyperparathyroidism thoughtfully.",
+          ],
+        },
       ],
       trialCallouts: [
         { trial: "PRESERVE", pearl: "NAC and bicarb do NOT prevent contrast nephropathy. Best prevention: adequate hydration with any isotonic crystalloid." },
         { trial: "BiCARB (CKD Bicarb Supplementation)", pearl: "Oral bicarb in CKD with metabolic acidosis (bicarb <22) slows GFR decline. KDIGO recommends target bicarb \u226522." },
+      ],
+    },
+    {
+      id: "cardiorenal-cheatsheet",
+      icon: "\u2764\uFE0F",
+      title: "Cardiorenal Syndrome",
+      subtitle: "When the heart and kidney stop cooperating",
+      topics: ["Cardiorenal Syndrome", "Fluid Management", "Diuretics"],
+      sections: [
+        {
+          heading: "What Is Cardiorenal Syndrome?",
+          items: [
+            "CRS = acute or chronic dysfunction of heart OR kidneys inducing dysfunction in the other",
+            "30-60% of HF patients have eGFR <60 \u2014 this is extremely common",
+            "20-30% of hospitalized HF patients develop Cr rise >0.3 mg/dL during treatment",
+            "Key concept: Rising Cr during diuresis is NOT always bad \u2014 if the patient is decongesting, it may be hemodynamic (not injury)",
+          ],
+        },
+        {
+          heading: "Pathophysiology (Why Kidneys Fail in HF)",
+          items: [
+            "NOT just 'low forward flow' \u2014 venous congestion is often the dominant driver",
+            "Elevated CVP \u2192 elevated renal venous pressure \u2192 \u2193 GFR (independent of cardiac output!)",
+            "Neurohormonal activation: \u2191 RAAS, \u2191 SNS, \u2191 ADH \u2192 sodium/water retention \u2192 worsening congestion",
+            "RV dilation impairs LV filling via ventricular interdependence (septal shift) \u2192 \u2193 forward output",
+            "BUN/Cr ratio elevation reflects neurohormonal activation more than 'prerenal' physiology",
+          ],
+        },
+        {
+          heading: "Management Pearls",
+          items: [
+            "Decongest aggressively \u2014 don\u2019t stop diuretics just because Cr rises if the patient is still volume overloaded",
+            "Cr rise + hemoconcentration + \u2193 NT-proBNP = good sign (effective decongestion), NOT kidney injury",
+            "Loop diuretic resistance: Increase dose \u2192 add thiazide (metolazone) \u2192 consider IV chlorothiazide \u2192 consider CRRT/ultrafiltration",
+            "CARRESS-HF: Ultrafiltration was NOT superior to diuretics and had more adverse events \u2014 diuretics remain first-line",
+            "Hypochloremia with metabolic alkalosis during diuresis \u2260 contraction alkalosis if patient is still volume overloaded \u2014 it\u2019s chloride depletion alkalosis",
+            "Monitor: Daily weights, strict I&Os, BMP, BNP/NT-proBNP trend, urine output",
+          ],
+        },
+      ],
+      trialCallouts: [
+        { trial: "Ultrafiltration vs IV Diuretics for Decompensated HF (CARRESS-HF)", pearl: "Ultrafiltration vs. stepped diuretics for cardiorenal syndrome \u2014 diuretics won. UF had more adverse events and similar weight loss." },
+        { trial: "DOSE", pearl: "High-dose IV furosemide (2.5\u00d7 home dose) trended toward better decongestion with transient Cr rise that was NOT harmful. Don\u2019t be afraid of the dose." },
       ],
     },
   ],
@@ -598,7 +727,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1F50E}",
       title: "Glomerular Disease Cheat Sheet",
       subtitle: "Nephrotic vs. nephritic \u2014 know the difference cold",
-      topics: ["Glomerulonephritis", "Nephrotic Syndrome", "Proteinuria", "APOL1-Associated Kidney Disease"],
+      topics: ["Glomerulonephritis", "Nephrotic Syndrome", "Proteinuria", "Kidney Biopsy", "APOL1-Associated Kidney Disease"],
       sections: [
         {
           heading: "Nephrotic Syndrome (protein leak)",
@@ -642,7 +771,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1F48A}",
       title: "CKD & the SGLT2i Revolution",
       subtitle: "Four pillars of DKD therapy you must know",
-      topics: ["CKD", "Hypertension", "Proteinuria", "Polycystic Kidney Disease"],
+      topics: ["CKD", "Anemia of CKD", "Hypertension", "Proteinuria", "Polycystic Kidney Disease"],
       sections: [
         {
           heading: "CKD Staging (KDIGO Heat Map)",
@@ -672,6 +801,15 @@ export const STUDY_SHEETS = {
             "BP target in CKD: SBP <120 if tolerated (SPRINT) \u2014 but use automated unattended readings",
           ],
         },
+        {
+          heading: "CKD Complications You Should Name on Rounds",
+          items: [
+            "Anemia of CKD is usually low EPO plus iron-restricted erythropoiesis. Check hemoglobin, ferritin, and TSAT together.",
+            "Iron deficiency is common, especially in dialysis. Replete iron before or alongside ESA therapy when appropriate.",
+            "ESAs reduce transfusion burden, but higher hemoglobin targets caused harm in trials like TREAT and CHOIR.",
+            "For advanced CKD, keep mentioning bicarbonate, potassium, anemia, CKD-MBD, and dialysis/transplant planning in the same breath.",
+          ],
+        },
       ],
       trialCallouts: [
         { trial: "Captopril Trial", pearl: "THE original trial proving ACEi slows diabetic nephropathy progression (1993). Foundation for Pillar 1 of DKD therapy." },
@@ -684,6 +822,54 @@ export const STUDY_SHEETS = {
         { trial: "SHARP", pearl: "Simvastatin/ezetimibe reduced atherosclerotic events 17% in CKD. The practical takeaway is to start statins before dialysis, not after dialysis has already begun." },
       ],
     },
+    {
+      id: "dkd-sglt2i-cheatsheet",
+      icon: "\u{1F489}",
+      title: "DKD & SGLT2i Deep Dive",
+      subtitle: "The #1 cause of ESKD deserves its own sheet",
+      topics: ["Diabetic Kidney Disease", "SGLT2 Inhibitors", "CKD"],
+      sections: [
+        {
+          heading: "Diabetic Kidney Disease (DKD)",
+          items: [
+            "#1 cause of ESKD worldwide \u2014 affects ~40% of patients with diabetes",
+            "Classic progression: Hyperfiltration \u2192 microalbuminuria (A2: 30-300 mg/g) \u2192 macroalbuminuria (A3: >300) \u2192 declining GFR \u2192 ESKD",
+            "Screening: Annual UACR + eGFR for all diabetics (type 1 after 5 years, type 2 at diagnosis)",
+            "When to suspect non-diabetic kidney disease in a diabetic: No retinopathy, active sediment, rapid GFR decline, onset <5 years after T1DM diagnosis \u2192 consider biopsy",
+            "Pathology: Kimmelstiel-Wilson nodular glomerulosclerosis (classic but late), diffuse mesangial expansion (earlier)",
+          ],
+        },
+        {
+          heading: "SGLT2 Inhibitors \u2014 The Game Changer",
+          items: [
+            "Mechanism: Block sodium-glucose cotransporter-2 in proximal tubule \u2192 glucosuria \u2192 restore tubuloglomerular feedback \u2192 \u2193 intraglomerular pressure",
+            "Benefits BEYOND glucose: \u2193 proteinuria, \u2193 GFR decline, \u2193 CV death, \u2193 HF hospitalization \u2014 works in NON-DIABETICS too (DAPA-CKD, EMPA-KIDNEY)",
+            "Initiation: Can start down to eGFR 20 (EMPA-KIDNEY). Don\u2019t stop until dialysis/transplant even if eGFR falls below 20",
+            "The 'eGFR dip': Expect 3-5 mL/min drop initially (hemodynamic, like ACEi). This is PROTECTIVE, not harmful. Rebounds by ~3 months",
+            "Sick day rules: Hold during acute illness, major surgery, prolonged fasting (risk of euglycemic DKA in diabetics)",
+            "Side effects: Genital mycotic infections (10-15%), volume depletion (caution with diuretics), euglycemic DKA (rare, mostly T1DM)",
+          ],
+        },
+        {
+          heading: "Four Pillars of DKD Therapy (2024)",
+          items: [
+            "Pillar 1 \u2014 ACEi/ARB: Max tolerated dose. Cr rise up to 30% is acceptable. Foundation since 1993 (Captopril Trial)",
+            "Pillar 2 \u2014 SGLT2i: Dapagliflozin or empagliflozin. Class I recommendation for all CKD with UACR \u2265200 mg/g",
+            "Pillar 3 \u2014 Finerenone (non-steroidal MRA): Add on top of ACEi/ARB in DKD. 18% kidney risk reduction (FIDELIO-DKD). Less hyperkalemia than spironolactone",
+            "Pillar 4 \u2014 GLP-1 RA (semaglutide): FLOW trial showed 24% kidney risk reduction. Stopped early for efficacy. The newest pillar",
+            "BP target: SBP <120 mmHg if tolerated (SPRINT). HbA1c target: <7% for most, but avoid hypoglycemia",
+            "Statin: Indicated for all CKD patients (SHARP trial). Start before dialysis, not after",
+          ],
+        },
+      ],
+      trialCallouts: [
+        { trial: "CREDENCE", pearl: "First SGLT2i kidney-specific trial: Canagliflozin reduced kidney failure 30% in DKD. Stopped early for overwhelming benefit." },
+        { trial: "DAPA-CKD", pearl: "Dapagliflozin reduced kidney events 39% \u2014 INCLUDING in non-diabetics. Changed the paradigm: SGLT2i are kidney drugs, not just diabetes drugs." },
+        { trial: "EMPA-KIDNEY", pearl: "Broadest population: eGFR 20-45 (any UACR) or eGFR 45-90 (UACR \u2265200). Confirmed class effect down to eGFR 20." },
+        { trial: "FIDELIO-DKD", pearl: "Finerenone on top of max ACEi/ARB: 18% kidney risk reduction + 14% CV risk reduction. Third pillar of DKD therapy." },
+        { trial: "FLOW", pearl: "Semaglutide: 24% kidney risk reduction in DKD. First GLP-1 RA kidney trial. Fourth pillar. Stopped early." },
+      ],
+    },
   ],
   4: [
     {
@@ -691,7 +877,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1FA78}",
       title: "Dialysis Essentials",
       subtitle: "When, how, and what kind \u2014 the attending will quiz you",
-      topics: ["Dialysis", "Diuretics"],
+      topics: ["Dialysis", "Dialysis Access", "Diuretics"],
       sections: [
         {
           heading: "When to Start Dialysis",
@@ -781,6 +967,111 @@ export const STUDY_SHEETS = {
         { trial: "PRESERVE", pearl: "NAC and bicarb don\u2019t prevent contrast nephropathy. Just hydrate well and use low-osmolar contrast." },
       ],
     },
+    {
+      id: "pd-cheatsheet",
+      icon: "\u{1FAE7}",
+      title: "Peritoneal Dialysis & Peritonitis",
+      subtitle: "PD patients come to the hospital \u2014 you need to know this",
+      topics: ["Peritoneal Dialysis", "Dialysis"],
+      sections: [
+        {
+          heading: "PD Basics",
+          items: [
+            "Mechanism: Peritoneum as a dialysis membrane \u2014 dialysate instilled via Tenckhoff catheter, dwells, drains. Solute clearance by diffusion, fluid removal by osmotic ultrafiltration",
+            "CAPD: 4-5 manual exchanges/day (2L each, dwell 4-6h). Continuous therapy = always has fluid in abdomen",
+            "APD (cycler): Automated overnight exchanges while sleeping + daytime dwell. Most common modality in US",
+            "Advantages over HD: Better residual renal function preservation, hemodynamic stability, patient independence, home-based, no vascular access needed",
+            "Adequacy: Weekly Kt/V \u22651.7 (ADEMEX showed no benefit above this). Also track residual urine output + ultrafiltration volume",
+          ],
+        },
+        {
+          heading: "PD Peritonitis \u2014 The Big Complication",
+          items: [
+            "Suspect when: Cloudy effluent (most reliable sign!) + abdominal pain \u00b1 fever. Can present without systemic signs",
+            "Diagnosis: Effluent WBC >100/\u03bcL with >50% PMNs. Send effluent for cell count + gram stain + culture (blood culture bottles!)",
+            "Most common organisms: Gram-positive cocci (S. epidermidis, S. aureus) = ~60%. Gram-negative = ~25%. Culture-negative = ~15%",
+            "Empiric treatment: IP (intraperitoneal) vancomycin + IP gentamicin (or IP cefepime/ceftazidime for gram-negative coverage) \u2014 ISPD 2022 guidelines",
+            "Duration: Typically 14-21 days. Fungal peritonitis or refractory peritonitis \u2192 remove the catheter",
+            "Prevention: Sterile exchange technique, exit site care, prophylactic antibiotics before procedures, mupirocin at exit site",
+          ],
+        },
+        {
+          heading: "Inpatient PD Management Pearls",
+          items: [
+            "Continue PD in the hospital if possible \u2014 coordinate with PD nursing/nephrologist",
+            "Hold PD before abdominal surgery (drain abdomen). Resume per surgeon + nephrologist",
+            "If admitted with peritonitis: Drain effluent, send cultures, start empiric IP antibiotics, hold exchanges until effluent clears",
+            "Don\u2019t use IV antibiotics alone for PD peritonitis \u2014 IP dosing is essential for adequate peritoneal levels",
+            "Catheter removal indications: Fungal peritonitis, refractory peritonitis (effluent not clearing by day 5), relapsing peritonitis, tunnel infection",
+            "Switch to HD temporarily if PD catheter removed or peritonitis is severe \u2014 place temporary HD catheter if needed",
+          ],
+        },
+      ],
+      trialCallouts: [
+        { trial: "ADEMEX", pearl: "Increasing peritoneal Kt/V above 1.7 did NOT improve survival. Standard PD dosing is adequate." },
+      ],
+    },
+    {
+      id: "special-topics-cheatsheet",
+      icon: "🌟",
+      title: "Special Topics in Nephrology",
+      subtitle: "Pregnancy, genetic kidney diseases, RTA, and onco-nephrology",
+      topics: ["Other"],
+      sections: [
+        {
+          heading: "Pregnancy & the Kidney",
+          items: [
+            "Normal pregnancy: GFR increases ~50% (Cr drops to ~0.5-0.7 mg/dL). A 'normal' Cr of 1.0 in pregnancy may indicate impaired function",
+            "Preeclampsia: HTN + proteinuria after 20 weeks. Endotheliosis on biopsy. HELLP syndrome = hemolysis, elevated liver enzymes, low platelets",
+            "Thrombotic microangiopathy (TMA): Can occur postpartum — differentiate from preeclampsia, HELLP, atypical HUS (aHUS). If not improving after delivery → think aHUS",
+            "CKD in pregnancy: Higher risk of preeclampsia, preterm birth, and CKD progression. Close co-management with MFM and nephrology",
+            "Medication safety: ACEi/ARB are CONTRAINDICATED (teratogenic). Use labetalol, nifedipine, or methyldopa for BP control",
+          ],
+        },
+        {
+          heading: "Fabry Disease",
+          items: [
+            "X-linked lysosomal storage disorder: Deficiency of alpha-galactosidase A → accumulation of globotriaosylceramide (Gb3) in kidneys, heart, and nervous system",
+            "Kidney manifestations: Progressive CKD with proteinuria, can reach ESKD by age 40-50 in males. Females are variably affected (X-inactivation)",
+            "Classic symptoms: Acroparesthesias (burning pain in hands/feet in childhood), angiokeratomas, corneal verticillata, hypohidrosis, cardiac (LVH, arrhythmias)",
+            "Diagnosis: Alpha-galactosidase A activity (low in males), genetic testing (GLA gene mutation). Renasight genetic testing panel can identify GLA variants in the nephrology office setting",
+            "Treatment: Enzyme replacement therapy (agalsidase beta) or oral chaperone therapy (migalastat). Early treatment slows progression",
+          ],
+        },
+        {
+          heading: "Alport Syndrome",
+          items: [
+            "Genetic collagen IV disorder: Mutations in COL4A3, COL4A4, or COL4A5 → abnormal glomerular basement membrane",
+            "X-linked (most common, COL4A5): Males → ESKD by 20s-30s, sensorineural hearing loss, anterior lenticonus. Females = carriers with variable hematuria/proteinuria",
+            "Autosomal recessive (COL4A3/A4): Both sexes affected equally, similar severity to X-linked males",
+            "Biopsy: GBM thinning, splitting, and lamellation ('basket-weave' pattern on electron microscopy)",
+            "Treatment: ACEi/ARB early (slows progression). SGLT2i being studied. Renasight genetic testing in clinic can confirm the diagnosis and guide family screening",
+            "After transplant: Risk of anti-GBM disease against the 'new' normal collagen IV in the allograft (rare but important)",
+          ],
+        },
+        {
+          heading: "Renal Tubular Acidosis (RTA)",
+          items: [
+            "Type 1 (Distal RTA): Cannot secrete H+ in collecting duct → positive urine anion gap, urine pH >5.5, hypokalemia. Causes: autoimmune (Sjögren's), amphotericin, lithium",
+            "Type 2 (Proximal RTA): Cannot reabsorb HCO₃ in proximal tubule → bicarb wasting, urine pH varies (initially >5.5, then <5.5 as bicarb drops). Causes: Fanconi syndrome, multiple myeloma, carbonic anhydrase inhibitors",
+            "Type 4 (Hypoaldosteronism): Hyperkalemic NAGMA. Most common in DM + CKD (hyporeninemic hypoaldosteronism). Low aldosterone → ↓K+ secretion + ↓H+ secretion",
+            "Urine anion gap: (UNa + UK) − UCl. Positive = impaired renal acid excretion (RTA). Negative = appropriate renal response (GI bicarb loss)",
+            "Pearl: If NAGMA + hyperkalemia → think Type 4 RTA. If NAGMA + hypokalemia → think Type 1 or 2 RTA. Always check urine pH and urine anion gap",
+          ],
+        },
+        {
+          heading: "Onco-Nephrology: TLS, TMA & Cast Nephropathy",
+          items: [
+            "Tumor lysis syndrome (TLS): Massive cell death → hyperuricemia, hyperkalemia, hyperphosphatemia, hypocalcemia, AKI. Prevention: aggressive IV fluids + rasburicase (NOT allopurinol if high-risk). Avoid urine alkalinization (promotes calcium-phosphate precipitation)",
+            "Thrombotic microangiopathy (TMA): MAHA (schistocytes) + thrombocytopenia + AKI. Cancer-associated TMA can be from: gemcitabine, mitomycin C, anti-VEGF agents, transplant-associated, or aHUS",
+            "Cast nephropathy (myeloma kidney): Light chains precipitate in distal tubules forming obstructing casts. Large 'fractured' casts on biopsy. Chemotherapy is the treatment — plasmapheresis is controversial (MYRE trial negative)",
+            "Checkpoint inhibitor nephritis: Immune-mediated AIN from PD-1/PD-L1 inhibitors (pembrolizumab, nivolumab). Rising Cr + sterile pyuria. Usually responds to steroids, may need to hold checkpoint inhibitor",
+            "Cisplatin nephrotoxicity: Dose-dependent AKI + Mg²⁺ wasting (hypomagnesemia). Prevention: aggressive saline hydration before/after. May cause chronic tubulointerstitial disease",
+          ],
+        },
+      ],
+      trialCallouts: [],
+    },
   ],
 };
 
@@ -794,7 +1085,10 @@ export const FEEDBACK_TAGS = [
 // ─── Topic → Resource Map (for patient-topic auto-linking) ──────────
 export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWeeks: number[] }> = {
   "AKI":                  { studySheets: ["aki-cheatsheet"],                quizWeeks: [1] },
+  "Post-Renal AKI":       { studySheets: ["aki-cheatsheet"],                quizWeeks: [1] },
   "CKD":                  { studySheets: ["ckd-sglt2i-cheatsheet"],         quizWeeks: [3] },
+  "Anemia of CKD":        { studySheets: ["ckd-sglt2i-cheatsheet"],         quizWeeks: [] },
+  "CKD-MBD":              { studySheets: ["potassium-acidbase-cheatsheet"], quizWeeks: [2] },
   "Hyponatremia":         { studySheets: ["sodium-cheatsheet"],             quizWeeks: [2] },
   "Hypernatremia":        { studySheets: ["sodium-cheatsheet"],             quizWeeks: [2] },
   "Hyperkalemia":         { studySheets: ["potassium-acidbase-cheatsheet"], quizWeeks: [2] },
@@ -802,7 +1096,9 @@ export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWee
   "Acid-Base":            { studySheets: ["potassium-acidbase-cheatsheet"], quizWeeks: [2] },
   "Glomerulonephritis":   { studySheets: ["gn-nephrotic-cheatsheet"],       quizWeeks: [3] },
   "Nephrotic Syndrome":   { studySheets: ["gn-nephrotic-cheatsheet"],       quizWeeks: [3] },
+  "Kidney Biopsy":        { studySheets: ["gn-nephrotic-cheatsheet"],       quizWeeks: [3] },
   "Dialysis":             { studySheets: ["dialysis-cheatsheet"],           quizWeeks: [4] },
+  "Dialysis Access":      { studySheets: ["dialysis-cheatsheet"],           quizWeeks: [4] },
   "Transplant":           { studySheets: ["transplant-stones-drugs-cheatsheet"], quizWeeks: [4] },
   "Kidney Stones":        { studySheets: ["transplant-stones-drugs-cheatsheet"], quizWeeks: [4] },
   "AIN":                  { studySheets: ["aki-cheatsheet"],                quizWeeks: [1] },
@@ -814,5 +1110,12 @@ export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWee
   "Proteinuria":          { studySheets: ["gn-nephrotic-cheatsheet"],       quizWeeks: [3] },
   "Polycystic Kidney Disease": { studySheets: ["ckd-sglt2i-cheatsheet"],   quizWeeks: [3] },
   "APOL1-Associated Kidney Disease": { studySheets: ["gn-nephrotic-cheatsheet"], quizWeeks: [3] },
+  "Hepatorenal Syndrome": { studySheets: ["hrs-contrast-rhabdo-cheatsheet"], quizWeeks: [1] },
+  "Contrast-Associated AKI": { studySheets: ["hrs-contrast-rhabdo-cheatsheet"], quizWeeks: [1] },
+  "Rhabdomyolysis":       { studySheets: ["hrs-contrast-rhabdo-cheatsheet"], quizWeeks: [1] },
+  "Cardiorenal Syndrome": { studySheets: ["cardiorenal-cheatsheet"],         quizWeeks: [2] },
+  "Diabetic Kidney Disease": { studySheets: ["dkd-sglt2i-cheatsheet"],      quizWeeks: [3] },
+  "SGLT2 Inhibitors":     { studySheets: ["dkd-sglt2i-cheatsheet"],         quizWeeks: [3] },
+  "Peritoneal Dialysis":  { studySheets: ["pd-cheatsheet"],                 quizWeeks: [4] },
   "Other":                { studySheets: [],                                quizWeeks: [] },
 };

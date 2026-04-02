@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import { T } from "../../data/constants";
+import { useIsMobile } from "../../utils/helpers";
 import { LIMITS } from "../../utils/validation";
 
 export default function LoginScreen({ studentName, setStudentName, studentPin, setStudentPin, joinCode, setJoinCode, joinError, setJoinError, joining, onJoinRotation, onSkipRotation, onAdminToggle }: {
@@ -11,6 +13,13 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
   onSkipRotation: () => void;
   onAdminToggle?: () => void;
 }) {
+  const isMobile = useIsMobile();
+  const adminTapRef = useRef<number[]>([]);
+  const handleCopyrightTap = () => {
+    const now = Date.now();
+    adminTapRef.current = [...adminTapRef.current.filter(t => now - t < 800), now];
+    if (adminTapRef.current.length >= 5 && onAdminToggle) { adminTapRef.current = []; onAdminToggle(); }
+  };
   const canJoin = studentName.trim() && studentPin.length === 4 && joinCode.length >= 4;
   const canSkip = studentName.trim();
   return (
@@ -19,8 +28,7 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
         <div style={{ textAlign: "center" }}>
           <div style={{ width: 52, height: 52, borderRadius: 13, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 26 }}>{"\uD83E\uDED8"}</div>
           <h1 style={{ color: T.navy, fontFamily: T.serif, fontSize: 21, margin: "0 0 4px", fontWeight: 700 }}>Nephrology Rotation</h1>
-          <p style={{ color: T.sub, fontSize: 13, margin: "0 0 6px" }}>Teaching App for MS3 / MS4 Students</p>
-          <p style={{ color: T.muted, fontSize: 11, margin: "0 0 20px" }}>4-Week Curriculum &bull; Quizzes &bull; Quick References &bull; Journal Articles</p>
+          <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px" }}>Teaching App</p>
         </div>
 
         <div style={{ marginBottom: 14 }}>
@@ -34,11 +42,11 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
           />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 14 }}>
           <div>
             <label style={{ fontSize: 10, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>4-Digit PIN</label>
             <input
-              type="password" inputMode="numeric" placeholder="&&bull;&&bull;&&bull;&&bull;" maxLength={4}
+              type="password" inputMode="numeric" pattern="[0-9]*" placeholder="••••" maxLength={4}
               value={studentPin} onChange={e => setStudentPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
               style={{ width: "100%", padding: "10px 12px", fontSize: 16, border: `2px solid ${T.pale}`, borderRadius: 8, outline: "none", boxSizing: "border-box", fontFamily: T.mono, textAlign: "center", letterSpacing: 6 }}
               onFocus={e => e.target.style.borderColor = T.med}
@@ -59,7 +67,7 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
         </div>
 
         <p style={{ fontSize: 11, color: T.muted, margin: "0 0 12px", lineHeight: 1.5 }}>
-          Choose a PIN if new. Use your existing PIN to resume your progress on this phone.
+          Pick a 4-digit PIN to save your progress. Your attending can restore it if you switch devices.
         </p>
 
         {joinError && <p style={{ color: T.accent, fontSize: 12, margin: "0 0 12px", fontWeight: 600, textAlign: "center" }}>{joinError}</p>}
@@ -77,8 +85,17 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
           Use without rotation (offline only)
         </button>
 
+        <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${T.line}`, textAlign: "center" }}>
+          <p style={{ fontSize: 9, color: T.muted, lineHeight: 1.6, margin: "0 0 8px" }}>
+            For educational use only. Not medical advice. Content may not reflect current guidelines. Always use clinical judgment.
+          </p>
+          <p style={{ fontSize: 9, color: T.muted, margin: 0 }}>
+            &copy; {new Date().getFullYear()} JCheng
+          </p>
+        </div>
+
         {onAdminToggle && (
-          <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 16, paddingTop: 12, textAlign: "center" }}>
+          <div style={{ marginTop: 10, textAlign: "center" }}>
             <button onClick={onAdminToggle} style={{ background: "none", border: "none", color: T.muted, fontSize: 11, cursor: "pointer", padding: "4px 8px" }}>
               Admin Login
             </button>

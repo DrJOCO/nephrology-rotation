@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { T } from "../../data/constants";
 import { QUICK_REFS } from "../../data/guides";
+import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
 import type { QuickRefCalculator, QuickRefReference, QuickRefAtlas, CalcResult } from "../../types";
 
 // ─── Calculator Component ──────────────────────────────────────
 function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
+  const isMobile = useIsMobile();
   const [values, setValues] = useState<Record<string, string>>({});
   const [result, setResult] = useState<CalcResult | null>(null);
 
@@ -29,7 +31,7 @@ function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
   return (
     <div>
       <div style={{ background: T.card, borderRadius: 14, padding: 20, border: `1px solid ${T.line}`, marginBottom: 16 }}>
-        <div style={{ display: "grid", gridTemplateColumns: refData.inputs.length > 4 ? "1fr" : "1fr 1fr", gap: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile || refData.inputs.length > 4 ? "1fr" : "1fr 1fr", gap: 12 }}>
           {refData.inputs.map(inp => (
             <div key={inp.key}>
               <label style={{ fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>{inp.label}</label>

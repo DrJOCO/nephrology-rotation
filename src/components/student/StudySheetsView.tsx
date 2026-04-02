@@ -1,12 +1,12 @@
 import { useState, CSSProperties } from "react";
-import { T, WEEKLY, STUDY_SHEETS } from "../../data/constants";
+import { T, WEEKLY, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { backBtnStyle } from "./shared";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
 
 const imgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 10, marginBottom: 6, border: `1px solid ${T.line}` };
 const captionStyle: CSSProperties = { fontSize: 11, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.4 };
 
-export default function StudySheetsView({ week, onBack, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
+export default function StudySheetsView({ week, onBack, navigate, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const sheets = STUDY_SHEETS[week] || [];
   const wk = WEEKLY[week];
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -36,7 +36,7 @@ export default function StudySheetsView({ week, onBack, completedItems, bookmark
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{sheet.title}</div>
                   <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{sheet.subtitle}</div>
                 </div>
-                <span onClick={(e) => { e.stopPropagation(); onToggleBookmark(sheet.id); }} style={{ fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.gold : T.muted, cursor: "pointer", flexShrink: 0 }}>{(bookmarks?.studySheets || []).includes(sheet.id) ? "\u2605" : "\u2606"}</span>
+                <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(sheet.id); }} style={{ background: "none", border: "none", fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.gold : T.muted, cursor: "pointer", flexShrink: 0, padding: "8px", margin: "-8px", lineHeight: 1 }}>{(bookmarks?.studySheets || []).includes(sheet.id) ? "\u2605" : "\u2606"}</button>
                 <span style={{ color: T.muted, fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
               </div>
             </button>
@@ -73,12 +73,21 @@ export default function StudySheetsView({ week, onBack, completedItems, bookmark
                     <div style={{ fontSize: 11, fontWeight: 700, color: T.goldText, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 13 }}>{"\u2B50"}</span> Trial Connections
                     </div>
-                    {sheet.trialCallouts.map((callout, ci) => (
-                      <div key={ci} style={{ background: T.yellowBg, borderRadius: 10, padding: "10px 14px", marginBottom: 10, borderLeft: `3px solid ${T.gold}` }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>{callout.trial}</div>
-                        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>{callout.pearl}</div>
-                      </div>
-                    ))}
+                    {sheet.trialCallouts.map((callout, ci) => {
+                      const trialExists = ALL_LANDMARK_TRIALS.some(t => t.name === callout.trial);
+                      return (
+                        <div key={ci}
+                          onClick={trialExists && navigate ? () => navigate("guide", { type: "trialLibrary", searchTrial: callout.trial }) : undefined}
+                          role={trialExists ? "button" : undefined} tabIndex={trialExists ? 0 : undefined}
+                          style={{ background: T.yellowBg, borderRadius: 10, padding: "10px 14px", marginBottom: 10, borderLeft: `3px solid ${T.gold}`, cursor: trialExists ? "pointer" : "default", transition: "box-shadow 0.2s" }}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>{callout.trial}</div>
+                            {trialExists && <span style={{ fontSize: 11, color: T.goldText, fontWeight: 600 }}>View trial ›</span>}
+                          </div>
+                          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>{callout.pearl}</div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 

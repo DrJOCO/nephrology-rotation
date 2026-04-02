@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 // Inject Google Fonts once into document.head (avoids re-inserting on every render)
 let _fontsLoaded = false;
 export function ensureGoogleFonts(): void {
@@ -86,6 +88,33 @@ export function ensureLayoutStyles(): void {
     }
   `;
   document.head.appendChild(style);
+}
+
+export function useIsMobile(maxWidth = 480): boolean {
+  const getMatches = () => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
+  };
+
+  const [isMobile, setIsMobile] = useState(getMatches);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia(`(max-width: ${maxWidth}px)`);
+    const handleChange = (event: MediaQueryListEvent) => setIsMobile(event.matches);
+
+    setIsMobile(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, [maxWidth]);
+
+  return isMobile;
 }
 
 export const SHARED_KEYS: Record<string, string> = {

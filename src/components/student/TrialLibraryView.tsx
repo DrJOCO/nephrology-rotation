@@ -3,8 +3,8 @@ import { T, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { CategoryGroupedTrials } from "./TrialCard";
 import { backBtnStyle } from "./shared";
 
-export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark }) {
-  const [searchQ, setSearchQ] = useState("");
+export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, initialSearch }: { onBack: () => void; bookmarks: any; onToggleBookmark: (name: string) => void; initialSearch?: string }) {
+  const [searchQ, setSearchQ] = useState(initialSearch || "");
 
   const filtered = searchQ.trim()
     ? ALL_LANDMARK_TRIALS.filter(t => {

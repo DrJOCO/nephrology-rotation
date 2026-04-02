@@ -7,7 +7,7 @@ export interface FollowUp {
 }
 
 export interface Patient {
-  id: number;
+  id: string | number;
   initials: string;
   room: string;
   dx: string;
@@ -52,13 +52,14 @@ export type SubView =
   | { type: "srReview" }
   | { type: "practiceQuiz" }
   | { type: "refDetail"; id: string }
-  | { type: "trialLibrary" }
+  | { type: "trialLibrary"; searchTrial?: string }
   | { type: "browseByTopic" }
   | { type: "topicDetail"; topic: string }
   | { type: "clinicGuide"; date: string }
   | { type: "clinicGuideHistory" }
   | { type: "inpatientGuide"; topic: string }
   | { type: "rotationGuide"; guideId: string }
+  | { type: "guideDetail"; id: string }
   | null;
 
 export type AdminSubView =
@@ -176,6 +177,19 @@ export interface AdminStudent {
   bookmarks?: Bookmarks;
   feedbackTags?: FeedbackTag[];
   lastSyncedAt?: string | null;
+}
+
+export interface TeamSnapshot {
+  studentId: string;
+  name: string;
+  points: number;
+  levelName: string;
+  levelIcon: string;
+  patientCount: number;
+  activePatientCount: number;
+  dischargedPatientCount: number;
+  topicCounts: Record<string, number>;
+  updatedAt: string;
 }
 
 export interface Trial {

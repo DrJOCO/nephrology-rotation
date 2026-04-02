@@ -33,7 +33,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("trials", t.name)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.gold, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("guide", { type: "trialLibrary" })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{t.name}</div>
             <div style={{ fontSize: 11, color: T.muted }}>{t.category}</div>
           </button>
         </div>
@@ -42,7 +42,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("articles", a.url)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.gold, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("home", { type: "articles", week: a._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.title}</div>
             <div style={{ fontSize: 11, color: T.muted }}>Week {a._week} {"\u2022"} {a.type || "Article"}</div>
           </button>
         </div>
@@ -51,7 +51,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("cases", c.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.gold, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("home", { type: "cases", week: c._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{c.title}</div>
             <div style={{ fontSize: 11, color: T.muted }}>Week {c._week} {"\u2022"} {c.difficulty}</div>
           </button>
         </div>
@@ -60,7 +60,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("studySheets", s.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.gold, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("home", { type: "studySheets", week: s._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.icon} {s.title}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{s.icon} {s.title}</div>
             <div style={{ fontSize: 11, color: T.muted }}>Week {s._week}</div>
           </button>
         </div>

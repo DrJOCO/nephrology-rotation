@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { T } from "../../data/constants";
+import { useIsMobile } from "../../utils/helpers";
 import store from "../../utils/store";
 import { backBtnStyle } from "./shared";
 import type { QuizQuestion, QuizScore, QuizAnswer } from "../../types";
@@ -32,6 +33,7 @@ function generateChoiceOrders(questions: QuizQuestion[]) {
 }
 
 export default function QuizEngine({ questions, title, onBack, onFinish, questionCount }: { questions: QuizQuestion[]; title: string; onBack: () => void; onFinish: (score: QuizScore) => void; questionCount?: number }) {
+  const isMobile = useIsMobile();
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -168,34 +170,35 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
   const choiceMap = choiceOrders[origQIdx];
   const progress = ((current + (showResult ? 1 : 0)) / quizLen) * 100;
 
+  const mob = isMobile;
+
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: mob ? 10 : 16 }}>
       {/* Header bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <button onClick={onBack} style={{ ...backBtnStyle, marginBottom: 0, fontSize: 20, gap: 0 }}>{"\u2190"}</button>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: mob ? 8 : 16 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 20, cursor: "pointer", padding: "6px 4px", minHeight: 36 }}>{"\u2190"}</button>
         <div style={{ flex: 1 }}>
-          <div style={{ height: 6, background: T.line, borderRadius: 3, overflow: "hidden" }}>
+          <div style={{ height: 5, background: T.line, borderRadius: 3, overflow: "hidden" }}>
             <div style={{ width: `${progress}%`, height: "100%", background: T.med, borderRadius: 3, transition: "width 0.4s ease" }} />
           </div>
         </div>
-        <span style={{ fontSize: 12, color: T.sub, fontWeight: 600, fontFamily: T.mono, minWidth: 42, textAlign: "right" }}>{current + 1}/{quizLen}</span>
-        {/* Restart button */}
+        <span style={{ fontSize: 11, color: T.sub, fontWeight: 600, fontFamily: T.mono, minWidth: 36, textAlign: "right" }}>{current + 1}/{quizLen}</span>
         <button onClick={() => { store.set(quizKey, null); setCurrent(0); setSelected(null); setAnswers([]); setCorrectCount(0); setFinished(false); setShowResult(false); setShowExplanation(false); const newShuffle = shuffleIndices(questions.length); const count = questionCount && questionCount < questions.length ? questionCount : questions.length; setShuffledOrder(newShuffle.slice(0, count)); setChoiceOrders(generateChoiceOrders(questions)); }}
-          style={{ padding: "6px 14px", background: T.accent, color: "white", border: "none", borderRadius: 8, fontSize: 12, cursor: "pointer" }}>
+          style={{ padding: "4px 10px", background: T.accent, color: "white", border: "none", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
           Restart
         </button>
       </div>
 
       {/* Quiz title */}
-      <div style={{ fontSize: 11, color: T.med, fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{title}</div>
+      <div style={{ fontSize: 10, color: T.med, fontWeight: 700, marginBottom: mob ? 4 : 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{title}</div>
 
       {/* Question */}
-      <div style={{ background: T.card, borderRadius: 14, padding: 20, marginBottom: 16, border: `1px solid ${T.line}` }}>
-        <p style={{ color: T.text, fontSize: 15, lineHeight: 1.55, margin: 0, fontWeight: 500 }}>{q.q}</p>
+      <div style={{ background: T.card, borderRadius: 12, padding: mob ? 12 : 20, marginBottom: mob ? 8 : 16, border: `1px solid ${T.line}` }}>
+        <p style={{ color: T.text, fontSize: mob ? 14 : 15, lineHeight: 1.45, margin: 0, fontWeight: 500 }}>{q.q}</p>
       </div>
 
       {/* Choices (shuffled per-question) */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: mob ? 6 : 10 }}>
         {choiceMap.map((origChoiceIdx, displayIdx) => {
           const c = q.choices[origChoiceIdx];
           const isCorrectChoice = origChoiceIdx === q.answer;
@@ -207,46 +210,42 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
 
           return (
             <button key={displayIdx} onClick={() => handleSelect(displayIdx)}
-              style={{ padding: "14px 16px", background: bg, border: `2px solid ${border}`, borderRadius: 12,
-                cursor: showResult ? "default" : "pointer", textAlign: "left", fontSize: 14, color: textColor,
-                fontWeight: fontW, display: "flex", alignItems: "flex-start", gap: 12, transition: "all 0.2s", fontFamily: T.sans }}>
+              style={{ padding: mob ? "10px 12px" : "14px 16px", background: bg, border: `2px solid ${border}`, borderRadius: 10,
+                cursor: showResult ? "default" : "pointer", textAlign: "left", fontSize: mob ? 13 : 14, color: textColor,
+                fontWeight: fontW, display: "flex", alignItems: "flex-start", gap: 10, transition: "all 0.2s", fontFamily: T.sans }}>
               <span style={{
-                width: 26, height: 26, borderRadius: 13, display: "flex", alignItems: "center", justifyContent: "center",
+                width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center",
                 background: showResult && isCorrectChoice ? T.green : showResult && displayIdx === selected ? T.accent : T.grayBg,
                 color: showResult && (isCorrectChoice || displayIdx === selected) ? "white" : T.sub,
-                fontSize: 12, fontWeight: 700, flexShrink: 0
+                fontSize: 11, fontWeight: 700, flexShrink: 0
               }}>
                 {showResult && isCorrectChoice ? "\u2713" : showResult && displayIdx === selected ? "\u2717" : String.fromCharCode(65 + displayIdx)}
               </span>
-              <span style={{ paddingTop: 2 }}>{c}</span>
+              <span style={{ paddingTop: 1 }}>{c}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Explanation */}
+      {/* Explanation + Next button */}
       {showResult && (() => {
         const selectedOrigIdx = choiceMap[selected!];
         const wasCorrect = selectedOrigIdx === q.answer;
         return (
-          <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginTop: 16, borderLeft: `3px solid ${T.med}` }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.greenDk : T.accent, marginBottom: 6 }}>
+          <div style={{ background: T.ice, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.med}` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: wasCorrect ? T.greenDk : T.accent, marginBottom: 4 }}>
               {wasCorrect ? "\u2713 Correct!" : "\u2717 Not quite"}
             </div>
-            <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55, wordBreak: "break-word" }}>{q.explanation}</div>
+            <div style={{ fontSize: mob ? 12 : 13, color: T.text, lineHeight: 1.45, wordBreak: "break-word" }}>{q.explanation}</div>
+            <button onClick={handleNext} style={{
+              width: "100%", marginTop: mob ? 8 : 12, padding: mob ? "11px 0" : "14px 0", background: T.med, color: "white",
+              border: "none", borderRadius: 10, fontSize: mob ? 14 : 15, fontWeight: 600, cursor: "pointer"
+            }}>
+              {current + 1 >= quizLen ? "See Results" : "Next Question \u2192"}
+            </button>
           </div>
         );
       })()}
-
-      {/* Next button */}
-      {showResult && (
-        <button onClick={handleNext} style={{
-          width: "100%", marginTop: 16, padding: "14px 0", background: T.med, color: "white",
-          border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer"
-        }}>
-          {current + 1 >= quizLen ? "See Results" : "Next Question \u2192"}
-        </button>
-      )}
     </div>
   );
 }

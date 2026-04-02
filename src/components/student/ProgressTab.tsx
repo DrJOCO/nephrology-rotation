@@ -2,9 +2,11 @@ import { T, TOPICS, WEEKLY } from "../../data/constants";
 import { getLevel, ACHIEVEMENTS } from "../../utils/gamification";
 import { MiniLineChart, MiniBarChart } from "./charts";
 import { getTopicExposures, getUnstudiedTopics, getUnseenTopics } from "../../utils/topicExposure";
+import { useIsMobile } from "../../utils/helpers";
 import type { Patient, WeeklyScores, QuizScore, Gamification, CompletedItems, LineChartPoint, BarChartItem } from "../../types";
 
 export default function ProgressTab({ patients, weeklyScores, preScore, postScore, curriculum, gamification, completedItems, totalWeeks = 4 }: { patients: Patient[]; weeklyScores: WeeklyScores; preScore: QuizScore | null; postScore: QuizScore | null; curriculum: typeof WEEKLY; gamification: Gamification; completedItems?: CompletedItems; totalWeeks?: number }) {
+  const isMobile = useIsMobile();
   const topicCounts: Record<string, number> = {};
   patients.forEach(p => {
     const topics = p.topics || (p.topic ? [p.topic] : []);
@@ -40,15 +42,15 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
         <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
           Achievements ({(gamification?.achievements || []).length}/{ACHIEVEMENTS.length})
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           {ACHIEVEMENTS.map(a => {
             const earned = (gamification?.achievements || []).includes(a.id);
             return (
-              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 10px", borderRadius: 10, background: earned ? T.ice : T.bg, border: `1px solid ${earned ? T.pale : T.line}`, opacity: earned ? 1 : 0.5 }}>
-                <span style={{ fontSize: 18 }}>{earned ? a.icon : "\u{1F512}"}</span>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: earned ? T.navy : T.muted }}>{a.title}</div>
-                  <div style={{ fontSize: 9, color: T.sub }}>{a.desc}</div>
+              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderRadius: 10, background: earned ? T.ice : T.bg, border: `1px solid ${earned ? T.pale : T.line}`, opacity: earned ? 1 : 0.4 }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{earned ? a.icon : "🔒"}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: earned ? T.navy : T.muted, lineHeight: 1.2 }}>{a.title}</div>
+                  <div style={{ fontSize: 9, color: T.sub, marginTop: 2, lineHeight: 1.3 }}>{a.desc}</div>
                 </div>
               </div>
             );
@@ -112,10 +114,10 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
                   return (
                     <div key={d} style={{
                       aspectRatio: "1", borderRadius: 6,
-                      background: isActive ? T.green : T.bg,
+                      background: isActive ? T.green : T.pale,
                       border: isToday ? `2px solid ${T.med}` : "1px solid transparent",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 9, color: isActive ? "white" : T.muted, fontWeight: 600,
+                      fontSize: 9, color: isActive ? "white" : T.sub, fontWeight: 600,
                     }}>
                       {new Date(d + "T00:00:00").getDate()}
                     </div>
@@ -154,7 +156,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
       )}
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
         {[
           { val: totalPts, label: "Patients Seen", color: T.navy },
           { val: topicsCovered, label: "Topics Covered", color: T.med },
@@ -203,7 +205,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
                 const hasStudied = e.contentCompleted > 0;
                 return (
                   <div key={e.topic} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <div style={{ width: 130, fontSize: 11, color: T.text, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.topic}</div>
+                    <div style={{ width: isMobile ? 90 : 130, fontSize: isMobile ? 10 : 11, color: T.text, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.topic}</div>
                     <div style={{ flex: 1, height: 14, background: T.grayBg, borderRadius: 7, overflow: "hidden", position: "relative" }}>
                       {/* Clinical exposure bar */}
                       <div style={{ width: hasClinical ? `${Math.max((e.patientCount / maxPatientCount) * 100, 8)}%` : 0, height: "100%", background: hasClinical ? T.med : "transparent", borderRadius: 7, transition: "width 0.3s" }} />
@@ -221,7 +223,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
               )}
             </div>
             {/* Legend */}
-            <div style={{ display: "flex", gap: 16, marginTop: 8, marginBottom: 8, fontSize: 10, color: T.sub }}>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8, marginBottom: 8, fontSize: 10, color: T.sub }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <div style={{ width: 10, height: 10, borderRadius: 3, background: T.med }} /> Patients seen
               </div>
@@ -276,15 +278,15 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
             {allAttempts.length >= 2 && (
               <div style={{ background: T.card, borderRadius: 14, padding: 18, marginBottom: 12, border: `1px solid ${T.line}` }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 10 }}>Quiz Score Trend</div>
-                <div style={{ overflowX: "auto" }}>
-                  <MiniLineChart data={allAttempts} width={Math.max(280, allAttempts.length * 60)} color={T.med} />
+                <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%" }}>
+                  <MiniLineChart data={allAttempts} width={Math.max(isMobile ? 220 : 280, allAttempts.length * (isMobile ? 44 : 60))} color={T.med} />
                 </div>
               </div>
             )}
             {hasWeeklyData && (
               <div style={{ background: T.card, borderRadius: 14, padding: 18, marginBottom: 12, border: `1px solid ${T.line}` }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 10 }}>Weekly Best Scores</div>
-                <MiniBarChart data={weeklyBest} />
+                <MiniBarChart data={weeklyBest} width={isMobile ? 240 : 280} />
               </div>
             )}
           </>

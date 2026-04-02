@@ -162,6 +162,22 @@ const store = {
     return () => { unsub?.(); };
   },
 
+  // ─── Real-time listener: sanitized team snapshots ────────────────
+  onTeamSnapshotsChanged(callback: (snapshots: FirestoreData[]) => void): () => void {
+    if (!rotationCode) return () => {};
+    let unsub: (() => void) | null = null;
+    const code = rotationCode;
+    getFirebase().then(({ db, fs }) => {
+      unsub = fs.onSnapshot(fs.collection(db, "rotations", code, "team"), (snap) => {
+        const snapshots = snap.docs.map(d => ({ studentId: d.id, ...d.data() }));
+        callback(snapshots);
+      }, (err) => {
+        console.warn("Team listener error:", err);
+      });
+    });
+    return () => { unsub?.(); };
+  },
+
   // ─── Real-time listener: rotation-level data ─────────────────────
   onRotationChanged(callback: (data: FirestoreData) => void): () => void {
     if (!rotationCode) return () => {};
@@ -201,6 +217,18 @@ const store = {
       await fs.setDoc(studentRef, data, { merge: true });
     } catch (e) {
       console.warn("setStudentData failed:", e);
+    }
+  },
+
+  // ─── Write sanitized team snapshot to Firestore ──────────────────
+  async setTeamSnapshot(studentId: string, data: object): Promise<void> {
+    if (!rotationCode || !studentId) return;
+    try {
+      const { db, fs } = await getFirebase();
+      const teamRef = fs.doc(db, "rotations", rotationCode, "team", studentId);
+      await fs.setDoc(teamRef, data, { merge: true });
+    } catch (e) {
+      console.warn("setTeamSnapshot failed:", e);
     }
   },
 
@@ -258,6 +286,19 @@ const store = {
     }
   },
 
+  // ─── Delete a single student document ───────────────────────────
+  async deleteStudentData(studentId: string): Promise<void> {
+    if (!rotationCode || !studentId) return;
+    try {
+      const { db, fs } = await getFirebase();
+      await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "students", studentId));
+      await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "team", studentId));
+    } catch (e) {
+      console.warn("deleteStudentData failed:", e);
+      throw e;
+    }
+  },
+
   // ─── Delete rotation and its students ───────────────────────────
   async deleteRotation(code: string): Promise<void> {
     try {
@@ -266,6 +307,10 @@ const store = {
       const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", code, "students"));
       for (const s of studentsSnap.docs) {
         await fs.deleteDoc(fs.doc(db, "rotations", code, "students", s.id));
+      }
+      const teamSnap = await fs.getDocs(fs.collection(db, "rotations", code, "team"));
+      for (const s of teamSnap.docs) {
+        await fs.deleteDoc(fs.doc(db, "rotations", code, "team", s.id));
       }
       // Delete rotation doc
       await fs.deleteDoc(fs.doc(db, "rotations", code));

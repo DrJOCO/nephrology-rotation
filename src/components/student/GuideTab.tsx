@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { T, ALL_LANDMARK_TRIALS } from "../../data/constants";
+import { T, ALL_LANDMARK_TRIALS, RESOURCES } from "../../data/constants";
 import { GUIDE_SECTIONS, GUIDE_DATA } from "../../data/guides";
 import { CLINIC_GUIDES, type ClinicGuideTopic } from "../../data/clinicGuides";
 import { INPATIENT_GUIDES, INPATIENT_GUIDE_TOPICS } from "../../data/inpatientGuides";
 import { ROTATION_GUIDES, ROTATION_GUIDE_IDS } from "../../data/rotationGuides";
 import { getCurrentOrNextFriday, getClinicTopicForDate } from "../../utils/clinicRotation";
+import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
 import type { ClinicGuideRecord } from "../../types";
 
@@ -84,45 +85,11 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
 }
 
 export default function GuideTab({ navigate, subView, clinicGuides }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null; clinicGuides?: ClinicGuideRecord[] }) {
-  const [guideSearch, setGuideSearch] = useState("");
+  const isMobile = useIsMobile();
 
   if (subView?.type === "guideDetail") {
     return <GuideDetailView sectionId={subView.id as string} onBack={() => navigate("guide")} />;
   }
-
-  const highlightMatch = (text: string, query: string) => {
-    if (!query.trim()) return text;
-    const idx = text.toLowerCase().indexOf(query.toLowerCase());
-    if (idx === -1) return text;
-    return (
-      <>{text.slice(0, idx)}<span style={{ background: T.goldAlphaMd, fontWeight: 600 }}>{text.slice(idx, idx + query.length)}</span>{text.slice(idx + query.length)}</>
-    );
-  };
-
-  const searchResults = guideSearch.trim() ? (() => {
-    const q = guideSearch.trim().toLowerCase();
-    interface SearchMatch { category: string; emoji: string; item: string; color: string }
-    const results: { section: typeof GUIDE_SECTIONS[0]; matchingItems: SearchMatch[] }[] = [];
-    GUIDE_SECTIONS.forEach(sec => {
-      const data = GUIDE_DATA[sec.id];
-      if (!data) return;
-      const sectionMatch = sec.title.toLowerCase().includes(q) || sec.sub.toLowerCase().includes(q);
-      const introMatch = data.intro?.toLowerCase().includes(q);
-      const matchingItems: SearchMatch[] = [];
-      (data.categories || []).forEach(cat => {
-        const catTitleMatch = cat.title.toLowerCase().includes(q);
-        (cat.items || []).forEach(item => {
-          if (item.toLowerCase().includes(q) || catTitleMatch) {
-            matchingItems.push({ category: cat.title, emoji: cat.emoji, item, color: cat.color });
-          }
-        });
-      });
-      if (sectionMatch || introMatch || matchingItems.length > 0) {
-        results.push({ section: sec, matchingItems: matchingItems.slice(0, 5) });
-      }
-    });
-    return results;
-  })() : null;
 
   return (
     <div style={{ padding: 16 }}>
@@ -156,8 +123,8 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
               <span style={{ color: T.greenDk, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
             </button>
             <button onClick={() => navigate("guide", { type: "clinicGuideHistory" })}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 0 0", fontSize: 12, color: T.med, fontWeight: 600 }}>
-              View past clinic guides
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 4px 0", fontSize: 11, color: T.sub, fontWeight: 500 }}>
+              View past clinic guides →
             </button>
           </div>
         ) : null;
@@ -166,7 +133,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
       {/* Inpatient Consult Guides */}
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8, fontFamily: T.serif }}>Inpatient Consult Guides</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
           {INPATIENT_GUIDE_TOPICS.map(t => {
             const g = INPATIENT_GUIDES[t];
             return (
@@ -188,7 +155,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
       {/* Rotation Guides */}
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8, fontFamily: T.serif }}>Rotation Guides</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
           {ROTATION_GUIDE_IDS.map(id => {
             const g = ROTATION_GUIDES[id];
             return (
@@ -207,6 +174,19 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         </div>
       </div>
 
+      <button onClick={() => navigate("guide", { type: "faq" })}
+        style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
+          background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", marginBottom: 14 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, border: `1px solid ${T.goldAlphaMd}` }}>
+          ❓
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Rotation FAQ</div>
+          <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{RESOURCES.faq.length} common rotation questions answered</div>
+        </div>
+        <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>›</span>
+      </button>
+
       {/* Trial Library Button */}
       <button onClick={() => navigate("guide", { type: "trialLibrary" })}
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
@@ -223,53 +203,30 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         <span style={{ color: T.goldText, fontSize: 16, flexShrink: 0 }}>›</span>
       </button>
 
-      <input type="text" placeholder="Search guides... (e.g. creatinine, consult, biopsy)"
-        value={guideSearch} onChange={e => setGuideSearch(e.target.value)}
-        style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", marginBottom: 14, fontFamily: T.sans, outline: "none" }} />
-
-      {searchResults ? (
-        searchResults.length === 0 ? (
-          <div style={{ padding: 20, textAlign: "center", color: T.muted, fontSize: 13 }}>No matches found for "{guideSearch}"</div>
-        ) : searchResults.map(r => (
-          <div key={r.section.id} style={{ marginBottom: 12 }}>
-            <button onClick={() => { setGuideSearch(""); navigate("guide", { type: "guideDetail", id: r.section.id }); }}
-              style={{ display: "block", width: "100%", background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: r.matchingItems.length > 0 ? 8 : 0 }}>
-                <span style={{ fontSize: 20 }}>{r.section.icon}</span>
-                <div>
-                  <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{highlightMatch(r.section.title, guideSearch)}</div>
-                  <div style={{ fontSize: 11, color: T.sub }}>{r.section.sub}</div>
-                </div>
-              </div>
-              {r.matchingItems.map((mi, i) => (
-                <div key={i} style={{ fontSize: 12, color: T.text, lineHeight: 1.5, padding: "4px 0 4px 30px", borderTop: i === 0 ? `1px solid ${T.line}` : "none" }}>
-                  <span style={{ color: mi.color, marginRight: 6 }}>{mi.emoji}</span>
-                  {highlightMatch(mi.item, guideSearch)}
-                </div>
+      {/* Additional unique guides */}
+      {(() => {
+        const KEEP_IDS = ["firstday", "office", "notes", "career"];
+        const sections = GUIDE_SECTIONS.filter(s => KEEP_IDS.includes(s.id));
+        return (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8, fontFamily: T.serif }}>More Guides</div>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
+              {sections.map(sec => (
+                <button key={sec.id} onClick={() => navigate("guide", { type: "guideDetail", id: sec.id })}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px",
+                    background: T.card, borderRadius: 12, border: `1px solid ${T.line}`,
+                    cursor: "pointer", textAlign: "left" }}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }}>{sec.icon}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.2 }}>{sec.title}</div>
+                    <div style={{ fontSize: 10, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sec.sub}</div>
+                  </div>
+                </button>
               ))}
-            </button>
-          </div>
-        ))
-      ) : (
-        GUIDE_SECTIONS.map(sec => (
-          <button key={sec.id} onClick={() => navigate("guide", { type: "guideDetail", id: sec.id })}
-            style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, marginBottom: 10,
-              border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "box-shadow 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"}
-            onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
-                {sec.icon}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{sec.title}</div>
-                <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{sec.sub}</div>
-              </div>
-              <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>›</span>
             </div>
-          </button>
-        ))
-      )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

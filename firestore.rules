@@ -21,6 +21,25 @@ service cloud.firestore {
         && request.resource.data.name.size() <= 50;
     }
 
+    function hasValidTeamSnapshot(studentId) {
+      return request.resource.data.studentId == studentId
+        && hasValidStudentName()
+        && request.resource.data.points is int
+        && request.resource.data.points >= 0
+        && request.resource.data.patientCount is int
+        && request.resource.data.patientCount >= 0
+        && request.resource.data.activePatientCount is int
+        && request.resource.data.activePatientCount >= 0
+        && request.resource.data.dischargedPatientCount is int
+        && request.resource.data.dischargedPatientCount >= 0
+        && request.resource.data.levelName is string
+        && request.resource.data.levelName.size() > 0
+        && request.resource.data.levelIcon is string
+        && request.resource.data.levelIcon.size() > 0
+        && request.resource.data.topicCounts is map
+        && request.resource.data.updatedAt is string;
+    }
+
     match /admins/{uid} {
       allow get: if isSignedIn() && request.auth.uid == uid;
       allow list: if false;
@@ -53,6 +72,13 @@ service cloud.firestore {
         allow update: if (isAdmin() || isStudentOwner(studentId))
                       && hasValidStudentName();
         allow delete: if isAdmin();
+      }
+
+      match /team/{studentId} {
+        allow get, list: if isSignedIn();
+        allow create, update: if (isAdmin() || isStudentOwner(studentId))
+                              && hasValidTeamSnapshot(studentId);
+        allow delete: if isAdmin() || isStudentOwner(studentId);
       }
     }
 

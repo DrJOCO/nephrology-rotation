@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { T, TOPICS, WEEKLY, ARTICLES, STUDY_SHEETS, FEEDBACK_TAGS } from "../data/constants";
+import { T, TOPICS, WEEKLY, ARTICLES, STUDY_SHEETS, FEEDBACK_TAGS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
 import { QUICK_REFS } from "../data/guides";
 import store, { RotationInfo } from "../utils/store";
 import { getCurrentAdminUser, signInAdmin, signOutFirebase } from "../utils/firebase";
 import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, createRotationCode } from "../utils/helpers";
 import { calculatePoints, getLevel, ACHIEVEMENTS } from "../utils/gamification";
+import { buildTeamSnapshot } from "../utils/teamSnapshots";
+import { validatePatientForm, clampLength, LIMITS, PHI_WARNING } from "../utils/validation";
 import { HistogramChart, FunnelChart, HeatmapChart } from "./student/charts";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../data/clinicGuides";
 import { getCurrentOrNextFriday, getClinicTopicForDate, ensureCurrentClinicGuide, overrideClinicGuide, regenerateClinicGuide } from "../utils/clinicRotation";
-import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, Patient, QuizScore, WeeklyScores, Gamification, FeedbackTag, ClinicGuideRecord } from "../types";
+import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, Patient, QuizScore, WeeklyScores, Gamification, FeedbackTag, ClinicGuideRecord, CompletedItems, Bookmarks, ActivityLogEntry } from "../types";
 
 type NavigateFn = (t: string, sv?: AdminSubView) => void;
 type WeeklyData = typeof WEEKLY;
@@ -29,6 +31,118 @@ function getAdminAuthErrorMessage(error: unknown) {
   if (code === "auth/too-many-requests") return "Too many sign-in attempts. Try again later.";
   if (code === "auth/operation-not-allowed") return "Enable Email/Password sign-in in Firebase Authentication.";
   return "Admin sign-in failed. Check Firebase Auth and your admin setup.";
+}
+
+function pickLatestScore(a: QuizScore | null | undefined, b: QuizScore | null | undefined): QuizScore | null {
+  if (!a) return b || null;
+  if (!b) return a;
+  return new Date(a.date).getTime() >= new Date(b.date).getTime() ? a : b;
+}
+
+function mergeWeeklyScores(source: WeeklyScores = {}, target: WeeklyScores = {}): WeeklyScores {
+  const merged: WeeklyScores = {};
+  const weeks = new Set([...Object.keys(source), ...Object.keys(target)]);
+  weeks.forEach(week => {
+    const seen = new Map<string, QuizScore>();
+    [...(source[week] || []), ...(target[week] || [])].forEach(score => {
+      seen.set(`${score.date}|${score.correct}|${score.total}`, score);
+    });
+    merged[week] = Array.from(seen.values()).sort((a, b) => a.date.localeCompare(b.date));
+  });
+  return merged;
+}
+
+function mergeCompletedItems(source?: CompletedItems, target?: CompletedItems): CompletedItems | undefined {
+  const merged: CompletedItems = {
+    articles: { ...(source?.articles || {}), ...(target?.articles || {}) },
+    studySheets: { ...(source?.studySheets || {}), ...(target?.studySheets || {}) },
+    cases: { ...(source?.cases || {}), ...(target?.cases || {}) },
+  };
+  if (
+    Object.keys(merged.articles).length === 0 &&
+    Object.keys(merged.studySheets).length === 0 &&
+    Object.keys(merged.cases).length === 0
+  ) {
+    return undefined;
+  }
+  return merged;
+}
+
+function mergeBookmarks(source?: Bookmarks, target?: Bookmarks): Bookmarks | undefined {
+  const merged: Bookmarks = {
+    trials: Array.from(new Set([...(source?.trials || []), ...(target?.trials || [])])),
+    articles: Array.from(new Set([...(source?.articles || []), ...(target?.articles || [])])),
+    cases: Array.from(new Set([...(source?.cases || []), ...(target?.cases || [])])),
+    studySheets: Array.from(new Set([...(source?.studySheets || []), ...(target?.studySheets || [])])),
+  };
+  if (
+    merged.trials.length === 0 &&
+    merged.articles.length === 0 &&
+    merged.cases.length === 0 &&
+    merged.studySheets.length === 0
+  ) {
+    return undefined;
+  }
+  return merged;
+}
+
+function mergeActivityLog(source: ActivityLogEntry[] = [], target: ActivityLogEntry[] = []): ActivityLogEntry[] {
+  const deduped = new Map<string, ActivityLogEntry>();
+  [...source, ...target].forEach(entry => {
+    deduped.set(`${entry.timestamp}|${entry.type}|${entry.label}|${entry.detail}`, entry);
+  });
+  return Array.from(deduped.values())
+    .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+    .slice(-50);
+}
+
+function buildRecoveredStudent(source: AdminStudent, target: AdminStudent): AdminStudent {
+  const sourcePatients = source.patients || [];
+  const targetPatients = target.patients || [];
+  const mergedPatients = [
+    ...sourcePatients,
+    ...targetPatients.filter(tp => !sourcePatients.some(sp => String(sp.id) === String(tp.id))),
+  ];
+  const mergedAchievements = Array.from(new Set([
+    ...(source.gamification?.achievements || []),
+    ...(target.gamification?.achievements || []),
+  ]));
+  const mergedActivityLog = mergeActivityLog(source.activityLog || [], target.activityLog || []);
+
+  return {
+    ...target,
+    name: target.name || source.name,
+    loginPin: target.loginPin || source.loginPin,
+    year: target.year || source.year,
+    email: target.email || source.email,
+    status: target.status === "active" || source.status === "active" ? "active" : "completed",
+    addedDate: [source.addedDate, target.addedDate].filter(Boolean).sort()[0] || new Date().toISOString(),
+    patients: mergedPatients,
+    weeklyScores: mergeWeeklyScores(source.weeklyScores || {}, target.weeklyScores || {}),
+    preScore: pickLatestScore(source.preScore, target.preScore),
+    postScore: pickLatestScore(source.postScore, target.postScore),
+    gamification: {
+      points: Math.max(source.gamification?.points || 0, target.gamification?.points || 0),
+      achievements: mergedAchievements,
+      streaks:
+        (target.gamification?.streaks?.lastActiveDate || "") >= (source.gamification?.streaks?.lastActiveDate || "")
+          ? (target.gamification?.streaks || source.gamification?.streaks || { currentDays: 0, longestDays: 0, lastActiveDate: null })
+          : (source.gamification?.streaks || target.gamification?.streaks || { currentDays: 0, longestDays: 0, lastActiveDate: null }),
+    },
+    srQueue: { ...(source.srQueue || {}), ...(target.srQueue || {}) },
+    activityLog: mergedActivityLog,
+    completedItems: mergeCompletedItems(source.completedItems, target.completedItems),
+    bookmarks: mergeBookmarks(source.bookmarks, target.bookmarks),
+    feedbackTags: [
+      ...(source.feedbackTags || []),
+      ...(target.feedbackTags || []).filter(tag =>
+        !(source.feedbackTags || []).some(existing =>
+          existing.tag === tag.tag && existing.date === tag.date && existing.note === tag.note
+        )
+      ),
+    ],
+    lastSyncedAt: new Date().toISOString(),
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -197,11 +311,68 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   // Write student edits back to Firestore
   const writeStudentToFirestore = useCallback((studentId: string, data: Record<string, unknown>) => {
     if (!firebaseAdmin || !rotationCode || !studentId) return;
+    const existing = students.find(student => student.studentId === studentId);
+    const merged = { ...existing, ...data };
+    const updatedAt = new Date().toISOString();
     store.setStudentData(studentId, {
       ...data,
+      updatedAt,
+    });
+    void store.setTeamSnapshot(studentId, buildTeamSnapshot({
+      studentId,
+      name: typeof merged.name === "string" ? merged.name : "Unknown",
+      patients: Array.isArray(merged.patients) ? merged.patients as Patient[] : [],
+      points: calculatePoints(merged as Parameters<typeof calculatePoints>[0]),
+      updatedAt,
+    }));
+  }, [rotationCode, firebaseAdmin, students]);
+
+  const recoverStudentToRecord = useCallback(async (sourceStudentId: string, targetStudentId: string) => {
+    if (!firebaseAdmin || !rotationCode) throw new Error("Connect to the live rotation before running recovery.");
+    if (!sourceStudentId || !targetStudentId || sourceStudentId === targetStudentId) {
+      throw new Error("Select a different destination record.");
+    }
+
+    const source = students.find(s => s.studentId === sourceStudentId);
+    const target = students.find(s => s.studentId === targetStudentId);
+    if (!source || !target) throw new Error("Student record not found.");
+
+    const merged = buildRecoveredStudent(source, target);
+    await store.setStudentData(target.studentId, {
+      name: merged.name,
+      loginPin: merged.loginPin,
+      year: merged.year,
+      email: merged.email,
+      status: merged.status,
+      joinedAt: merged.addedDate,
+      patients: merged.patients,
+      weeklyScores: merged.weeklyScores,
+      preScore: merged.preScore,
+      postScore: merged.postScore,
+      gamification: merged.gamification,
+      srQueue: merged.srQueue,
+      activityLog: merged.activityLog,
+      completedItems: merged.completedItems,
+      bookmarks: merged.bookmarks,
+      feedbackTags: merged.feedbackTags,
       updatedAt: new Date().toISOString(),
     });
-  }, [rotationCode, firebaseAdmin]);
+    await store.setTeamSnapshot(target.studentId, buildTeamSnapshot({
+      studentId: target.studentId,
+      name: merged.name,
+      patients: merged.patients,
+      points: calculatePoints(merged as Parameters<typeof calculatePoints>[0]),
+    }));
+    await store.deleteStudentData(source.studentId);
+
+    setStudents(prev =>
+      prev
+        .filter(s => s.studentId !== source.studentId)
+        .map(s => (s.studentId === target.studentId ? merged : s))
+    );
+
+    return target.studentId;
+  }, [firebaseAdmin, rotationCode, students]);
 
   const navigate = (t: string, sv: AdminSubView = null) => { setTab(t); setSubView(sv); };
   const activePin = (settings?.adminPin || "1234").trim();
@@ -442,7 +613,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} onBack={() => navigate("dashboard")} />}
         {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} />}
-        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} navigate={navigate} />}
+        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} navigate={navigate} />}
         {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "analytics" && <AnalyticsTab students={students} />}
@@ -1663,6 +1834,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
   const [historyLoading, setHistoryLoading] = useState(true);
   const [newDates, setNewDates] = useState("");
   const [newLocation, setNewLocation] = useState("");
+  const [newCustomCode, setNewCustomCode] = useState("");
   const update = (key: string, val: string) => setSettings(prev => ({ ...prev, [key]: val }));
 
   // Load rotation history on mount
@@ -1677,7 +1849,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
   const handleCreateRotation = async () => {
     setCreating(true);
     try {
-      let code = createRotationCode(newLocation, newDates);
+      let code = newCustomCode.trim().toUpperCase() || createRotationCode(newLocation, newDates);
       // Check for collision — append random suffix if code already exists
       const exists = await store.validateRotationCode(code);
       if (exists) {
@@ -1698,6 +1870,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
       setRotationCodeState(code);
       setNewDates("");
       setNewLocation("");
+      setNewCustomCode("");
       // Refresh history
       const list = await store.listRotations();
       setRotationHistory(list);
@@ -1813,6 +1986,12 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
                   <option value="4" style={{ color: "#000" }}>4 weeks</option>
                 </select>
               </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Custom Code (optional)</label>
+              <input value={newCustomCode} onChange={e => setNewCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, ""))} placeholder="e.g. TEST or GS-APR26"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "monospace", letterSpacing: 2 }} />
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>If blank, code is auto-generated from location + dates</div>
             </div>
             <button onClick={handleCreateRotation} disabled={creating}
               style={{ width: "100%", padding: "14px 0", background: T.orange, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: creating ? "wait" : "pointer", opacity: creating ? 0.7 : 1, marginBottom: 16 }}>
@@ -2009,16 +2188,40 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
 //  Student Detail View (with score entry & patient logging)
 // ═══════════════════════════════════════════════════════════════════════
 
-function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFirestore, navigate }: { student: AdminStudent | undefined; onBack: () => void; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; navigate: NavigateFn }) {
+function StudentDetailView({ student: s, students, onBack, setStudents, writeStudentToFirestore, recoverStudentToRecord, navigate }: { student: AdminStudent | undefined; students: AdminStudent[]; onBack: () => void; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; recoverStudentToRecord: (sourceStudentId: string, targetStudentId: string) => Promise<string>; navigate: NavigateFn }) {
   const [showScoreEntry, setShowScoreEntry] = useState(false);
   const [scoreType, setScoreType] = useState("pre"); // pre, post, weekly
   const [scoreWeek, setScoreWeek] = useState(1);
   const [scoreForm, setScoreForm] = useState({ correct: "", total: "" });
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [patForm, setPatForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+  const [patErrors, setPatErrors] = useState<Record<string, string | undefined>>({});
+  const [showAllPatTopics, setShowAllPatTopics] = useState(false);
   const [showAddFeedback, setShowAddFeedback] = useState(false);
   const [feedbackNote, setFeedbackNote] = useState("");
-  const togglePatTopic = (t: string) => setPatForm(prev => ({ ...prev, topics: prev.topics.includes(t) ? prev.topics.filter((x: string) => x !== t) : [...prev.topics, t] }));
+  const [recoveryTargetId, setRecoveryTargetId] = useState("");
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
+  const [recoveryError, setRecoveryError] = useState("");
+  const togglePatTopic = (t: string) => {
+    setPatForm(prev => ({ ...prev, topics: prev.topics.includes(t) ? prev.topics.filter((x: string) => x !== t) : [...prev.topics, t] }));
+    setPatErrors(prev => ({ ...prev, topics: undefined }));
+  };
+
+  const normalizedName = s?.name.trim().toLowerCase() || "";
+  const preferredRecoveryCandidates = s ? students.filter(other =>
+    other.studentId !== s.studentId &&
+    (other.name.trim().toLowerCase() === normalizedName || (!!s.loginPin && other.loginPin === s.loginPin))
+  ) : [];
+  const recoveryCandidates = (preferredRecoveryCandidates.length > 0 ? preferredRecoveryCandidates : students.filter(other => other.studentId !== s?.studentId))
+    .slice()
+    .sort((a, b) => (b.lastSyncedAt || "").localeCompare(a.lastSyncedAt || ""));
+
+  useEffect(() => {
+    if (!recoveryCandidates.some(candidate => candidate.studentId === recoveryTargetId)) {
+      setRecoveryTargetId(recoveryCandidates[0]?.studentId || "");
+    }
+  }, [recoveryCandidates, recoveryTargetId]);
+
   if (!s) return <div style={{ padding: 16 }}>Student not found.</div>;
 
   const prePct = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : null;
@@ -2064,10 +2267,16 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
   };
 
   const addPatient = () => {
-    if (!patForm.initials.trim() || patForm.topics.length === 0) return;
-    const p = { ...patForm, id: crypto.randomUUID(), date: new Date().toISOString(), status: "active" as const, followUps: [] } as unknown as Patient;
+    const { valid, errors } = validatePatientForm(patForm);
+    if (!valid) {
+      setPatErrors(errors);
+      return;
+    }
+    const p = { ...patForm, id: Date.now(), date: new Date().toISOString(), status: "active" as const, followUps: [] } as Patient;
     updateStudent({ patients: [...patients, p] });
     setPatForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
+    setPatErrors({});
+    setShowAllPatTopics(false);
     setShowAddPatient(false);
   };
 
@@ -2076,6 +2285,40 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
     const ts = p.topics || (p.topic ? [p.topic] : []);
     ts.forEach(t => { topicCounts[t] = (topicCounts[t] || 0) + 1; });
   });
+  const visibleAdminTopics = showAllPatTopics
+    ? TOPICS
+    : [...COMMON_PATIENT_TOPICS, ...ADDITIONAL_PATIENT_TOPICS.filter(topic => patForm.topics.includes(topic))];
+  const hiddenAdminTopicCount = showAllPatTopics
+    ? 0
+    : ADDITIONAL_PATIENT_TOPICS.length - ADDITIONAL_PATIENT_TOPICS.filter(topic => patForm.topics.includes(topic)).length;
+
+  const handleRecovery = async () => {
+    if (!recoveryTargetId) {
+      setRecoveryError("Select the new device record first.");
+      return;
+    }
+    const target = recoveryCandidates.find(candidate => candidate.studentId === recoveryTargetId);
+    if (!target) {
+      setRecoveryError("Selected recovery record no longer exists.");
+      return;
+    }
+    const confirmed = confirm(
+      `Move ${s.name}'s saved progress into ${target.name} (${target.studentId.slice(0, 8)}...) and delete this older device record?`
+    );
+    if (!confirmed) return;
+
+    setRecoveryBusy(true);
+    setRecoveryError("");
+    try {
+      const nextStudentId = await recoverStudentToRecord(s.studentId, target.studentId);
+      navigate("students", { type: "studentDetail", id: nextStudentId });
+      alert("Recovery complete. The new device record now owns the student's progress.");
+    } catch (error) {
+      console.error("Student recovery failed:", error);
+      setRecoveryError(error instanceof Error ? error.message : "Recovery failed.");
+    }
+    setRecoveryBusy(false);
+  };
 
   return (
     <div style={{ padding: 16 }}>
@@ -2087,6 +2330,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
           <div>
             <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>{s.name}</h2>
             <div style={{ fontSize: 13, color: T.sub }}>{s.year} • {s.email || "No email"}</div>
+            <div style={{ fontSize: 11, color: T.muted, marginTop: 4, fontFamily: T.mono }}>Record ID: {s.studentId}</div>
             {s.loginPin && (
               <div style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 6, background: T.yellowBg, padding: "4px 10px", borderRadius: 8 }}>
                 <span style={{ fontSize: 11, color: T.sub, fontWeight: 600 }}>Login PIN:</span>
@@ -2134,6 +2378,7 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
             + Enter Score
           </button>
           <button onClick={() => setShowAddPatient(!showAddPatient)}
+            onClickCapture={() => { if (showAddPatient) setShowAllPatTopics(false); }}
             style={{ fontSize: 11, color: T.green, background: "rgba(26,188,156,0.1)", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             + Log Patient
           </button>
@@ -2146,6 +2391,40 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
             Export PDF
           </button>
         </div>
+      </div>
+
+      {/* Device Recovery */}
+      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>Device Recovery</div>
+        <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
+          If the student had to join on a new phone/browser, have them join once so a new blank record appears here. Then move this saved progress into that new device-owned record.
+        </div>
+        {recoveryCandidates.length === 0 ? (
+          <div style={{ fontSize: 12, color: T.muted, fontStyle: "italic" }}>
+            No other student records available yet. Once the new device joins, refresh this page and select the new record here.
+          </div>
+        ) : (
+          <>
+            <label style={adminLabel}>New Device Record</label>
+            <select value={recoveryTargetId} onChange={e => setRecoveryTargetId(e.target.value)}
+              style={{ ...adminInput, marginBottom: 10 }}>
+              {recoveryCandidates.map(candidate => {
+                const candidateQuizCount = Object.values(candidate.weeklyScores || {}).flat().length;
+                const lastSeen = candidate.lastSyncedAt ? new Date(candidate.lastSyncedAt).toLocaleString() : "not synced yet";
+                return (
+                  <option key={candidate.studentId} value={candidate.studentId}>
+                    {candidate.name} • {candidate.studentId.slice(0, 8)}... • {candidate.patients.length} pts • {candidateQuizCount} quizzes • {lastSeen}
+                  </option>
+                );
+              })}
+            </select>
+            <button onClick={handleRecovery} disabled={recoveryBusy}
+              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
+              {recoveryBusy ? "Moving Progress..." : "Move Progress To New Device Record"}
+            </button>
+            {recoveryError && <div style={{ fontSize: 11, color: T.accent, marginTop: 8 }}>{recoveryError}</div>}
+          </>
+        )}
       </div>
 
       {/* Feedback Tags */}
@@ -2259,14 +2538,18 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
       {showAddPatient && (
         <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.green}` }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: T.green, marginBottom: 10 }}>LOG PATIENT</div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Initials</label>
-            <input value={patForm.initials} onChange={e => setPatForm({...patForm, initials: e.target.value})} placeholder="J.S." style={adminInput} />
+          <div style={{ background: T.yellowBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.goldAlphaMd}`, fontSize: 11, color: T.sub, lineHeight: 1.5 }}>
+            <strong style={{ color: T.goldText }}>No PHI:</strong> {PHI_WARNING}
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Topics (select all that apply)</label>
+            <label style={adminLabel}>Initials</label>
+            <input value={patForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => { setPatForm({...patForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setPatErrors(prev => ({ ...prev, initials: undefined })); }} placeholder="J.S." style={adminInput} />
+            {patErrors.initials && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>{patErrors.initials}</div>}
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={adminLabel}>Learning Tags</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-              {["AKI","CKD","Hyponatremia","Hyperkalemia","Acid-Base","Glomerulonephritis","Nephrotic Syndrome","Dialysis","Transplant","Hypertension","Kidney Stones","Diuretics","Other"].map(t => {
+              {visibleAdminTopics.map(t => {
                 const sel = patForm.topics.includes(t);
                 return (
                   <button key={t} type="button" onClick={() => togglePatTopic(t)}
@@ -2278,15 +2561,25 @@ function StudentDetailView({ student: s, onBack, setStudents, writeStudentToFire
                 );
               })}
             </div>
-            {patForm.topics.length === 0 && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>Select at least one</div>}
+            {(hiddenAdminTopicCount > 0 || showAllPatTopics) && (
+              <button
+                type="button"
+                onClick={() => setShowAllPatTopics(prev => !prev)}
+                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.orange, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+              >
+                {showAllPatTopics ? "Show fewer topics" : `More topics (${hiddenAdminTopicCount})`}
+              </button>
+            )}
+            {(patForm.topics.length === 0 || patErrors.topics) && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>{patErrors.topics || "Select at least one"}</div>}
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Diagnosis</label>
-            <input value={patForm.dx} onChange={e => setPatForm({...patForm, dx: e.target.value})} placeholder="e.g. AKI from sepsis" style={adminInput} />
+            <input value={patForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => { setPatForm({...patForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setPatErrors(prev => ({ ...prev, dx: undefined })); }} placeholder="e.g. AKI from sepsis" style={adminInput} />
+            {patErrors.dx && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>{patErrors.dx}</div>}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={addPatient} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Add Patient</button>
-            <button onClick={() => setShowAddPatient(false)} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+            <button onClick={() => { setShowAllPatTopics(false); setShowAddPatient(false); }} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
           </div>
         </div>
       )}

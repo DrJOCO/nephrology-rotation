@@ -52,10 +52,10 @@ function AppInner() {
   const [mode, setMode] = useState("student");
   if (mode === "admin") return (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: T.sub, fontFamily: T.serif, fontSize: 16 }}>Loading Admin...</div></div>}>
-      <AdminPanel onExit={() => setMode("student")} />
+      <AdminPanel />
     </Suspense>
   );
-  return <StudentApp onAdminToggle={() => setMode("admin")} />;
+  return <StudentApp onAdminToggle={() => { setMode("admin"); }} />;
 }
 
 export default function App() {

@@ -223,7 +223,7 @@ export function searchAll(query: string, { trials, articlesByWeek, cases, studyS
       { value: a.full, weight: 2 },
     ]);
     if (score > 0) {
-      results.abbreviations.push({ label: a.abbr, sub: a.full, icon: "\uD83D\uDD24", score, nav: ["home", { type: "abbreviations" }] });
+      results.abbreviations.push({ label: a.abbr, sub: a.full, icon: "\uD83D\uDD24", score, nav: ["refs", { type: "abbreviations" }] });
     }
   });
 

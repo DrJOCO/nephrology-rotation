@@ -22,7 +22,7 @@ const ONBOARDING_STEPS = [
   },
 ];
 
-export default function OnboardingOverlay({ onDismiss }) {
+export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDismiss: () => void; onViewFirstDay?: () => void }) {
   const [step, setStep] = useState(0);
   const s = ONBOARDING_STEPS[step];
   const isLast = step === ONBOARDING_STEPS.length - 1;
@@ -53,7 +53,7 @@ export default function OnboardingOverlay({ onDismiss }) {
 
         {/* Hint */}
         <div style={{ fontSize: 11, color: T.med, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-block", marginBottom: 24 }}>
-          \uD83D\uDCA1 {s.hint}
+          💡 {s.hint}
         </div>
 
         {/* Actions */}
@@ -64,9 +64,17 @@ export default function OnboardingOverlay({ onDismiss }) {
           </button>
           <button onClick={() => isLast ? handleDismiss() : setStep(step + 1)}
             style={{ padding: "10px 24px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", minWidth: 120 }}>
-            {isLast ? "Get Started" : "Next \u2192"}
+            {isLast ? "Get Started" : "Next →"}
           </button>
         </div>
+
+        {/* First Day Guide link on last step */}
+        {isLast && onViewFirstDay && (
+          <button onClick={() => { localStorage.setItem("neph_hasSeenOnboarding", "true"); onViewFirstDay(); }}
+            style={{ marginTop: 16, background: "none", border: "none", color: T.med, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
+            🌅 View First Day Orientation Guide →
+          </button>
+        )}
       </div>
     </div>
   );

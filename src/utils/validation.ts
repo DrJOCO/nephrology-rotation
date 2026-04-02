@@ -20,6 +20,11 @@ export interface FollowUpValidation {
   error: string | null;
 }
 
+interface PhiCheck {
+  pattern: RegExp;
+  message: string;
+}
+
 // ── Field constraints ──────────────────────────────────────────────────
 export const LIMITS = {
   INITIALS_MAX: 5,
@@ -36,6 +41,17 @@ export const LIMITS = {
   ARTICLE_TITLE_MAX: 200,
   ARTICLE_URL_MAX: 500,
 };
+
+export const PHI_WARNING =
+  "Use initials and learning points only. Do not enter names, DOBs, MRNs, phone numbers, email addresses, or home addresses.";
+
+const PHI_CHECKS: PhiCheck[] = [
+  { pattern: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, message: "Remove email addresses." },
+  { pattern: /\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})\b/, message: "Remove phone numbers." },
+  { pattern: /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b(?:19|20)\d{2}-\d{2}-\d{2}\b/, message: "Remove full dates." },
+  { pattern: /\b\d{7,}\b/, message: "Remove MRNs or other long numeric identifiers." },
+  { pattern: /\b(?:dob|date of birth|mrn|ssn|social security|address)\b/i, message: "Remove explicit identifying details." },
+];
 
 // ── Sanitization helpers ───────────────────────────────────────────────
 
@@ -60,6 +76,17 @@ export function isValidUrl(str: string | undefined | null): boolean {
   } catch {
     return false;
   }
+}
+
+export function detectPotentialPhi(text: string | undefined | null): string | null {
+  const value = (text || "").trim();
+  if (!value) return null;
+
+  for (const check of PHI_CHECKS) {
+    if (check.pattern.test(value)) return check.message;
+  }
+
+  return null;
 }
 
 // ── Patient form validation ────────────────────────────────────────────
@@ -94,6 +121,9 @@ export function validatePatientForm(form: PatientFormData): ValidationResult {
   const dx = (form.dx || "").trim();
   if (dx.length > LIMITS.DIAGNOSIS_MAX) {
     errors.dx = `Max ${LIMITS.DIAGNOSIS_MAX} characters`;
+  } else {
+    const dxPhi = detectPotentialPhi(dx);
+    if (dxPhi) errors.dx = dxPhi;
   }
 
   // Topics: at least one required
@@ -105,6 +135,9 @@ export function validatePatientForm(form: PatientFormData): ValidationResult {
   const notes = (form.notes || "").trim();
   if (notes.length > LIMITS.NOTES_MAX) {
     errors.notes = `Max ${LIMITS.NOTES_MAX} characters`;
+  } else {
+    const notesPhi = detectPotentialPhi(notes);
+    if (notesPhi) errors.notes = notesPhi;
   }
 
   return { valid: Object.keys(errors).length === 0, errors };
@@ -119,6 +152,8 @@ export function validateFollowUp(text: string | undefined | null): FollowUpValid
   const trimmed = (text || "").trim();
   if (!trimmed) return { valid: false, error: "Follow-up note cannot be empty" };
   if (trimmed.length > LIMITS.FOLLOWUP_MAX) return { valid: false, error: `Max ${LIMITS.FOLLOWUP_MAX} characters` };
+  const phiError = detectPotentialPhi(trimmed);
+  if (phiError) return { valid: false, error: phiError };
   return { valid: true, error: null };
 }
 

@@ -1,7 +1,8 @@
 import { useState, useEffect, CSSProperties } from "react";
-import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS } from "../../data/constants";
+import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../../data/constants";
 import { inputLabel, inputStyle } from "./shared";
-import { validatePatientForm, validateFollowUp, clampLength, LIMITS } from "../../utils/validation";
+import { useIsMobile } from "../../utils/helpers";
+import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
 import type { Patient, SubView } from "../../types";
 
 const errorStyle: CSSProperties = { fontSize: 11, color: T.accent, marginTop: 3, fontWeight: 500 };
@@ -16,15 +17,35 @@ interface PatientForm {
   notes: string;
 }
 
-function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; topicColor: (topic: string) => string; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: number, note: string) => void; onRemoveFollowUp: (patientId: number, followUpId: number) => void }) {
+function getVisibleTopicOptions(selectedTopics: string[], expanded: boolean): string[] {
+  if (expanded) return TOPICS;
+  const selectedExtraTopics = ADDITIONAL_PATIENT_TOPICS.filter(topic => selectedTopics.includes(topic));
+  return [...COMMON_PATIENT_TOPICS, ...selectedExtraTopics];
+}
+
+function getHiddenTopicCount(selectedTopics: string[], expanded: boolean): number {
+  if (expanded) return 0;
+  const selectedExtraTopics = ADDITIONAL_PATIENT_TOPICS.filter(topic => selectedTopics.includes(topic));
+  return ADDITIONAL_PATIENT_TOPICS.length - selectedExtraTopics.length;
+}
+
+function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; topicColor: (topic: string) => string; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: string | number, note: string) => void; onRemoveFollowUp: (patientId: string | number, followUpId: number) => void }) {
+  const isMobile = useIsMobile();
   const [followUpText, setFollowUpText] = useState("");
   const [followUpError, setFollowUpError] = useState<string | null>(null);
   const [showFollowUps, setShowFollowUps] = useState(false);
+  const [showAllEditTopics, setShowAllEditTopics] = useState(false);
 
   // Backwards compat: old patients have p.topic (string), new have p.topics (array)
   const topics = p.topics || (p.topic ? [p.topic] : []);
   const followUps = p.followUps || [];
   const primaryColor = topicColor(topics[0] || "Other");
+  const visibleEditTopics = getVisibleTopicOptions(editForm.topics, showAllEditTopics);
+  const hiddenEditTopicCount = getHiddenTopicCount(editForm.topics, showAllEditTopics);
+
+  useEffect(() => {
+    if (!isEditing) setShowAllEditTopics(false);
+  }, [isEditing]);
 
   const handleAddFollowUp = () => {
     const { valid, error } = validateFollowUp(followUpText);
@@ -38,7 +59,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
     return (
       <div style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 10, border: `2px solid ${T.med}` }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: T.med, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Editing Patient</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
           <div>
             <label style={inputLabel}>Initials</label>
             <input value={editForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => onEditChange({...editForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)})} style={inputStyle} />
@@ -53,13 +74,13 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
           <input value={editForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => onEditChange({...editForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)})} style={inputStyle} />
         </div>
         <div style={{ marginBottom: 10 }}>
-          <label style={inputLabel}>Topics</label>
+          <label style={inputLabel}>Learning Tags</label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-            {TOPICS.map(t => {
+            {visibleEditTopics.map(t => {
               const sel = editForm.topics.includes(t);
               return (
                 <button key={t} type="button" onClick={() => onEditToggleTopic(t)}
-                  style={{ padding: "5px 10px", borderRadius: 20, fontSize: 11, fontWeight: sel ? 600 : 400, cursor: "pointer",
+                  style={{ padding: isMobile ? "8px 14px" : "5px 10px", borderRadius: 20, fontSize: isMobile ? 12 : 11, fontWeight: sel ? 600 : 400, cursor: "pointer",
                     background: sel ? T.med : T.card, color: sel ? "white" : T.sub,
                     border: sel ? `1.5px solid ${T.med}` : `1.5px solid ${T.line}` }}>
                   {sel ? "✓ " : ""}{t}
@@ -67,6 +88,15 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
               );
             })}
           </div>
+          {(hiddenEditTopicCount > 0 || showAllEditTopics) && (
+            <button
+              type="button"
+              onClick={() => setShowAllEditTopics(prev => !prev)}
+              style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+            >
+              {showAllEditTopics ? "Show fewer topics" : `More topics (${hiddenEditTopicCount})`}
+            </button>
+          )}
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={inputLabel}>Notes</label>
@@ -93,21 +123,21 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 4 }}>
               {topics.map(t => (
-                <span key={t} style={{ fontSize: 10, color: "white", background: topicColor(t), padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{t}</span>
+                <span key={t} style={{ fontSize: isMobile ? 11 : 10, color: "white", background: topicColor(t), padding: isMobile ? "4px 10px" : "2px 8px", borderRadius: 10, fontWeight: 600 }}>{t}</span>
               ))}
             </div>
             {p.dx && <div style={{ fontSize: 13, color: T.text, marginBottom: 2, wordBreak: "break-word" }}>{p.dx}</div>}
             {p.notes && <div style={{ fontSize: 11, color: T.sub, fontStyle: "italic", marginTop: 4, wordBreak: "break-word" }}>💡 {p.notes}</div>}
             <div style={{ fontSize: 10, color: T.muted, marginTop: 6 }}>Added {new Date(p.date).toLocaleDateString()}</div>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: isMobile ? "wrap" : "nowrap", justifyContent: "flex-end" }}>
             {!dimmed && (
-              <button onClick={onStartEdit} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 10, cursor: "pointer", color: T.med, fontWeight: 600 }}>✎ Edit</button>
+              <button onClick={onStartEdit} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "4px 8px", fontSize: isMobile ? 12 : 10, cursor: "pointer", color: T.med, fontWeight: 600 }}>✎ Edit</button>
             )}
-            <button onClick={onToggle} style={{ background: "none", border: `1px solid ${dimmed ? T.green : T.muted}`, borderRadius: 6, padding: "4px 8px", fontSize: 10, cursor: "pointer", color: dimmed ? T.green : T.sub }}>
+            <button onClick={onToggle} style={{ background: "none", border: `1px solid ${dimmed ? T.green : T.muted}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "4px 8px", fontSize: isMobile ? 12 : 10, cursor: "pointer", color: dimmed ? T.green : T.sub }}>
               {dimmed ? "↩ Reactivate" : "✓ D/C"}
             </button>
-            <button onClick={onRemove} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 10, cursor: "pointer", color: T.muted }}>✕</button>
+            <button onClick={onRemove} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "4px 8px", fontSize: isMobile ? 12 : 10, cursor: "pointer", color: T.muted }}>✕</button>
           </div>
         </div>
       </div>
@@ -137,9 +167,9 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
                 onChange={e => { setFollowUpText(clampLength(e.target.value, LIMITS.FOLLOWUP_MAX)); setFollowUpError(null); }}
                 onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
                 placeholder="Add follow-up note..."
-                style={{ flex: 1, padding: "6px 10px", fontSize: 12, border: `1px solid ${followUpError ? T.accent : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
+                style={{ flex: 1, padding: isMobile ? "8px 12px" : "6px 10px", fontSize: 12, border: `1px solid ${followUpError ? T.accent : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
               <button onClick={handleAddFollowUp}
-                style={{ padding: "6px 12px", background: followUpText.trim() ? T.med : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: followUpText.trim() ? "pointer" : "default" }}>+</button>
+                style={{ padding: isMobile ? "8px 14px" : "6px 12px", background: followUpText.trim() ? T.med : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: followUpText.trim() ? "pointer" : "default" }}>+</button>
             </div>
             {followUpError && <div style={errorStyle}>{followUpError}</div>}
           </div>
@@ -156,13 +186,15 @@ interface TopicSuggestion {
 }
 
 export default function PatientTab({ patients, setPatients, navigate }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void }) {
+  const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
   const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editForm, setEditForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
   // Auto-dismiss suggestions after 12s
   useEffect(() => {
@@ -176,6 +208,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
       ...prev,
       topics: prev.topics.includes(t) ? prev.topics.filter(x => x !== t) : [...prev.topics, t],
     }));
+    setFormErrors(prev => ({ ...prev, topics: undefined }));
   };
 
   const editToggleTopic = (t: string) => {
@@ -231,11 +264,12 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
 
     setForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
     setFormErrors({});
+    setShowAllTopics(false);
     setShowAdd(false);
   };
 
-  const toggle = (id: number) => setPatients(prev => prev.map(p => p.id === id ? { ...p, status: p.status === "active" ? "discharged" : "active" } : p));
-  const remove = (id: number) => setPatients(prev => prev.filter(p => p.id !== id));
+  const toggle = (id: string | number) => setPatients(prev => prev.map(p => p.id === id ? { ...p, status: p.status === "active" ? "discharged" : "active" } : p));
+  const remove = (id: string | number) => setPatients(prev => prev.filter(p => p.id !== id));
 
   const startEdit = (patient: Patient) => {
     setEditingId(patient.id);
@@ -251,8 +285,11 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
   const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [], notes: "" }); };
 
   const saveEdit = () => {
-    const { valid } = validatePatientForm(editForm);
-    if (!valid) return;
+    const { valid, errors } = validatePatientForm(editForm);
+    if (!valid) {
+      alert(Object.values(errors)[0] || "Please fix the patient entry.");
+      return;
+    }
     const sanitized = {
       initials: editForm.initials.trim(),
       room: editForm.room.trim(),
@@ -264,7 +301,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
     cancelEdit();
   };
 
-  const addFollowUp = (patientId: number, noteText: string) => {
+  const addFollowUp = (patientId: string | number, noteText: string) => {
     if (!noteText.trim()) return;
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
@@ -272,7 +309,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
     } : p));
   };
 
-  const removeFollowUp = (patientId: number, followUpId: number) => {
+  const removeFollowUp = (patientId: string | number, followUpId: number) => {
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
       followUps: (p.followUps || []).filter(f => f.id !== followUpId)
@@ -281,11 +318,14 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
 
   const active = patients.filter(p => p.status === "active");
   const discharged = patients.filter(p => p.status === "discharged");
+  const visibleAddTopics = getVisibleTopicOptions(form.topics, showAllTopics);
+  const hiddenAddTopicCount = getHiddenTopicCount(form.topics, showAllTopics);
 
   const topicColor = (topic: string): string => {
-    const map = { AKI: T.accent, CKD: T.purple, Hyponatremia: T.med, Hyperkalemia: T.orange,
-      "Acid-Base": T.greenDk, Glomerulonephritis: T.redDeep, "Nephrotic Syndrome": T.orange,
-      Dialysis: T.dark, Transplant: T.green, Hypertension: T.purpleAccent };
+    const map = { AKI: T.accent, "Post-Renal AKI": T.gold, CKD: T.purple, "Anemia of CKD": T.orange, "CKD-MBD": T.gold,
+      Hyponatremia: T.med, Hyperkalemia: T.orange, "Acid-Base": T.greenDk, Glomerulonephritis: T.redDeep,
+      "Nephrotic Syndrome": T.orange, "Kidney Biopsy": T.redDeep, Dialysis: T.dark, "Dialysis Access": T.dark,
+      Transplant: T.green, Hypertension: T.purpleAccent };
     return map[topic] || T.med;
   };
 
@@ -293,15 +333,23 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Rounding List</h2>
-        <button onClick={() => setShowAdd(!showAdd)}
+        <button onClick={() => {
+          if (showAdd) setShowAllTopics(false);
+          setShowAdd(!showAdd);
+        }}
           style={{ padding: "8px 16px", background: showAdd ? T.sub : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ Add Patient"}
         </button>
       </div>
 
+      <div style={{ background: T.yellowBg, borderRadius: 12, padding: 12, marginBottom: 16, border: `1px solid ${T.goldAlphaMd}` }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>No PHI</div>
+        <div style={{ fontSize: 11, color: T.sub, lineHeight: 1.5 }}>{PHI_WARNING}</div>
+      </div>
+
       {showAdd && (
         <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `2px solid ${T.med}` }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
               <label style={inputLabel}>Patient Initials</label>
               <input value={form.initials} maxLength={LIMITS.INITIALS_MAX}
@@ -325,13 +373,13 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
             {formErrors.dx && <div style={errorStyle}>{formErrors.dx}</div>}
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={inputLabel}>Nephrology Topics (select all that apply)</label>
+            <label style={inputLabel}>Learning Tags (pick the main one or two)</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-              {TOPICS.map(t => {
+              {visibleAddTopics.map(t => {
                 const sel = form.topics.includes(t);
                 return (
-                  <button key={t} type="button" onClick={() => toggleTopic(t)}
-                    style={{ padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
+                <button key={t} type="button" onClick={() => toggleTopic(t)}
+                    style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
                       background: sel ? T.med : T.card, color: sel ? "white" : T.sub,
                       border: sel ? `1.5px solid ${T.med}` : `1.5px solid ${T.line}` }}>
                     {sel ? "✓ " : ""}{t}
@@ -339,6 +387,15 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
                 );
               })}
             </div>
+            {(hiddenAddTopicCount > 0 || showAllTopics) && (
+              <button
+                type="button"
+                onClick={() => setShowAllTopics(prev => !prev)}
+                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+              >
+                {showAllTopics ? "Show fewer topics" : `More topics (${hiddenAddTopicCount})`}
+              </button>
+            )}
             {(form.topics.length === 0 || formErrors.topics) && <div style={errorStyle}>{formErrors.topics || "Select at least one topic"}</div>}
           </div>
           <div style={{ marginBottom: 14 }}>
@@ -368,7 +425,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => { navigate(...s.nav); setShowSuggestions(false); }}
-                style={{ padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600, cursor: "pointer",
+                style={{ padding: isMobile ? "8px 12px" : "6px 12px", borderRadius: 8, fontSize: isMobile ? 12 : 11, fontWeight: 600, cursor: "pointer",
                   background: s.type === "studySheet" ? T.card : T.ice,
                   color: s.type === "studySheet" ? T.purpleAccent : T.med,
                   border: `1px solid ${s.type === "studySheet" ? T.purpleSoft : T.med}` }}>

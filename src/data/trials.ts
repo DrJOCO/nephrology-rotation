@@ -28,15 +28,15 @@ export const LANDMARK_TRIALS = {
       details: "Design: Multicenter RCT (31 French ICUs). N=620 critically ill patients with KDIGO stage 3 AKI. Arms: Early (RRT within 6h of reaching stage 3) vs. Delayed (RRT only for urgent indications: K>6.5, pH<7.15, pulmonary edema, BUN>112). Demographics: Mean age 64, 73% male, 80% mechanically ventilated, ~80% septic. Results: 60-day mortality 48.5% (early) vs. 49.7% (delayed), p=0.79. 49% of delayed-group patients NEVER required RRT. Catheter-related infections significantly lower in delayed group.",
       significance: "Alongside STARRT-AKI, established that 'watchful waiting' is safe for RRT timing. Nearly half of delayed-group patients recovered without ever needing dialysis. Supports using clinical indications (AEIOU) rather than lab thresholds alone to start RRT." },
 
-    // ── IV Fluids ──
-    { name: "SMART", category: "IV Fluids",
+    // ── Fluid Management ──
+    { name: "SMART", category: "Fluid Management",
       full_title: "Balanced Crystalloids versus Saline in Critically Ill Adults",
       journal: "NEJM", year: 2018,
       url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1711584",
       takeaway: "Balanced crystalloids (LR/Plasmalyte) reduced the composite of death, new RRT, or persistent renal dysfunction vs. normal saline in ICU patients.",
       details: "Design: Single-center pragmatic cluster-randomized crossover trial (Vanderbilt MICU). N=15,802 critically ill adults receiving IV crystalloids. Arms: Balanced crystalloids (LR or Plasmalyte) vs. 0.9% Normal Saline, alternating monthly. Demographics: Mean age 58, 55% male, diverse ICU admitting diagnoses. Results: 30-day MAKE (major adverse kidney events) 14.3% vs. 15.4% (OR 0.90, p=0.04). NNT=91. Benefit most pronounced in sepsis subgroup (NNT=29) and patients receiving larger volumes.",
       significance: "Landmark pragmatic trial that shifted IV fluid practice away from NS. The benefit was driven primarily by reduced AKI. NS causes hyperchloremic acidosis and renal vasoconstriction. Now standard: use balanced crystalloids as default in most patients." },
-    { name: "SALT-ED", category: "IV Fluids",
+    { name: "SALT-ED", category: "Fluid Management",
       full_title: "Balanced Crystalloids versus Saline in Noncritically Ill Adults",
       journal: "NEJM", year: 2018,
       url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1711586",
@@ -61,6 +61,26 @@ export const LANDMARK_TRIALS = {
       takeaway: "Neither N-acetylcysteine nor sodium bicarbonate prevented contrast-associated AKI better than placebo/saline.",
       details: "Design: Multicenter 2x2 factorial RCT (53 VA hospitals). N=5,177 patients undergoing angiography with eGFR 15-44.9 (or 45-59.9 with DM). Arms: (1) IV NaHCO3 vs. IV NaCl, AND (2) Oral NAC 5 days vs. Placebo. Demographics: Mean age 70, 96% male (VA), 67% DM, mean eGFR 50. Results: Contrast-associated AKI ~9% in all groups — no difference for bicarb vs. saline (OR 0.93, p=0.41) or NAC vs. placebo (OR 1.02, p=0.88). No difference in death, dialysis, or persistent kidney injury at 90 days.",
       significance: "Definitive trial that debunked two longstanding practices. NAC does NOT prevent contrast nephropathy. IV bicarb is NOT superior to NS for contrast prophylaxis. Best prevention: adequate hydration with any isotonic crystalloid and using low-osmolar contrast." },
+
+    // ── Hepatorenal Syndrome ──
+    { name: "CONFIRM", category: "Hepatorenal Syndrome",
+      full_title: "Terlipressin Plus Albumin for the Treatment of Type 1 Hepatorenal Syndrome",
+      journal: "NEJM", year: 2021,
+      url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2034323",
+      takeaway: "Terlipressin + albumin significantly improved HRS-AKI reversal compared with placebo + albumin (32% vs 17%).",
+      details: "Design: Multicenter double-blind RCT. N=300 adults with cirrhosis and HRS type 1. Arms: Terlipressin 1 mg IV q6h (dose up to 2 mg if needed) + albumin vs. placebo + albumin. Primary endpoint: Verified HRS reversal (two consecutive Cr \u22641.5 mg/dL). Results: 32% vs 17% HRS reversal (p=0.006). Concern: Increased respiratory failure in terlipressin group (11% vs 2%), especially in volume-overloaded patients.",
+      significance: "Led to FDA approval of terlipressin (Terlivaz) in 2022 \u2014 the first FDA-approved drug for HRS in the US. Important caveat: must avoid use in patients with volume overload due to respiratory failure risk. Cemented albumin + vasoconstrictor as standard HRS treatment pending liver transplant.",
+      topics: ["Hepatorenal Syndrome"] },
+
+    // ── Contrast Nephropathy ──
+    { name: "AMACING", category: "Contrast Nephropathy",
+      full_title: "A MAastricht Contrast-Induced Nephropathy Guideline",
+      journal: "Lancet", year: 2017,
+      url: "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(17)30057-0/fulltext",
+      takeaway: "Prophylactic IV hydration before contrast did NOT reduce CI-AKI in patients with eGFR 30-59 receiving intravenous contrast.",
+      details: "Design: Multicenter RCT. N=660 patients with eGFR 30-59 scheduled for elective IV contrast-enhanced procedures. Arms: No prophylaxis vs. standard IV normal saline hydration. Primary endpoint: CI-AKI (Cr rise \u226525% or \u22650.5 mg/dL within 2-6 days). Results: CI-AKI in 2.7% (no prophylaxis) vs 2.6% (hydration) \u2014 no difference.",
+      significance: "Challenged the dogma that all CKD patients need pre-hydration for IV contrast. Suggests the risk of IV contrast in moderate CKD (eGFR 30-59) is very low and that routine prophylactic hydration may be unnecessary for elective IV contrast studies. Does NOT apply to intra-arterial contrast or eGFR <30.",
+      topics: ["Contrast-Associated AKI"] },
   ],
 
   // ═══ WEEK 2: ELECTROLYTES, ACID-BASE & CKD COMPLICATIONS ═══════════
@@ -121,6 +141,24 @@ export const LANDMARK_TRIALS = {
       takeaway: "Ramipril (ACEi) was superior to amlodipine for slowing CKD progression in African Americans with hypertensive nephrosclerosis.",
       details: "Design: Multicenter RCT (21 US centers). N=1,094 African Americans with hypertensive CKD (GFR 20-65). Arms: 3x2 factorial — ramipril vs. metoprolol vs. amlodipine, AND usual (MAP 102-107) vs. low (MAP ≤92) BP target. Demographics: Mean age 55, 61% male, mean GFR 46. Results: Amlodipine arm stopped early — ramipril reduced composite (GFR decline, ESKD, death) by 38% vs. amlodipine (p=0.004) in patients with proteinuria >300mg/day. No overall benefit of lower BP target except in proteinuric subgroup.",
       significance: "Established ACEi as preferred antihypertensive in CKD with proteinuria. Showed amlodipine (dihydropyridine CCB) is inferior for kidney protection despite similar BP reduction. Supported the concept that RAAS blockade provides renoprotection beyond BP lowering." },
+
+    // ── Cardiorenal Syndrome ──
+    { name: "CARRESS-HF", category: "Cardiorenal Syndrome",
+      full_title: "Ultrafiltration in Decompensated Heart Failure with Cardiorenal Syndrome",
+      journal: "NEJM", year: 2012,
+      url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1210357",
+      takeaway: "Ultrafiltration was NOT superior to stepped pharmacologic therapy (diuretics) for cardiorenal syndrome and was associated with more adverse events.",
+      details: "Design: Multicenter RCT. N=188 patients hospitalized with acute HF, volume overload, and worsening renal function (Cr rise \u22650.3 mg/dL). Arms: Ultrafiltration (200 mL/h) vs. stepped pharmacologic therapy (escalating diuretics per protocol). Primary endpoint: Bivariate change in weight and serum Cr at 96h. Results: No difference in weight loss. Cr was HIGHER in the UF group (+0.23 vs -0.04 mg/dL, p=0.003). More adverse events with UF.",
+      significance: "Definitively showed that ultrafiltration should NOT be used as first-line for cardiorenal syndrome. Stepped diuretic therapy is safer and equally effective. UF reserved for truly diuretic-refractory cases. Changed practice away from early UF enthusiasm.",
+      topics: ["Cardiorenal Syndrome"] },
+    { name: "DOSE", category: "Diuretic Strategy in HF",
+      full_title: "Diuretic Strategies in Patients with Acute Decompensated Heart Failure",
+      journal: "NEJM", year: 2011,
+      url: "https://www.nejm.org/doi/full/10.1056/NEJMoa1005419",
+      takeaway: "High-dose IV furosemide (2.5\u00d7 oral dose) trended toward better decongestion vs low-dose. Continuous infusion was NOT better than bolus dosing.",
+      details: "Design: 2\u00d72 factorial RCT. N=308 patients hospitalized for acute HF. Arms: Low-dose (same as home dose) vs. high-dose (2.5\u00d7 home dose) \u00d7 IV bolus q12h vs. continuous infusion. Primary endpoint: Patient global assessment and change in Cr. Results: High-dose trended toward greater fluid loss and symptom relief. No significant difference in Cr. Bolus = continuous infusion.",
+      significance: "Supported using higher-dose diuretics in acute HF without excessive kidney risk. The transient Cr rise with aggressive diuresis was NOT associated with worse outcomes. Freed clinicians to diurese more aggressively. Bolus dosing is simpler and equally effective.",
+      topics: ["Cardiorenal Syndrome", "Diuretics"] },
   ],
 
   // ═══ WEEK 3: GLOMERULAR DISEASE & CKD ═══════════════════════════════
@@ -378,9 +416,11 @@ export const ALL_LANDMARK_TRIALS = Object.entries(LANDMARK_TRIALS)
 // ── Ordered category list for consistent rendering ──
 export const TRIAL_CATEGORY_ORDER = [
   // Week 1
-  "RRT Dosing & Timing", "IV Fluids", "Acidosis in AKI", "Contrast Prevention",
+  "RRT Dosing & Timing", "Fluid Management", "Acidosis in AKI", "Contrast Prevention",
+  "Hepatorenal Syndrome", "Contrast Nephropathy",
   // Week 2
   "CKD Acid-Base", "Anemia of CKD", "CKD-MBD", "CKD Foundations",
+  "Cardiorenal Syndrome", "Diuretic Strategy in HF",
   // Week 3
   "RAAS Blockade", "Dual RAAS Blockade (Negative)", "SGLT2 Inhibitors",
   "Finerenone & GLP-1", "BP & Lipids in CKD", "Glomerular Diseases",

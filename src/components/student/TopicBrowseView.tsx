@@ -2,6 +2,7 @@ import { useState } from "react";
 import { T, TOPICS, ARTICLES, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
+import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
 
 interface TopicBrowseViewProps {
@@ -15,6 +16,7 @@ interface TopicBrowseViewProps {
 }
 
 export default function TopicBrowseView({ onBack, navigate, completedItems }: TopicBrowseViewProps) {
+  const isMobile = useIsMobile();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const completed = completedItems || {};
 
@@ -130,7 +132,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems }: To
       <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>Browse by Topic</h2>
       <p style={{ color: T.sub, fontSize: 12, margin: "0 0 16px" }}>Explore resources by nephrology topic, independent of weekly schedule</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
         {topicsWithContent.map(topic => {
           const hasContent = topicHasContent(topic);
           const content = getTopicContent(topic);

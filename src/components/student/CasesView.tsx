@@ -273,9 +273,9 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
           <button key={c.id} onClick={() => setActiveCase(c)}
             style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, marginBottom: 10, border: done ? `2px solid ${T.green}` : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", position: "relative" }}>
             <div style={{ position: "absolute", top: 10, right: 12, display: "flex", alignItems: "center", gap: 6 }}>
-              <span onClick={(e) => { e.stopPropagation(); onToggleBookmark(c.id); }} style={{ fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.gold : T.muted, cursor: "pointer" }}>
+              <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(c.id); }} style={{ background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.gold : T.muted, cursor: "pointer", padding: "8px", margin: "-8px", lineHeight: 1 }}>
                 {(bookmarks?.cases || []).includes(c.id) ? "★" : "☆"}
-              </span>
+              </button>
               {done && (
                 <span style={{ fontSize: 10, fontWeight: 700, color: T.green, background: T.greenBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
                   ✓ {done.score}/{done.total}
