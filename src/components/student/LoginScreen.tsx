@@ -3,14 +3,13 @@ import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import { LIMITS } from "../../utils/validation";
 
-export default function LoginScreen({ studentName, setStudentName, studentPin, setStudentPin, joinCode, setJoinCode, joinError, setJoinError, joining, onJoinRotation, onSkipRotation, onAdminToggle }: {
+export default function LoginScreen({ studentName, setStudentName, studentPin, setStudentPin, joinCode, setJoinCode, joinError, setJoinError, joining, onJoinRotation, onAdminToggle }: {
   studentName: string; setStudentName: (v: string) => void;
   studentPin: string; setStudentPin: (v: string) => void;
   joinCode: string; setJoinCode: (v: string) => void;
   joinError: string; setJoinError: (v: string) => void;
   joining: boolean;
   onJoinRotation: () => void;
-  onSkipRotation: () => void;
   onAdminToggle?: () => void;
 }) {
   const isMobile = useIsMobile();
@@ -77,12 +76,6 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
           disabled={!canJoin || joining}
           style={{ width: "100%", padding: "12px 0", background: canJoin && !joining ? T.med : T.muted, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: canJoin && !joining ? "pointer" : "default", marginBottom: 10, opacity: canJoin && !joining ? 1 : 0.6 }}>
           {joining ? "Joining..." : "Join Rotation"}
-        </button>
-        <button
-          onClick={onSkipRotation}
-          disabled={!canSkip}
-          style={{ width: "100%", background: "none", border: "none", color: T.sub, fontSize: 12, cursor: canSkip ? "pointer" : "default", textDecoration: "underline", padding: "8px 0" }}>
-          Use without rotation (offline only)
         </button>
 
         <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${T.line}`, textAlign: "center" }}>

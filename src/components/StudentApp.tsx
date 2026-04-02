@@ -385,16 +385,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setJoining(false);
   };
 
-  const handleSkipRotation = () => {
-    if (!studentName.trim()) return;
-    const sid = studentId || `stu_local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    setStudentId(sid);
-    setRotationCodeState("_skip");
-    setNameSet(true);
-    if (!localStorage.getItem("neph_hasSeenOnboarding")) setShowOnboarding(true);
-    store.set("neph_name", studentName);
-    store.set("neph_studentId", sid);
-  };
 
   const handleLogout = async () => {
     const confirmed = window.confirm(
@@ -450,7 +440,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         joinError={joinError} setJoinError={setJoinError}
         joining={joining}
         onJoinRotation={handleJoinRotation}
-        onSkipRotation={handleSkipRotation}
         onAdminToggle={onAdminToggle}
       />
     );
