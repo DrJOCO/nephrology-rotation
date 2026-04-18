@@ -496,7 +496,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           {toast}
         </div>
       )}
-      {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("guide", { type: "guideDetail", id: "firstday" }); }} />}
+      {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("library", { type: "guideDetail", id: "firstday" }); }} />}
       {searchOpen && <GlobalSearchOverlay onClose={() => setSearchOpen(false)} onNavigate={(t, sv) => { navigate(t, sv); setSearchOpen(false); }} articles={articles} />}
       {logoutConfirmOpen && (
         <ConfirmSheet
@@ -608,8 +608,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
-            onBack={() => navigate("home")}
-            onFinish={(score) => { setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]})); setSrQueue(prev => processQuizResults(score.answers || [], "weekly", subView.week, prev)); logActivity("quiz", `Week ${subView.week} Quiz`, `${score.correct}/${score.total}`); navigate("home"); }} />
+            onBack={() => navigate("today")}
+            onFinish={(score) => { setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]})); setSrQueue(prev => processQuizResults(score.answers || [], "weekly", subView.week, prev)); logActivity("quiz", `Week ${subView.week} Quiz`, `${score.correct}/${score.total}`); navigate("today"); }} />
         )}
         {tab === "today" && subView?.type === "reviewMissed" && (() => {
           const ws = weeklyScores[subView.week] || [];
@@ -618,25 +618,25 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const missedQuestions = missed.map(a => WEEKLY_QUIZZES[subView.week][a.qIdx]);
           return missedQuestions.length > 0 ? (
             <QuizEngine questions={missedQuestions} title={`Week ${subView.week} — Review Missed`}
-              onBack={() => navigate("home")}
-              onFinish={() => navigate("home")} />
+              onBack={() => navigate("today")}
+              onFinish={() => navigate("today")} />
           ) : null;
         })()}
         {tab === "today" && subView?.type === "preQuiz" && (
           <QuizEngine questions={PRE_QUIZ} title="Pre-Rotation Assessment"
-            onBack={() => navigate("home")}
-            onFinish={(score) => { setPreScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "pre", 0, prev)); logActivity("assessment", "Pre-Rotation Assessment", `${score.correct}/${score.total}`); navigate("home", { type: "preResults" }); }} />
+            onBack={() => navigate("today")}
+            onFinish={(score) => { setPreScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "pre", 0, prev)); logActivity("assessment", "Pre-Rotation Assessment", `${score.correct}/${score.total}`); navigate("today", { type: "preResults" }); }} />
         )}
         {tab === "today" && subView?.type === "preResults" && (
           <PreTestResultsView preScore={preScore} navigate={navigate} />
         )}
         {tab === "today" && subView?.type === "postQuiz" && (
           <QuizEngine questions={POST_QUIZ} title="Post-Rotation Assessment"
-            onBack={() => navigate("home")}
-            onFinish={(score) => { setPostScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "post", 0, prev)); logActivity("assessment", "Post-Rotation Assessment", `${score.correct}/${score.total}`); navigate("home"); }} />
+            onBack={() => navigate("today")}
+            onFinish={(score) => { setPostScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "post", 0, prev)); logActivity("assessment", "Post-Rotation Assessment", `${score.correct}/${score.total}`); navigate("today"); }} />
         )}
         {tab === "today" && subView?.type === "articles" && (
-          <ArticlesView week={subView.week} onBack={() => navigate("home")} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
+          <ArticlesView week={subView.week} onBack={() => navigate("today")} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
             setCompletedItems(prev => {
               const next = { ...prev, articles: { ...prev.articles } };
               if (next.articles[url]) delete next.articles[url];
@@ -646,10 +646,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           }} />
         )}
         {tab === "today" && subView?.type === "trials" && (
-          <LandmarkTrialsView week={subView.week} onBack={() => navigate("home")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
+          <LandmarkTrialsView week={subView.week} onBack={() => navigate("today")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
         {tab === "today" && subView?.type === "studySheets" && (
-          <StudySheetsView week={subView.week} onBack={() => navigate("home")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
+          <StudySheetsView week={subView.week} onBack={() => navigate("today")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
             setCompletedItems(prev => {
               const next = { ...prev, studySheets: { ...prev.studySheets } };
               if (next.studySheets[sheetId]) delete next.studySheets[sheetId];
@@ -659,7 +659,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           }} />
         )}
         {tab === "today" && subView?.type === "cases" && (
-          <CasesView week={subView.week} onBack={() => navigate("home")} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("cases", id)} onCaseComplete={(caseId, result) => {
+          <CasesView week={subView.week} onBack={() => navigate("today")} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("cases", id)} onCaseComplete={(caseId, result) => {
             setCompletedItems(prev => ({
               ...prev,
               cases: { ...prev.cases, [caseId]: { score: result.score, total: result.total, date: new Date().toISOString() } }
@@ -668,30 +668,30 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           }} />
         )}
         {tab === "today" && subView?.type === "resources" && (
-          <ResourcesView onBack={() => navigate("home")} />
+          <ResourcesView onBack={() => navigate("today")} />
         )}
         {tab === "today" && subView?.type === "abbreviations" && (
-          <AbbreviationsView onBack={() => navigate("home")} />
+          <AbbreviationsView onBack={() => navigate("today")} />
         )}
         {tab === "today" && subView?.type === "faq" && (
-          <FaqView onBack={() => navigate("home")} />
+          <FaqView onBack={() => navigate("today")} />
         )}
         {tab === "today" && subView?.type === "bookmarks" && (
-          <BookmarksView bookmarks={bookmarks} onBack={() => navigate("home")} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} />
+          <BookmarksView bookmarks={bookmarks} onBack={() => navigate("today")} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} />
         )}
         {tab === "today" && subView?.type === "browseByTopic" && (
-          <TopicBrowseView onBack={() => navigate("home")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} />
+          <TopicBrowseView onBack={() => navigate("today")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} />
         )}
         {tab === "today" && subView?.type === "extraPractice" && (() => {
           const dueKeys = getDueItems(srQueue);
           const allWeeklyQs = [1,2,3,4].flatMap(w => (WEEKLY_QUIZZES[w] || []).map((q, i) => ({ ...q, _key: `weekly_${w}_${i}` })));
           return (
             <div style={{ padding: 16 }}>
-              <button onClick={() => navigate("home")} style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
+              <button onClick={() => navigate("today")} style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
               <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 6px" }}>Extra Practice</h2>
               <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px", lineHeight: 1.5 }}>Review missed questions or practice from the full question bank.</p>
               {dueKeys.length > 0 && (
-                <button onClick={() => navigate("home", { type: "srReview" })}
+                <button onClick={() => navigate("today", { type: "srReview" })}
                   style={{ width: "100%", background: `linear-gradient(135deg, ${T.orange}, ${T.gold})`, borderRadius: 12, padding: 16, border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
                   <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDD04"}</span>
                   <div style={{ flex: 1 }}>
@@ -701,7 +701,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                   <span style={{ background: "white", color: T.accent, fontSize: 13, fontWeight: 700, padding: "4px 10px", borderRadius: 12, flexShrink: 0 }}>{dueKeys.length}</span>
                 </button>
               )}
-              <button onClick={() => navigate("home", { type: "practiceQuiz" })}
+              <button onClick={() => navigate("today", { type: "practiceQuiz" })}
                 style={{ width: "100%", background: T.card, borderRadius: 12, padding: 16, border: `1.5px solid ${T.med}`, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
                 <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
                 <div style={{ flex: 1 }}>
@@ -730,7 +730,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           }).filter(Boolean);
           return dueQuestions.length > 0 ? (
             <QuizEngine questions={dueQuestions} title="Spaced Repetition Review"
-              onBack={() => navigate("home", { type: "extraPractice" })}
+              onBack={() => navigate("today", { type: "extraPractice" })}
               onFinish={(score) => {
                 const reviewAnswers = (score.answers || []).map(a => ({
                   questionKey: dueQuestions[a.qIdx]?._srKey,
@@ -738,14 +738,14 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 })).filter(a => a.questionKey);
                 setSrQueue(prev => processReviewResults(reviewAnswers, prev));
                 logActivity("sr_review", "Spaced Repetition Review", `${score.correct}/${score.total}`);
-                navigate("home", { type: "extraPractice" });
+                navigate("today", { type: "extraPractice" });
               }} />
           ) : (
             <div style={{ padding: 40, textAlign: "center" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>{"\u2705"}</div>
               <div style={{ color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>All caught up!</div>
               <div style={{ color: T.sub, fontSize: 13, marginBottom: 20 }}>No questions due for review right now.</div>
-              <button onClick={() => navigate("home", { type: "extraPractice" })} style={{ padding: "10px 24px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
+              <button onClick={() => navigate("today", { type: "extraPractice" })} style={{ padding: "10px 24px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
             </div>
           );
         })()}
@@ -753,36 +753,36 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const allWeeklyQs = [1,2,3,4].flatMap(w => WEEKLY_QUIZZES[w] || []);
           return (
             <QuizEngine questions={allWeeklyQs} title="Practice Questions" questionCount={15}
-              onBack={() => navigate("home", { type: "extraPractice" })}
-              onFinish={() => navigate("home", { type: "extraPractice" })} />
+              onBack={() => navigate("today", { type: "extraPractice" })}
+              onFinish={() => navigate("today", { type: "extraPractice" })} />
           );
         })()}
         {/* Library hub (Phase 3a shell): lands on a simple stacked view of Guide + Refs sections.
             Phase 3b+ will restructure to the spec §03 Library (filterable by week). */}
         {tab === "library" && !subView && <LibraryHub navigate={navigate} clinicGuides={clinicGuides} />}
         {tab === "library" && subView?.type === "refDetail" && (
-          <RefDetailView refId={subView.id} onBack={() => navigate("refs")} />
+          <RefDetailView refId={subView.id} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "abbreviations" && (
-          <AbbreviationsView onBack={() => navigate("refs")} />
+          <AbbreviationsView onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "trialLibrary" && (
-          <TrialLibraryView onBack={() => navigate("guide")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} initialSearch={subView?.searchTrial as string | undefined} />
+          <TrialLibraryView onBack={() => navigate("library")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} initialSearch={subView?.searchTrial as string | undefined} />
         )}
         {tab === "library" && subView?.type === "clinicGuide" && (
-          <ClinicGuideView date={subView.date} topic={clinicGuides.find(g => g.date === subView.date)?.topic || "CKD"} isOverride={clinicGuides.find(g => g.date === subView.date)?.isOverride} onBack={() => navigate("guide")} />
+          <ClinicGuideView date={subView.date} topic={clinicGuides.find(g => g.date === subView.date)?.topic || "CKD"} isOverride={clinicGuides.find(g => g.date === subView.date)?.isOverride} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "clinicGuideHistory" && (
-          <ClinicGuideHistoryView guides={clinicGuides} onSelect={(date) => navigate("guide", { type: "clinicGuide", date })} onBack={() => navigate("guide")} />
+          <ClinicGuideHistoryView guides={clinicGuides} onSelect={(date) => navigate("library", { type: "clinicGuide", date })} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "inpatientGuide" && (
-          <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={() => navigate("guide")} />
+          <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "rotationGuide" && (
-          <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("guide")} />
+          <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "faq" && (
-          <FaqView onBack={() => navigate("guide")} />
+          <FaqView onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} />}

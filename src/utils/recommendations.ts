@@ -255,7 +255,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       icon: "🔄",
       label: `Review ${dueCount} spaced repetition question${dueCount !== 1 ? "s" : ""}`,
       detail: "Strengthen weak areas with targeted review",
-      nav: ["home", { type: "extraPractice" }],
+      nav: ["today", { type: "extraPractice" }],
     });
   }
 
@@ -269,7 +269,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       icon: "📝",
       label: `Take Week ${w} Quiz: ${WEEK_TOPIC_MAP[w]?.label}`,
       detail: `${(WEEKLY_QUIZZES[w] || []).length} questions — establish your baseline`,
-      nav: ["home", { type: "weeklyQuiz", week: w }],
+      nav: ["today", { type: "weeklyQuiz", week: w }],
     });
   }
 
@@ -283,7 +283,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       icon: "📋",
       label: `Review Week ${weakWeek.week} Study Sheets`,
       detail: `${weekSheetGap.done}/${weekSheetGap.total} completed — covers ${WEEK_TOPIC_MAP[weakWeek.week]?.label}`,
-      nav: ["home", { type: "studySheets", week: weakWeek.week }],
+      nav: ["today", { type: "studySheets", week: weakWeek.week }],
     });
   }
 
@@ -296,7 +296,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       icon: "🏥",
       label: `Try Week ${weakWeek.week} Clinical Cases`,
       detail: `${weekCaseGap.done}/${weekCaseGap.total} completed — apply knowledge to real scenarios`,
-      nav: ["home", { type: "cases", week: weakWeek.week }],
+      nav: ["today", { type: "cases", week: weakWeek.week }],
     });
   }
 
@@ -309,7 +309,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       icon: "🔁",
       label: `Retake Week ${w} Quiz (${weekScores[w]}%)`,
       detail: `Target: 80%+ — review study sheet first for best results`,
-      nav: ["home", { type: "weeklyQuiz", week: w }],
+      nav: ["today", { type: "weeklyQuiz", week: w }],
     });
   }
 
@@ -321,7 +321,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       icon: "📊",
       label: "Take Pre-Rotation Assessment",
       detail: "Establish your baseline — helps track growth",
-      nav: ["home", { type: "preQuiz" }],
+      nav: ["today", { type: "preQuiz" }],
     });
   } else if (!postScore) {
     const totalQuizAttempts = Object.values(weeklyScores).flat().length;
@@ -332,7 +332,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
         icon: "🎓",
         label: "Take Post-Rotation Assessment",
         detail: "Measure your growth since the pre-test",
-        nav: ["home", { type: "postQuiz" }],
+        nav: ["today", { type: "postQuiz" }],
       });
     }
   }

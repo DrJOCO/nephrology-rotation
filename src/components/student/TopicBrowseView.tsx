@@ -37,7 +37,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems }: To
               if (!sheet) return null;
               const done = !!completed.studySheets?.[s.id];
               return (
-                <button key={s.id} onClick={() => navigate("home", { type: "studySheets", week: s.week })}
+                <button key={s.id} onClick={() => navigate("today", { type: "studySheets", week: s.week })}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.greenBg : T.card, border: `1px solid ${done ? T.greenAlpha : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                   <span style={{ fontSize: 18, flexShrink: 0 }}>{sheet.icon}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -60,7 +60,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems }: To
               if (!article) return null;
               const done = !!completed.articles?.[a.url];
               return (
-                <button key={a.url} onClick={() => navigate("home", { type: "articles", week: a.week })}
+                <button key={a.url} onClick={() => navigate("today", { type: "articles", week: a.week })}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.greenBg : T.card, border: `1px solid ${done ? T.greenAlpha : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                   <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCC4"}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -83,7 +83,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems }: To
               if (!cs) return null;
               const done = !!completed.cases?.[c.id];
               return (
-                <button key={c.id} onClick={() => navigate("home", { type: "cases", week: c.week })}
+                <button key={c.id} onClick={() => navigate("today", { type: "cases", week: c.week })}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.greenBg : T.card, border: `1px solid ${done ? T.greenAlpha : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                   <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83C\uDFE5"}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -102,7 +102,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems }: To
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Related Quizzes</div>
             {content.quizWeeks.map(w => (
-              <button key={w} onClick={() => navigate("home", { type: "weeklyQuiz", week: w })}
+              <button key={w} onClick={() => navigate("today", { type: "weeklyQuiz", week: w })}
                 style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>

@@ -58,7 +58,7 @@ export default function WeakAreasCard({ preScore, navigate }) {
             const bgTint = w.pct >= 80 ? T.greenBg : w.pct >= 60 ? T.yellowBg : T.redBg;
             const statusLabel = w.pct >= 80 ? "Strong" : w.pct >= 60 ? "Review" : "Focus";
             return (
-              <button key={w.week} onClick={() => navigate("home", { type: "weeklyQuiz", week: w.week })}
+              <button key={w.week} onClick={() => navigate("today", { type: "weeklyQuiz", week: w.week })}
                 style={{ width: "100%", background: bgTint, border: "none", borderRadius: 10, padding: "10px 12px", marginBottom: 8, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 18 }}>{weekIcons[w.week]}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>

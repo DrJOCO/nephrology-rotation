@@ -12,7 +12,7 @@ export default function RefsTab({ navigate }) {
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
         {QUICK_REFS.map(ref => (
-          <button key={ref.id} onClick={() => navigate("refs", { type: "refDetail", id: ref.id })}
+          <button key={ref.id} onClick={() => navigate("library", { type: "refDetail", id: ref.id })}
             style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "box-shadow 0.2s" }}
             onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
             onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
@@ -30,7 +30,7 @@ export default function RefsTab({ navigate }) {
             )}
           </button>
         ))}
-        <button onClick={() => navigate("refs", { type: "abbreviations" })}
+        <button onClick={() => navigate("library", { type: "abbreviations" })}
           style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "box-shadow 0.2s" }}
           onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
           onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>

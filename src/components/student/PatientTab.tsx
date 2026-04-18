@@ -286,7 +286,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
           for (const [wk, sheets] of Object.entries(STUDY_SHEETS)) {
             const sheet = (sheets as { id: string; title: string }[]).find(s => s.id === sheetId);
             if (sheet) {
-              newSuggestions.push({ label: sheet.title, type: "studySheet", nav: ["home", { type: "studySheets", week: Number(wk) }] });
+              newSuggestions.push({ label: sheet.title, type: "studySheet", nav: ["today", { type: "studySheets", week: Number(wk) }] });
               break;
             }
           }
@@ -294,7 +294,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
         for (const week of mapping.quizWeeks) {
           if (seenWeeks.has(week)) continue;
           seenWeeks.add(week);
-          newSuggestions.push({ label: `Week ${week} Quiz`, type: "quiz", nav: ["home", { type: "weeklyQuiz", week }] });
+          newSuggestions.push({ label: `Week ${week} Quiz`, type: "quiz", nav: ["today", { type: "weeklyQuiz", week }] });
         }
       }
       if (newSuggestions.length > 0) {

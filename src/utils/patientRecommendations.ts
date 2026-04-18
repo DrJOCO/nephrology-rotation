@@ -154,7 +154,7 @@ export function getPatientSuggestedActions(
         detail: `${rec.reason} — study sheet available`,
         topic: rec.topic,
         contentType: "studySheet",
-        nav: ["home", { type: "studySheets", week: sheetWeek }],
+        nav: ["today", { type: "studySheets", week: sheetWeek }],
       });
     } else if (rec.cases.length > 0) {
       const caseId = rec.cases[0];
@@ -172,7 +172,7 @@ export function getPatientSuggestedActions(
         detail: `${rec.reason} — clinical case available`,
         topic: rec.topic,
         contentType: "case",
-        nav: ["home", { type: "cases", week: caseWeek }],
+        nav: ["today", { type: "cases", week: caseWeek }],
       });
     } else if (rec.quizWeeks.length > 0) {
       actions.push({
@@ -181,7 +181,7 @@ export function getPatientSuggestedActions(
         detail: `${rec.reason} — test your knowledge`,
         topic: rec.topic,
         contentType: "quiz",
-        nav: ["home", { type: "weeklyQuiz", week: rec.quizWeeks[0] }],
+        nav: ["today", { type: "weeklyQuiz", week: rec.quizWeeks[0] }],
       });
     }
   }

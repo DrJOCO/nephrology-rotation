@@ -89,7 +89,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
   const isMobile = useIsMobile();
 
   if (subView?.type === "guideDetail") {
-    return <GuideDetailView sectionId={subView.id as string} onBack={() => navigate("guide")} />;
+    return <GuideDetailView sectionId={subView.id as string} onBack={() => navigate("library")} />;
   }
 
   return (
@@ -109,7 +109,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         const dayLabel = new Date().getDay() === 5 ? "Today" : friday.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
         return template ? (
           <div style={{ marginBottom: 14 }}>
-            <button onClick={() => navigate("guide", { type: "clinicGuide", date: dateStr })}
+            <button onClick={() => navigate("library", { type: "clinicGuide", date: dateStr })}
               style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
                 background: `linear-gradient(135deg, ${T.greenBg} 0%, ${T.blueBg} 100%)`, borderRadius: 14,
                 border: `1.5px solid ${T.green}`, cursor: "pointer", textAlign: "left",
@@ -123,7 +123,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
               </div>
               <span style={{ color: T.greenDk, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
             </button>
-            <button onClick={() => navigate("guide", { type: "clinicGuideHistory" })}
+            <button onClick={() => navigate("library", { type: "clinicGuideHistory" })}
               style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 4px 0", fontSize: 11, color: T.sub, fontWeight: 500 }}>
               View past clinic guides →
             </button>
@@ -138,7 +138,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
           {INPATIENT_GUIDE_TOPICS.map(t => {
             const g = INPATIENT_GUIDES[t];
             return (
-              <button key={t} onClick={() => navigate("guide", { type: "inpatientGuide", topic: t })}
+              <button key={t} onClick={() => navigate("library", { type: "inpatientGuide", topic: t })}
                 style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px",
                   background: T.card, borderRadius: 12, border: `1px solid ${T.line}`,
                   cursor: "pointer", textAlign: "left" }}>
@@ -160,7 +160,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
           {ROTATION_GUIDE_IDS.map(id => {
             const g = ROTATION_GUIDES[id];
             return (
-              <button key={id} onClick={() => navigate("guide", { type: "rotationGuide", guideId: id })}
+              <button key={id} onClick={() => navigate("library", { type: "rotationGuide", guideId: id })}
                 style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px",
                   background: T.card, borderRadius: 12, border: `1px solid ${T.line}`,
                   cursor: "pointer", textAlign: "left" }}>
@@ -175,7 +175,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         </div>
       </div>
 
-      <button onClick={() => navigate("guide", { type: "faq" })}
+      <button onClick={() => navigate("library", { type: "faq" })}
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
           background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", marginBottom: 14 }}>
         <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${T.goldAlphaMd}` }}>
@@ -189,7 +189,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
       </button>
 
       {/* Trial Library Button */}
-      <button onClick={() => navigate("guide", { type: "trialLibrary" })}
+      <button onClick={() => navigate("library", { type: "trialLibrary" })}
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
           background: `linear-gradient(135deg, ${T.warmBg} 0%, ${T.yellowBg} 100%)`, borderRadius: 14,
           border: `1.5px solid ${T.gold}`, cursor: "pointer", textAlign: "left", marginBottom: 14,
@@ -213,7 +213,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8, fontFamily: T.serif }}>More Guides</div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
               {sections.map(sec => (
-                <button key={sec.id} onClick={() => navigate("guide", { type: "guideDetail", id: sec.id })}
+                <button key={sec.id} onClick={() => navigate("library", { type: "guideDetail", id: sec.id })}
                   style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px",
                     background: T.card, borderRadius: 12, border: `1px solid ${T.line}`,
                     cursor: "pointer", textAlign: "left" }}>

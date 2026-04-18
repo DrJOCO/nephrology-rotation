@@ -77,7 +77,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                       const trialExists = ALL_LANDMARK_TRIALS.some(t => t.name === callout.trial);
                       return (
                         <div key={ci}
-                          onClick={trialExists && navigate ? () => navigate("guide", { type: "trialLibrary", searchTrial: callout.trial }) : undefined}
+                          onClick={trialExists && navigate ? () => navigate("library", { type: "trialLibrary", searchTrial: callout.trial }) : undefined}
                           role={trialExists ? "button" : undefined} tabIndex={trialExists ? 0 : undefined}
                           style={{ background: T.yellowBg, borderRadius: 10, padding: "10px 14px", marginBottom: 10, borderLeft: `3px solid ${T.gold}`, cursor: trialExists ? "pointer" : "default", transition: "box-shadow 0.2s" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

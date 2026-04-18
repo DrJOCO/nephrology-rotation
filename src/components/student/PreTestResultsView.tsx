@@ -15,7 +15,7 @@ export default function PreTestResultsView({ preScore, navigate }) {
   return (
     <div style={{ padding: 16 }}>
       {/* Back button */}
-      <button onClick={() => navigate("home")} style={backBtnStyle}>{"\u2190"} Back to Home</button>
+      <button onClick={() => navigate("today")} style={backBtnStyle}>{"\u2190"} Back to Home</button>
 
       {/* Score header */}
       <div style={{ background: T.card, borderRadius: 16, padding: 28, textAlign: "center", border: `1px solid ${T.line}`, marginBottom: 20 }}>
@@ -66,11 +66,11 @@ export default function PreTestResultsView({ preScore, navigate }) {
 
       {/* Action buttons */}
       <div style={{ display: "flex", gap: 10 }}>
-        <button onClick={() => navigate("home")}
+        <button onClick={() => navigate("today")}
           style={{ flex: 1, padding: "14px 20px", background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
           Done
         </button>
-        <button onClick={() => navigate("home", { type: "preQuiz" })}
+        <button onClick={() => navigate("today", { type: "preQuiz" })}
           style={{ flex: 1, padding: "14px 20px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
           {"\u21BB"} Retake
         </button>

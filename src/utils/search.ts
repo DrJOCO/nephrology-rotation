@@ -165,7 +165,7 @@ export function searchAll(query: string, { trials, articlesByWeek, cases, studyS
       { value: t.significance, weight: 0.5 },
     ]);
     if (score > 0) {
-      results.trials.push({ label: t.name, sub: t.category, icon: "\uD83D\uDCCB", score, nav: ["guide", { type: "trialLibrary" }] });
+      results.trials.push({ label: t.name, sub: t.category, icon: "\uD83D\uDCCB", score, nav: ["library", { type: "trialLibrary" }] });
     }
   });
 
@@ -179,7 +179,7 @@ export function searchAll(query: string, { trials, articlesByWeek, cases, studyS
         { value: a.type, weight: 1 },
       ]);
       if (score > 0) {
-        results.articles.push({ label: a.title, sub: `Week ${w} \u2022 ${a.type || "Article"}`, icon: "\uD83D\uDCF0", score, nav: ["home", { type: "articles", week: w }] });
+        results.articles.push({ label: a.title, sub: `Week ${w} \u2022 ${a.type || "Article"}`, icon: "\uD83D\uDCF0", score, nav: ["today", { type: "articles", week: w }] });
       }
     });
   });
@@ -194,7 +194,7 @@ export function searchAll(query: string, { trials, articlesByWeek, cases, studyS
         { value: c.scenario, weight: 0.5 },
       ]);
       if (score > 0) {
-        results.cases.push({ label: c.title, sub: `Week ${w} \u2022 ${c.difficulty}`, icon: "\uD83C\uDFE5", score, nav: ["home", { type: "cases", week: w }] });
+        results.cases.push({ label: c.title, sub: `Week ${w} \u2022 ${c.difficulty}`, icon: "\uD83C\uDFE5", score, nav: ["today", { type: "cases", week: w }] });
       }
     });
   });
@@ -211,7 +211,7 @@ export function searchAll(query: string, { trials, articlesByWeek, cases, studyS
         { value: itemText, weight: 0.3 },
       ]);
       if (score > 0) {
-        results.studySheets.push({ label: s.title, sub: `Week ${w}`, icon: "\uD83D\uDCDD", score, nav: ["home", { type: "studySheets", week: w }] });
+        results.studySheets.push({ label: s.title, sub: `Week ${w}`, icon: "\uD83D\uDCDD", score, nav: ["today", { type: "studySheets", week: w }] });
       }
     });
   });
