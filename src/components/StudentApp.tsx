@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { BookOpen, Stethoscope, Activity, Users, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home } from "lucide-react";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
@@ -6,8 +6,9 @@ import { processQuizResults, processReviewResults, getDueItems } from "../utils/
 import store from "../utils/store";
 import { ensureStudentSession, signOutFirebase } from "../utils/firebase";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
-import { calculatePoints, getLevel, checkAchievements, updateStreak, ACHIEVEMENTS } from "../utils/gamification";
+import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
+import { buildCompetencySummary } from "../utils/competency";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord } from "../types";
 
@@ -77,7 +78,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [joinError, setJoinError] = useState("");
   const [joining, setJoining] = useState(false);
   const [gamification, setGamification] = useState<Gamification>({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
-  const [toast, setToast] = useState<string | null>(null);
   const [sharedSettings, setSharedSettings] = useState<SharedSettings | null>(null);
   const [completedItems, setCompletedItems] = useState<CompletedItems>({ articles: {}, studySheets: {}, cases: {} });
   const [searchOpen, setSearchOpen] = useState(false);
@@ -218,14 +218,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         streaks: newStreaks,
       };
       setGamification(updated);
-      // Show toast for newly earned achievements
-      if (newlyEarned.length > 0) {
-        const achieved = ACHIEVEMENTS.find(a => a.id === newlyEarned[0]);
-        if (achieved) {
-          setToast(`${achieved.icon} ${achieved.title} earned!`);
-          setTimeout(() => setToast(null), 3000);
-        }
-      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patients, weeklyScores, preScore, postScore, nameSet, loading, completedItems, srQueue]);
@@ -428,7 +420,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setBookmarks({ trials: [], articles: [], cases: [], studySheets: [] });
     setSrQueue({});
     setActivityLog([]);
-    setToast(null);
     setTab("today");
     setSubView(null);
   };
@@ -486,16 +477,21 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     return Math.floor(diffDays / 7) + 1 > totalWeeks;
   })();
+  const competencySummary = useMemo(() => buildCompetencySummary({
+    weeklyScores,
+    preScore,
+    postScore,
+    completedItems,
+    srQueue,
+    currentWeek,
+    totalWeeks,
+    articlesByWeek: articles,
+  }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles]);
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.sans }}>
       {/* Skip to main content — Phase 2.5 (§12). Visually hidden until focused. */}
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
-      {toast && (
-        <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: T.green, color: "white", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 700, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)", animation: "fadeIn 0.3s ease" }}>
-          {toast}
-        </div>
-      )}
       {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("library", { type: "guideDetail", id: "firstday" }); }} />}
       {searchOpen && <GlobalSearchOverlay onClose={() => setSearchOpen(false)} onNavigate={(t, sv) => { navigate(t, sv); setSearchOpen(false); }} articles={articles} />}
       {logoutConfirmOpen && (
@@ -594,8 +590,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         <ProfileSheet
           studentName={studentName}
           rotationCode={rotationCode}
-          points={gamification.points}
-          levelIcon={getLevel(gamification.points).icon}
+          competencyLine={competencySummary.profileLine}
           streakDays={gamification.streaks?.currentDays ?? 0}
           onEndSession={requestLogout}
           onClose={() => setProfileOpen(false)}
@@ -604,7 +599,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
       <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + env(safe-area-inset-bottom, 0px))` }}>
-        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} clinicGuides={clinicGuides} />}
+        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} clinicGuides={clinicGuides} competencySummary={competencySummary} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
@@ -787,7 +782,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
-        {tab === "me" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} completedItems={completedItems} totalWeeks={totalWeeks} />}
+        {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}
         </Suspense>
       </main>
 
@@ -849,14 +844,14 @@ function LibraryHub({
 
 // ─────────────────────────────────────────────────────────────────────────
 // ProfileSheet — Phase 2 (spec §01). Right-side sheet surfacing the items
-// that used to live in the cramped header: name, rotation code, points,
-// theme toggle, end session. ESC to close. Click backdrop to close.
+// that used to live in the cramped header: name, rotation code, competency
+// signal, theme toggle, end session. ESC to close. Click backdrop to close.
 // ─────────────────────────────────────────────────────────────────────────
 function ProfileSheet({
-  studentName, rotationCode, points, levelIcon, streakDays, onEndSession, onClose,
+  studentName, rotationCode, competencyLine, streakDays, onEndSession, onClose,
 }: {
-  studentName: string; rotationCode: string | null; points: number;
-  levelIcon: string; streakDays: number;
+  studentName: string; rotationCode: string | null; competencyLine: string;
+  streakDays: number;
   onEndSession: () => void; onClose: () => void;
 }) {
   // Phase 2.5: ESC to close + focus trap + focus return to opener on unmount.
@@ -905,21 +900,21 @@ function ProfileSheet({
           )}
         </div>
 
-        {/* Points + streak */}
-        {(points > 0 || streakDays > 0) && (
+        {/* Competency + streak */}
+        {(competencyLine || streakDays > 0) && (
           <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Progress</div>
-            <div style={{ display: "flex", gap: 16 }}>
-              {points > 0 && (
+            <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Learning Signal</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {competencyLine && (
                 <div>
-                  <div style={{ fontSize: 11, color: T.ink2, marginBottom: 2 }}>Points</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: T.warn, fontFamily: T.mono }}>{levelIcon} {points}</div>
+                  <div style={{ fontSize: 11, color: T.ink2, marginBottom: 2 }}>Top competency</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, letterSpacing: 0.1 }}>{competencyLine}</div>
                 </div>
               )}
               {streakDays > 0 && (
                 <div>
                   <div style={{ fontSize: 11, color: T.ink2, marginBottom: 2 }}>Streak</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 18, fontWeight: 700, color: T.warn, fontFamily: T.mono }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 16, fontWeight: 700, color: T.warn, fontFamily: T.mono }}>
                     <Flame size={16} strokeWidth={2} aria-hidden="true" /> {streakDays}d
                   </div>
                 </div>

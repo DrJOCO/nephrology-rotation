@@ -15,7 +15,6 @@ import { T, WEEKLY, ARTICLES, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
-import { getTopicExposures } from "../../utils/topicExposure";
 import { getClinicTopicForDate, getCurrentOrNextFriday } from "../../utils/clinicRotation";
 import { useIsMobile } from "../../utils/helpers";
 import type {
@@ -28,6 +27,7 @@ import type {
   SubView,
   WeeklyScores,
 } from "../../types";
+import type { CompetencySummary } from "../../utils/competency";
 
 const PEARL_STORAGE_KEY = "neph_todayPearlDismissed";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -49,6 +49,7 @@ interface HomeTabProps {
   patients: Patient[];
   online?: boolean;
   clinicGuides?: ClinicGuideRecord[];
+  competencySummary: CompetencySummary;
 }
 
 interface NavAction {
@@ -365,6 +366,7 @@ export default function HomeTab({
   patients,
   online = true,
   clinicGuides = [],
+  competencySummary,
 }: HomeTabProps) {
   const isMobile = useIsMobile();
   const now = useMemo(() => new Date(), []);
@@ -405,17 +407,6 @@ export default function HomeTab({
       postScore,
     }),
     [activePatients.length, clinicGuides, currentWeek, learningPlan, now, postScore, rotationEnded],
-  );
-
-  const exposures = useMemo(() => getTopicExposures(patients || [], completedItems), [completedItems, patients]);
-  const clinicallySeenTopics = exposures.filter((item) => item.patientCount > 0);
-  const reinforcedTopics = clinicallySeenTopics.filter((item) => item.contentCompleted > 0);
-  const quizSignal = currentWeek && (weeklyScores[currentWeek] || []).length > 0 ? 1 : preScore ? 0.5 : 0;
-  const exposureSignal = clinicallySeenTopics.length > 0
-    ? reinforcedTopics.length / clinicallySeenTopics.length
-    : Math.min(activePatients.length / 3, 1);
-  const competencyPreview = Math.round(
-    ((learningPlan.completionRatio * 0.6) + (exposureSignal * 0.25) + (quizSignal * 0.15)) * 100,
   );
 
   const pearlIndex = useMemo(() => getPearlIndex(now), [now]);
@@ -676,7 +667,7 @@ export default function HomeTab({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 14 }}>
           <div>
             <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Competency preview</h2>
-            <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>A single readiness signal until the full tracker lands in Me.</div>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>The same bounded mastery model now powers both Today and Me.</div>
           </div>
           <button
             onClick={() => navigate("me")}
@@ -687,30 +678,26 @@ export default function HomeTab({
           </button>
         </div>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, alignItems: isMobile ? "flex-start" : "center" }}>
-          <ProgressRing value={competencyPreview} />
+          <ProgressRing value={competencySummary.masteryPercent} />
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <Brain size={16} strokeWidth={1.75} color={T.med} aria-hidden="true" />
               <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-                {clinicallySeenTopics.length > 0
-                  ? `${reinforcedTopics.length}/${clinicallySeenTopics.length} seen topics reinforced`
-                  : "No clinically linked topics yet"}
+                {competencySummary.profileLine}
               </div>
             </div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginBottom: 10 }}>
-              {currentWeek
-                ? `Week ${currentWeek} essentials drive most of this score right now, with a smaller boost from quiz work and clinically seen topics you've reinforced.`
-                : "This preview starts rising as you log patients, complete essentials, and keep up with quiz work."}
+              {competencySummary.masteryDetail}. The strongest domain right now is {competencySummary.topDomain.label.toLowerCase()}, and Me now shows exactly which signals are lagging.
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
-                Essentials {Math.round(learningPlan.completionRatio * 100)}%
+                Mastery {competencySummary.masteryPercent}%
               </span>
               <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
-                Clinically linked {clinicallySeenTopics.length}
+                Proficient {competencySummary.proficientCount}
               </span>
-              <span style={{ background: (currentWeek && (weeklyScores[currentWeek] || []).length > 0) ? T.blueBg : T.yellowBg, color: (currentWeek && (weeklyScores[currentWeek] || []).length > 0) ? T.med : T.warn, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
-                {(currentWeek && (weeklyScores[currentWeek] || []).length > 0) ? "Quiz checked in" : "Quiz still open"}
+              <span style={{ background: competencySummary.developingCount > 0 ? T.yellowBg : T.blueBg, color: competencySummary.developingCount > 0 ? T.warn : T.med, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
+                Developing {competencySummary.developingCount}
               </span>
             </div>
           </div>

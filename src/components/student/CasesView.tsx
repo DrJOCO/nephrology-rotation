@@ -108,7 +108,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             {pct}%
           </div>
           <div style={{ fontSize: 14, color: T.sub, marginTop: 4 }}>{score}/{questions.length} correct</div>
-          {pct >= 80 && <div style={{ marginTop: 10, fontSize: 12, color: T.green, fontWeight: 600 }}>+5 bonus points for scoring 80%+!</div>}
+          {pct >= 80 && <div style={{ marginTop: 10, fontSize: 12, color: T.green, fontWeight: 600 }}>Strong signal for this domain.</div>}
         </div>
 
         {/* Review answers */}
