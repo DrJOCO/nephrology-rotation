@@ -40,6 +40,7 @@ export type SubView =
   | { type: "preQuiz" }
   | { type: "postQuiz" }
   | { type: "preResults" }
+  | { type: "postResults" }
   | { type: "articles"; week: number }
   | { type: "trials"; week: number }
   | { type: "studySheets"; week: number }

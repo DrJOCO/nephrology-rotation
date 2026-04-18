@@ -21,7 +21,7 @@ import HomeTab from "./student/HomeTab";
 
 // Lazy-loaded sub-views
 const BookmarksView = lazy(() => import("./student/BookmarksView"));
-const PreTestResultsView = lazy(() => import("./student/PreTestResultsView"));
+const AssessmentResultsView = lazy(() => import("./student/AssessmentResultsView"));
 const ArticlesView = lazy(() => import("./student/ArticlesView"));
 const LandmarkTrialsView = lazy(() => import("./student/LandmarkTrialsView"));
 const TrialLibraryView = lazy(() => import("./student/TrialLibraryView"));
@@ -640,12 +640,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             onFinish={(score) => { setPreScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "pre", 0, prev)); logActivity("assessment", "Pre-Rotation Assessment", `${score.correct}/${score.total}`); navigate("today", { type: "preResults" }); }} />
         )}
         {tab === "today" && subView?.type === "preResults" && (
-          <PreTestResultsView preScore={preScore} navigate={navigate} />
+          <AssessmentResultsView mode="pre" score={preScore} navigate={navigate} comparisonScore={null} srDueCount={getDueItems(srQueue).length} />
         )}
         {tab === "today" && subView?.type === "postQuiz" && (
           <QuizEngine questions={POST_QUIZ} title="Post-Rotation Assessment"
             onBack={() => navigate("today")}
-            onFinish={(score) => { setPostScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "post", 0, prev)); logActivity("assessment", "Post-Rotation Assessment", `${score.correct}/${score.total}`); navigate("today"); }} />
+            onFinish={(score) => { setPostScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "post", 0, prev)); logActivity("assessment", "Post-Rotation Assessment", `${score.correct}/${score.total}`); navigate("today", { type: "postResults" }); }} />
+        )}
+        {tab === "today" && subView?.type === "postResults" && (
+          <AssessmentResultsView mode="post" score={postScore} comparisonScore={preScore} navigate={navigate} srDueCount={getDueItems(srQueue).length} />
         )}
         {tab === "today" && subView?.type === "articles" && (
           <ArticlesView week={subView.week} onBack={() => navigate("today")} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {

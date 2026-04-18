@@ -17,6 +17,7 @@ import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
 import { getClinicTopicForDate, getCurrentOrNextFriday } from "../../utils/clinicRotation";
 import { useIsMobile } from "../../utils/helpers";
+import { buildAssessmentSummary } from "../../utils/assessmentInsights";
 import type {
   Announcement,
   Bookmarks,
@@ -261,16 +262,16 @@ function buildHeroCard({
   if (rotationEnded) {
     return {
       eyebrow: "Next up",
-      title: postScore ? "Close out the rotation" : "Finish your post-rotation check",
+      title: postScore ? "Close out the rotation" : "Optional post-rotation check-in",
       body: postScore
         ? "Use Me to review what you covered, then clean up anything still open in the rotation."
-        : "Your wrap-up is ready. Take the post-rotation assessment, then review any essentials still left open.",
+        : "Your wrap-up is ready. The final assessment is optional, but it helps show what stuck and what to keep reinforcing.",
       tone: "wrap",
       badge: postScore ? "Wrap-up" : "Assessment",
       actions: [
         postScore
           ? { label: "Open Me", meta: "Review progress, activity, and milestones", tab: "me" }
-          : { label: "Take post-rotation quiz", meta: "Measure growth from your baseline", tab: "today", subView: { type: "postQuiz" } },
+          : { label: "Take post-rotation quiz", meta: "Optional wrap-up to compare against your baseline", tab: "today", subView: { type: "postQuiz" } },
         learningPlan.nextAction,
       ],
     };
@@ -346,6 +347,216 @@ function ProgressRing({ value }: { value: number }) {
         <div style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: 0.7 }}>Ready</div>
       </div>
     </div>
+  );
+}
+
+interface AssessmentSectionProps {
+  navigate: (tab: string, sv?: SubView) => void;
+  preScore: QuizScore | null;
+  postScore: QuizScore | null;
+  rotationEnded: boolean;
+  srDueCount: number;
+}
+
+function AssessmentSection({
+  navigate,
+  preScore,
+  postScore,
+  rotationEnded,
+  srDueCount,
+}: AssessmentSectionProps) {
+  const preSummary = useMemo(
+    () => (preScore ? buildAssessmentSummary({ mode: "pre", score: preScore }) : null),
+    [preScore],
+  );
+  const postSummary = useMemo(
+    () => (postScore ? buildAssessmentSummary({ mode: "post", score: postScore, comparisonScore: preScore }) : null),
+    [postScore, preScore],
+  );
+
+  const summary = rotationEnded ? postSummary : preSummary;
+  const pendingAction = rotationEnded
+    ? makeAction("Take post-rotation assessment", "Optional wrap-up to compare against your baseline", "today", { type: "postQuiz" })
+    : makeAction("Take pre-rotation assessment", "Optional baseline that personalizes teaching and review", "today", { type: "preQuiz" });
+  const bridgeAction = rotationEnded
+    ? makeAction("Open Me", "Review your competency snapshot and wrap-up items", "me")
+    : makeAction("Browse topics", "Skip it for now and jump straight into the curriculum", "today", { type: "browseByTopic" });
+  const followUpAction = summary
+    ? srDueCount > 0
+      ? makeAction(
+          "Start spaced repetition",
+          `${srDueCount} review card${srDueCount !== 1 ? "s" : ""} due now from missed assessment items`,
+          "today",
+          { type: "srReview" },
+        )
+      : summary.recommendedArea.practiceAction
+    : null;
+
+  if (!summary) {
+    return (
+      <section style={{ marginBottom: 14 }}>
+        <div
+          style={{
+            background: `linear-gradient(135deg, ${T.warmBg} 0%, ${T.card} 100%)`,
+            borderRadius: 18,
+            padding: 18,
+            border: `1px solid ${T.line}`,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9, marginBottom: 6 }}>
+                Assessment
+              </div>
+              <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 22, fontWeight: 700 }}>
+                {rotationEnded ? "Optional post-rotation check-in" : "Optional baseline check-in"}
+              </h2>
+              <p style={{ margin: "8px 0 0", color: T.text, fontSize: 14, lineHeight: 1.6, maxWidth: 580 }}>
+                {rotationEnded
+                  ? "Not required, but it gives you a cleaner wrap-up: where you grew, what still needs teaching, and what should keep repeating."
+                  : "Not required, but it helps Today highlight the topics you already own and the ones that need more teaching and reinforcement."}
+              </p>
+            </div>
+            <div style={{ background: T.card, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 700, border: `1px solid ${T.line}` }}>
+              Optional
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+            <span style={{ background: T.yellowBg, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+              25 questions
+            </span>
+            <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+              Topic strengths + gaps
+            </span>
+            <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+              Feeds teaching + review
+            </span>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+            {[pendingAction, bridgeAction].map((action, index) => (
+              <button
+                key={action.label}
+                onClick={() => navigate(action.tab, action.subView)}
+                style={{
+                  background: index === 0 ? T.accent : T.card,
+                  color: index === 0 ? "white" : T.navy,
+                  border: index === 0 ? "none" : `1px solid ${T.line}`,
+                  borderRadius: 14,
+                  padding: "14px 14px",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{action.label}</div>
+                  <div style={{ fontSize: 12, color: index === 0 ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
+                    {action.meta}
+                  </div>
+                </div>
+                <ArrowRight size={16} strokeWidth={2} aria-hidden="true" style={{ flexShrink: 0 }} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section style={{ marginBottom: 14 }}>
+      <div style={{ background: T.card, borderRadius: 18, padding: 18, border: `1px solid ${T.line}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 12, flexWrap: "wrap" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <BadgeCheck size={16} strokeWidth={2} color={T.greenDk} aria-hidden="true" />
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9 }}>
+                Assessment insight
+              </div>
+            </div>
+            <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
+              {rotationEnded ? "Post-rotation snapshot" : "Baseline snapshot"}
+            </h2>
+            <p style={{ margin: "8px 0 0", color: T.text, fontSize: 14, lineHeight: 1.6, maxWidth: 580 }}>
+              {summary.summaryLine}. {summary.detailLine}
+            </p>
+          </div>
+          <div style={{ background: T.ice, color: T.navy, borderRadius: 16, padding: "10px 12px", minWidth: 90, textAlign: "right" }}>
+            <div style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Score</div>
+            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: T.mono }}>{summary.overallPct}%</div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+          <span style={{ background: T.yellowBg, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            Focus: {summary.recommendedArea.shortLabel}
+          </span>
+          {summary.strongestAreas[0] && (
+            <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+              Strongest: {summary.strongestAreas[0].shortLabel}
+            </span>
+          )}
+          {summary.growthPct !== null && (
+            <span style={{ background: summary.growthPct >= 0 ? T.greenBg : T.redBg, color: summary.growthPct >= 0 ? T.greenDk : T.accent, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+              {summary.growthPct >= 0 ? "+" : ""}
+              {summary.growthPct} pts vs baseline
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginBottom: 12 }}>
+          {summary.focusAreas.slice(0, 2).map((area) => (
+            <div key={area.week} style={{ background: T.warmBg, borderRadius: 14, padding: "12px 14px", border: `1px solid ${T.line}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <Brain size={15} strokeWidth={1.9} color={T.warn} aria-hidden="true" />
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
+                  Week {area.week}: {area.shortLabel}
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5 }}>
+                {area.correct}/{area.total} correct
+                {area.missedTopics.length > 0 ? ` · Missed ${area.missedTopics.join(", ")}` : " · Ready for a quick polish pass"}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+          {[summary.recommendedArea.action, followUpAction, summary.reviewAction].filter(Boolean).map((action, index) => (
+            <button
+              key={action!.label}
+              onClick={() => navigate(action!.tab, action!.subView)}
+              style={{
+                background: index === 0 ? T.accent : T.card,
+                color: index === 0 ? "white" : T.navy,
+                border: index === 0 ? "none" : `1px solid ${T.line}`,
+                borderRadius: 14,
+                padding: "14px 14px",
+                cursor: "pointer",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{action!.label}</div>
+                <div style={{ fontSize: 12, color: index === 0 ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
+                  {action!.meta}
+                </div>
+              </div>
+              <ArrowRight size={16} strokeWidth={2} aria-hidden="true" style={{ flexShrink: 0 }} />
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -436,11 +647,6 @@ export default function HomeTab({
       ? [makeAction("Saved items", `${totalBookmarks} bookmark${totalBookmarks !== 1 ? "s" : ""}`, "today", { type: "bookmarks" })]
       : []),
     makeAction("Resources", "Podcasts, guidelines, and websites", "today", { type: "resources" }),
-    ...(!preScore
-      ? [makeAction("Baseline quiz", "Optional pre-rotation assessment", "today", { type: "preQuiz" })]
-      : rotationEnded && !postScore
-        ? [makeAction("Post-rotation quiz", "Complete your wrap-up assessment", "today", { type: "postQuiz" })]
-        : []),
   ];
 
   const heroToneStyles: Record<HeroCard["tone"], { background: string; border: string; badge: string }> = {
@@ -521,6 +727,14 @@ export default function HomeTab({
           ))}
         </div>
       </div>
+
+      <AssessmentSection
+        navigate={navigate}
+        preScore={preScore}
+        postScore={postScore}
+        rotationEnded={rotationEnded}
+        srDueCount={srDueCount}
+      />
 
       {latestAnnouncement && (
         <div style={{ background: T.card, borderRadius: 16, padding: "12px 14px", border: `1px solid ${T.line}`, display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 14 }}>
@@ -750,13 +964,6 @@ export default function HomeTab({
             </button>
           ))}
         </div>
-
-        {preScore && !rotationEnded && (
-          <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, color: T.muted, fontSize: 12 }}>
-            <BadgeCheck size={14} strokeWidth={2} color={T.greenDk} aria-hidden="true" />
-            Baseline quiz complete. Post-rotation assessment will surface here once the rotation ends.
-          </div>
-        )}
       </section>
     </div>
   );

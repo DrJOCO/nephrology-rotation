@@ -131,6 +131,13 @@ describe("processQuizResults", () => {
     expect(queue["weekly_1_1"]).toBeUndefined(); // correct, not in queue
   });
 
+  it("makes missed assessment questions due immediately", () => {
+    const queue = processQuizResults([{ qIdx: 0, correct: false }], "pre", 0, {});
+
+    expect(queue["pre_0_0"]).toBeDefined();
+    expect(queue["pre_0_0"].nextReviewDate).toBe("2026-03-08");
+  });
+
   it("resets existing items on wrong answer", () => {
     const existing: Record<string, SrItem> = {
       weekly_1_0: makeItem({ questionKey: "weekly_1_0", repetitions: 3, interval: 15, easeFactor: 2.6 }),

@@ -4,9 +4,9 @@ import { T } from "../../data/constants";
 const ONBOARDING_STEPS = [
   {
     icon: "\uD83D\uDCDD",
-    title: "Take the Pre-Rotation Quiz",
-    body: "Start with a 25-question assessment to identify your strengths and areas to focus on during the rotation.",
-    hint: "Your results will guide your study plan",
+    title: "Optional Baseline Check-In",
+    body: "You can start with a short assessment to see which nephrology topics are already strong and which ones need more teaching during the rotation.",
+    hint: "Results can tailor Today, review, and spaced repetition",
   },
   {
     icon: "\uD83D\uDCDA",

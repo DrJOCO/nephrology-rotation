@@ -75,6 +75,7 @@ export function getDueItems(srQueue: Record<string, SrItem> | undefined): string
 export function processQuizResults(answers: QuizAnswer[], source: string, week: number, existingSrQueue: Record<string, SrItem>): Record<string, SrItem> {
   const queue = { ...existingSrQueue };
   const now = today();
+  const initialDelayDays = source === "pre" || source === "post" ? 0 : 1;
 
   for (const a of answers) {
     const questionKey = `${source}_${week}_${a.qIdx}`;
@@ -85,7 +86,7 @@ export function processQuizResults(answers: QuizAnswer[], source: string, week: 
         queue[questionKey] = updateSrItem(queue[questionKey], false);
       } else {
         const nextDate = new Date();
-        nextDate.setDate(nextDate.getDate() + 1);
+        nextDate.setDate(nextDate.getDate() + initialDelayDays);
         queue[questionKey] = {
           questionKey,
           easeFactor: 2.5,
