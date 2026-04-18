@@ -367,4 +367,6 @@ export interface SearchDataSources {
   studySheets: Record<number, StudySheet[]>;
   abbreviations: Abbreviation[];
   quickRefs: QuickRef[];
+  patients?: Patient[];
+  teamSnapshots?: TeamSnapshot[];
 }

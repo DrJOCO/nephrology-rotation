@@ -94,6 +94,17 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const lastLocalWriteRef = useRef<number>(0);
   const loginAttemptsRef = useRef<{ count: number; lockedUntil: number }>({ count: 0, lockedUntil: 0 });
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
   };
@@ -493,7 +504,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       {/* Skip to main content — Phase 2.5 (§12). Visually hidden until focused. */}
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
       {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("library", { type: "guideDetail", id: "firstday" }); }} />}
-      {searchOpen && <GlobalSearchOverlay onClose={() => setSearchOpen(false)} onNavigate={(t, sv) => { navigate(t, sv); setSearchOpen(false); }} articles={articles} />}
+      {searchOpen && (
+        <GlobalSearchOverlay
+          onClose={() => setSearchOpen(false)}
+          onNavigate={(t, sv) => { navigate(t, sv as SubView | undefined); setSearchOpen(false); }}
+          articles={articles}
+          patients={patients}
+          currentStudentId={studentId}
+        />
+      )}
       {logoutConfirmOpen && (
         <ConfirmSheet
           title="End this student session?"

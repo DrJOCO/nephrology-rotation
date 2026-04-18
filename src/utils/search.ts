@@ -1,15 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════════
-//  Search Engine — relevance-scored, multi-word, fuzzy search
+// Search Engine — relevance-scored, multi-word, fuzzy search
 //
-//  Scoring:
-//    Exact match (full query)     → +100
-//    Word-boundary match          → +40 per word
-//    Substring match              → +15 per word
-//    Fuzzy match (1-edit typo)    → +8 per word
-//    Field weight multiplier      → title=3x, name=3x, category=2x, other=1x
+// Scoring:
+//   Exact match (full query)     → +100
+//   Word-boundary match          → +40 per word
+//   Substring match              → +15 per word
+//   Fuzzy match (1-edit typo)    → +8 per word
+//   Field weight multiplier      → title=3x, name=3x, category=2x, other=1x
 // ═══════════════════════════════════════════════════════════════════════
 
+import { CLINIC_GUIDES } from "../data/clinicGuides";
+import { INPATIENT_GUIDES } from "../data/inpatientGuides";
+import { ROTATION_GUIDES } from "../data/rotationGuides";
 import type { SearchDataSources } from "../types";
+
+export type SearchScope = "all" | "articles" | "trials" | "pearls" | "patients" | "team";
 
 export interface SearchField {
   value: string;
@@ -18,20 +23,27 @@ export interface SearchField {
 
 export interface SearchResultItem {
   label: string;
-  sub: string;
-  icon: string;
+  kind: string;
+  tag: string;
   score: number;
-  nav: [string, Record<string, unknown>];
+  nav: [string, Record<string, unknown> | undefined];
 }
 
 export interface SearchResults {
-  trials: SearchResultItem[];
   articles: SearchResultItem[];
+  trials: SearchResultItem[];
+  pearls: SearchResultItem[];
+  patients: SearchResultItem[];
+  team: SearchResultItem[];
   cases: SearchResultItem[];
   studySheets: SearchResultItem[];
   abbreviations: SearchResultItem[];
   quickRefs: SearchResultItem[];
 }
+
+const ROTATION_GUIDE_LIST = Object.values(ROTATION_GUIDES);
+const INPATIENT_GUIDE_LIST = Object.values(INPATIENT_GUIDES);
+const CLINIC_GUIDE_LIST = Object.values(CLINIC_GUIDES);
 
 /**
  * Compute Levenshtein edit distance between two strings (for typo tolerance)
@@ -39,7 +51,8 @@ export interface SearchResults {
  */
 function editDistance(a: string, b: string): number {
   if (a.length > 20 || b.length > 20) return Infinity;
-  const m = a.length, n = b.length;
+  const m = a.length;
+  const n = b.length;
   const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
   for (let i = 0; i <= m; i++) dp[i][0] = i;
   for (let j = 0; j <= n; j++) dp[0][j] = j;
@@ -62,22 +75,14 @@ function editDistance(a: string, b: string): number {
 function scoreWordInField(word: string, field: string): number {
   if (!field || !word) return 0;
 
-  // Exact full-field match (query = field)
   if (field === word) return 120;
-
-  // Starts with the word (strong signal)
   if (field.startsWith(word)) return 60;
 
-  // Word-boundary match (word appears after space, hyphen, etc.)
   const wordBoundary = new RegExp(`(?:^|[\\s\\-/,.(])${escapeRegex(word)}`);
   if (wordBoundary.test(field)) return 40;
-
-  // Substring match anywhere
   if (field.includes(word)) return 15;
 
-  // Fuzzy match — only for words 4+ chars (avoids noisy short matches)
   if (word.length >= 4) {
-    // Check each word in the field for edit distance ≤ 1
     const fieldWords = field.split(/[\s\-/,.()]+/).filter(Boolean);
     for (const fw of fieldWords) {
       if (fw.length >= 3 && editDistance(word, fw) <= 1) return 8;
@@ -115,17 +120,14 @@ export function scoreItem(query: string, fields: SearchField[]): number {
     totalScore += bestWordScore;
   }
 
-  // Bonus for matching ALL words (multi-word queries)
   if (words.length > 1 && matchedWords === words.length) {
     totalScore *= 1.5;
   }
 
-  // Penalty if not all words matched
   if (matchedWords < words.length) {
     totalScore *= (matchedWords / words.length) * 0.5;
   }
 
-  // Check for exact full-query match in any field (huge bonus)
   for (const { value, weight } of fields) {
     const fieldLower = (value || "").toLowerCase();
     if (fieldLower.includes(query)) {
@@ -136,112 +138,266 @@ export function scoreItem(query: string, fields: SearchField[]): number {
   return Math.round(totalScore);
 }
 
+function sortResults(results: SearchResults): SearchResults {
+  for (const key of Object.keys(results) as (keyof SearchResults)[]) {
+    results[key].sort((a, b) => b.score - a.score);
+  }
+  return results;
+}
+
 /**
  * Search and rank all content items
  * @param {string} query - raw search input
- * @param {Object} dataSources - { trials, articles, cases, studySheets, abbreviations, quickRefs }
- * @returns {{ trials: [], articles: [], cases: [], studySheets: [], abbreviations: [], quickRefs: [] }}
+ * @param {Object} dataSources - content available to search
+ * @returns {{ trials: [], articles: [], pearls: [], patients: [], team: [], ... }}
  */
-export function searchAll(query: string, { trials, articlesByWeek, cases, studySheets, abbreviations, quickRefs }: SearchDataSources): SearchResults | null {
+export function searchAll(
+  query: string,
+  { trials, articlesByWeek, cases, studySheets, abbreviations, quickRefs, patients = [], teamSnapshots = [] }: SearchDataSources,
+): SearchResults | null {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return null;
 
   const results: SearchResults = {
-    trials: [],
     articles: [],
+    trials: [],
+    pearls: [],
+    patients: [],
+    team: [],
     cases: [],
     studySheets: [],
     abbreviations: [],
     quickRefs: [],
   };
 
-  // Trials
-  (trials || []).forEach(t => {
+  (trials || []).forEach((trial) => {
     const score = scoreItem(q, [
-      { value: t.name, weight: 3 },
-      { value: t.full_title, weight: 2 },
-      { value: t.category, weight: 2 },
-      { value: t.takeaway, weight: 1 },
-      { value: t.significance, weight: 0.5 },
+      { value: trial.name, weight: 3 },
+      { value: trial.full_title, weight: 2 },
+      { value: trial.category, weight: 2 },
+      { value: trial.takeaway, weight: 1 },
+      { value: trial.significance, weight: 0.5 },
     ]);
     if (score > 0) {
-      results.trials.push({ label: t.name, sub: t.category, icon: "\uD83D\uDCCB", score, nav: ["library", { type: "trialLibrary" }] });
+      results.trials.push({
+        label: trial.name,
+        kind: "Trial",
+        tag: trial.category,
+        score,
+        nav: ["library", { type: "trialLibrary", searchTrial: trial.name }],
+      });
     }
   });
 
-  // Articles
-  [1, 2, 3, 4].forEach(w => {
-    ((articlesByWeek || {})[w] || []).forEach(a => {
+  [1, 2, 3, 4].forEach((week) => {
+    ((articlesByWeek || {})[week] || []).forEach((article) => {
       const score = scoreItem(q, [
-        { value: a.title, weight: 3 },
-        { value: a.journal, weight: 1.5 },
-        { value: a.topic, weight: 2 },
-        { value: a.type, weight: 1 },
+        { value: article.title, weight: 3 },
+        { value: article.journal, weight: 1.5 },
+        { value: article.topic, weight: 2 },
+        { value: article.type, weight: 1 },
       ]);
       if (score > 0) {
-        results.articles.push({ label: a.title, sub: `Week ${w} \u2022 ${a.type || "Article"}`, icon: "\uD83D\uDCF0", score, nav: ["today", { type: "articles", week: w }] });
+        results.articles.push({
+          label: article.title,
+          kind: "Article",
+          tag: `${article.topic} · Week ${week}`,
+          score,
+          nav: ["today", { type: "articles", week }],
+        });
       }
     });
   });
 
-  // Cases
-  [1, 2, 3, 4].forEach(w => {
-    ((cases || {})[w] || []).forEach(c => {
+  [1, 2, 3, 4].forEach((week) => {
+    ((cases || {})[week] || []).forEach((item) => {
       const score = scoreItem(q, [
-        { value: c.title, weight: 3 },
-        { value: c.category, weight: 2 },
-        { value: c.difficulty, weight: 0.5 },
-        { value: c.scenario, weight: 0.5 },
+        { value: item.title, weight: 3 },
+        { value: item.category, weight: 2 },
+        { value: item.difficulty, weight: 0.5 },
+        { value: item.scenario, weight: 0.5 },
       ]);
       if (score > 0) {
-        results.cases.push({ label: c.title, sub: `Week ${w} \u2022 ${c.difficulty}`, icon: "\uD83C\uDFE5", score, nav: ["today", { type: "cases", week: w }] });
+        results.cases.push({
+          label: item.title,
+          kind: "Case",
+          tag: `${item.category} · Week ${week}`,
+          score,
+          nav: ["today", { type: "cases", week }],
+        });
       }
     });
   });
 
-  // Study Sheets
-  [1, 2, 3, 4].forEach(w => {
-    ((studySheets || {})[w] || []).forEach(s => {
-      const sectionText = (s.sections || []).map(sec => sec.heading).join(" ");
-      const itemText = (s.sections || []).flatMap(sec => sec.items || []).join(" ");
+  [1, 2, 3, 4].forEach((week) => {
+    ((studySheets || {})[week] || []).forEach((sheet) => {
+      const sectionText = (sheet.sections || []).map(section => section.heading).join(" ");
+      const itemText = (sheet.sections || []).flatMap(section => section.items || []).join(" ");
       const score = scoreItem(q, [
-        { value: s.title, weight: 3 },
-        { value: s.subtitle, weight: 2 },
+        { value: sheet.title, weight: 3 },
+        { value: sheet.subtitle, weight: 2 },
         { value: sectionText, weight: 1.5 },
         { value: itemText, weight: 0.3 },
       ]);
       if (score > 0) {
-        results.studySheets.push({ label: s.title, sub: `Week ${w}`, icon: "\uD83D\uDCDD", score, nav: ["today", { type: "studySheets", week: w }] });
+        results.studySheets.push({
+          label: sheet.title,
+          kind: "Study sheet",
+          tag: `Week ${week}`,
+          score,
+          nav: ["today", { type: "studySheets", week }],
+        });
       }
+
+      (sheet.trialCallouts || []).forEach((callout) => {
+        const pearlScore = scoreItem(q, [
+          { value: callout.pearl, weight: 3 },
+          { value: callout.trial, weight: 2 },
+          { value: sheet.title, weight: 1.5 },
+        ]);
+        if (pearlScore > 0) {
+          results.pearls.push({
+            label: callout.pearl,
+            kind: "Pearl",
+            tag: `${sheet.title} · Week ${week}`,
+            score: pearlScore,
+            nav: ["today", { type: "studySheets", week }],
+          });
+        }
+      });
     });
   });
 
-  // Abbreviations
-  (abbreviations || []).forEach(a => {
+  ROTATION_GUIDE_LIST.forEach((guide) => {
     const score = scoreItem(q, [
-      { value: a.abbr, weight: 3 },
-      { value: a.full, weight: 2 },
+      { value: guide.teachingPearl, weight: 3 },
+      { value: guide.title, weight: 2 },
+      { value: guide.subtitle, weight: 1.5 },
+      { value: guide.teachingPoints.join(" "), weight: 1 },
     ]);
     if (score > 0) {
-      results.abbreviations.push({ label: a.abbr, sub: a.full, icon: "\uD83D\uDD24", score, nav: ["refs", { type: "abbreviations" }] });
+      results.pearls.push({
+        label: guide.teachingPearl,
+        kind: "Pearl",
+        tag: guide.title,
+        score,
+        nav: ["library", { type: "rotationGuide", guideId: guide.id }],
+      });
     }
   });
 
-  // Quick References
-  (quickRefs || []).forEach(r => {
+  INPATIENT_GUIDE_LIST.forEach((guide) => {
     const score = scoreItem(q, [
-      { value: r.title, weight: 3 },
-      { value: r.desc, weight: 1.5 },
+      { value: guide.teachingPearl, weight: 3 },
+      { value: guide.title, weight: 2 },
+      { value: guide.topic, weight: 2 },
+      { value: guide.subtitle, weight: 1.5 },
+      { value: guide.discussionQuestions.join(" "), weight: 0.5 },
     ]);
     if (score > 0) {
-      results.quickRefs.push({ label: r.title, sub: r.desc, icon: r.icon || "\u26A1", score, nav: ["refs", { type: "refDetail", id: r.id }] });
+      results.pearls.push({
+        label: guide.teachingPearl,
+        kind: "Pearl",
+        tag: guide.title,
+        score,
+        nav: ["library", { type: "inpatientGuide", topic: guide.topic }],
+      });
     }
   });
 
-  // Sort each category by score (highest first)
-  for (const key of Object.keys(results) as (keyof SearchResults)[]) {
-    results[key].sort((a, b) => b.score - a.score);
-  }
+  CLINIC_GUIDE_LIST.forEach((guide) => {
+    const score = scoreItem(q, [
+      { value: guide.teachingPearl, weight: 3 },
+      { value: guide.title, weight: 2 },
+      { value: guide.topic, weight: 2 },
+      { value: guide.subtitle, weight: 1.5 },
+      { value: guide.teachingPoints.join(" "), weight: 1 },
+    ]);
+    if (score > 0) {
+      results.pearls.push({
+        label: guide.teachingPearl,
+        kind: "Pearl",
+        tag: guide.title,
+        score,
+        nav: ["library", { type: "clinicGuideHistory" }],
+      });
+    }
+  });
 
-  return results;
+  (patients || []).forEach((patient) => {
+    const topics = patient.topics || (patient.topic ? [patient.topic] : []);
+    const score = scoreItem(q, [
+      { value: patient.initials, weight: 2.5 },
+      { value: patient.dx, weight: 3 },
+      { value: topics.join(" "), weight: 2 },
+      { value: patient.notes, weight: 1 },
+      { value: patient.room, weight: 0.5 },
+    ]);
+    if (score > 0) {
+      const tagParts = [patient.status === "active" ? "Active patient" : "Discharged patient"];
+      if (topics.length > 0) tagParts.push(topics.slice(0, 2).join(", "));
+      else if (patient.room) tagParts.push(`Rm ${patient.room}`);
+      results.patients.push({
+        label: patient.dx ? `${patient.initials} · ${patient.dx}` : patient.initials || "Patient",
+        kind: "My patient",
+        tag: tagParts.join(" · "),
+        score,
+        nav: ["patients", undefined],
+      });
+    }
+  });
+
+  (teamSnapshots || []).forEach((snapshot) => {
+    const topics = Object.keys(snapshot.topicCounts || {});
+    const score = scoreItem(q, [
+      { value: snapshot.name, weight: 3 },
+      { value: snapshot.levelName, weight: 1 },
+      { value: topics.join(" "), weight: 2 },
+    ]);
+    if (score > 0) {
+      const topicSummary = topics.length > 0 ? topics.slice(0, 2).join(", ") : "Shared learning snapshot";
+      results.team.push({
+        label: snapshot.name || "Team member",
+        kind: "Ask the team",
+        tag: topicSummary,
+        score,
+        nav: ["team", undefined],
+      });
+    }
+  });
+
+  (abbreviations || []).forEach((item) => {
+    const score = scoreItem(q, [
+      { value: item.abbr, weight: 3 },
+      { value: item.full, weight: 2 },
+    ]);
+    if (score > 0) {
+      results.abbreviations.push({
+        label: item.abbr,
+        kind: "Abbreviation",
+        tag: item.full,
+        score,
+        nav: ["library", { type: "abbreviations" }],
+      });
+    }
+  });
+
+  (quickRefs || []).forEach((ref) => {
+    const score = scoreItem(q, [
+      { value: ref.title, weight: 3 },
+      { value: ref.desc, weight: 1.5 },
+      { value: ref.type, weight: 1 },
+    ]);
+    if (score > 0) {
+      results.quickRefs.push({
+        label: ref.title,
+        kind: "Quick ref",
+        tag: ref.type === "atlas" ? "Atlas" : ref.type === "calculator" ? "Calculator" : "Reference",
+        score,
+        nav: ["library", { type: "refDetail", id: ref.id }],
+      });
+    }
+  });
+
+  return sortResults(results);
 }
