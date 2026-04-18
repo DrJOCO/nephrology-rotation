@@ -459,7 +459,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const tabs: Array<{ id: string; Icon: typeof BookOpen; label: string }> = [
     { id: "today", Icon: Home, label: "Today" },
     { id: "library", Icon: BookOpen, label: "Library" },
-    { id: "patients", Icon: Stethoscope, label: "Rounds" },
+    { id: "patients", Icon: Stethoscope, label: "Patients" },
     { id: "team", Icon: Users, label: "Team" },
     { id: "me", Icon: UserIcon, label: "Me" },
   ];
@@ -604,7 +604,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
       <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + env(safe-area-inset-bottom, 0px))` }}>
-        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
+        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} clinicGuides={clinicGuides} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}

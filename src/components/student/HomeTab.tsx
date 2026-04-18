@@ -1,488 +1,776 @@
-import { useState, useMemo, useEffect, useRef } from "react";
-import { RefreshCw, Megaphone, ClipboardList, Activity, FileText, Star } from "lucide-react";
-import { T, WEEKLY, ARTICLES, LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  BookOpen,
+  Brain,
+  ChevronRight,
+  ClipboardList,
+  Megaphone,
+  RefreshCw,
+  Sparkles,
+  Stethoscope,
+} from "lucide-react";
+import { T, WEEKLY, ARTICLES, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
-import { getRecommendations } from "../../utils/recommendations";
-import { getPatientSuggestedActions } from "../../utils/patientRecommendations";
+import { getTopicExposures } from "../../utils/topicExposure";
+import { getClinicTopicForDate, getCurrentOrNextFriday } from "../../utils/clinicRotation";
 import { useIsMobile } from "../../utils/helpers";
+import type {
+  Announcement,
+  Bookmarks,
+  ClinicGuideRecord,
+  CompletedItems,
+  Patient,
+  QuizScore,
+  SubView,
+  WeeklyScores,
+} from "../../types";
 
-export default function HomeTab({ navigate, preScore, postScore, curriculum, articles, announcements, currentWeek, totalWeeks = 4, rotationEnded = false, weeklyScores, completedItems, bookmarks, srDueCount, patients, srQueue }) {
-  const isMobile = useIsMobile();
-  const [expanded, setExpanded] = useState(currentWeek || null);
-  // Pick a random tip on each mount (changes on every screen change)
-  const [mountTime] = useState(() => Date.now());
-  const [tipIndex] = useState(() => Math.floor(Math.random() * PRO_TIPS.length));
+const PEARL_STORAGE_KEY = "neph_todayPearlDismissed";
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-  // Filter announcements to only those < 7 days old
-  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
-  const activeAnnouncements = useMemo(() => announcements.filter(a => {
-    if (!a.date) return true; // legacy announcements without dates still show
-    return (mountTime - new Date(a.date).getTime()) < SEVEN_DAYS;
-  }), [announcements, mountTime, SEVEN_DAYS]);
+interface HomeTabProps {
+  navigate: (tab: string, sv?: SubView) => void;
+  preScore: QuizScore | null;
+  postScore: QuizScore | null;
+  curriculum: typeof WEEKLY;
+  articles: typeof ARTICLES;
+  announcements: Announcement[];
+  currentWeek: number | null;
+  totalWeeks?: number;
+  rotationEnded?: boolean;
+  weeklyScores: WeeklyScores;
+  completedItems: CompletedItems;
+  bookmarks: Bookmarks;
+  srDueCount: number;
+  patients: Patient[];
+  online?: boolean;
+  clinicGuides?: ClinicGuideRecord[];
+}
 
-  // Relative time helper
-  const timeAgo = (dateStr) => {
-    if (!dateStr) return "";
-    const diff = mountTime - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "just now";
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-    const days = Math.floor(hrs / 24);
-    if (days === 1) return "yesterday";
-    return `${days}d ago`;
+interface NavAction {
+  label: string;
+  meta: string;
+  tab: string;
+  subView?: SubView;
+}
+
+interface LearningPlan {
+  label: string;
+  detail: string;
+  remaining: number;
+  done: number;
+  total: number;
+  completionRatio: number;
+  nextAction: NavAction;
+}
+
+interface HeroCard {
+  eyebrow: string;
+  title: string;
+  body: string;
+  tone: "rounds" | "didactic" | "clinic" | "wrap";
+  badge: string;
+  actions: NavAction[];
+}
+
+function makeAction(label: string, meta: string, tab: string, subView?: SubView): NavAction {
+  return { label, meta, tab, subView };
+}
+
+function toDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatRelativeTime(dateStr?: string, now: Date = new Date()): string {
+  if (!dateStr) return "";
+  const diff = now.getTime() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "yesterday" : `${days}d ago`;
+}
+
+function getPearlIndex(date: Date): number {
+  const dayNumber = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+  return dayNumber % PRO_TIPS.length;
+}
+
+function countBookmarks(bookmarks: Bookmarks): number {
+  return Object.values(bookmarks || {}).reduce((sum, items) => sum + items.length, 0);
+}
+
+function buildLearningPlan({
+  currentWeek,
+  totalWeeks,
+  rotationEnded,
+  articles,
+  completedItems,
+  weeklyScores,
+}: {
+  currentWeek: number | null;
+  totalWeeks: number;
+  rotationEnded: boolean;
+  articles: typeof ARTICLES;
+  completedItems: CompletedItems;
+  weeklyScores: WeeklyScores;
+}): LearningPlan {
+  const activeWeeks = currentWeek
+    ? [currentWeek]
+    : rotationEnded
+      ? Array.from({ length: Math.min(totalWeeks, 4) }, (_, index) => index + 1)
+      : [1];
+
+  let sheetsTotal = 0;
+  let sheetsDone = 0;
+  let articlesTotal = 0;
+  let articlesDone = 0;
+  let casesTotal = 0;
+  let casesDone = 0;
+  let quizzesTotal = 0;
+  let quizzesDone = 0;
+  let nextAction: NavAction | null = null;
+
+  for (const week of activeWeeks) {
+    const weekSheets = STUDY_SHEETS[week] || [];
+    const weekArticles = articles[week] || [];
+    const weekCases = WEEKLY_CASES[week] || [];
+    const quizAvailable = (WEEKLY_QUIZZES[week] || []).length > 0;
+
+    const weekSheetsDone = weekSheets.filter((sheet) => completedItems.studySheets?.[sheet.id]).length;
+    const weekArticlesDone = weekArticles.filter((article) => completedItems.articles?.[article.url]).length;
+    const weekCasesDone = weekCases.filter((item) => completedItems.cases?.[item.id]).length;
+    const weekQuizTaken = (weeklyScores[week] || []).length > 0;
+
+    sheetsTotal += weekSheets.length;
+    sheetsDone += weekSheetsDone;
+    articlesTotal += weekArticles.length;
+    articlesDone += weekArticlesDone;
+    casesTotal += weekCases.length;
+    casesDone += weekCasesDone;
+    if (quizAvailable) quizzesTotal += 1;
+    if (weekQuizTaken) quizzesDone += 1;
+
+    if (!nextAction && weekSheetsDone < weekSheets.length) {
+      nextAction = {
+        label: `Open Week ${week} study sheets`,
+        meta: `${weekSheets.length - weekSheetsDone} still to review`,
+        tab: "today",
+        subView: { type: "studySheets", week },
+      };
+      continue;
+    }
+    if (!nextAction && weekArticlesDone < weekArticles.length) {
+      nextAction = {
+        label: `Read Week ${week} articles`,
+        meta: `${weekArticles.length - weekArticlesDone} still unread`,
+        tab: "today",
+        subView: { type: "articles", week },
+      };
+      continue;
+    }
+    if (!nextAction && weekCasesDone < weekCases.length) {
+      nextAction = {
+        label: `Work Week ${week} cases`,
+        meta: `${weekCases.length - weekCasesDone} case${weekCases.length - weekCasesDone !== 1 ? "s" : ""} pending`,
+        tab: "today",
+        subView: { type: "cases", week },
+      };
+      continue;
+    }
+    if (!nextAction && quizAvailable && !weekQuizTaken) {
+      nextAction = {
+        label: `Take Week ${week} quiz`,
+        meta: `${(WEEKLY_QUIZZES[week] || []).length} questions`,
+        tab: "today",
+        subView: { type: "weeklyQuiz", week },
+      };
+    }
+  }
+
+  const total = sheetsTotal + articlesTotal + casesTotal + quizzesTotal;
+  const done = sheetsDone + articlesDone + casesDone + quizzesDone;
+  const remaining = Math.max(total - done, 0);
+  const detailParts: string[] = [];
+  if (sheetsTotal - sheetsDone > 0) detailParts.push(`${sheetsTotal - sheetsDone} sheet${sheetsTotal - sheetsDone !== 1 ? "s" : ""}`);
+  if (articlesTotal - articlesDone > 0) detailParts.push(`${articlesTotal - articlesDone} article${articlesTotal - articlesDone !== 1 ? "s" : ""}`);
+  if (casesTotal - casesDone > 0) detailParts.push(`${casesTotal - casesDone} case${casesTotal - casesDone !== 1 ? "s" : ""}`);
+  if (quizzesTotal - quizzesDone > 0) detailParts.push(`${quizzesTotal - quizzesDone} quiz`);
+
+  return {
+    label: currentWeek ? `Week ${currentWeek} essentials` : rotationEnded ? "Rotation wrap-up" : "Getting started",
+    detail: remaining > 0 ? detailParts.join(" · ") : "All tracked essentials complete",
+    remaining,
+    done,
+    total,
+    completionRatio: total > 0 ? done / total : 0,
+    nextAction: nextAction || {
+      label: rotationEnded ? "Open Me" : "Browse by topic",
+      meta: rotationEnded ? "Review your progress and wrap up" : "Explore the full rotation map",
+      tab: rotationEnded ? "me" : "today",
+      subView: rotationEnded ? undefined : { type: "browseByTopic" },
+    },
+  };
+}
+
+function buildHeroCard({
+  now,
+  currentWeek,
+  rotationEnded,
+  learningPlan,
+  activePatientCount,
+  clinicGuides,
+  postScore,
+}: {
+  now: Date;
+  currentWeek: number | null;
+  rotationEnded: boolean;
+  learningPlan: LearningPlan;
+  activePatientCount: number;
+  clinicGuides: ClinicGuideRecord[];
+  postScore: QuizScore | null;
+}): HeroCard {
+  const friday = getCurrentOrNextFriday(now);
+  const fridayDate = toDateKey(friday);
+  const fridayTopic = clinicGuides.find((guide) => guide.date === fridayDate)?.topic || getClinicTopicForDate(friday);
+  const weekday = now.getDay();
+  const clinicAction: NavAction = {
+    label: "Open Friday clinic guide",
+    meta: `${fridayTopic} · ${friday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+    tab: "library",
+    subView: { type: "clinicGuide", date: fridayDate },
+  };
+  const patientsAction: NavAction = {
+    label: activePatientCount > 0 ? "Open patient list" : "Add your first patient",
+    meta: activePatientCount > 0
+      ? `${activePatientCount} active consult${activePatientCount !== 1 ? "s" : ""}`
+      : "Start your rounding list",
+    tab: "patients",
   };
 
-  // Today's Priorities computation
-  const activePatientCount = (patients || []).filter(p => p.status === "active").length;
-
-  const unreadAnnouncementCount = useMemo(() => {
-    const lastSeen = localStorage.getItem("neph_lastAnnouncementSeen");
-    const lastSeenTime = lastSeen ? new Date(lastSeen).getTime() : 0;
-    return announcements.filter(a => a.date && new Date(a.date).getTime() > lastSeenTime).length;
-  }, [announcements]);
-
-  // Keep a ref to the latest announcements so the unmount cleanup can read it
-  // without adding announcements to the effect's dependency array.
-  const announcementsRef = useRef(announcements);
-  announcementsRef.current = announcements;
-
-  // Mark announcements as seen only on true unmount (empty deps),
-  // so the badge stays visible even if new announcements arrive while on this tab.
-  useEffect(() => {
-    return () => {
-      if (announcementsRef.current.length > 0) {
-        localStorage.setItem("neph_lastAnnouncementSeen", new Date().toISOString());
-      }
+  if (rotationEnded) {
+    return {
+      eyebrow: "Next up",
+      title: postScore ? "Close out the rotation" : "Finish your post-rotation check",
+      body: postScore
+        ? "Use Me to review what you covered, then clean up anything still open in the rotation."
+        : "Your wrap-up is ready. Take the post-rotation assessment, then review any essentials still left open.",
+      tone: "wrap",
+      badge: postScore ? "Wrap-up" : "Assessment",
+      actions: [
+        postScore
+          ? { label: "Open Me", meta: "Review progress, activity, and milestones", tab: "me" }
+          : { label: "Take post-rotation quiz", meta: "Measure growth from your baseline", tab: "today", subView: { type: "postQuiz" } },
+        learningPlan.nextAction,
+      ],
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
 
-  const incompleteWeekTasks = useMemo(() => {
-    if (!currentWeek) return 0;
-    const wkArticles = (articles[currentWeek] || []).length;
-    const readArticles = (articles[currentWeek] || []).filter(a => (completedItems?.articles || {})[a.url]).length;
-    const wkSheets = (STUDY_SHEETS[currentWeek] || []).length;
-    const doneSheets = (STUDY_SHEETS[currentWeek] || []).filter(s => (completedItems?.studySheets || {})[s.id]).length;
-    const wkCases = (WEEKLY_CASES[currentWeek] || []).length;
-    const doneCases = (WEEKLY_CASES[currentWeek] || []).filter(c => (completedItems?.cases || {})[c.id]).length;
-    return (wkArticles - readArticles) + (wkSheets - doneSheets) + (wkCases - doneCases);
-  }, [currentWeek, articles, completedItems]);
+  if (weekday === 4 || weekday === 5) {
+    return {
+      eyebrow: "Next up",
+      title: weekday === 5 ? "Friday clinic" : "Friday clinic prep",
+      body: `Review the ${fridayTopic} teaching guide, then tighten one more week-${currentWeek || 1} learning item before clinic.`,
+      tone: "clinic",
+      badge: friday.toLocaleDateString("en-US", { weekday: "short" }),
+      actions: [clinicAction, learningPlan.nextAction],
+    };
+  }
 
-  const hasPriorities = srDueCount > 0 || unreadAnnouncementCount > 0 || incompleteWeekTasks > 0 || activePatientCount > 0;
+  if (weekday === 3) {
+    return {
+      eyebrow: "Next up",
+      title: "Midweek teaching",
+      body: "Use today to sharpen the highest-yield ideas before conference, rounds, and afternoon check-ins.",
+      tone: "didactic",
+      badge: "Didactic",
+      actions: [learningPlan.nextAction, patientsAction],
+    };
+  }
+
+  return {
+    eyebrow: "Next up",
+    title: activePatientCount > 0 ? "Morning rounds" : "Build your rounding list",
+    body: activePatientCount > 0
+      ? "Start with your active consults, then knock out one high-yield prep task before the day gets noisy."
+      : "No patients logged yet. Add your consults first so Today can start tailoring the right prep.",
+    tone: "rounds",
+    badge: "Rounds",
+    actions: [patientsAction, learningPlan.nextAction],
+  };
+}
+
+function ProgressRing({ value }: { value: number }) {
+  const size = 92;
+  const stroke = 8;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - Math.max(0, Math.min(value, 100)) / 100);
 
   return (
-    <div style={{ padding: 16 }}>
-      {/* Today's Priorities */}
-      {hasPriorities && (
-        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 10 }}>Today's Priorities</div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
-            {srDueCount > 0 && (
-              <button onClick={() => navigate("home", { type: "srReview" })}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.yellowBg, border: `1px solid ${T.goldAlpha}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                <RefreshCw size={16} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.orange }}>{srDueCount}</div>
-                  <div style={{ fontSize: 10, color: T.sub }}>SR due</div>
-                </div>
-              </button>
-            )}
-            {unreadAnnouncementCount > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.redBg, border: `1px solid ${T.redAlpha}`, borderRadius: 8 }}>
-                <Megaphone size={16} strokeWidth={1.75} color={T.accent} aria-hidden="true" />
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.accent }}>{unreadAnnouncementCount}</div>
-                  <div style={{ fontSize: 10, color: T.sub }}>New announcements</div>
-                </div>
-              </div>
-            )}
-            {incompleteWeekTasks > 0 && currentWeek && (
-              <button onClick={() => navigate("home")}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.blueBg, border: `1px solid ${T.med}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                <ClipboardList size={16} strokeWidth={1.75} color={T.med} aria-hidden="true" />
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.med }}>{incompleteWeekTasks}</div>
-                  <div style={{ fontSize: 10, color: T.sub }}>Week {currentWeek} tasks</div>
-                </div>
-              </button>
-            )}
-            {activePatientCount > 0 && (
-              <button onClick={() => navigate("patients")}
-                style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.greenBg, border: `1px solid ${T.greenAlpha}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                <Activity size={16} strokeWidth={1.75} color={T.greenDk} aria-hidden="true" />
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.greenDk }}>{activePatientCount}</div>
-                  <div style={{ fontSize: 10, color: T.sub }}>Active patients</div>
-                </div>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Pre/Post Rotation Assessment Cards */}
-      {!preScore ? (
-        // Pre-quiz not taken — show full CTA
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 16 }}>
-          <button onClick={() => navigate("home", { type: "preQuiz" })}
-            style={{ background: T.blueBg, borderRadius: 12, padding: 16, border: `1.5px solid ${T.med}`, cursor: "pointer", textAlign: "left" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: T.med, marginBottom: 4 }}>Pre-Rotation</div>
-            <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 700, color: T.navy, marginBottom: 2 }}>Take Quiz</div>
-            <div style={{ fontSize: 10, color: T.sub }}>25 questions · Baseline</div>
-          </button>
-          <button onClick={() => navigate("home", { type: "postQuiz" })}
-            style={{ background: T.card, borderRadius: 12, padding: 16, border: `1.5px dashed ${T.line}`, cursor: "pointer", textAlign: "left", opacity: 0.5 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: T.muted, marginBottom: 4 }}>Post-Rotation</div>
-            <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 700, color: T.sub, marginBottom: 2 }}>Take Quiz</div>
-            <div style={{ fontSize: 10, color: T.muted }}>Available at rotation end</div>
-          </button>
-        </div>
-      ) : rotationEnded && !postScore ? (
-        // Rotation over — prompt post-quiz prominently
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <button onClick={() => navigate("home", { type: "preResults" })}
-              style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", background: T.ice, borderRadius: 10, padding: "8px 12px", border: `1px solid ${T.pale}`, cursor: "pointer", textAlign: "left" }}>
-              <div>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: T.med }}>Pre-Rotation</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{Math.round((preScore.correct / preScore.total) * 100)}%</div>
-              </div>
-              <div style={{ fontSize: 10, color: T.sub }}>{preScore.correct}/{preScore.total} ›</div>
-            </button>
-          </div>
-          <button onClick={() => navigate("home", { type: "postQuiz" })}
-            style={{ width: "100%", background: `linear-gradient(135deg, ${T.greenBg}, rgba(26,188,156,0.08))`, borderRadius: 12, padding: 16, border: `1.5px solid ${T.green}`, cursor: "pointer", textAlign: "left", boxSizing: "border-box" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: T.greenDk, marginBottom: 4 }}>🎉 Rotation Complete</div>
-            <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 700, color: T.navy, marginBottom: 2 }}>Take Post-Rotation Quiz</div>
-            <div style={{ fontSize: 10, color: T.sub }}>See how much you've learned · 25 questions</div>
-          </button>
-        </div>
-      ) : (
-        // Both scores exist OR rotation still ongoing with pre done — compact row
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <button onClick={() => navigate("home", { type: "preResults" })}
-            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", background: T.ice, borderRadius: 10, padding: "8px 12px", border: `1px solid ${T.pale}`, cursor: "pointer", textAlign: "left" }}>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: T.med }}>Pre-Rotation</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{Math.round((preScore.correct / preScore.total) * 100)}%</div>
-            </div>
-            <div style={{ fontSize: 10, color: T.sub }}>{preScore.correct}/{preScore.total} ›</div>
-          </button>
-          <button onClick={() => navigate("home", { type: "postQuiz" })}
-            style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", background: postScore ? T.greenBg : T.card, borderRadius: 10, padding: "8px 12px", border: postScore ? `1px solid ${T.greenAlpha}` : `1px dashed ${T.line}`, cursor: "pointer", textAlign: "left" }}>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: postScore ? T.greenDk : T.muted }}>Post-Rotation</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: postScore ? T.greenDk : T.sub }}>
-                {postScore ? `${Math.round((postScore.correct / postScore.total) * 100)}%` : "At end of rotation"}
-              </div>
-            </div>
-            {postScore ? (
-              <div style={{ fontSize: 10, fontWeight: 700, color: T.greenDk }}>
-                {Math.round((postScore.correct/postScore.total)*100) - Math.round((preScore.correct/preScore.total)*100) >= 0 ? "+" : ""}
-                {Math.round((postScore.correct/postScore.total)*100) - Math.round((preScore.correct/preScore.total)*100)}%
-              </div>
-            ) : (
-              <div style={{ fontSize: 10, color: T.muted }}>—</div>
-            )}
-          </button>
-        </div>
-      )}
-
-      {activeAnnouncements.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <h2 style={{ color: T.text, fontSize: 16, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Announcements</h2>
-          {activeAnnouncements.slice(0, 3).map(a => {
-            const prioColor = a.priority === "urgent" ? T.accent : a.priority === "important" ? T.orange : T.med;
-            return (
-              <div key={a.id || `${a.title}-${a.date}`} style={{ background: T.card, borderRadius: 10, padding: 10, marginBottom: 8, borderLeft: `4px solid ${prioColor}`, border: `1px solid ${T.line}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: T.navy }}>{a.title}</div>
-                  {a.date && <div style={{ fontSize: 10, color: T.muted, flexShrink: 0 }}>{timeAgo(a.date)}</div>}
-                </div>
-                {a.body && <div style={{ fontSize: 11, color: T.sub, marginTop: 4, lineHeight: 1.4 }}>{a.body}</div>}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Weekly Curriculum */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>This Week's Focus</h2>
-        <button onClick={() => navigate("home", { type: "browseByTopic" })}
-          style={{ background: T.purpleBg, color: T.purpleAccent, border: `1px solid ${T.purpleSoft}`, borderRadius: 8, padding: isMobile ? "8px 12px" : "4px 10px", fontSize: isMobile ? 12 : 11, fontWeight: 600, cursor: "pointer" }}>
-          Browse by Topic
-        </button>
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} aria-hidden="true">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={T.line}
+          strokeWidth={stroke}
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={T.med}
+          strokeWidth={stroke}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{value}%</div>
+        <div style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: 0.7 }}>Ready</div>
       </div>
-      {[1,2,3,4].map(w => {
-        const wk = curriculum[w] || WEEKLY[w];
-        const isOpen = expanded === w;
-        const isCurrent = w === currentWeek;
-        return (
-          <div key={w} style={{ marginBottom: 8, background: T.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${isOpen ? T.med + "60" : T.line}`, transition: "border 0.2s" }}>
-            {/* Week header row */}
-            <button onClick={() => setExpanded(isOpen ? null : w)}
-              style={{ width: "100%", padding: "12px 14px", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 9, background: isCurrent ? T.med : T.ice, color: isCurrent ? "white" : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-                {w}
-              </div>
-              <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>{wk.title}</span>
-                  {isCurrent && <span style={{ fontSize: 9, fontWeight: 700, background: T.med, color: "white", padding: "2px 6px", borderRadius: 6, letterSpacing: 0.5 }}>CURRENT</span>}
+    </div>
+  );
+}
+
+export default function HomeTab({
+  navigate,
+  preScore,
+  postScore,
+  curriculum,
+  articles,
+  announcements,
+  currentWeek,
+  totalWeeks = 4,
+  rotationEnded = false,
+  weeklyScores,
+  completedItems,
+  bookmarks,
+  srDueCount,
+  patients,
+  online = true,
+  clinicGuides = [],
+}: HomeTabProps) {
+  const isMobile = useIsMobile();
+  const now = useMemo(() => new Date(), []);
+  const todayKey = useMemo(() => toDateKey(now), [now]);
+  const [pearlDismissed, setPearlDismissed] = useState(false);
+
+  useEffect(() => {
+    setPearlDismissed(localStorage.getItem(PEARL_STORAGE_KEY) === todayKey);
+  }, [todayKey]);
+
+  const activePatients = useMemo(
+    () => (patients || [])
+      .filter((patient) => patient.status === "active")
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, isMobile ? 3 : 4),
+    [isMobile, patients],
+  );
+
+  const activeAnnouncements = useMemo(
+    () => (announcements || [])
+      .filter((item) => !item.date || now.getTime() - new Date(item.date).getTime() < SEVEN_DAYS_MS)
+      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()),
+    [announcements, now],
+  );
+  const latestAnnouncement = activeAnnouncements[0] || null;
+  const learningPlan = useMemo(
+    () => buildLearningPlan({ currentWeek, totalWeeks, rotationEnded, articles, completedItems, weeklyScores }),
+    [articles, completedItems, currentWeek, rotationEnded, totalWeeks, weeklyScores],
+  );
+  const heroCard = useMemo(
+    () => buildHeroCard({
+      now,
+      currentWeek,
+      rotationEnded,
+      learningPlan,
+      activePatientCount: activePatients.length,
+      clinicGuides,
+      postScore,
+    }),
+    [activePatients.length, clinicGuides, currentWeek, learningPlan, now, postScore, rotationEnded],
+  );
+
+  const exposures = useMemo(() => getTopicExposures(patients || [], completedItems), [completedItems, patients]);
+  const clinicallySeenTopics = exposures.filter((item) => item.patientCount > 0);
+  const reinforcedTopics = clinicallySeenTopics.filter((item) => item.contentCompleted > 0);
+  const quizSignal = currentWeek && (weeklyScores[currentWeek] || []).length > 0 ? 1 : preScore ? 0.5 : 0;
+  const exposureSignal = clinicallySeenTopics.length > 0
+    ? reinforcedTopics.length / clinicallySeenTopics.length
+    : Math.min(activePatients.length / 3, 1);
+  const competencyPreview = Math.round(
+    ((learningPlan.completionRatio * 0.6) + (exposureSignal * 0.25) + (quizSignal * 0.15)) * 100,
+  );
+
+  const pearlIndex = useMemo(() => getPearlIndex(now), [now]);
+  const totalBookmarks = useMemo(() => countBookmarks(bookmarks), [bookmarks]);
+  const displayWeek = currentWeek || 1;
+  const headerKicker = currentWeek ? `Wk ${currentWeek} · ${now.toLocaleDateString("en-US", { weekday: "short" })}` : rotationEnded ? `Rotation complete · ${now.toLocaleDateString("en-US", { weekday: "short" })}` : `Getting started · ${now.toLocaleDateString("en-US", { weekday: "short" })}`;
+  const headerSub = rotationEnded
+    ? "Everything you need to finish strong and close the loop."
+    : curriculum[displayWeek]?.sub || "One focused screen for what matters next.";
+  const srAction: NavAction = srDueCount > 0
+    ? {
+      label: "Review spaced repetition",
+      meta: `${srDueCount} question${srDueCount !== 1 ? "s" : ""} due now`,
+      tab: "today",
+      subView: { type: "srReview" },
+    }
+    : {
+      label: "Open extra practice",
+      meta: "No SR due right now — use a fresh practice set instead",
+      tab: "today",
+      subView: { type: "extraPractice" },
+    };
+
+  const quickLinks: NavAction[] = [
+    makeAction("Browse topics", "See all content by nephrology concept", "today", { type: "browseByTopic" }),
+    ...(totalBookmarks > 0
+      ? [makeAction("Saved items", `${totalBookmarks} bookmark${totalBookmarks !== 1 ? "s" : ""}`, "today", { type: "bookmarks" })]
+      : []),
+    makeAction("Resources", "Podcasts, guidelines, and websites", "today", { type: "resources" }),
+    ...(!preScore
+      ? [makeAction("Baseline quiz", "Optional pre-rotation assessment", "today", { type: "preQuiz" })]
+      : rotationEnded && !postScore
+        ? [makeAction("Post-rotation quiz", "Complete your wrap-up assessment", "today", { type: "postQuiz" })]
+        : []),
+  ];
+
+  const heroToneStyles: Record<HeroCard["tone"], { background: string; border: string; badge: string }> = {
+    rounds: { background: `linear-gradient(135deg, ${T.ice} 0%, ${T.card} 100%)`, border: T.med, badge: T.med },
+    didactic: { background: `linear-gradient(135deg, ${T.purpleBg} 0%, ${T.card} 100%)`, border: T.purple, badge: T.purpleAccent },
+    clinic: { background: `linear-gradient(135deg, ${T.greenBg} 0%, ${T.blueBg} 100%)`, border: T.green, badge: T.greenDk },
+    wrap: { background: `linear-gradient(135deg, ${T.yellowBg} 0%, ${T.card} 100%)`, border: T.gold, badge: T.goldText },
+  };
+  const heroStyle = heroToneStyles[heroCard.tone];
+
+  return (
+    <div style={{ padding: "18px 16px 24px" }}>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 1.1, marginBottom: 6 }}>
+          {headerKicker}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+          <div>
+            <h1 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>Today</h1>
+            <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.5, maxWidth: 520 }}>
+              {headerSub}
+            </p>
+          </div>
+          {!online && (
+            <div style={{ background: T.goldAlpha, color: T.warn, border: `1px solid ${T.gold}`, borderRadius: 999, padding: "7px 12px", fontSize: 12, fontWeight: 700 }}>
+              Offline
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ background: heroStyle.background, borderRadius: 20, padding: 18, border: `1.5px solid ${heroStyle.border}`, marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 16 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9, marginBottom: 6 }}>
+              {heroCard.eyebrow}
+            </div>
+            <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
+              {heroCard.title}
+            </h2>
+            <p style={{ margin: "8px 0 0", color: T.text, fontSize: 14, lineHeight: 1.55, maxWidth: 560 }}>
+              {heroCard.body}
+            </p>
+          </div>
+          <div style={{ background: T.card, color: heroStyle.badge, borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 700, border: `1px solid ${T.line}`, whiteSpace: "nowrap" }}>
+            {heroCard.badge}
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+          {heroCard.actions.map((action, index) => (
+            <button
+              key={`${action.label}-${index}`}
+              onClick={() => navigate(action.tab, action.subView)}
+              style={{
+                width: "100%",
+                background: index === 0 ? T.navy : T.card,
+                color: index === 0 ? "white" : T.navy,
+                border: index === 0 ? "none" : `1px solid ${T.line}`,
+                borderRadius: 14,
+                padding: "14px 14px",
+                cursor: "pointer",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{action.label}</div>
+                <div style={{ fontSize: 12, color: index === 0 ? "rgba(255,255,255,0.8)" : T.sub, marginTop: 3 }}>
+                  {action.meta}
                 </div>
-                <div style={{ fontSize: 11, color: T.sub, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{wk.sub}</div>
               </div>
-              <span style={{ color: T.muted, fontSize: 14, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0)", flexShrink: 0 }}>▾</span>
+              <ArrowRight size={16} strokeWidth={2} aria-hidden="true" style={{ flexShrink: 0 }} />
             </button>
+          ))}
+        </div>
+      </div>
 
-            {isOpen && (
-              <div style={{ padding: "0 14px 14px" }}>
-                <div style={{ height: 1, background: T.line, marginBottom: 12 }} />
-                {/* Topic pills */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
-                  {wk.topics.map(t => (
-                    <span key={t} style={{ background: T.ice, color: T.navy, fontSize: 10, padding: "3px 8px", borderRadius: 8, fontWeight: 500 }}>{t}</span>
-                  ))}
-                </div>
-                {/* 2-column content tile grid */}
-                {(() => {
-                  const sheets = STUDY_SHEETS[w] || [];
-                  const sheetDone = sheets.filter(s => (completedItems?.studySheets || {})[s.id]).length;
-                  const wkCases = WEEKLY_CASES[w] || [];
-                  const caseDone = wkCases.filter(c => (completedItems?.cases || {})[c.id]).length;
-                  const arts = articles[w] || [];
-                  const artDone = arts.filter(a => (completedItems?.articles || {})[a.url]).length;
-                  const trials = LANDMARK_TRIALS[w] || [];
-                  const ws = (weeklyScores || {})[w] || [];
-                  const best = ws.length > 0 ? Math.max(...ws.map(s => Math.round((s.correct / s.total) * 100))) : null;
+      {latestAnnouncement && (
+        <div style={{ background: T.card, borderRadius: 16, padding: "12px 14px", border: `1px solid ${T.line}`, display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 14 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: T.redBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Megaphone size={18} strokeWidth={1.75} color={T.accent} aria-hidden="true" />
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
+                {latestAnnouncement.title}
+                {activeAnnouncements.length > 1 ? ` · +${activeAnnouncements.length - 1} more` : ""}
+              </div>
+              <div style={{ fontSize: 11, color: T.muted }}>
+                {formatRelativeTime(latestAnnouncement.date, now)}
+              </div>
+            </div>
+            {latestAnnouncement.body && (
+              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 4 }}>
+                {latestAnnouncement.body}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-                  const tileStyle = (accent: string) => ({
-                    display: "flex" as const, alignItems: "center" as const,
-                    padding: "9px 11px", background: T.bg, borderRadius: 10,
-                    border: `1px solid ${T.line}`, borderLeft: `3px solid ${accent}`,
-                    cursor: "pointer", textAlign: "left" as const, gap: 8,
-                  });
+      <section style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
+          <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Due today</h2>
+          <div style={{ fontSize: 11, color: T.muted }}>Two fast wins before the day gets away</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+          <button
+            onClick={() => navigate(srAction.tab, srAction.subView)}
+            style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
+          >
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <RefreshCw size={18} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
+            </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Spaced repetition</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{srAction.label}</div>
+              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>{srAction.meta}</div>
+            </div>
+          </button>
 
-                  return (
-                    <>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-                        <button onClick={() => navigate("home", { type: "studySheets", week: w })} style={tileStyle(T.purple)}>
-                          <ClipboardList size={16} strokeWidth={1.75} color={T.ink2} aria-hidden="true" style={{ flexShrink: 0 }} />
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Study Sheets</div>
-                            <div style={{ fontSize: 10, color: sheetDone === sheets.length && sheets.length > 0 ? T.greenDk : T.sub }}>
-                              {sheetDone}/{sheets.length} done{sheetDone === sheets.length && sheets.length > 0 ? " ✓" : ""}
-                            </div>
-                          </div>
-                        </button>
+          <button
+            onClick={() => navigate(learningPlan.nextAction.tab, learningPlan.nextAction.subView)}
+            style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
+          >
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.blueBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <ClipboardList size={18} strokeWidth={1.75} color={T.med} aria-hidden="true" />
+            </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{learningPlan.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
+                {learningPlan.remaining > 0 ? `${learningPlan.remaining} item${learningPlan.remaining !== 1 ? "s" : ""} still open` : "Everything for this block is covered"}
+              </div>
+              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>
+                {learningPlan.total > 0 ? `${learningPlan.done}/${learningPlan.total} complete · ` : ""}
+                {learningPlan.detail}
+              </div>
+            </div>
+          </button>
+        </div>
+      </section>
 
-                        {wkCases.length > 0 ? (
-                          <button onClick={() => navigate("home", { type: "cases", week: w })} style={tileStyle(T.green)}>
-                            <Activity size={16} strokeWidth={1.75} color={T.ink2} aria-hidden="true" style={{ flexShrink: 0 }} />
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Clinical Cases</div>
-                              <div style={{ fontSize: 10, color: caseDone === wkCases.length ? T.greenDk : T.sub }}>
-                                {caseDone}/{wkCases.length} done{caseDone === wkCases.length ? " ✓" : ""}
-                              </div>
-                            </div>
-                          </button>
-                        ) : <div />}
+      <section style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
+          <div>
+            <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Rounding list</h2>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>
+              {activePatients.length > 0
+                ? `${activePatients.length} active patient${activePatients.length !== 1 ? "s" : ""} surfaced here`
+                : "Log your consults to make Today feel personal."}
+            </div>
+          </div>
+          <button
+            onClick={() => navigate("patients")}
+            style={{ background: "none", border: "none", color: T.med, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
+          >
+            Open patients
+            <ChevronRight size={15} strokeWidth={2} aria-hidden="true" />
+          </button>
+        </div>
 
-                        <button onClick={() => navigate("home", { type: "articles", week: w })} style={tileStyle(T.sky)}>
-                          <FileText size={16} strokeWidth={1.75} color={T.ink2} aria-hidden="true" style={{ flexShrink: 0 }} />
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Journal Articles</div>
-                            <div style={{ fontSize: 10, color: artDone === arts.length && arts.length > 0 ? T.greenDk : T.sub }}>
-                              {artDone}/{arts.length} read{artDone === arts.length && arts.length > 0 ? " ✓" : ""}
-                            </div>
-                          </div>
-                        </button>
-
-                        <button onClick={() => navigate("home", { type: "trials", week: w })} style={tileStyle(T.gold)}>
-                          <Star size={16} strokeWidth={1.75} color={T.warn} aria-hidden="true" style={{ flexShrink: 0 }} />
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Landmark Trials</div>
-                            <div style={{ fontSize: 10, color: T.sub }}>{trials.length} trial{trials.length !== 1 ? "s" : ""}</div>
-                          </div>
-                        </button>
+        {activePatients.length > 0 ? (
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+            {activePatients.map((patient) => {
+              const topics = patient.topics?.length ? patient.topics : patient.topic ? [patient.topic] : [];
+              return (
+                <button
+                  key={patient.id}
+                  onClick={() => navigate("patients")}
+                  style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left" }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: T.navy }}>
+                        {patient.initials || "New patient"}
                       </div>
-
-                      {/* Quiz — full width, bottom */}
-                      <button onClick={() => navigate("home", { type: "weeklyQuiz", week: w })}
-                        style={{ width: "100%", padding: "11px 14px", background: best !== null ? T.ice : T.med, color: best !== null ? T.navy : "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" as const }}>
-                        <span>📝 Week {w} Quiz · {(WEEKLY_QUIZZES[w]||[]).length} questions</span>
-                        {best !== null ? (
-                          <span style={{ background: best >= 80 ? T.green : best >= 60 ? T.gold : T.accent, color: "white", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>
-                            Best: {best}%
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>Take quiz →</span>
-                        )}
-                      </button>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {/* ── From Your Current Patients ─────────────────────────────── */}
-      {(() => {
-        const patientActions = getPatientSuggestedActions(patients || [], completedItems);
-        const activeCount = (patients || []).filter(p => p.status === "active").length;
-        return (
-          <div style={{ marginTop: 16, marginBottom: 16 }}>
-            <h2 style={{ color: T.text, fontSize: 16, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>From Your Current Patients</h2>
-            {patientActions.length > 0 ? (
-              <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1.5px solid ${T.green}` }}>
-                <div style={{ fontSize: 11, color: T.sub, marginBottom: 10 }}>
-                  Based on your {activeCount} active consult{activeCount !== 1 ? "s" : ""}
-                </div>
-                {patientActions.map((action, i) => (
-                  <button key={i} onClick={() => navigate(...action.nav)}
-                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: T.bg, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                    <span style={{ fontSize: 16, flexShrink: 0 }}>{action.icon}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{action.label}</div>
-                      <div style={{ fontSize: 10, color: T.muted }}>{action.detail}</div>
+                      <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>
+                        {patient.room ? `Rm ${patient.room}` : "Room pending"} · Added {new Date(patient.date).toLocaleDateString()}
+                      </div>
                     </div>
-                    <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px dashed ${T.line}`, textAlign: "center" }}>
-                <div style={{ fontSize: 12, color: T.muted }}>Log patients in the Rounds tab to get consult-driven suggestions</div>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* ── Due for Review ─────────────────────────────────────────── */}
-      <h2 style={{ color: T.text, fontSize: 16, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Due for Review</h2>
-
-      {/* Extra Practice */}
-      <button onClick={() => navigate("home", { type: "extraPractice" })}
-        style={{ width: "100%", background: T.card, borderRadius: 12, padding: 16, border: `1.5px solid ${T.med}`, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginTop: 6, marginBottom: 10 }}>
-        <div style={{ width: 40, height: 40, borderRadius: 10, background: T.blueBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{"\uD83E\uDDE0"}</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, fontFamily: T.serif }}>Extra Practice</div>
-          <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>
-            {srDueCount > 0 ? `${srDueCount} question${srDueCount !== 1 ? "s" : ""} due for review` : "Practice more questions"}
-          </div>
-        </div>
-        {srDueCount > 0 && (
-          <span style={{ background: T.med, color: "white", fontSize: 12, fontWeight: 700, padding: "3px 9px", borderRadius: 10, flexShrink: 0 }}>{srDueCount}</span>
-        )}
-        <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
-      </button>
-
-      {/* AI Recommendations — rule-based weak area detection */}
-      {(() => {
-        const recs = getRecommendations({ weeklyScores, preScore, postScore, srQueue: srQueue || {}, completedItems, patients: patients || [] });
-        if (!recs.stats.hasEnoughData) return null;
-        return (
-          <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 12, border: `1.5px solid ${T.purple}`, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, right: 0, background: T.purpleBg, padding: "4px 12px 4px 16px", borderBottomLeftRadius: 10, fontSize: 9, fontWeight: 700, color: T.purpleAccent, textTransform: "uppercase", letterSpacing: 0.5 }}>Smart Insights</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-              <span style={{ fontSize: 20 }}>{"\uD83C\uDFAF"}</span>
-              <div>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, fontFamily: T.serif }}>Focus Areas</div>
-                {recs.stats.avgScore !== null && <div style={{ fontSize: 11, color: T.sub }}>Average quiz score: {recs.stats.avgScore}%</div>}
-              </div>
-            </div>
-            {/* Focus area cards */}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 12 }}>
-              {recs.focusAreas.map(area => (
-                <div key={area.week} style={{ background: area.isWeak ? T.redBg : T.greenBg, borderRadius: 8, padding: 10, border: `1px solid ${area.isWeak ? T.redAlpha : T.greenAlpha}` }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.3 }}>Week {area.week}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, marginTop: 2 }}>{area.label}</div>
-                  <div style={{ fontSize: 10, color: area.isWeak ? T.accent : T.greenDk, marginTop: 3, fontWeight: 600 }}>
-                    {area.score !== null ? `${area.score}%` : "—"} {area.isWeak ? "⚠" : "✓"}
+                    <div style={{ width: 34, height: 34, borderRadius: 12, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Stethoscope size={16} strokeWidth={1.75} color={T.greenDk} aria-hidden="true" />
+                    </div>
                   </div>
-                  <div style={{ fontSize: 10, color: T.sub, marginTop: 1 }}>{area.reason}</div>
-                </div>
-              ))}
-            </div>
-            {/* Suggested actions */}
-            {recs.suggestedActions.length > 0 && (
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Suggested Next Steps</div>
-                {recs.suggestedActions.slice(0, 3).map((action, i) => (
-                  <button key={i} onClick={() => navigate(...action.nav)}
-                    style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: T.bg, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                    <span style={{ fontSize: 16, flexShrink: 0 }}>{action.icon}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{action.label}</div>
-                      <div style={{ fontSize: 10, color: T.muted }}>{action.detail}</div>
+                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 8 }}>
+                    {patient.dx || "Diagnosis not entered yet"}
+                  </div>
+                  {topics.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: patient.notes ? 8 : 0 }}>
+                      {topics.slice(0, 3).map((topic) => (
+                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 8px", fontSize: 11, fontWeight: 700 }}>
+                          {topic}
+                        </span>
+                      ))}
                     </div>
-                    <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
-                  </button>
-                ))}
+                  )}
+                  {patient.notes && (
+                    <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
+                      {patient.notes}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <button
+            onClick={() => navigate("patients")}
+            style={{ width: "100%", background: T.card, borderRadius: 16, border: `1px dashed ${T.line}`, padding: "18px 16px", cursor: "pointer", textAlign: "left" }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.navy, marginBottom: 4 }}>Start your list in Patients</div>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
+              Add consults, tag the learning issues, and Today will start surfacing the right prep automatically.
+            </div>
+          </button>
+        )}
+      </section>
+
+      <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "16px 16px", marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 14 }}>
+          <div>
+            <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Competency preview</h2>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>A single readiness signal until the full tracker lands in Me.</div>
+          </div>
+          <button
+            onClick={() => navigate("me")}
+            style={{ background: "none", border: "none", color: T.med, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
+          >
+            See all
+            <ChevronRight size={15} strokeWidth={2} aria-hidden="true" />
+          </button>
+        </div>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 16, alignItems: isMobile ? "flex-start" : "center" }}>
+          <ProgressRing value={competencyPreview} />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <Brain size={16} strokeWidth={1.75} color={T.med} aria-hidden="true" />
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
+                {clinicallySeenTopics.length > 0
+                  ? `${reinforcedTopics.length}/${clinicallySeenTopics.length} seen topics reinforced`
+                  : "No clinically linked topics yet"}
               </div>
-            )}
+            </div>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginBottom: 10 }}>
+              {currentWeek
+                ? `Week ${currentWeek} essentials drive most of this score right now, with a smaller boost from quiz work and clinically seen topics you've reinforced.`
+                : "This preview starts rising as you log patients, complete essentials, and keep up with quiz work."}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
+                Essentials {Math.round(learningPlan.completionRatio * 100)}%
+              </span>
+              <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
+                Clinically linked {clinicallySeenTopics.length}
+              </span>
+              <span style={{ background: (currentWeek && (weeklyScores[currentWeek] || []).length > 0) ? T.blueBg : T.yellowBg, color: (currentWeek && (weeklyScores[currentWeek] || []).length > 0) ? T.med : T.warn, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
+                {(currentWeek && (weeklyScores[currentWeek] || []).length > 0) ? "Quiz checked in" : "Quiz still open"}
+              </span>
+            </div>
           </div>
-        );
-      })()}
+        </div>
+      </section>
 
-      {/* Pro Tip — rotates on each screen change */}
-      <div style={{ background: T.ice, borderRadius: 10, padding: "10px 14px", marginTop: 10, marginBottom: 16, borderLeft: `3px solid ${T.med}`, display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <span style={{ fontSize: 13, flexShrink: 0, marginTop: 1 }}>{"\uD83D\uDCA1"}</span>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 }}>Nephrology Pro Tip</div>
-          <div style={{ fontSize: 12, color: T.text, lineHeight: 1.5 }}>{PRO_TIPS[tipIndex]}</div>
-          <div style={{ fontSize: 10, color: T.muted, marginTop: 6, fontStyle: "italic" }}>
-            Adapted from <em>Nephrology Secrets</em>, 4th Edition (Elsevier)
+      {!pearlDismissed && (
+        <section style={{ background: T.ice, borderRadius: 18, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Sparkles size={16} strokeWidth={1.75} color={T.med} aria-hidden="true" />
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.9 }}>Pearl of the day</div>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.setItem(PEARL_STORAGE_KEY, todayKey);
+                setPearlDismissed(true);
+              }}
+              style={{ background: "none", border: "none", color: T.muted, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0 }}
+            >
+              Dismiss
+            </button>
           </div>
-        </div>
-      </div>
+          <div style={{ fontSize: 14, color: T.text, lineHeight: 1.65 }}>
+            {PRO_TIPS[pearlIndex]}
+          </div>
+        </section>
+      )}
 
-      {/* Bookmarks Quick Access */}
-      {(() => { const totalBk = Object.values(bookmarks || {}).flat().length; return totalBk > 0 && (
-        <button onClick={() => navigate("home", { type: "bookmarks" })}
-          style={{ width: "100%", background: T.yellowBg, borderRadius: 12, padding: 14, border: `1px solid ${T.goldAlpha}`, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-          <span style={{ fontSize: 22 }}>{"\u2B50"}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Saved Items</div>
-            <div style={{ fontSize: 11, color: T.sub }}>{totalBk} bookmarked</div>
-          </div>
-          <span style={{ color: T.muted, fontSize: 14 }}>{"\u203A"}</span>
-        </button>
-      ); })()}
+      <section>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
+          <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Quick links</h2>
+          <div style={{ fontSize: 11, color: T.muted }}>Still reachable without crowding the main screen</div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+          {quickLinks.map((link) => (
+            <button
+              key={link.label}
+              onClick={() => navigate(link.tab, link.subView)}
+              style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: "12px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 10, alignItems: "center" }}
+            >
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: T.warmBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <BookOpen size={15} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{link.label}</div>
+                <div style={{ fontSize: 12, color: T.sub, marginTop: 3 }}>{link.meta}</div>
+              </div>
+              <ArrowRight size={16} strokeWidth={1.75} aria-hidden="true" style={{ color: T.muted, flexShrink: 0 }} />
+            </button>
+          ))}
+        </div>
 
-      {/* External Resources */}
-      <h2 style={{ color: T.text, fontSize: 16, margin: "20px 0 12px", fontFamily: T.serif, fontWeight: 700 }}>External Resources</h2>
-      <button onClick={() => navigate("home", { type: "resources" })}
-        style={{ display: "block", width: "100%", background: T.card, borderRadius: 12, padding: 14, marginBottom: 10, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 10, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{"\uD83C\uDFA7"}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Podcasts, Websites & Guidelines</div>
-            <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>Curbsiders, Freely Filtered, NephJC, KDIGO & more</div>
+        {preScore && !rotationEnded && (
+          <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, color: T.muted, fontSize: 12 }}>
+            <BadgeCheck size={14} strokeWidth={2} color={T.greenDk} aria-hidden="true" />
+            Baseline quiz complete. Post-rotation assessment will surface here once the rotation ends.
           </div>
-          <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
-        </div>
-      </button>
-      {/* Disclaimer & Copyright Footer */}
-      <div style={{ textAlign: "center", padding: "24px 16px 8px", marginTop: 12, borderTop: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 10, color: T.muted, lineHeight: 1.6, marginBottom: 8, maxWidth: 360, marginLeft: "auto", marginRight: "auto" }}>
-          This app is for medical education purposes only and does not constitute medical advice. Clinical content may not reflect the most current evidence or guidelines. Always verify information independently and use clinical judgment when caring for patients.
-        </div>
-        <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.6 }}>
-          &copy; {new Date().getFullYear()} Jonathan Cheng, MD MPH
-        </div>
-        <div style={{ fontSize: 10, color: T.muted, marginTop: 2 }}>
-          Premier Nephrology Medical Group {"\u00B7"} For educational use only
-        </div>
-      </div>
+        )}
+      </section>
     </div>
   );
 }
