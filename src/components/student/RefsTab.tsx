@@ -1,3 +1,4 @@
+import { Type } from "lucide-react";
 import { T, ABBREVIATIONS } from "../../data/constants";
 import { QUICK_REFS } from "../../data/guides";
 import { useIsMobile } from "../../utils/helpers";
@@ -33,7 +34,7 @@ export default function RefsTab({ navigate }) {
           style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "box-shadow 0.2s" }}
           onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
           onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>🔤</div>
+          <Type size={28} strokeWidth={1.5} color={T.med} aria-hidden="true" style={{ marginBottom: 8 }} />
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>Nephrology Abbreviations</div>
           <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>{ABBREVIATIONS.length} terms you will see in notes and on rounds</div>
           <div style={{ fontSize: 10, color: T.med, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Reference →</div>

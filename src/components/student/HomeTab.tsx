@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { RefreshCw, Megaphone, ClipboardList, Activity, FileText, Star } from "lucide-react";
 import { T, WEEKLY, ARTICLES, LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
@@ -83,7 +84,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
             {srDueCount > 0 && (
               <button onClick={() => navigate("home", { type: "srReview" })}
                 style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.yellowBg, border: `1px solid ${T.goldAlpha}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 16 }}>🔄</span>
+                <RefreshCw size={16} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.orange }}>{srDueCount}</div>
                   <div style={{ fontSize: 10, color: T.sub }}>SR due</div>
@@ -92,7 +93,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
             )}
             {unreadAnnouncementCount > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.redBg, border: `1px solid ${T.redAlpha}`, borderRadius: 8 }}>
-                <span style={{ fontSize: 16 }}>📢</span>
+                <Megaphone size={16} strokeWidth={1.75} color={T.accent} aria-hidden="true" />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.accent }}>{unreadAnnouncementCount}</div>
                   <div style={{ fontSize: 10, color: T.sub }}>New announcements</div>
@@ -102,7 +103,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
             {incompleteWeekTasks > 0 && currentWeek && (
               <button onClick={() => navigate("home")}
                 style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.blueBg, border: `1px solid ${T.med}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 16 }}>📋</span>
+                <ClipboardList size={16} strokeWidth={1.75} color={T.med} aria-hidden="true" />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.med }}>{incompleteWeekTasks}</div>
                   <div style={{ fontSize: 10, color: T.sub }}>Week {currentWeek} tasks</div>
@@ -112,7 +113,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
             {activePatientCount > 0 && (
               <button onClick={() => navigate("patients")}
                 style={{ display: "flex", alignItems: "center", gap: 8, padding: isMobile ? "12px 12px" : "8px 10px", background: T.greenBg, border: `1px solid ${T.greenAlpha}`, borderRadius: 8, cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontSize: 16 }}>🏥</span>
+                <Activity size={16} strokeWidth={1.75} color={T.greenDk} aria-hidden="true" />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.greenDk }}>{activePatientCount}</div>
                   <div style={{ fontSize: 10, color: T.sub }}>Active patients</div>
@@ -271,7 +272,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
                     <>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
                         <button onClick={() => navigate("home", { type: "studySheets", week: w })} style={tileStyle(T.purple)}>
-                          <span style={{ fontSize: 16, flexShrink: 0 }}>📋</span>
+                          <ClipboardList size={16} strokeWidth={1.75} color={T.ink2} aria-hidden="true" style={{ flexShrink: 0 }} />
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Study Sheets</div>
                             <div style={{ fontSize: 10, color: sheetDone === sheets.length && sheets.length > 0 ? T.greenDk : T.sub }}>
@@ -282,7 +283,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
 
                         {wkCases.length > 0 ? (
                           <button onClick={() => navigate("home", { type: "cases", week: w })} style={tileStyle(T.green)}>
-                            <span style={{ fontSize: 16, flexShrink: 0 }}>🏥</span>
+                            <Activity size={16} strokeWidth={1.75} color={T.ink2} aria-hidden="true" style={{ flexShrink: 0 }} />
                             <div style={{ minWidth: 0 }}>
                               <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Clinical Cases</div>
                               <div style={{ fontSize: 10, color: caseDone === wkCases.length ? T.greenDk : T.sub }}>
@@ -293,7 +294,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
                         ) : <div />}
 
                         <button onClick={() => navigate("home", { type: "articles", week: w })} style={tileStyle(T.sky)}>
-                          <span style={{ fontSize: 16, flexShrink: 0 }}>📄</span>
+                          <FileText size={16} strokeWidth={1.75} color={T.ink2} aria-hidden="true" style={{ flexShrink: 0 }} />
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Journal Articles</div>
                             <div style={{ fontSize: 10, color: artDone === arts.length && arts.length > 0 ? T.greenDk : T.sub }}>
@@ -303,7 +304,7 @@ export default function HomeTab({ navigate, preScore, postScore, curriculum, art
                         </button>
 
                         <button onClick={() => navigate("home", { type: "trials", week: w })} style={tileStyle(T.gold)}>
-                          <span style={{ fontSize: 16, flexShrink: 0 }}>⭐</span>
+                          <Star size={16} strokeWidth={1.75} color={T.warn} aria-hidden="true" style={{ flexShrink: 0 }} />
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, lineHeight: 1.2 }}>Landmark Trials</div>
                             <div style={{ fontSize: 10, color: T.sub }}>{trials.length} trial{trials.length !== 1 ? "s" : ""}</div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, CSSProperties } from "react";
+import { Pencil, RotateCcw, Check, X, Plus, ChevronRight, Lightbulb } from "lucide-react";
 import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../../data/constants";
 import { inputLabel, inputStyle } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
@@ -127,17 +128,39 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
               ))}
             </div>
             {p.dx && <div style={{ fontSize: 13, color: T.text, marginBottom: 2, wordBreak: "break-word" }}>{p.dx}</div>}
-            {p.notes && <div style={{ fontSize: 11, color: T.sub, fontStyle: "italic", marginTop: 4, wordBreak: "break-word" }}>💡 {p.notes}</div>}
+            {p.notes && (
+              <div style={{ fontSize: 11, color: T.sub, fontStyle: "italic", marginTop: 4, wordBreak: "break-word", display: "flex", alignItems: "flex-start", gap: 4 }}>
+                <Lightbulb size={12} strokeWidth={1.75} color={T.warn} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
+                <span>{p.notes}</span>
+              </div>
+            )}
             <div style={{ fontSize: 10, color: T.muted, marginTop: 6 }}>Added {new Date(p.date).toLocaleDateString()}</div>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: isMobile ? "wrap" : "nowrap", justifyContent: "flex-end" }}>
             {!dimmed && (
-              <button onClick={onStartEdit} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "4px 8px", fontSize: isMobile ? 12 : 10, cursor: "pointer", color: T.med, fontWeight: 600 }}>✎ Edit</button>
+              <button
+                onClick={onStartEdit}
+                aria-label={`Edit patient ${p.initials || ""}`.trim()}
+                style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: T.med, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
+              >
+                <Pencil size={12} strokeWidth={1.75} aria-hidden="true" /> Edit
+              </button>
             )}
-            <button onClick={onToggle} style={{ background: "none", border: `1px solid ${dimmed ? T.green : T.muted}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "4px 8px", fontSize: isMobile ? 12 : 10, cursor: "pointer", color: dimmed ? T.green : T.sub }}>
-              {dimmed ? "↩ Reactivate" : "✓ D/C"}
+            <button
+              onClick={onToggle}
+              aria-label={dimmed ? `Reactivate patient ${p.initials || ""}`.trim() : `Discharge patient ${p.initials || ""}`.trim()}
+              style={{ background: "none", border: `1px solid ${dimmed ? T.green : T.muted}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: dimmed ? T.green : T.sub, display: "inline-flex", alignItems: "center", gap: 4 }}
+            >
+              {dimmed ? <><RotateCcw size={12} strokeWidth={1.75} aria-hidden="true" /> Reactivate</> : <><Check size={12} strokeWidth={2} aria-hidden="true" /> D/C</>}
             </button>
-            <button onClick={onRemove} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "4px 8px", fontSize: isMobile ? 12 : 10, cursor: "pointer", color: T.muted }}>✕</button>
+            <button
+              onClick={onRemove}
+              aria-label={`Remove patient ${p.initials || ""}`.trim()}
+              title="Remove"
+              style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, minHeight: isMobile ? 36 : 30, minWidth: isMobile ? 36 : 30, padding: isMobile ? "8px" : "6px", cursor: "pointer", color: T.muted, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+            >
+              <X size={14} strokeWidth={1.75} aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>
@@ -145,9 +168,13 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
       {/* Follow-ups section */}
       <div style={{ borderTop: `1px solid ${T.line}`, padding: "8px 12px" }}>
         {followUps.length > 0 && (
-          <button onClick={() => setShowFollowUps(!showFollowUps)}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: T.med, fontWeight: 600, padding: "2px 0", marginBottom: 6, display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s", display: "inline-block" }}>▸</span>
+          <button
+            onClick={() => setShowFollowUps(!showFollowUps)}
+            aria-expanded={showFollowUps}
+            aria-label={`${showFollowUps ? "Collapse" : "Expand"} follow-ups`}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: T.med, fontWeight: 600, padding: "6px 0", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, minHeight: 32 }}
+          >
+            <ChevronRight size={14} strokeWidth={2} aria-hidden="true" style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }} />
             Follow-ups ({followUps.length})
           </button>
         )}
@@ -157,7 +184,14 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
               <div style={{ fontSize: 10, color: T.muted }}>{new Date(f.date).toLocaleDateString()} {new Date(f.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
               <div style={{ fontSize: 12, color: T.text, wordBreak: "break-word" }}>{f.note}</div>
             </div>
-            <button onClick={() => onRemoveFollowUp(p.id, f.id)} style={{ background: "none", border: "none", color: T.muted, fontSize: 12, cursor: "pointer", padding: "0 4px", flexShrink: 0 }}>✕</button>
+            <button
+              onClick={() => onRemoveFollowUp(p.id, f.id)}
+              aria-label="Remove follow-up"
+              title="Remove follow-up"
+              style={{ background: "none", border: "none", color: T.muted, cursor: "pointer", padding: 6, minHeight: 32, minWidth: 32, flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: 6 }}
+            >
+              <X size={14} strokeWidth={1.75} aria-hidden="true" />
+            </button>
           </div>
         ))}
         {!dimmed && (
@@ -168,8 +202,15 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
                 onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
                 placeholder="Add follow-up note..."
                 style={{ flex: 1, padding: isMobile ? "8px 12px" : "6px 10px", fontSize: 12, border: `1px solid ${followUpError ? T.accent : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
-              <button onClick={handleAddFollowUp}
-                style={{ padding: isMobile ? "8px 14px" : "6px 12px", background: followUpText.trim() ? T.med : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: followUpText.trim() ? "pointer" : "default" }}>+</button>
+              <button
+                onClick={handleAddFollowUp}
+                aria-label="Add follow-up note"
+                title="Add follow-up"
+                disabled={!followUpText.trim()}
+                style={{ padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 40 : 32, minWidth: isMobile ? 40 : 32, background: followUpText.trim() ? T.med : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, cursor: followUpText.trim() ? "pointer" : "not-allowed", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+              >
+                <Plus size={16} strokeWidth={2.25} aria-hidden="true" />
+              </button>
             </div>
             {followUpError && <div style={errorStyle}>{followUpError}</div>}
           </div>

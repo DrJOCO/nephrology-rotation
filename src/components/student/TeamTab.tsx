@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Users, Trophy, ClipboardList } from "lucide-react";
 import { T } from "../../data/constants";
 import store from "../../utils/store";
 import { sortTopicCounts } from "../../utils/teamSnapshots";
@@ -21,7 +22,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
   if (!store.getRotationCode()) {
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
+        <Users size={48} strokeWidth={1.5} color={T.muted} aria-hidden="true" style={{ marginBottom: 12 }} />
         <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 8px" }}>Team Board</h2>
         <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.6 }}>
           Join a rotation to see your team&apos;s shared learning snapshot.
@@ -54,7 +55,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
       </div>
 
       <div style={{ background: `linear-gradient(135deg, ${T.navyBg}, ${T.deepBg})`, borderRadius: 14, padding: 16, marginBottom: 16, color: "white" }}>
-        <h3 style={{ fontFamily: T.serif, color: "white", fontSize: 14, margin: "0 0 14px", fontWeight: 700 }}>🏆 Leaderboard</h3>
+        <h3 style={{ fontFamily: T.serif, color: "white", fontSize: 14, margin: "0 0 14px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><Trophy size={16} strokeWidth={1.75} aria-hidden="true" /> Leaderboard</h3>
         {sorted.length === 0 ? (
           <div style={{ textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: 12 }}>No students yet</div>
         ) : (
@@ -116,7 +117,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
         )}
       </div>
 
-      <h3 style={{ fontFamily: T.serif, color: T.navy, fontSize: 15, margin: "0 0 12px", fontWeight: 700 }}>📋 Student Snapshots</h3>
+      <h3 style={{ fontFamily: T.serif, color: T.navy, fontSize: 15, margin: "0 0 12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" /> Student Snapshots</h3>
       {sorted.map((student) => {
         const isMe = student.studentId === currentStudentId;
         const isExpanded = expandedStudent === student.studentId;

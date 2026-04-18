@@ -18,11 +18,20 @@ export const T = {
   purpleSoft: "var(--c-purple-soft)", redDeep: "var(--c-red-deep)",
   // Overlay
   overlay: "var(--c-overlay)",
-  // Fonts and layout (unchanged)
-  serif: "'Crimson Pro', Georgia, serif",
-  sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
-  mono: "'JetBrains Mono', monospace",
+  // Fonts and layout — Phase 1 (Clinical Paper spec v1)
+  serif: "'Source Serif 4', 'Crimson Pro', Georgia, serif",
+  sans: "'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+  mono: "'JetBrains Mono', ui-monospace, monospace",
   navH: 56, navPad: 8,
+
+  // Semantic aliases (Phase 1). Old keys above still work. New code should
+  // prefer these names — they mirror the spec's token vocabulary.
+  ink: "var(--c-text)",        // primary text
+  ink2: "var(--c-sub)",         // secondary text
+  surface: "var(--c-card)",     // card / elevated surface
+  surface2: "var(--c-ice)",     // sunken / tint surface
+  warn: "var(--c-orange)",      // warn — Clinical Paper rust
+  ok: "var(--c-green)",         // ok — Clinical Paper sage
 };
 
 export const TOPICS = [

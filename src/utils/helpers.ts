@@ -1,4 +1,61 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type RefObject } from "react";
+
+// Phase 2.5 (§12): focus-trap + focus-return for modal sheets.
+// - Captures `document.activeElement` when the modal opens, restores it on unmount.
+// - Intercepts Tab/Shift+Tab so focus cycles within `containerRef` only.
+// - Focuses the first focusable element (or `initialFocusRef` if provided) on open.
+// The hook runs when a sheet MOUNTS (isOpen=true is the default for mount-time use),
+// so in practice the dialogs just call it unconditionally — unmount = cleanup = focus restore.
+export function useFocusTrap(
+  containerRef: RefObject<HTMLElement | null>,
+  initialFocusRef?: RefObject<HTMLElement | null>,
+) {
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const returnTo = document.activeElement as HTMLElement | null;
+
+    const getFocusable = (): HTMLElement[] => {
+      const sel = [
+        "a[href]",
+        "button:not([disabled])",
+        "input:not([disabled])",
+        "select:not([disabled])",
+        "textarea:not([disabled])",
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(",");
+      return Array.from(container.querySelectorAll<HTMLElement>(sel))
+        .filter(el => !el.hasAttribute("disabled") && el.offsetParent !== null);
+    };
+
+    // Initial focus: caller's requested element, else first focusable, else the container.
+    const initial = initialFocusRef?.current ?? getFocusable()[0] ?? container;
+    initial.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const focusables = getFocusable();
+      if (focusables.length === 0) { e.preventDefault(); return; }
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || !container.contains(active))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && (active === last || !container.contains(active))) {
+        e.preventDefault(); first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKey);
+
+    return () => {
+      container.removeEventListener("keydown", onKey);
+      // Restore focus only if the original element is still in the DOM and focusable.
+      if (returnTo && document.body.contains(returnTo) && typeof returnTo.focus === "function") {
+        returnTo.focus();
+      }
+    };
+  }, [containerRef, initialFocusRef]);
+}
 
 // Inject Google Fonts once into document.head (avoids re-inserting on every render)
 let _fontsLoaded = false;
@@ -7,7 +64,9 @@ export function ensureGoogleFonts(): void {
   _fontsLoaded = true;
   const link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = "https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
+  // Phase 1 (Clinical Paper spec v1): Inter Tight + Source Serif 4 + JetBrains Mono.
+  // Crimson Pro retained as serif fallback until Phase 2 sweep.
+  link.href = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
   document.head.appendChild(link);
 }
 
@@ -19,38 +78,54 @@ export function ensureThemeStyles(): void {
   const s = document.createElement("style");
   s.id = "neph-theme-vars";
   s.textContent = `
+    /* Phase 1 (Clinical Paper spec v1): CSS var names preserved; values remapped to new palette.
+       Old names (navy/sky/gold/purple/etc.) are aliased to the closest Clinical Paper token so
+       every existing component picks up the new look without code changes. Full sweep to semantic
+       names (ink/accent/warn/ok) happens in Phase 2. */
     :root {
-      --c-navy:#0F2B3C;--c-deep:#163B50;--c-med:#2980B9;--c-sky:#5DADE2;
-      --c-ice:#EAF2F8;--c-pale:#D4E6F1;--c-accent:#E74C3C;--c-green:#1ABC9C;
-      --c-greenDk:#16A085;--c-gold:#F1C40F;--c-orange:#E67E22;--c-dark:#1C2833;
-      --c-purple:#8E44AD;--c-text:#2C3E50;--c-sub:#5D6D7E;--c-muted:#ABB2B9;
-      --c-line:#D5DBDB;--c-bg:#F4F6F7;--c-card:#FFFFFF;
-      --c-navy-bg:#0F2B3C;--c-deep-bg:#163B50;
-      --c-yellow-bg:#FEF9E7;--c-red-bg:#FDEDEC;--c-purple-bg:#F5EEF8;
-      --c-green-bg:#E8F8F5;--c-blue-bg:#EBF5FB;--c-gray-bg:#ECF0F1;--c-warm-bg:#FFFCF0;
-      --c-gold-alpha:rgba(241,196,15,0.13);--c-gold-alpha-md:rgba(241,196,15,0.25);
-      --c-green-alpha:rgba(26,188,156,0.25);--c-red-alpha:rgba(231,76,60,0.06);
-      --c-gold-text:#B7950B;--c-purple-accent:#7D3C98;--c-purple-soft:#BB8FCE;
-      --c-red-deep:#C0392B;--c-overlay:rgba(0,0,0,0.65);
+      /* Inks: navy/deep/text/sub/dark all collapse to the Clinical Paper ink ramp */
+      --c-navy:#1E1B16;--c-deep:#3D372E;--c-text:#1E1B16;--c-sub:#3D372E;--c-dark:#1E1B16;
+      --c-muted:#7C7260;
+      /* Accent (was blue #2980B9 / red #E74C3C / purple #8E44AD) → Clinical Paper deep red */
+      --c-med:#8B2E2E;--c-sky:#8B2E2E;--c-accent:#8B2E2E;--c-purple:#8B2E2E;
+      /* Surface tints (ice/pale were cool blue tints) → warm surface2 */
+      --c-ice:#EFE8D6;--c-pale:#EFE8D6;
+      /* Ok (green) and warn (gold/orange) in Clinical Paper are desaturated */
+      --c-green:#5E7D4F;--c-greenDk:#4D6841;--c-gold:#B8732C;--c-orange:#B8732C;
+      /* Lines and surfaces */
+      --c-line:#D9D1BF;--c-bg:#F7F2E7;--c-card:#FBF8F0;
+      /* Header backgrounds — kept dark (warm ink) so existing white-on-dark header still reads.
+         Full header redesign (light title bar) is Phase 2 / §01. */
+      --c-navy-bg:#1E1B16;--c-deep-bg:#26231D;
+      /* Semantic tint backgrounds — warmed to match paper aesthetic */
+      --c-yellow-bg:#F7EED8;--c-red-bg:#F4E4DD;--c-purple-bg:#F4E4DD;
+      --c-green-bg:#E8EEDC;--c-blue-bg:#EFE8D6;--c-gray-bg:#EFE8D6;--c-warm-bg:#FBF8F0;
+      /* Alphas remapped to new warn (#B8732C) and ok (#5E7D4F) / accent (#8B2E2E) */
+      --c-gold-alpha:rgba(184,115,44,0.10);--c-gold-alpha-md:rgba(184,115,44,0.20);
+      --c-green-alpha:rgba(94,125,79,0.22);--c-red-alpha:rgba(139,46,46,0.08);
+      --c-gold-text:#8F5A23;--c-purple-accent:#8B2E2E;--c-purple-soft:#C09494;
+      --c-red-deep:#7A2828;--c-overlay:rgba(30,27,22,0.65);
     }
     html, body {
       background: var(--c-bg);
       margin: 0;
     }
     @media screen {
+      /* Dark mode: Clinical Paper paired palette (spec §10) */
       [data-theme="dark"] {
-        --c-navy:#C9D1D9;--c-deep:#B0BAC5;--c-med:#539BD4;--c-sky:#6EB0DC;
-        --c-ice:#181F2A;--c-pale:#1C2D3E;--c-accent:#E06B63;--c-green:#3AAF85;
-        --c-greenDk:#2EA77A;--c-gold:#D4A83A;--c-orange:#CC8450;--c-dark:#010409;
-        --c-purple:#B08ACF;--c-text:#D5DAE0;--c-sub:#8B949E;--c-muted:#6E7681;
-        --c-line:#2A3140;--c-bg:#0F1419;--c-card:#171D26;
-        --c-navy-bg:#0F1419;--c-deep-bg:#171D26;
-        --c-yellow-bg:#231F10;--c-red-bg:#221A1C;--c-purple-bg:#211A28;
-        --c-green-bg:#122420;--c-blue-bg:#122230;--c-gray-bg:#1C2129;--c-warm-bg:#231F10;
-        --c-gold-alpha:rgba(212,168,58,0.18);--c-gold-alpha-md:rgba(212,168,58,0.28);
-        --c-green-alpha:rgba(58,175,133,0.25);--c-red-alpha:rgba(224,107,99,0.1);
-        --c-gold-text:#D4A83A;--c-purple-accent:#B08ACF;--c-purple-soft:#C4A8DE;
-        --c-red-deep:#E06B63;--c-overlay:rgba(0,0,0,0.8);
+        --c-navy:#F0EADB;--c-deep:#C9C2AF;--c-text:#F0EADB;--c-sub:#C9C2AF;--c-dark:#F0EADB;
+        --c-muted:#8A8373;
+        --c-med:#B86E6E;--c-sky:#B86E6E;--c-accent:#B86E6E;--c-purple:#B86E6E;
+        --c-ice:#26231D;--c-pale:#26231D;
+        --c-green:#7A9564;--c-greenDk:#617A4F;--c-gold:#C8895A;--c-orange:#C8895A;
+        --c-line:#34302A;--c-bg:#15130F;--c-card:#1D1A15;
+        --c-navy-bg:#15130F;--c-deep-bg:#1D1A15;
+        --c-yellow-bg:#2A2418;--c-red-bg:#2A1F1C;--c-purple-bg:#2A1F1C;
+        --c-green-bg:#1E2418;--c-blue-bg:#26231D;--c-gray-bg:#1D1A15;--c-warm-bg:#1D1A15;
+        --c-gold-alpha:rgba(200,137,90,0.18);--c-gold-alpha-md:rgba(200,137,90,0.28);
+        --c-green-alpha:rgba(122,149,100,0.25);--c-red-alpha:rgba(184,110,110,0.12);
+        --c-gold-text:#C8895A;--c-purple-accent:#B86E6E;--c-purple-soft:#C49090;
+        --c-red-deep:#9E5050;--c-overlay:rgba(0,0,0,0.8);
       }
     }
   `;
@@ -78,6 +153,34 @@ export function ensureLayoutStyles(): void {
     @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .tab-content-enter { animation: slideUp 0.2s ease-out; }
 
+    /* A11y (spec §12): visible keyboard focus ring on all interactive elements.
+       Uses the brand accent so it reads as intentional, not a browser default. */
+    :focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; border-radius: 4px; }
+    button:focus:not(:focus-visible), [role="button"]:focus:not(:focus-visible) { outline: none; }
+
+    /* Skip-to-content link (Phase 2.5): visually hidden until keyboard-focused,
+       then anchors top-left so the user sees it immediately. !important on :focus
+       because the reduced-motion global rule elsewhere affects transition-duration
+       via *, and some browsers treat it as a cascade tie-breaker with unexpected results. */
+    .skip-to-content {
+      position: fixed; left: 8px; top: -48px;
+      background: var(--c-accent); color: white;
+      padding: 10px 16px; border-radius: 8px;
+      font-size: 14px; font-weight: 600; text-decoration: none;
+      z-index: 10000; transition: top 0.15s ease;
+    }
+    .skip-to-content:focus { top: 8px !important; outline: 2px solid white; outline-offset: 2px; }
+
+    /* A11y (spec §12): honor prefers-reduced-motion globally. */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
     @media print {
       body > * { display: none !important; }
       body > #root > * { display: none !important; }
@@ -88,6 +191,24 @@ export function ensureLayoutStyles(): void {
     }
   `;
   document.head.appendChild(style);
+}
+
+// Phase 2 (spec §11): reactive `navigator.onLine` for offline banner.
+export function useOnline(): boolean {
+  const [online, setOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  return online;
 }
 
 export function useIsMobile(maxWidth = 480): boolean {

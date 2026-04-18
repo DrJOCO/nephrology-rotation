@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { HelpCircle, BookOpen } from "lucide-react";
 import { T, ALL_LANDMARK_TRIALS, RESOURCES } from "../../data/constants";
 import { GUIDE_SECTIONS, GUIDE_DATA } from "../../data/guides";
 import { CLINIC_GUIDES, type ClinicGuideTopic } from "../../data/clinicGuides";
@@ -177,8 +178,8 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
       <button onClick={() => navigate("guide", { type: "faq" })}
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
           background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", marginBottom: 14 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, border: `1px solid ${T.goldAlphaMd}` }}>
-          ❓
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${T.goldAlphaMd}` }}>
+          <HelpCircle size={22} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Rotation FAQ</div>
@@ -193,8 +194,8 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
           background: `linear-gradient(135deg, ${T.warmBg} 0%, ${T.yellowBg} 100%)`, borderRadius: 14,
           border: `1.5px solid ${T.gold}`, cursor: "pointer", textAlign: "left", marginBottom: 14,
           boxShadow: "0 2px 8px rgba(241,196,15,0.15)" }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, border: `1px solid ${T.goldAlphaMd}` }}>
-          📚
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${T.goldAlphaMd}` }}>
+          <BookOpen size={22} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Landmark Trial Library</div>

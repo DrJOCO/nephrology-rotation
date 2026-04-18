@@ -1,3 +1,4 @@
+import { Lock, Flame } from "lucide-react";
 import { T, TOPICS, WEEKLY } from "../../data/constants";
 import { getLevel, ACHIEVEMENTS } from "../../utils/gamification";
 import { MiniLineChart, MiniBarChart } from "./charts";
@@ -47,7 +48,9 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
             const earned = (gamification?.achievements || []).includes(a.id);
             return (
               <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", borderRadius: 10, background: earned ? T.ice : T.bg, border: `1px solid ${earned ? T.pale : T.line}`, opacity: earned ? 1 : 0.4 }}>
-                <span style={{ fontSize: 20, flexShrink: 0 }}>{earned ? a.icon : "🔒"}</span>
+                {earned
+                  ? <span style={{ fontSize: 20, flexShrink: 0 }}>{a.icon}</span>
+                  : <Lock size={18} strokeWidth={1.75} color={T.muted} aria-hidden="true" style={{ flexShrink: 0 }} />}
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: earned ? T.navy : T.muted, lineHeight: 1.2 }}>{a.title}</div>
                   <div style={{ fontSize: 9, color: T.sub, marginTop: 2, lineHeight: 1.3 }}>{a.desc}</div>
@@ -63,7 +66,7 @@ export default function ProgressTab({ patients, weeklyScores, preScore, postScor
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, fontFamily: T.serif }}>Study Streak</div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 16 }}>🔥</span>
+            <Flame size={16} strokeWidth={2} color={T.warn} aria-hidden="true" />
             <span style={{ fontWeight: 700, color: T.orange, fontSize: 18, fontFamily: T.mono }}>{gamification?.streaks?.currentDays || 0}</span>
             <span style={{ fontSize: 11, color: T.sub }}>day{(gamification?.streaks?.currentDays || 0) !== 1 ? "s" : ""}</span>
           </div>

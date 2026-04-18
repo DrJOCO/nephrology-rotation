@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { BookOpen, Stethoscope, Activity, Users, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home } from "lucide-react";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems } from "../utils/spacedRepetition";
 import store from "../utils/store";
 import { ensureStudentSession, signOutFirebase } from "../utils/firebase";
-import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, useIsMobile } from "../utils/helpers";
+import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
 import { calculatePoints, getLevel, checkAchievements, updateStreak, ACHIEVEMENTS } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
@@ -56,7 +57,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     adminTapRef.current = [...adminTapRef.current.filter(t => now - t < 800), now];
     if (adminTapRef.current.length >= 5 && onAdminToggle) { adminTapRef.current = []; onAdminToggle(); }
   };
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState("today");
   const [subView, setSubView] = useState<SubView>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [weeklyScores, setWeeklyScores] = useState<WeeklyScores>({});
@@ -84,6 +85,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [srQueue, setSrQueue] = useState<SrQueue>({});
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
+  // Phase 1 (spec §12): accessible logout confirmation — replaces window.confirm.
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  // Phase 2 (spec §01): profile sheet holds name, code, theme toggle, end-session.
+  const [profileOpen, setProfileOpen] = useState(false);
+  const online = useOnline();
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLocalWriteRef = useRef<number>(0);
   const loginAttemptsRef = useRef<{ count: number; lockedUntil: number }>({ count: 0, lockedUntil: 0 });
@@ -257,7 +263,12 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
 
-  const navigate = (t: string, sv: SubView = null) => { setTab(t); setSubView(sv); window.scrollTo(0, 0); };
+  // Phase 3a (spec §01/§03): new 5-tab IA — today · library · patients · team · me.
+  // Old tab ids ("home", "guide", "refs", "progress") are aliased so existing call sites
+  // across sub-views keep working. Phase 3b+ will sweep call sites to use the new ids directly.
+  const TAB_ALIASES: Record<string, string> = { home: "today", guide: "library", refs: "library", progress: "me" };
+  const normalizeTab = (t: string) => TAB_ALIASES[t] ?? t;
+  const navigate = (t: string, sv: SubView = null) => { setTab(normalizeTab(t)); setSubView(sv); window.scrollTo(0, 0); };
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
     setBookmarks(prev => {
@@ -386,12 +397,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   };
 
 
-  const handleLogout = async () => {
-    const confirmed = window.confirm(
-      "End this student session on this device? You will start a new secure session next time you join, and an attending can recover older progress if needed."
-    );
-    if (!confirmed) return;
+  const requestLogout = () => setLogoutConfirmOpen(true);
 
+  const handleLogout = async () => {
+    setLogoutConfirmOpen(false);
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     await flushStudentSync();
     try {
@@ -420,7 +429,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setSrQueue({});
     setActivityLog([]);
     setToast(null);
-    setTab("home");
+    setTab("today");
     setSubView(null);
   };
 
@@ -445,14 +454,14 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     );
   }
 
-  // Tab data
-  const tabs = [
-    { id: "home", icon: "📚", label: "Learn" },
-    { id: "guide", icon: "🩺", label: "Guide" },
-    { id: "refs", icon: "⚡", label: "Refs" },
-    { id: "patients", icon: "🏥", label: "Rounds" },
-    { id: "team", icon: "👥", label: "Team" },
-    { id: "progress", icon: "📊", label: "Progress" },
+  // Tab data — Phase 3a (spec §01/§03): 5-tab IA (Today · Library · Patients · Team · Me).
+  // Lucide monoline icons per §02.
+  const tabs: Array<{ id: string; Icon: typeof BookOpen; label: string }> = [
+    { id: "today", Icon: Home, label: "Today" },
+    { id: "library", Icon: BookOpen, label: "Library" },
+    { id: "patients", Icon: Stethoscope, label: "Rounds" },
+    { id: "team", Icon: Users, label: "Team" },
+    { id: "me", Icon: UserIcon, label: "Me" },
   ];
 
   // Compute current rotation week from admin settings
@@ -480,6 +489,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.sans }}>
+      {/* Skip to main content — Phase 2.5 (§12). Visually hidden until focused. */}
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
       {toast && (
         <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: T.green, color: "white", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 700, zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.2)", animation: "fadeIn 0.3s ease" }}>
           {toast}
@@ -487,43 +498,120 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       )}
       {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("guide", { type: "guideDetail", id: "firstday" }); }} />}
       {searchOpen && <GlobalSearchOverlay onClose={() => setSearchOpen(false)} onNavigate={(t, sv) => { navigate(t, sv); setSearchOpen(false); }} articles={articles} />}
-      {/* Header */}
-      <div style={{ background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, padding: `calc(10px + env(safe-area-inset-top, 0px)) 16px 10px`, position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(0,0,0,0.15)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ minWidth: 0, flex: 1, marginRight: 8 }}>
-            <span onClick={handleTitleTap} style={{ color: "white", fontFamily: T.serif, fontSize: isMobile ? 15 : 17, fontWeight: 700, cursor: "default", WebkitUserSelect: "none", userSelect: "none" }}>Nephrology Rotation</span>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {studentName}
+      {logoutConfirmOpen && (
+        <ConfirmSheet
+          title="End this student session?"
+          message="You'll start a new secure session next time you join. An attending can recover older progress if needed."
+          confirmLabel="End session"
+          cancelLabel="Cancel"
+          onConfirm={() => void handleLogout()}
+          onCancel={() => setLogoutConfirmOpen(false)}
+        />
+      )}
+      {/* Header — Phase 2 (spec §01): collapsed 48px light title bar.
+          Name, rotation code, theme, end-session moved to ProfileSheet.
+          Kept inline: title, streak chip (or offline chip), search, profile button. */}
+      <div style={{
+        background: T.surface,
+        borderBottom: `1px solid ${T.line}`,
+        padding: `env(safe-area-inset-top, 0px) 16px 0`,
+        position: "sticky", top: 0, zIndex: 100,
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 48 }}>
+          <span
+            onClick={handleTitleTap}
+            style={{
+              color: T.ink, fontFamily: T.serif,
+              fontSize: isMobile ? 16 : 18, fontWeight: 600, letterSpacing: -0.3,
+              cursor: "default", WebkitUserSelect: "none", userSelect: "none",
+              minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}
+          >
+            Nephrology Rotation
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            {online && (gamification.streaks?.currentDays ?? 0) > 0 && (
+              <span
+                title={`${gamification.streaks?.currentDays}-day streak`}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  fontSize: 12, fontWeight: 600, color: T.warn,
+                  background: T.goldAlpha,
+                  padding: "4px 10px", borderRadius: 999, minHeight: 28,
+                  fontFamily: T.mono,
+                }}
+              >
+                <Flame size={14} strokeWidth={2} aria-hidden="true" />
+                {gamification.streaks?.currentDays}
               </span>
-              {rotationCode && <span style={{ fontSize: 10, background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.6)", padding: "2px 8px", borderRadius: 6, fontFamily: T.mono, letterSpacing: 1, flexShrink: 0 }}>{rotationCode}</span>}
-              {gamification.points > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.goldAlpha, padding: "2px 8px", borderRadius: 12, flexShrink: 0 }}>
-                  {getLevel(gamification.points).icon} {gamification.points}
-                </span>
-              )}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            <button onClick={() => setSearchOpen(true)} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, padding: "5px 8px", cursor: "pointer", fontSize: 14, lineHeight: 1, color: "white", display: "flex", alignItems: "center" }} title="Search">🔍</button>
-            <ThemeToggle />
-<button onClick={() => void handleLogout()} style={{ background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 10, padding: "5px 8px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
-              End Session
+            )}
+            <button
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search"
+              title="Search"
+              style={{
+                background: "transparent", border: "none", padding: 8,
+                minHeight: 44, minWidth: 44,
+                borderRadius: 8, cursor: "pointer",
+                color: T.ink, display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <Search size={18} strokeWidth={1.75} aria-hidden="true" />
+            </button>
+            <button
+              onClick={() => setProfileOpen(true)}
+              aria-label="Open profile"
+              title="Profile"
+              style={{
+                background: T.surface2, border: `1px solid ${T.line}`, padding: 0,
+                minHeight: 44, minWidth: 44, borderRadius: 999, cursor: "pointer",
+                color: T.ink, display: "flex", alignItems: "center", justifyContent: "center",
+                marginLeft: 4,
+              }}
+            >
+              <UserIcon size={16} strokeWidth={1.75} aria-hidden="true" />
             </button>
           </div>
         </div>
       </div>
+      {/* Offline banner — spec §11. Sits between header and content, soft warm tone. */}
+      {!online && (
+        <div
+          role="status" aria-live="polite"
+          style={{
+            background: T.goldAlpha, color: T.warn,
+            borderBottom: `1px solid ${T.line}`,
+            padding: "8px 16px", fontSize: 12, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 8,
+            fontFamily: T.sans,
+          }}
+        >
+          <WifiOff size={14} strokeWidth={2} aria-hidden="true" />
+          <span>Offline · Changes sync when reconnected.</span>
+        </div>
+      )}
+      {profileOpen && (
+        <ProfileSheet
+          studentName={studentName}
+          rotationCode={rotationCode}
+          points={gamification.points}
+          levelIcon={getLevel(gamification.points).icon}
+          streakDays={gamification.streaks?.currentDays ?? 0}
+          onEndSession={requestLogout}
+          onClose={() => setProfileOpen(false)}
+        />
+      )}
 
-      {/* Content Area */}
-      <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + env(safe-area-inset-bottom, 0px))` }}>
-        {tab === "home" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
+      {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
+      <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + env(safe-area-inset-bottom, 0px))` }}>
+        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} srQueue={srQueue} />}
         <Suspense fallback={<LazyFallback />}>
-        {tab === "home" && subView?.type === "weeklyQuiz" && (
+        {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
             onBack={() => navigate("home")}
             onFinish={(score) => { setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]})); setSrQueue(prev => processQuizResults(score.answers || [], "weekly", subView.week, prev)); logActivity("quiz", `Week ${subView.week} Quiz`, `${score.correct}/${score.total}`); navigate("home"); }} />
         )}
-        {tab === "home" && subView?.type === "reviewMissed" && (() => {
+        {tab === "today" && subView?.type === "reviewMissed" && (() => {
           const ws = weeklyScores[subView.week] || [];
           const latest = ws[ws.length - 1];
           const missed = (latest?.answers || []).filter(a => !a.correct);
@@ -534,20 +622,20 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               onFinish={() => navigate("home")} />
           ) : null;
         })()}
-        {tab === "home" && subView?.type === "preQuiz" && (
+        {tab === "today" && subView?.type === "preQuiz" && (
           <QuizEngine questions={PRE_QUIZ} title="Pre-Rotation Assessment"
             onBack={() => navigate("home")}
             onFinish={(score) => { setPreScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "pre", 0, prev)); logActivity("assessment", "Pre-Rotation Assessment", `${score.correct}/${score.total}`); navigate("home", { type: "preResults" }); }} />
         )}
-        {tab === "home" && subView?.type === "preResults" && (
+        {tab === "today" && subView?.type === "preResults" && (
           <PreTestResultsView preScore={preScore} navigate={navigate} />
         )}
-        {tab === "home" && subView?.type === "postQuiz" && (
+        {tab === "today" && subView?.type === "postQuiz" && (
           <QuizEngine questions={POST_QUIZ} title="Post-Rotation Assessment"
             onBack={() => navigate("home")}
             onFinish={(score) => { setPostScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "post", 0, prev)); logActivity("assessment", "Post-Rotation Assessment", `${score.correct}/${score.total}`); navigate("home"); }} />
         )}
-        {tab === "home" && subView?.type === "articles" && (
+        {tab === "today" && subView?.type === "articles" && (
           <ArticlesView week={subView.week} onBack={() => navigate("home")} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
             setCompletedItems(prev => {
               const next = { ...prev, articles: { ...prev.articles } };
@@ -557,10 +645,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             });
           }} />
         )}
-        {tab === "home" && subView?.type === "trials" && (
+        {tab === "today" && subView?.type === "trials" && (
           <LandmarkTrialsView week={subView.week} onBack={() => navigate("home")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
-        {tab === "home" && subView?.type === "studySheets" && (
+        {tab === "today" && subView?.type === "studySheets" && (
           <StudySheetsView week={subView.week} onBack={() => navigate("home")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
             setCompletedItems(prev => {
               const next = { ...prev, studySheets: { ...prev.studySheets } };
@@ -570,7 +658,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             });
           }} />
         )}
-        {tab === "home" && subView?.type === "cases" && (
+        {tab === "today" && subView?.type === "cases" && (
           <CasesView week={subView.week} onBack={() => navigate("home")} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("cases", id)} onCaseComplete={(caseId, result) => {
             setCompletedItems(prev => ({
               ...prev,
@@ -579,22 +667,22 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             logActivity("case", `Clinical Case: ${caseId}`, `${result.score}/${result.total}`);
           }} />
         )}
-        {tab === "home" && subView?.type === "resources" && (
+        {tab === "today" && subView?.type === "resources" && (
           <ResourcesView onBack={() => navigate("home")} />
         )}
-        {tab === "home" && subView?.type === "abbreviations" && (
+        {tab === "today" && subView?.type === "abbreviations" && (
           <AbbreviationsView onBack={() => navigate("home")} />
         )}
-        {tab === "home" && subView?.type === "faq" && (
+        {tab === "today" && subView?.type === "faq" && (
           <FaqView onBack={() => navigate("home")} />
         )}
-        {tab === "home" && subView?.type === "bookmarks" && (
+        {tab === "today" && subView?.type === "bookmarks" && (
           <BookmarksView bookmarks={bookmarks} onBack={() => navigate("home")} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} />
         )}
-        {tab === "home" && subView?.type === "browseByTopic" && (
+        {tab === "today" && subView?.type === "browseByTopic" && (
           <TopicBrowseView onBack={() => navigate("home")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} />
         )}
-        {tab === "home" && subView?.type === "extraPractice" && (() => {
+        {tab === "today" && subView?.type === "extraPractice" && (() => {
           const dueKeys = getDueItems(srQueue);
           const allWeeklyQs = [1,2,3,4].flatMap(w => (WEEKLY_QUIZZES[w] || []).map((q, i) => ({ ...q, _key: `weekly_${w}_${i}` })));
           return (
@@ -634,7 +722,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             </div>
           );
         })()}
-        {tab === "home" && subView?.type === "srReview" && (() => {
+        {tab === "today" && subView?.type === "srReview" && (() => {
           const dueKeys = getDueItems(srQueue);
           const dueQuestions = dueKeys.map(key => {
             const q = getQuestionByKey(key);
@@ -661,7 +749,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             </div>
           );
         })()}
-        {tab === "home" && subView?.type === "practiceQuiz" && (() => {
+        {tab === "today" && subView?.type === "practiceQuiz" && (() => {
           const allWeeklyQs = [1,2,3,4].flatMap(w => WEEKLY_QUIZZES[w] || []);
           return (
             <QuizEngine questions={allWeeklyQs} title="Practice Questions" questionCount={15}
@@ -669,37 +757,39 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               onFinish={() => navigate("home", { type: "extraPractice" })} />
           );
         })()}
-        {tab === "refs" && !subView && <RefsTab navigate={navigate} />}
-        {tab === "refs" && subView?.type === "refDetail" && (
+        {/* Library hub (Phase 3a shell): lands on a simple stacked view of Guide + Refs sections.
+            Phase 3b+ will restructure to the spec §03 Library (filterable by week). */}
+        {tab === "library" && !subView && <LibraryHub navigate={navigate} clinicGuides={clinicGuides} />}
+        {tab === "library" && subView?.type === "refDetail" && (
           <RefDetailView refId={subView.id} onBack={() => navigate("refs")} />
         )}
-        {tab === "refs" && subView?.type === "abbreviations" && (
+        {tab === "library" && subView?.type === "abbreviations" && (
           <AbbreviationsView onBack={() => navigate("refs")} />
         )}
-        {tab === "guide" && subView?.type === "trialLibrary" && (
+        {tab === "library" && subView?.type === "trialLibrary" && (
           <TrialLibraryView onBack={() => navigate("guide")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} initialSearch={subView?.searchTrial as string | undefined} />
         )}
-        {tab === "guide" && subView?.type === "clinicGuide" && (
+        {tab === "library" && subView?.type === "clinicGuide" && (
           <ClinicGuideView date={subView.date} topic={clinicGuides.find(g => g.date === subView.date)?.topic || "CKD"} isOverride={clinicGuides.find(g => g.date === subView.date)?.isOverride} onBack={() => navigate("guide")} />
         )}
-        {tab === "guide" && subView?.type === "clinicGuideHistory" && (
+        {tab === "library" && subView?.type === "clinicGuideHistory" && (
           <ClinicGuideHistoryView guides={clinicGuides} onSelect={(date) => navigate("guide", { type: "clinicGuide", date })} onBack={() => navigate("guide")} />
         )}
-        {tab === "guide" && subView?.type === "inpatientGuide" && (
+        {tab === "library" && subView?.type === "inpatientGuide" && (
           <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={() => navigate("guide")} />
         )}
-        {tab === "guide" && subView?.type === "rotationGuide" && (
+        {tab === "library" && subView?.type === "rotationGuide" && (
           <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("guide")} />
         )}
-        {tab === "guide" && subView?.type === "faq" && (
+        {tab === "library" && subView?.type === "faq" && (
           <FaqView onBack={() => navigate("guide")} />
         )}
-        {tab === "guide" && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
+        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
-        {tab === "progress" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} completedItems={completedItems} totalWeeks={totalWeeks} />}
+        {tab === "me" && <ProgressTab patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} curriculum={curriculum} gamification={gamification} completedItems={completedItems} totalWeeks={totalWeeks} />}
         </Suspense>
-      </div>
+      </main>
 
       {/* Bottom Nav */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: T.card, borderTop: `1px solid ${T.line}`, display: "flex", zIndex: 100, boxShadow: "0 -2px 12px rgba(0,0,0,0.06)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
@@ -712,7 +802,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 color: active ? T.med : T.sub,
                 transition: "background 0.15s ease, color 0.15s ease",
               }}>
-              <span style={{ fontSize: 20 }}>{t.icon}</span>
+              <t.Icon size={20} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
               <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
             </button>
           );
@@ -723,3 +813,192 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 }
 
 export default StudentApp;
+
+// ─────────────────────────────────────────────────────────────────────────
+// LibraryHub — Phase 3a shell (spec §03). Landing page for the Library tab.
+// For now it simply stacks the existing Guide and Refs sections behind a common
+// heading. Phase 3b+ restructures to the spec's week-filterable Library layout.
+// ─────────────────────────────────────────────────────────────────────────
+function LibraryHub({
+  navigate, clinicGuides,
+}: {
+  navigate: (tab: string, sv?: SubView) => void;
+  clinicGuides: ClinicGuideRecord[];
+}) {
+  return (
+    <div>
+      <div style={{ padding: "20px 16px 8px", borderBottom: `1px solid ${T.line}` }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Library</div>
+        <h1 style={{ margin: 0, fontFamily: T.serif, fontSize: 28, fontWeight: 600, color: T.ink, letterSpacing: -0.4 }}>Guides &amp; references</h1>
+        <p style={{ margin: "6px 0 0", fontSize: 13, color: T.ink2, lineHeight: 1.5 }}>
+          Clinical guides, rotation playbooks, landmark trials, and quick-reference material.
+        </p>
+      </div>
+      <GuideTab
+        navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void}
+        subView={null}
+        clinicGuides={clinicGuides}
+      />
+      <div style={{ padding: "8px 16px", borderTop: `1px solid ${T.line}` }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, margin: "8px 0 4px" }}>Quick references</div>
+      </div>
+      <RefsTab navigate={navigate} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ProfileSheet — Phase 2 (spec §01). Right-side sheet surfacing the items
+// that used to live in the cramped header: name, rotation code, points,
+// theme toggle, end session. ESC to close. Click backdrop to close.
+// ─────────────────────────────────────────────────────────────────────────
+function ProfileSheet({
+  studentName, rotationCode, points, levelIcon, streakDays, onEndSession, onClose,
+}: {
+  studentName: string; rotationCode: string | null; points: number;
+  levelIcon: string; streakDays: number;
+  onEndSession: () => void; onClose: () => void;
+}) {
+  // Phase 2.5: ESC to close + focus trap + focus return to opener on unmount.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef);
+  return (
+    <div
+      role="dialog" aria-modal="true" aria-labelledby="profile-sheet-title"
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: T.overlay, zIndex: 9998, display: "flex", justifyContent: "flex-end", animation: "fadeIn 0.15s ease" }}
+    >
+      <div
+        ref={panelRef}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: T.surface, borderLeft: `1px solid ${T.line}`,
+          width: "min(340px, 100%)", height: "100%",
+          padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px))",
+          display: "flex", flexDirection: "column", gap: 14,
+          overflowY: "auto",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 id="profile-sheet-title" style={{ margin: 0, fontFamily: T.serif, fontSize: 20, fontWeight: 600, color: T.ink, letterSpacing: -0.2 }}>Profile</h2>
+          <button
+            onClick={onClose} aria-label="Close profile"
+            style={{ background: "transparent", border: "none", minHeight: 44, minWidth: 44, borderRadius: 8, cursor: "pointer", color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <X size={20} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        </div>
+
+        {/* Name + rotation code */}
+        <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Student</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: T.ink, marginBottom: 8 }}>{studentName || "—"}</div>
+          {rotationCode && (
+            <span style={{ display: "inline-block", fontSize: 11, fontFamily: T.mono, letterSpacing: 1, color: T.ink2, background: T.surface2, border: `1px solid ${T.line}`, padding: "4px 10px", borderRadius: 999 }}>
+              {rotationCode}
+            </span>
+          )}
+        </div>
+
+        {/* Points + streak */}
+        {(points > 0 || streakDays > 0) && (
+          <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Progress</div>
+            <div style={{ display: "flex", gap: 16 }}>
+              {points > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, color: T.ink2, marginBottom: 2 }}>Points</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: T.warn, fontFamily: T.mono }}>{levelIcon} {points}</div>
+                </div>
+              )}
+              {streakDays > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, color: T.ink2, marginBottom: 2 }}>Streak</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 18, fontWeight: 700, color: T.warn, fontFamily: T.mono }}>
+                    <Flame size={16} strokeWidth={2} aria-hidden="true" /> {streakDays}d
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Theme */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Appearance</div>
+          <ThemeToggle variant="sheet" />
+        </div>
+
+        {/* End session pushed to the bottom */}
+        <div style={{ marginTop: "auto", paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
+          <button
+            onClick={() => { onClose(); onEndSession(); }}
+            style={{
+              width: "100%", minHeight: 44, padding: "12px 16px",
+              background: "transparent", border: `1px solid ${T.line}`, borderRadius: 12,
+              color: T.ink, fontSize: 14, fontWeight: 600,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              cursor: "pointer",
+            }}
+          >
+            <LogOut size={16} strokeWidth={1.75} aria-hidden="true" />
+            End session
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// ConfirmSheet — accessible replacement for window.confirm (spec §12)
+// role=dialog + aria-modal + ESC to cancel + focus the confirm button on open.
+// Kept intentionally small; generalize if we need it in more sites.
+// ─────────────────────────────────────────────────────────────────────────
+function ConfirmSheet({
+  title, message, confirmLabel, cancelLabel, onConfirm, onCancel,
+}: {
+  title: string; message: string; confirmLabel: string; cancelLabel: string;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  // Phase 2.5: ESC to close + focus trap + focus return; initial focus on confirm.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+  useFocusTrap(panelRef, confirmRef);
+  return (
+    <div
+      role="dialog" aria-modal="true" aria-labelledby="confirmsheet-title" aria-describedby="confirmsheet-msg"
+      onClick={onCancel}
+      style={{ position: "fixed", inset: 0, background: T.overlay, zIndex: 9998, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 16, paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))", animation: "fadeIn 0.15s ease" }}
+    >
+      <div
+        ref={panelRef}
+        onClick={e => e.stopPropagation()}
+        style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, width: "100%", maxWidth: 420, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
+      >
+        <h2 id="confirmsheet-title" style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 600, color: T.ink, margin: "0 0 8px", letterSpacing: -0.2 }}>{title}</h2>
+        <p id="confirmsheet-msg" style={{ fontSize: 14, color: T.ink2, margin: "0 0 20px", lineHeight: 1.5 }}>{message}</p>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onCancel}
+            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: T.ink, background: "transparent", border: `1px solid ${T.line}`, borderRadius: 12, cursor: "pointer" }}>
+            {cancelLabel}
+          </button>
+          <button ref={confirmRef} onClick={onConfirm}
+            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: "white", background: T.accent, border: "none", borderRadius: 12, cursor: "pointer" }}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

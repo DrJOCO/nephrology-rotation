@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { Search } from "lucide-react";
 import { T, ARTICLES as DEFAULT_ARTICLES, ABBREVIATIONS, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { QUICK_REFS } from "../../data/guides";
@@ -40,17 +41,33 @@ export default function GlobalSearchOverlay({ onClose, onNavigate, articles: liv
   const totalResults = groups.reduce((s, g) => s + g.items.length, 0);
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.bg, display: "flex", flexDirection: "column" }}>
+    <div
+      role="dialog" aria-modal="true" aria-label="Search"
+      style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.bg, display: "flex", flexDirection: "column" }}
+    >
       <div style={{ padding: "calc(10px + env(safe-area-inset-top, 0px)) 16px 10px", background: T.card, borderBottom: `1px solid ${T.line}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ position: "relative", flex: 1 }}>
-            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, pointerEvents: "none" }}>{"\uD83D\uDD0D"}</span>
-            <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search trials, articles, cases..."
-              style={{ width: "100%", padding: "10px 12px 10px 36px", fontSize: 15, border: `1.5px solid ${T.line}`, borderRadius: 10, background: T.bg, color: T.text, outline: "none", boxSizing: "border-box", fontFamily: T.sans }} />
+            <Search size={16} strokeWidth={1.75} color={T.muted} aria-hidden="true" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search trials, articles, cases..."
+              aria-label="Search trials, articles, cases"
+              type="search"
+              style={{ width: "100%", padding: "10px 12px 10px 36px", fontSize: 15, border: `1.5px solid ${T.line}`, borderRadius: 10, background: T.bg, color: T.text, outline: "none", boxSizing: "border-box", fontFamily: T.sans }}
+            />
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "8px 4px", flexShrink: 0 }}>Cancel</button>
+          <button
+            onClick={onClose}
+            aria-label="Close search"
+            style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "10px 8px", minHeight: 44, flexShrink: 0 }}
+          >
+            Cancel
+          </button>
         </div>
-        {results && <div style={{ fontSize: 11, color: T.muted, marginTop: 6 }}>{totalResults} result{totalResults !== 1 ? "s" : ""}</div>}
+        {results && <div aria-live="polite" style={{ fontSize: 11, color: T.muted, marginTop: 6 }}>{totalResults} result{totalResults !== 1 ? "s" : ""}</div>}
       </div>
       <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
         {!results && <div style={{ textAlign: "center", color: T.muted, fontSize: 13, paddingTop: 40 }}>Type at least 2 characters to search</div>}
