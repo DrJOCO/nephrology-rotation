@@ -435,6 +435,37 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setSubView(null);
   };
 
+  const totalWeeks = parseInt(sharedSettings?.duration || "4", 10);
+  const currentWeek = (() => {
+    if (!sharedSettings?.rotationStart) return null;
+    const start = new Date(sharedSettings.rotationStart + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return null;
+    const week = Math.floor(diffDays / 7) + 1;
+    if (week > totalWeeks) return null;
+    return Math.min(week, 4);
+  })();
+  const rotationEnded = (() => {
+    if (!sharedSettings?.rotationStart) return false;
+    const start = new Date(sharedSettings.rotationStart + "T00:00:00");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.floor(diffDays / 7) + 1 > totalWeeks;
+  })();
+  const competencySummary = useMemo(() => buildCompetencySummary({
+    weeklyScores,
+    preScore,
+    postScore,
+    completedItems,
+    srQueue,
+    currentWeek,
+    totalWeeks,
+    articlesByWeek: articles,
+  }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles]);
+
   if (loading) return (
     <div style={{ minHeight: "100vh", background: T.navyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ color: T.pale, fontFamily: T.serif, fontSize: 18 }}>Loading...</div>
@@ -465,39 +496,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     { id: "team", Icon: Users, label: "Team" },
     { id: "me", Icon: UserIcon, label: "Me" },
   ];
-
-  // Compute current rotation week from admin settings
-  const currentWeek = (() => {
-    if (!sharedSettings?.rotationStart) return null;
-    const start = new Date(sharedSettings.rotationStart + "T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return null;
-    const week = Math.floor(diffDays / 7) + 1;
-    const totalWeeks = parseInt(sharedSettings.duration || "4", 10);
-    if (week > totalWeeks) return null;
-    return Math.min(week, 4);
-  })();
-  const totalWeeks = parseInt(sharedSettings?.duration || "4", 10);
-  const rotationEnded = (() => {
-    if (!sharedSettings?.rotationStart) return false;
-    const start = new Date(sharedSettings.rotationStart + "T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    return Math.floor(diffDays / 7) + 1 > totalWeeks;
-  })();
-  const competencySummary = useMemo(() => buildCompetencySummary({
-    weeklyScores,
-    preScore,
-    postScore,
-    completedItems,
-    srQueue,
-    currentWeek,
-    totalWeeks,
-    articlesByWeek: articles,
-  }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles]);
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.sans }}>
