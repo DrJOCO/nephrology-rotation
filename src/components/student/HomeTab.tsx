@@ -497,7 +497,7 @@ export default function HomeTab({
               onClick={() => navigate(action.tab, action.subView)}
               style={{
                 width: "100%",
-                background: index === 0 ? T.navy : T.card,
+                background: index === 0 ? T.accent : T.card,
                 color: index === 0 ? "white" : T.navy,
                 border: index === 0 ? "none" : `1px solid ${T.line}`,
                 borderRadius: 14,
