@@ -18,15 +18,15 @@ export default function RefsTab({ navigate }) {
             onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
             <div style={{ fontSize: 28, marginBottom: 8 }}>{ref.icon}</div>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>{ref.title}</div>
-            <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>{ref.desc}</div>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{ref.desc}</div>
             {ref.type === "calculator" && (
-              <div style={{ fontSize: 10, color: T.med, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Calculator →</div>
+              <div style={{ fontSize: 13, color: T.med, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Calculator →</div>
             )}
             {ref.type === "reference" && (
-              <div style={{ fontSize: 10, color: T.orange, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Reference →</div>
+              <div style={{ fontSize: 13, color: T.orange, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Reference →</div>
             )}
             {ref.type === "atlas" && (
-              <div style={{ fontSize: 10, color: T.purple, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Atlas →</div>
+              <div style={{ fontSize: 13, color: T.purple, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Atlas →</div>
             )}
           </button>
         ))}
@@ -36,8 +36,8 @@ export default function RefsTab({ navigate }) {
           onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
           <Type size={28} strokeWidth={1.5} color={T.med} aria-hidden="true" style={{ marginBottom: 8 }} />
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>Nephrology Abbreviations</div>
-          <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>{ABBREVIATIONS.length} terms you will see in notes and on rounds</div>
-          <div style={{ fontSize: 10, color: T.med, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Reference →</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{ABBREVIATIONS.length} terms you will see in notes and on rounds</div>
+          <div style={{ fontSize: 13, color: T.med, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Reference →</div>
         </button>
       </div>
     </div>

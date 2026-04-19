@@ -143,13 +143,13 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
               {missed.map((a, i) => (
                 <div key={i} style={{ background: T.redBg, borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: `3px solid ${T.accent}` }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 8, lineHeight: 1.4 }}>{questions[a.qIdx].q}</div>
-                  <div style={{ fontSize: 12, color: T.accent, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, color: T.accent, marginBottom: 4 }}>
                     {"\u2717"} Your answer: {questions[a.qIdx].choices[a.chosen]}
                   </div>
-                  <div style={{ fontSize: 12, color: T.green, fontWeight: 600, marginBottom: 6 }}>
+                  <div style={{ fontSize: 13, color: T.green, fontWeight: 600, marginBottom: 6 }}>
                     {"\u2713"} Correct: {questions[a.qIdx].choices[questions[a.qIdx].answer]}
                   </div>
-                  <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5, background: T.card, borderRadius: 6, padding: 10 }}>
+                  <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, background: T.card, borderRadius: 6, padding: 10 }}>
                     {questions[a.qIdx].explanation}
                   </div>
                 </div>
@@ -182,15 +182,15 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
             <div style={{ width: `${progress}%`, height: "100%", background: T.med, borderRadius: 3, transition: "width 0.4s ease" }} />
           </div>
         </div>
-        <span style={{ fontSize: 11, color: T.sub, fontWeight: 600, fontFamily: T.mono, minWidth: 36, textAlign: "right" }}>{current + 1}/{quizLen}</span>
+        <span style={{ fontSize: 13, color: T.sub, fontWeight: 600, fontFamily: T.mono, minWidth: 36, textAlign: "right" }}>{current + 1}/{quizLen}</span>
         <button onClick={() => { store.set(quizKey, null); setCurrent(0); setSelected(null); setAnswers([]); setCorrectCount(0); setFinished(false); setShowResult(false); setShowExplanation(false); const newShuffle = shuffleIndices(questions.length); const count = questionCount && questionCount < questions.length ? questionCount : questions.length; setShuffledOrder(newShuffle.slice(0, count)); setChoiceOrders(generateChoiceOrders(questions)); }}
-          style={{ padding: "4px 10px", background: T.accent, color: "white", border: "none", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+          style={{ padding: "4px 10px", background: T.accent, color: "white", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer" }}>
           Restart
         </button>
       </div>
 
       {/* Quiz title */}
-      <div style={{ fontSize: 10, color: T.med, fontWeight: 700, marginBottom: mob ? 4 : 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{title}</div>
+      <div style={{ fontSize: 13, color: T.med, fontWeight: 700, marginBottom: mob ? 4 : 8, textTransform: "uppercase", letterSpacing: 0.5 }}>{title}</div>
 
       {/* Question */}
       <div style={{ background: T.card, borderRadius: 12, padding: mob ? 12 : 20, marginBottom: mob ? 8 : 16, border: `1px solid ${T.line}` }}>
@@ -217,7 +217,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
                 width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center",
                 background: showResult && isCorrectChoice ? T.green : showResult && displayIdx === selected ? T.accent : T.grayBg,
                 color: showResult && (isCorrectChoice || displayIdx === selected) ? "white" : T.sub,
-                fontSize: 11, fontWeight: 700, flexShrink: 0
+                fontSize: 13, fontWeight: 700, flexShrink: 0
               }}>
                 {showResult && isCorrectChoice ? "\u2713" : showResult && displayIdx === selected ? "\u2717" : String.fromCharCode(65 + displayIdx)}
               </span>
@@ -233,7 +233,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
         const wasCorrect = selectedOrigIdx === q.answer;
         return (
           <div style={{ background: T.ice, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.med}` }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: wasCorrect ? T.greenDk : T.accent, marginBottom: 4 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.greenDk : T.accent, marginBottom: 4 }}>
               {wasCorrect ? "\u2713 Correct!" : "\u2717 Not quite"}
             </div>
             <div style={{ fontSize: mob ? 12 : 13, color: T.text, lineHeight: 1.45, wordBreak: "break-word" }}>{q.explanation}</div>

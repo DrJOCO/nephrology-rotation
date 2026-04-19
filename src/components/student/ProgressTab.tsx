@@ -31,7 +31,7 @@ function MasteryRing({ value }: { value: number }) {
       </svg>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         <div style={{ fontSize: 28, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{value}%</div>
-        <div style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8 }}>Mastery</div>
+        <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8 }}>Mastery</div>
       </div>
     </div>
   );
@@ -73,7 +73,7 @@ export default function ProgressTab({
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 18, alignItems: isMobile ? "flex-start" : "center" }}>
           <MasteryRing value={competencySummary.masteryPercent} />
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 1.1, marginBottom: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 1.1, marginBottom: 6 }}>
               {competencySummary.masteryLabel}
             </div>
             <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 24, fontWeight: 700 }}>
@@ -117,7 +117,7 @@ export default function ProgressTab({
         ].map((item) => (
           <div key={item.label} style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: "12px 10px", textAlign: "center" }}>
             <div style={{ fontSize: 24, fontWeight: 700, color: item.color, fontFamily: T.mono }}>{item.value}</div>
-            <div style={{ fontSize: 12, color: T.sub }}>{item.label}</div>
+            <div style={{ fontSize: 13, color: T.sub }}>{item.label}</div>
           </div>
         ))}
       </div>
@@ -144,7 +144,7 @@ export default function ProgressTab({
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
                         <div style={{ fontSize: 15, fontWeight: 700, color: T.navy }}>{domain.label}</div>
-                        <span style={{ background: tierStyle.bg, color: tierStyle.text, border: `1px solid ${tierStyle.border}`, borderRadius: 999, padding: "4px 9px", fontSize: 11, fontWeight: 700 }}>
+                        <span style={{ background: tierStyle.bg, color: tierStyle.text, border: `1px solid ${tierStyle.border}`, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                           {domain.tier}
                         </span>
                       </div>
@@ -152,7 +152,7 @@ export default function ProgressTab({
                       <div style={{ background: T.grayBg, borderRadius: 999, height: 8, overflow: "hidden" }}>
                         <div style={{ width: `${domain.progress}%`, background: domain.tier === "Proficient" ? T.green : domain.tier === "Developing" ? T.gold : T.med, height: "100%", borderRadius: 999 }} />
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginTop: 6, fontSize: 12, color: T.muted, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginTop: 6, fontSize: 13, color: T.muted, flexWrap: "wrap" }}>
                         <span>{domain.progress}% to next milestone</span>
                         <span>{domain.progressLabel}</span>
                       </div>
@@ -165,9 +165,9 @@ export default function ProgressTab({
                   <div style={{ borderTop: `1px solid ${T.line}`, padding: "14px 14px 16px" }}>
                     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 12 }}>
                       <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>SR interval</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>SR interval</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{domain.signals.srIntervalDays}d</div>
-                        <div style={{ fontSize: 12, color: T.sub, marginTop: 4 }}>
+                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
                           {domain.signals.dueCards > 0
                             ? `${domain.signals.dueCards} card${domain.signals.dueCards !== 1 ? "s" : ""} due now`
                             : `${domain.signals.totalCards} card${domain.signals.totalCards !== 1 ? "s" : ""} tracked`}
@@ -175,11 +175,11 @@ export default function ProgressTab({
                       </div>
 
                       <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Quiz signal</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Quiz signal</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>
                           {domain.signals.quizAccuracy === null ? "—" : `${domain.signals.quizAccuracy}%`}
                         </div>
-                        <div style={{ fontSize: 12, color: T.sub, marginTop: 4 }}>
+                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
                           {domain.signals.quizSampleSize > 0
                             ? `Last ${domain.signals.quizSampleSize} question${domain.signals.quizSampleSize !== 1 ? "s" : ""}`
                             : "No quiz signal yet"}
@@ -187,21 +187,21 @@ export default function ProgressTab({
                       </div>
 
                       <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Cases logged</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Cases logged</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>
                           {domain.signals.casesLogged}/{domain.signals.caseTarget || 0}
                         </div>
-                        <div style={{ fontSize: 12, color: T.sub, marginTop: 4 }}>
+                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
                           {domain.signals.caseTarget > 0 ? "Proficient target for current content set" : "No case requirement attached"}
                         </div>
                       </div>
 
                       <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Articles read</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Articles read</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>
                           {domain.signals.articlesRead}/{domain.signals.articleTarget || 0}
                         </div>
-                        <div style={{ fontSize: 12, color: T.sub, marginTop: 4 }}>
+                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
                           Supplementary signal used to round out the domain view
                         </div>
                       </div>
@@ -209,7 +209,7 @@ export default function ProgressTab({
 
                     <div style={{ background: T.ice, borderRadius: 14, padding: "12px 13px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Recommended next action</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Recommended next action</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{domain.action.label}</div>
                         <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 4 }}>{domain.action.detail}</div>
                       </div>
@@ -243,7 +243,7 @@ export default function ProgressTab({
 
         {preScore && postScore ? (
           <div style={{ background: T.bg, borderRadius: 14, padding: "12px 13px", border: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>Assessment growth</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>Assessment growth</div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <div style={{ fontSize: 14, color: T.sub }}>Pre {Math.round((preScore.correct / preScore.total) * 100)}%</div>
               <ArrowRight size={15} strokeWidth={2} color={T.muted} aria-hidden="true" />

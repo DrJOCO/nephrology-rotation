@@ -7,7 +7,7 @@ import { T } from "../../data/constants";
 
 export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1.5px solid ${T.line}`, color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", fontWeight: 600, minHeight: 44, borderRadius: 22, boxShadow: "0 2px 12px rgba(0,0,0,0.12)", zIndex: 99 };
 
-export const inputLabel: CSSProperties = { fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
+export const inputLabel: CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 
 export const inputStyle: CSSProperties = { width: "100%", padding: "10px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", fontFamily: "-apple-system, sans-serif", outline: "none" };
 

@@ -32,7 +32,7 @@ export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, 
         <div style={{ padding: 20, textAlign: "center", color: T.muted, fontSize: 13 }}>No trials match "{searchQ}"</div>
       )}
       {searchQ.trim() && filtered.length > 0 && (
-        <div style={{ fontSize: 12, color: T.sub, marginBottom: 12 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
+        <div style={{ fontSize: 13, color: T.sub, marginBottom: 12 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
       )}
       <CategoryGroupedTrials trials={filtered} bookmarks={bookmarks} onToggleBookmark={onToggleBookmark} />
       <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 16, marginBottom: 0 }}>{"\u2190"} Back</button>

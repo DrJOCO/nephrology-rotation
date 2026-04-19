@@ -52,7 +52,7 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
         <p style={{ fontSize: 14, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>{s.body}</p>
 
         {/* Hint */}
-        <div style={{ fontSize: 11, color: T.med, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-block", marginBottom: 24 }}>
+        <div style={{ fontSize: 13, color: T.med, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-block", marginBottom: 24 }}>
           💡 {s.hint}
         </div>
 

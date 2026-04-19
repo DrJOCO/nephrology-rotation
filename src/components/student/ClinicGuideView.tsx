@@ -47,7 +47,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.2 }}>{guide.title}</h2>
-          <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{guide.subtitle}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{guide.subtitle}</div>
         </div>
       </div>
 
@@ -55,7 +55,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
         <span style={{ fontSize: 13, color: T.med, fontWeight: 600 }}>{formatFriday(date)}</span>
         {isOverride && (
-          <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
         )}
       </div>
 
@@ -92,7 +92,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
               style={{ width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{section.heading}</div>
-                <div style={{ fontSize: 11, color: T.muted, marginTop: 1 }}>{section.items.length} items</div>
+                <div style={{ fontSize: 13, color: T.muted, marginTop: 1 }}>{section.items.length} items</div>
               </div>
               <span style={{ color: T.muted, fontSize: 14, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
             </button>
@@ -141,14 +141,14 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
 
       {/* Guideline basis */}
       <div style={{ background: T.grayBg, borderRadius: 12, padding: "12px 14px", marginBottom: 14 }}>
-        <div style={{ fontWeight: 700, color: T.sub, fontSize: 11, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 6 }}>Guideline Basis</div>
+        <div style={{ fontWeight: 700, color: T.sub, fontSize: 13, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 6 }}>Guideline Basis</div>
         {guide.guidelineBasis.map((ref, i) => (
-          <div key={i} style={{ fontSize: 12, color: T.sub, lineHeight: 1.5 }}>{"\u2022"} {ref}</div>
+          <div key={i} style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>{"\u2022"} {ref}</div>
         ))}
       </div>
 
       {/* Footer disclaimer */}
-      <div style={{ textAlign: "center", padding: "12px 0 8px", fontSize: 11, color: T.muted, fontStyle: "italic", lineHeight: 1.4 }}>
+      <div style={{ textAlign: "center", padding: "12px 0 8px", fontSize: 13, color: T.muted, fontStyle: "italic", lineHeight: 1.4 }}>
         {CLINIC_GUIDE_FOOTER}
       </div>
 

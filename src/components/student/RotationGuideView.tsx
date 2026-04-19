@@ -40,7 +40,7 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.2 }}>{guide.title}</h2>
-          <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{guide.subtitle}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{guide.subtitle}</div>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
               style={{ width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{section.heading}</div>
-                <div style={{ fontSize: 11, color: T.muted, marginTop: 1 }}>{section.items.length} {section.items.length === 1 ? "item" : "items"}</div>
+                <div style={{ fontSize: 13, color: T.muted, marginTop: 1 }}>{section.items.length} {section.items.length === 1 ? "item" : "items"}</div>
               </div>
               <span style={{ color: T.muted, fontSize: 14, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
             </button>

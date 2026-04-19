@@ -14,21 +14,21 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 2, flex: 1 }}>{trial.name}</div>
               {onToggleBookmark && <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(trial.name); }} style={{ background: "none", border: "none", fontSize: 16, color: isBookmarked ? T.gold : T.muted, cursor: "pointer", flexShrink: 0, padding: "8px", margin: "-8px", lineHeight: 1 }}>{isBookmarked ? "\u2605" : "\u2606"}</button>}
             </div>
-            <div style={{ fontSize: 11, color: T.sub }}>{trial.journal} ({trial.year})</div>
-            <div style={{ fontSize: 12, color: T.text, marginTop: 5, lineHeight: 1.45, fontStyle: "italic" }}>{trial.takeaway}</div>
+            <div style={{ fontSize: 13, color: T.sub }}>{trial.journal} ({trial.year})</div>
+            <div style={{ fontSize: 13, color: T.text, marginTop: 5, lineHeight: 1.45, fontStyle: "italic" }}>{trial.takeaway}</div>
           </div>
           <span style={{ color: T.muted, fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
         </div>
       </button>
       {isOpen && (
         <div style={{ padding: "0 14px 14px" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Full Title</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Full Title</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 12 }}>{trial.full_title}</div>
           {trial.details && (<>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Study Details</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Study Details</div>
             <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6, marginBottom: 12, background: T.yellowBg, borderRadius: 8, padding: 12, borderLeft: `3px solid ${T.gold}` }}>{trial.details}</div>
           </>)}
-          <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>How It Changed Practice</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>How It Changed Practice</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 12, background: T.ice, borderRadius: 8, padding: 12 }}>{trial.significance}</div>
           <a href={trial.url} target="_blank" rel="noopener noreferrer"
             style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: T.med, textDecoration: "none" }}>
@@ -68,7 +68,7 @@ export function CategoryGroupedTrials({ trials, categoryOrder = TRIAL_CATEGORY_O
           <span style={{ fontSize: 14, color: T.goldText, fontWeight: 700, transition: "transform 0.2s",
             transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", display: "inline-block" }}>{"\u25B8"}</span>
           <span style={{ fontWeight: 700, color: T.navy, fontSize: 14, flex: 1 }}>{cat}</span>
-          <span style={{ fontSize: 12, color: T.sub, fontWeight: 600, background: T.yellowBg, borderRadius: 8, padding: "2px 8px" }}>
+          <span style={{ fontSize: 13, color: T.sub, fontWeight: 600, background: T.yellowBg, borderRadius: 8, padding: "2px 8px" }}>
             {catTrials.length}
           </span>
         </button>

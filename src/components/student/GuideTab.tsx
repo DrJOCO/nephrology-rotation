@@ -27,7 +27,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
         </div>
         <div>
           <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.2 }}>{section.title}</h2>
-          <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{section.sub}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{section.sub}</div>
         </div>
       </div>
 
@@ -48,7 +48,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{cat.title}</div>
-                <div style={{ fontSize: 11, color: T.muted, marginTop: 1 }}>{cat.items.length} items</div>
+                <div style={{ fontSize: 13, color: T.muted, marginTop: 1 }}>{cat.items.length} items</div>
               </div>
               <span style={{ color: T.muted, fontSize: 14, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>›</span>
             </button>
@@ -119,12 +119,12 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Friday Clinic Guide</div>
-                <div style={{ fontSize: 12, color: T.greenDk, marginTop: 2 }}>{dayLabel}: {topic} Clinic</div>
+                <div style={{ fontSize: 13, color: T.greenDk, marginTop: 2 }}>{dayLabel}: {topic} Clinic</div>
               </div>
               <span style={{ color: T.greenDk, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
             </button>
             <button onClick={() => navigate("library", { type: "clinicGuideHistory" })}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 4px 0", fontSize: 11, color: T.sub, fontWeight: 500 }}>
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px 4px 0", fontSize: 13, color: T.sub, fontWeight: 500 }}>
               View past clinic guides →
             </button>
           </div>
@@ -145,7 +145,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
                 <span style={{ fontSize: 20, flexShrink: 0 }}>{g.icon}</span>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.2 }}>{t}</div>
-                  <div style={{ fontSize: 10, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.subtitle}</div>
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.subtitle}</div>
                 </div>
               </button>
             );
@@ -167,7 +167,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
                 <span style={{ fontSize: 20, flexShrink: 0 }}>{g.icon}</span>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.2 }}>{g.title}</div>
-                  <div style={{ fontSize: 10, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.subtitle}</div>
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.subtitle}</div>
                 </div>
               </button>
             );
@@ -183,7 +183,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Rotation FAQ</div>
-          <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{RESOURCES.faq.length} common rotation questions answered</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{RESOURCES.faq.length} common rotation questions answered</div>
         </div>
         <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>›</span>
       </button>
@@ -199,7 +199,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Landmark Trial Library</div>
-          <div style={{ fontSize: 12, color: T.goldText, marginTop: 2 }}>Browse all {ALL_LANDMARK_TRIALS.length} landmark nephrology trials by category</div>
+          <div style={{ fontSize: 13, color: T.goldText, marginTop: 2 }}>Browse all {ALL_LANDMARK_TRIALS.length} landmark nephrology trials by category</div>
         </div>
         <span style={{ color: T.goldText, fontSize: 16, flexShrink: 0 }}>›</span>
       </button>
@@ -220,7 +220,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{sec.icon}</span>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.2 }}>{sec.title}</div>
-                    <div style={{ fontSize: 10, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sec.sub}</div>
+                    <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sec.sub}</div>
                   </div>
                 </button>
               ))}

@@ -4,7 +4,7 @@ import { backBtnStyle } from "./shared";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
 
 const imgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 10, marginBottom: 6, border: `1px solid ${T.line}` };
-const captionStyle: CSSProperties = { fontSize: 11, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.4 };
+const captionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.4 };
 
 export default function StudySheetsView({ week, onBack, navigate, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const sheets = STUDY_SHEETS[week] || [];
@@ -34,7 +34,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                 <div style={{ width: 44, height: 44, borderRadius: 11, background: isDone ? T.greenBg : T.purpleBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{isDone ? "\u2705" : sheet.icon}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{sheet.title}</div>
-                  <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{sheet.subtitle}</div>
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{sheet.subtitle}</div>
                 </div>
                 <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(sheet.id); }} style={{ background: "none", border: "none", fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.gold : T.muted, cursor: "pointer", flexShrink: 0, padding: "8px", margin: "-8px", lineHeight: 1 }}>{(bookmarks?.studySheets || []).includes(sheet.id) ? "\u2605" : "\u2606"}</button>
                 <span style={{ color: T.muted, fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
@@ -49,7 +49,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
 
                 {sheet.sections.map((section, secIdx) => (
                   <div key={secIdx} style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: T.purpleAccent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.purpleAccent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
                       <div style={{ width: 3, height: 12, background: T.purpleSoft, borderRadius: 2 }} />
                       {section.heading}
                     </div>
@@ -70,7 +70,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                 {/* Trial Callouts */}
                 {sheet.trialCallouts && sheet.trialCallouts.length > 0 && (
                   <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: T.goldText, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.goldText, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 13 }}>{"\u2B50"}</span> Trial Connections
                     </div>
                     {sheet.trialCallouts.map((callout, ci) => {
@@ -81,8 +81,8 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                           role={trialExists ? "button" : undefined} tabIndex={trialExists ? 0 : undefined}
                           style={{ background: T.yellowBg, borderRadius: 10, padding: "10px 14px", marginBottom: 10, borderLeft: `3px solid ${T.gold}`, cursor: trialExists ? "pointer" : "default", transition: "box-shadow 0.2s" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>{callout.trial}</div>
-                            {trialExists && <span style={{ fontSize: 11, color: T.goldText, fontWeight: 600 }}>View trial ›</span>}
+                            <div style={{ fontSize: 13, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>{callout.trial}</div>
+                            {trialExists && <span style={{ fontSize: 13, color: T.goldText, fontWeight: 600 }}>View trial ›</span>}
                           </div>
                           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>{callout.pearl}</div>
                         </div>

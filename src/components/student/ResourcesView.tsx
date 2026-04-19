@@ -55,7 +55,7 @@ export default function ResourcesView({ onBack }) {
       <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto" }}>
         {tabList.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ padding: "8px 14px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+            style={{ padding: "8px 14px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
               background: activeTab === t.id ? T.navy : T.ice,
               color: activeTab === t.id ? "white" : T.text }}>
             {t.label}
@@ -75,7 +75,7 @@ export default function ResourcesView({ onBack }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{r.name}</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{r.tag}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{r.tag}</span>
                 </div>
                 <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45, wordBreak: "break-word" }}>{r.desc}</div>
               </div>
@@ -88,7 +88,7 @@ export default function ResourcesView({ onBack }) {
       {/* Bottom tip (podcasts tab only) */}
       {activeTab === "podcasts" && (
         <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 6, borderLeft: `4px solid ${T.med}` }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.med, marginBottom: 4 }}>LISTENING TIP</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 4 }}>LISTENING TIP</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
             Start with Curbsiders #226 (AKI) and REBOOT #48 (Hyponatremia) {"\u2014"} these cover the two most common consults you'll see. All Curbsiders nephrology episodes feature Joel Topf (@kidney_boy) and are outstanding. Listen during your commute {"\u2014"} 15 min/day adds up fast over 4 weeks.
           </div>

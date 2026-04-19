@@ -548,7 +548,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 title={`${gamification.streaks?.currentDays}-day streak`}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 4,
-                  fontSize: 12, fontWeight: 600, color: T.warn,
+                  fontSize: 13, fontWeight: 600, color: T.warn,
                   background: T.goldAlpha,
                   padding: "4px 10px", borderRadius: 999, minHeight: 28,
                   fontFamily: T.mono,
@@ -594,7 +594,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           style={{
             background: T.goldAlpha, color: T.warn,
             borderBottom: `1px solid ${T.line}`,
-            padding: "8px 16px", fontSize: 12, fontWeight: 600,
+            padding: "8px 16px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 8,
             fontFamily: T.sans,
           }}
@@ -711,7 +711,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                   <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDD04"}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: "white", fontSize: 15 }}>Spaced Repetition Review</div>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>{dueKeys.length} question{dueKeys.length !== 1 ? "s" : ""} due — missed questions resurface at increasing intervals</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>{dueKeys.length} question{dueKeys.length !== 1 ? "s" : ""} due — missed questions resurface at increasing intervals</div>
                   </div>
                   <span style={{ background: "white", color: T.accent, fontSize: 13, fontWeight: 700, padding: "4px 10px", borderRadius: 12, flexShrink: 0 }}>{dueKeys.length}</span>
                 </button>
@@ -721,13 +721,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Practice Questions</div>
-                  <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>15 random questions from the full bank of {allWeeklyQs.length}</div>
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>15 random questions from the full bank of {allWeeklyQs.length}</div>
                 </div>
               </button>
               {Object.keys(srQueue).length > 0 && (
                 <div style={{ background: T.ice, borderRadius: 10, padding: 14, marginTop: 8, borderLeft: `3px solid ${T.med}` }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: T.navy, marginBottom: 6 }}>SR Queue Stats</div>
-                  <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.6 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 6 }}>SR Queue Stats</div>
+                  <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6 }}>
                     <div>Total in queue: {Object.keys(srQueue).length}</div>
                     <div>Due now: {dueKeys.length}</div>
                     <div>Mastered (interval &gt; 21 days): {Object.values(srQueue).filter(i => i.interval > 21).length}</div>
@@ -818,7 +818,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 transition: "background 0.15s ease, color 0.15s ease",
               }}>
               <t.Icon size={20} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
-              <span style={{ fontSize: 10, fontWeight: active ? 700 : 500 }}>{t.label}</span>
+              <span style={{ fontSize: 13, fontWeight: active ? 700 : 500 }}>{t.label}</span>
             </button>
           );
         })}
@@ -843,7 +843,7 @@ function LibraryHub({
   return (
     <div>
       <div style={{ padding: "20px 16px 8px", borderBottom: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Library</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Library</div>
         <h1 style={{ margin: 0, fontFamily: T.serif, fontSize: 28, fontWeight: 600, color: T.ink, letterSpacing: -0.4 }}>Guides &amp; references</h1>
         <p style={{ margin: "6px 0 0", fontSize: 13, color: T.ink2, lineHeight: 1.5 }}>
           Clinical guides, rotation playbooks, landmark trials, and quick-reference material.
@@ -855,7 +855,7 @@ function LibraryHub({
         clinicGuides={clinicGuides}
       />
       <div style={{ padding: "8px 16px", borderTop: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, margin: "8px 0 4px" }}>Quick references</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, margin: "8px 0 4px" }}>Quick references</div>
       </div>
       <RefsTab navigate={navigate} />
     </div>
@@ -911,10 +911,10 @@ function ProfileSheet({
 
         {/* Name + rotation code */}
         <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Student</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Student</div>
           <div style={{ fontSize: 16, fontWeight: 600, color: T.ink, marginBottom: 8 }}>{studentName || "—"}</div>
           {rotationCode && (
-            <span style={{ display: "inline-block", fontSize: 11, fontFamily: T.mono, letterSpacing: 1, color: T.ink2, background: T.surface2, border: `1px solid ${T.line}`, padding: "4px 10px", borderRadius: 999 }}>
+            <span style={{ display: "inline-block", fontSize: 13, fontFamily: T.mono, letterSpacing: 1, color: T.ink2, background: T.surface2, border: `1px solid ${T.line}`, padding: "4px 10px", borderRadius: 999 }}>
               {rotationCode}
             </span>
           )}
@@ -923,17 +923,17 @@ function ProfileSheet({
         {/* Competency + streak */}
         {(competencyLine || streakDays > 0) && (
           <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Learning Signal</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Learning Signal</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {competencyLine && (
                 <div>
-                  <div style={{ fontSize: 11, color: T.ink2, marginBottom: 2 }}>Top competency</div>
+                  <div style={{ fontSize: 13, color: T.ink2, marginBottom: 2 }}>Top competency</div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, letterSpacing: 0.1 }}>{competencyLine}</div>
                 </div>
               )}
               {streakDays > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, color: T.ink2, marginBottom: 2 }}>Streak</div>
+                  <div style={{ fontSize: 13, color: T.ink2, marginBottom: 2 }}>Streak</div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 16, fontWeight: 700, color: T.warn, fontFamily: T.mono }}>
                     <Flame size={16} strokeWidth={2} aria-hidden="true" /> {streakDays}d
                   </div>
@@ -945,7 +945,7 @@ function ProfileSheet({
 
         {/* Theme */}
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Appearance</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Appearance</div>
           <ThemeToggle variant="sheet" />
         </div>
 

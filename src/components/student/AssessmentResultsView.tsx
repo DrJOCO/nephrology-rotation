@@ -49,7 +49,7 @@ function GrowthPill({ growthPct }: { growthPct: number | null }) {
         color: positive ? T.greenDk : T.accent,
         borderRadius: 999,
         padding: "6px 10px",
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
       }}
     >
@@ -124,7 +124,7 @@ export default function AssessmentResultsView({
       >
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 1 }}>
               {mode === "pre" ? "Optional baseline" : "Optional wrap-up"}
             </div>
             <h2 style={{ color: T.navy, fontFamily: T.serif, margin: "6px 0 8px", fontSize: 26, fontWeight: 700 }}>
@@ -144,30 +144,30 @@ export default function AssessmentResultsView({
               textAlign: "right",
             }}
           >
-            <div style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>
+            <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>
               Score
             </div>
             <div style={{ fontSize: 30, fontWeight: 700, color: tone.accent, fontFamily: T.mono, lineHeight: 1 }}>
               {summary.overallPct}%
             </div>
-            <div style={{ color: T.sub, fontSize: 12, marginTop: 6 }}>
+            <div style={{ color: T.sub, fontSize: 13, marginTop: 6 }}>
               {score.correct}/{score.total} correct
             </div>
           </div>
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-          <span style={{ background: tone.pill, color: tone.accent, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+          <span style={{ background: tone.pill, color: tone.accent, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
             Focus: {summary.recommendedArea.shortLabel}
           </span>
           {summary.strongestAreas[0] && (
-            <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Strongest: {summary.strongestAreas[0].shortLabel}
             </span>
           )}
           <GrowthPill growthPct={summary.growthPct} />
           {score.date && (
-            <span style={{ background: T.grayBg, color: T.sub, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: T.grayBg, color: T.sub, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Taken {new Date(score.date).toLocaleDateString()}
             </span>
           )}
@@ -194,7 +194,7 @@ export default function AssessmentResultsView({
             >
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{action.label}</div>
-                <div style={{ fontSize: 12, color: action.label === recommendedAction.label ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
+                <div style={{ fontSize: 13, color: action.label === recommendedAction.label ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
                   {action.meta}
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function AssessmentResultsView({
               Use the low bands to drive teaching, review, and the next quiz set.
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.med, fontSize: 12, fontWeight: 700 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.med, fontSize: 13, fontWeight: 700 }}>
             <Brain size={14} strokeWidth={2} aria-hidden="true" />
             Results now shape Today
           </div>
@@ -232,12 +232,12 @@ export default function AssessmentResultsView({
                     <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
                       Week {area.week}: {area.label}
                     </div>
-                    <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
                       {area.correct}/{area.total} correct
                       {area.missedTopics.length > 0 ? ` · Missed ${area.missedTopics.join(", ")}` : " · Solid coverage in this band"}
                     </div>
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: areaTone.text }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: areaTone.text }}>
                     {area.status === "strong" ? "Strong" : area.status === "steady" ? "Steady" : "Focus"} · {area.pct}%
                   </div>
                 </div>
@@ -247,14 +247,14 @@ export default function AssessmentResultsView({
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   <button
                     onClick={() => navigate(area.action.tab, area.action.subView)}
-                    style={{ background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                    style={{ background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <Target size={14} strokeWidth={2} aria-hidden="true" />
                     {area.action.label}
                   </button>
                   <button
                     onClick={() => navigate(area.practiceAction.tab, area.practiceAction.subView)}
-                    style={{ background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                    style={{ background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
                     {area.practiceAction.label}
@@ -285,7 +285,7 @@ export default function AssessmentResultsView({
           >
             <div style={{ textAlign: "left" }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>Review missed questions</div>
-              <div style={{ fontSize: 12, color: T.sub, marginTop: 3 }}>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>
                 {missed.length} missed item{missed.length !== 1 ? "s" : ""} with explanations
               </div>
             </div>
@@ -304,13 +304,13 @@ export default function AssessmentResultsView({
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.text, lineHeight: 1.5, marginBottom: 8 }}>
                     {item.question.q}
                   </div>
-                  <div style={{ fontSize: 12, color: T.accent, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, color: T.accent, marginBottom: 4 }}>
                     Your answer: {item.question.choices[item.chosen]}
                   </div>
-                  <div style={{ fontSize: 12, color: T.greenDk, fontWeight: 700, marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, color: T.greenDk, fontWeight: 700, marginBottom: 8 }}>
                     Correct answer: {item.question.choices[item.question.answer]}
                   </div>
-                  <div style={{ background: T.card, borderRadius: 10, padding: "10px 12px", fontSize: 12, color: T.sub, lineHeight: 1.55 }}>
+                  <div style={{ background: T.card, borderRadius: 10, padding: "10px 12px", fontSize: 13, color: T.sub, lineHeight: 1.55 }}>
                     {item.question.explanation}
                   </div>
                 </div>

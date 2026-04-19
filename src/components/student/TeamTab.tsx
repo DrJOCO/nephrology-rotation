@@ -50,7 +50,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Team Board</h2>
-      <div style={{ color: T.muted, fontSize: 11, marginBottom: 16 }}>
+      <div style={{ color: T.muted, fontSize: 13, marginBottom: 16 }}>
         {teammates.length} student{teammates.length !== 1 ? "s" : ""} • {totalPatients} logged patient{totalPatients !== 1 ? "s" : ""} • {totalPoints} total pts
       </div>
 
@@ -78,13 +78,13 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
                     <div style={{ fontWeight: 700, fontSize: 13, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {student.name || "Unknown"}{isMe ? " (You)" : ""}
                     </div>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.55)" }}>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
                       {student.levelName} • {student.patientCount} patient{student.patientCount !== 1 ? "s" : ""}
                     </div>
                   </div>
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: 15, fontFamily: T.mono, color: "#F0C866" }}>{student.points}</div>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>pts</div>
+                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>pts</div>
                   </div>
                 </div>
               );
@@ -95,21 +95,21 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
 
       <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>Shared Snapshot</div>
-        <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5, marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
           Team view shows sanitized counts and topic exposure only. Patient names, diagnoses, rooms, and notes stay out of peer-facing views.
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
-          <span style={{ fontSize: 11, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+          <span style={{ fontSize: 13, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalActivePatients} active patients
           </span>
-          <span style={{ fontSize: 11, color: T.greenDk, background: T.greenBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+          <span style={{ fontSize: 13, color: T.greenDk, background: T.greenBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {Object.keys(cohortTopicCounts).length} topics seen
           </span>
         </div>
         {topCohortTopics.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {topCohortTopics.map(({ topic, count }) => (
-              <span key={topic} style={{ fontSize: 11, color: T.navy, background: T.ice, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+              <span key={topic} style={{ fontSize: 13, color: T.navy, background: T.ice, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
                 {topic} x{count}
               </span>
             ))}
@@ -134,7 +134,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
                 <div style={{ fontWeight: 700, fontSize: 14, color: T.navy }}>
                   {student.name || "Unknown"}{isMe ? " (You)" : ""}
                 </div>
-                <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>
+                <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>
                   {student.activePatientCount} active • {student.dischargedPatientCount} discharged • {student.patientCount} total
                 </div>
               </div>
@@ -148,7 +148,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
                 ) : (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {topTopics.map(({ topic, count }) => (
-                      <span key={topic} style={{ fontSize: 11, color: T.navy, background: T.ice, padding: "5px 10px", borderRadius: 999, fontWeight: 600 }}>
+                      <span key={topic} style={{ fontSize: 13, color: T.navy, background: T.ice, padding: "5px 10px", borderRadius: 999, fontWeight: 600 }}>
                         {topic} x{count}
                       </span>
                     ))}

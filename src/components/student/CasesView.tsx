@@ -5,7 +5,7 @@ import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
 import type { CompletedItems, Bookmarks } from "../../types";
 
 const caseImgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 12, border: `1px solid ${T.line}` };
-const caseCaptionStyle: CSSProperties = { fontSize: 11, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 };
+const caseCaptionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 };
 
 interface CaseAnswer {
   questionIdx: number;
@@ -68,10 +68,10 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             <span style={{ fontSize: 28 }}>🏥</span>
             <div>
               <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{caseData.title}</h2>
-              <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{caseData.category} • {caseData.difficulty}</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{caseData.category} • {caseData.difficulty}</div>
             </div>
           </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clinical Scenario</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clinical Scenario</div>
           <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, whiteSpace: "pre-line" }}>
             {caseData.scenario}
           </div>
@@ -80,7 +80,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         </div>
 
         {done && (
-          <div style={{ background: T.greenBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 12, color: T.greenDk, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.green}` }}>
+          <div style={{ background: T.greenBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.greenDk, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.green}` }}>
             <span style={{ fontSize: 16 }}>✓</span>
             <span>Previously completed: {done.score}/{done.total} correct ({Math.round((done.score / done.total) * 100)}%)</span>
           </div>
@@ -108,7 +108,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             {pct}%
           </div>
           <div style={{ fontSize: 14, color: T.sub, marginTop: 4 }}>{score}/{questions.length} correct</div>
-          {pct >= 80 && <div style={{ marginTop: 10, fontSize: 12, color: T.green, fontWeight: 600 }}>Strong signal for this domain.</div>}
+          {pct >= 80 && <div style={{ marginTop: 10, fontSize: 13, color: T.green, fontWeight: 600 }}>Strong signal for this domain.</div>}
         </div>
 
         {/* Review answers */}
@@ -121,15 +121,15 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
               <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6, lineHeight: 1.4 }}>
                 {i + 1}. {q.q}
               </div>
-              <div style={{ fontSize: 12, color: isCorrect ? T.green : T.accent, fontWeight: 600, marginBottom: 6 }}>
+              <div style={{ fontSize: 13, color: isCorrect ? T.green : T.accent, fontWeight: 600, marginBottom: 6 }}>
                 {isCorrect ? "✓ Correct" : `✗ Your answer: ${q.choices[ans.selected]}`}
               </div>
               {!isCorrect && (
-                <div style={{ fontSize: 12, color: T.green, fontWeight: 600, marginBottom: 6 }}>
+                <div style={{ fontSize: 13, color: T.green, fontWeight: 600, marginBottom: 6 }}>
                   Correct answer: {q.choices[q.answer]}
                 </div>
               )}
-              <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5, background: T.bg, borderRadius: 8, padding: 10 }}>
+              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, background: T.bg, borderRadius: 8, padding: 10 }}>
                 {q.explanation}
               </div>
             </div>
@@ -160,7 +160,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
           style={{ background: "none", border: "none", color: currentQ === 0 && answers.length === 0 ? T.med : "transparent", fontSize: 14, cursor: currentQ === 0 ? "pointer" : "default", padding: 0, fontWeight: 600, pointerEvents: currentQ === 0 && answers.length === 0 ? "auto" : "none" }}>
           ← Back
         </button>
-        <div style={{ fontSize: 12, fontWeight: 600, color: T.sub }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: T.sub }}>
           Question {currentQ + 1} of {questions.length}
         </div>
       </div>
@@ -170,11 +170,11 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
       {/* Scenario reference toggle */}
       <button onClick={() => setShowScenario(!showScenario)}
-        style={{ width: "100%", padding: "8px 12px", background: T.ice, color: T.med, border: `1px solid ${T.pale}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        style={{ width: "100%", padding: "8px 12px", background: T.ice, color: T.med, border: `1px solid ${T.pale}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
         {showScenario ? "▾ Hide Scenario" : "▸ Show Clinical Scenario"}
       </button>
       {showScenario && (
-        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 14, border: `1px solid ${T.line}`, fontSize: 12, color: T.text, lineHeight: 1.6, whiteSpace: "pre-line", maxHeight: 200, overflowY: "auto" }}>
+        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 14, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, lineHeight: 1.6, whiteSpace: "pre-line", maxHeight: 200, overflowY: "auto" }}>
           {caseData.scenario}
         </div>
       )}
@@ -217,7 +217,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
       {/* Explanation */}
       {showExplanation && (
         <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${selected === q.answer ? T.green : T.accent}` }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: selected === q.answer ? T.green : T.accent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: selected === q.answer ? T.green : T.accent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
             {selected === q.answer ? "Correct!" : "Incorrect"}
           </div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>
@@ -277,7 +277,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
                 {(bookmarks?.cases || []).includes(c.id) ? "★" : "☆"}
               </button>
               {done && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: T.green, background: T.greenBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: T.green, background: T.greenBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
                   ✓ {done.score}/{done.total}
                 </span>
               )}
@@ -286,11 +286,11 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
               <span style={{ fontSize: 22 }}>🏥</span>
               <div>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
-                <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>{c.category} • {c.questions.length} questions</div>
+                <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{c.category} • {c.questions.length} questions</div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-              <span style={{ fontSize: 10, fontWeight: 600, color: diff.text, background: diff.bg, padding: "2px 8px", borderRadius: 6, border: `1px solid ${diff.border}` }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: diff.text, background: diff.bg, padding: "2px 8px", borderRadius: 6, border: `1px solid ${diff.border}` }}>
                 {c.difficulty}
               </span>
             </div>

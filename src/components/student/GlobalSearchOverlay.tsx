@@ -250,7 +250,7 @@ export default function GlobalSearchOverlay({
                     border: `1px solid ${active ? T.accent : T.line}`,
                     background: active ? T.redBg : T.surface,
                     color: active ? T.accent : T.ink2,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
                   }}
@@ -261,7 +261,7 @@ export default function GlobalSearchOverlay({
             })}
           </div>
 
-          <div aria-live="polite" style={{ fontSize: 11, color: T.muted, marginTop: 8, display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          <div aria-live="polite" style={{ fontSize: 13, color: T.muted, marginTop: 8, display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
             <span>
               {results
                 ? `${totalResults} result${totalResults !== 1 ? "s" : ""}${scope === "all" ? "" : ` in ${activeScope.label}`}`
@@ -276,7 +276,7 @@ export default function GlobalSearchOverlay({
             <section style={{ marginBottom: 18 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                 <Clock3 size={14} strokeWidth={1.75} color={T.muted} aria-hidden="true" />
-                <div style={{ fontSize: 12, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.6 }}>Recent queries</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.6 }}>Recent queries</div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {recentQueries.map((entry) => (
@@ -286,7 +286,7 @@ export default function GlobalSearchOverlay({
                     style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", cursor: "pointer", textAlign: "left" }}
                   >
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{entry.query}</div>
-                    <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{SCOPES.find((item) => item.id === entry.scope)?.label || "All"}</div>
+                    <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>{SCOPES.find((item) => item.id === entry.scope)?.label || "All"}</div>
                   </button>
                 ))}
               </div>
@@ -312,7 +312,7 @@ export default function GlobalSearchOverlay({
 
           {groups.map((group) => (
             <section key={group.key} style={{ marginBottom: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{group.title}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{group.title}</div>
               {group.items.slice(0, scope === "all" ? 5 : 8).map((item, index) => (
                 <button
                   key={`${group.key}-${index}-${item.label}`}
@@ -324,10 +324,10 @@ export default function GlobalSearchOverlay({
                       {highlightText(item.label, query)}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 7 }}>
-                      <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 8px", fontSize: 11, fontWeight: 700 }}>
+                      <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
                         {item.kind}
                       </span>
-                      <span style={{ fontSize: 12, color: T.sub, lineHeight: 1.45 }}>
+                      <span style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>
                         {highlightText(item.tag, query)}
                       </span>
                     </div>
@@ -336,7 +336,7 @@ export default function GlobalSearchOverlay({
                 </button>
               ))}
               {group.items.length > (scope === "all" ? 5 : 8) && (
-                <div style={{ fontSize: 11, color: T.med, textAlign: "center", paddingTop: 2 }}>
+                <div style={{ fontSize: 13, color: T.med, textAlign: "center", paddingTop: 2 }}>
                   +{group.items.length - (scope === "all" ? 5 : 8)} more
                 </div>
               )}

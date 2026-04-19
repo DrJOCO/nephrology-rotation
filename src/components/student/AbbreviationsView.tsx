@@ -38,7 +38,7 @@ export default function AbbreviationsView({ onBack }) {
 
       {!search && (
         <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 14, borderLeft: `4px solid ${T.med}` }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.med, marginBottom: 4 }}>PRO TIP</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 4 }}>PRO TIP</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
             If you see an abbreviation in a note you don't recognize, search here first. The most common ones you'll encounter daily: Cr, GFR, FENa, UA, UOP, I&Os, HD, PD, AVF, BMP, AG.
           </div>

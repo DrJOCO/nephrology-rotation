@@ -40,17 +40,17 @@ export default function ArticlesView({ week, onBack, curriculum, articles, compl
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, lineHeight: 1.35, marginBottom: 4 }}>{a.title}</div>
-                  <div style={{ fontSize: 12, color: T.sub }}>{a.journal} ({a.year})</div>
+                  <div style={{ fontSize: 13, color: T.sub }}>{a.journal} ({a.year})</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: T.muted, background: T.bg, padding: "2px 8px", borderRadius: 6 }}>{a.topic}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: T.muted, background: T.bg, padding: "2px 8px", borderRadius: 6 }}>{a.topic}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
-                    <span style={{ fontSize: 10, color: T.muted }}>Can&#39;t access?</span>
+                    <span style={{ fontSize: 13, color: T.muted }}>Can&#39;t access?</span>
                     <a href={`https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(a.title)}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                      style={{ fontSize: 10, fontWeight: 600, color: T.med, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.blueBg }}>PubMed</a>
+                      style={{ fontSize: 13, fontWeight: 600, color: T.med, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.blueBg }}>PubMed</a>
                     <a href={`https://scholar.google.com/scholar?q=${encodeURIComponent(a.title)}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                      style={{ fontSize: 10, fontWeight: 600, color: T.med, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.blueBg }}>Scholar</a>
+                      style={{ fontSize: 13, fontWeight: 600, color: T.med, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.blueBg }}>Scholar</a>
                   </div>
                 </div>
                 <div style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u2197"}</div>

@@ -34,7 +34,7 @@ function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
         <div style={{ display: "grid", gridTemplateColumns: isMobile || refData.inputs.length > 4 ? "1fr" : "1fr 1fr", gap: 12 }}>
           {refData.inputs.map(inp => (
             <div key={inp.key}>
-              <label style={{ fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>{inp.label}</label>
+              <label style={{ fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>{inp.label}</label>
               <input
                 type="number" step="any"
                 placeholder={inp.placeholder}
@@ -60,11 +60,11 @@ function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
       {/* Result */}
       {result && (
         <div style={{ background: T.ice, borderRadius: 14, padding: 20, border: `1px solid ${T.pale}` }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Result</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Result</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: T.navy, fontFamily: T.mono, marginBottom: 10 }}>{result.value}</div>
           <div style={{ fontSize: 14, color: T.text, lineHeight: 1.6, whiteSpace: "pre-line", wordBreak: "break-word", marginBottom: result.caveat ? 10 : 0 }}>{result.interpretation}</div>
           {result.caveat && (
-            <div style={{ fontSize: 12, color: T.orange, background: T.yellowBg, borderRadius: 8, padding: 10, lineHeight: 1.5 }}>{result.caveat}</div>
+            <div style={{ fontSize: 13, color: T.orange, background: T.yellowBg, borderRadius: 8, padding: 10, lineHeight: 1.5 }}>{result.caveat}</div>
           )}
         </div>
       )}
@@ -120,8 +120,8 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
     <div>
       {/* External Image Links banner */}
       <div style={{ background: T.purpleBg, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${T.purple}` }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: T.purple, marginBottom: 6 }}>📷 IMAGE RESOURCES</div>
-        <div style={{ fontSize: 12, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images. Pair with descriptions here for best learning.</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.purple, marginBottom: 6 }}>📷 IMAGE RESOURCES</div>
+        <div style={{ fontSize: 13, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images. Pair with descriptions here for best learning.</div>
         {refData.imageLinks.map((link, i) => (
           <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
             style={{ display: "block", fontSize: 13, color: T.med, fontWeight: 600, textDecoration: "none", padding: "4px 0" }}>
@@ -143,18 +143,18 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
                   style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.purpleBg : "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{item.finding}</div>
-                    <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{item.significance}</div>
+                    <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{item.significance}</div>
                   </div>
                   <span style={{ color: T.muted, fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0, marginLeft: 8 }}>›</span>
                 </button>
                 {isOpen && (
                   <div style={{ padding: "0 14px 14px" }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.3 }}>Appearance</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.3 }}>Appearance</div>
                     <div style={{ fontSize: 13, color: T.text, marginBottom: 10, lineHeight: 1.5 }}>{item.appearance}</div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.3 }}>Associations</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.3 }}>Associations</div>
                     <div style={{ fontSize: 13, color: T.text, marginBottom: 10, lineHeight: 1.5 }}>{item.associations}</div>
                     <div style={{ background: T.ice, borderRadius: 8, padding: 10, borderLeft: `3px solid ${T.med}` }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: T.med, marginBottom: 3 }}>CLINICAL PEARL</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 3 }}>CLINICAL PEARL</div>
                       <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{item.clinicalPearl}</div>
                     </div>
                   </div>

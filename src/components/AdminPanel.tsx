@@ -506,7 +506,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
           <h1 style={{ color: T.navy, fontFamily: T.serif, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>Admin Sign-In</h1>
           <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px" }}>Use your Firebase admin account before unlocking the panel PIN.</p>
           <div style={{ textAlign: "left", marginBottom: 12 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4 }}>Admin Email</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4 }}>Admin Email</label>
             <input
               type="email"
               value={authEmail}
@@ -517,7 +517,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             />
           </div>
           <div style={{ textAlign: "left", marginBottom: 14 }}>
-            <label style={{ fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4 }}>Password</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4 }}>Password</label>
             <input
               type="password"
               value={authPassword}
@@ -527,7 +527,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
               style={{ width: "100%", padding: "12px 14px", border: `2px solid ${T.pale}`, borderRadius: 10, outline: "none", boxSizing: "border-box", fontSize: 14 }}
             />
           </div>
-          {authError && <p style={{ color: T.accent, fontSize: 12, margin: "0 0 14px", fontWeight: 600 }}>{authError}</p>}
+          {authError && <p style={{ color: T.accent, fontSize: 13, margin: "0 0 14px", fontWeight: 600 }}>{authError}</p>}
           <button
             onClick={handleAdminSignIn}
             disabled={!authEmail.trim() || !authPassword || authSubmitting}
@@ -535,7 +535,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
           >
             {authSubmitting ? "Signing In..." : "Sign In"}
           </button>
-          <p style={{ color: T.muted, fontSize: 11, marginTop: 12 }}>Enable Email/Password auth in Firebase and add your UID to Firestore `admins/{'{uid}'}`.</p>
+          <p style={{ color: T.muted, fontSize: 13, marginTop: 12 }}>Enable Email/Password auth in Firebase and add your UID to Firestore `admins/{'{uid}'}`.</p>
           {onExit && <button onClick={onExit} style={{ marginTop: 14, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>← Back to Student App</button>}
         </div>
       </div>
@@ -557,12 +557,12 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
               style={{ width: "100%", padding: "14px 16px", fontSize: 18, border: `2px solid ${pinError ? T.accent : T.pale}`, borderRadius: 10, outline: "none", boxSizing: "border-box", marginBottom: 16, fontFamily: T.mono, textAlign: "center", letterSpacing: 6 }}
             />
           </div>
-          {pinError && <p style={{ color: T.accent, fontSize: 12, margin: "8px 0 0", fontWeight: 600 }}>Incorrect PIN</p>}
+          {pinError && <p style={{ color: T.accent, fontSize: 13, margin: "8px 0 0", fontWeight: 600 }}>Incorrect PIN</p>}
           <button onClick={handlePinSubmit}
             style={{ width: "100%", padding: "14px 0", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
             Enter
           </button>
-          <p style={{ color: T.muted, fontSize: 11, marginTop: 12 }}>Signed in as {firebaseAdmin.email || "admin user"}. Set or change your PIN in Settings.</p>
+          <p style={{ color: T.muted, fontSize: 13, marginTop: 12 }}>Signed in as {firebaseAdmin.email || "admin user"}. Set or change your PIN in Settings.</p>
           <button onClick={handleAdminSignOut} style={{ marginTop: 12, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>Sign Out</button>
           {onExit && <button onClick={onExit} style={{ marginTop: 14, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>← Back to Student App</button>}
         </div>
@@ -586,22 +586,22 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ color: "white", fontFamily: T.serif, fontSize: 19, fontWeight: 700 }}>
-              Admin Panel <span style={{ fontSize: 10, background: T.orange, color: "white", padding: "2px 8px", borderRadius: 6, marginLeft: 8, fontFamily: T.sans, fontWeight: 600, verticalAlign: "middle" }}>ATTENDING</span>
+              Admin Panel <span style={{ fontSize: 13, background: T.orange, color: "white", padding: "2px 8px", borderRadius: 6, marginLeft: 8, fontFamily: T.sans, fontWeight: 600, verticalAlign: "middle" }}>ATTENDING</span>
             </div>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {settings.attendingName || "Nephrology Rotation"}
-              {rotationCode && <span style={{ marginLeft: 8, fontSize: 10, background: "rgba(255,255,255,0.15)", padding: "2px 8px", borderRadius: 6, fontFamily: T.mono, letterSpacing: 1 }}>Code: {rotationCode}</span>}
+              {rotationCode && <span style={{ marginLeft: 8, fontSize: 13, background: "rgba(255,255,255,0.15)", padding: "2px 8px", borderRadius: 6, fontFamily: T.mono, letterSpacing: 1 }}>Code: {rotationCode}</span>}
             </div>
           </div>
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             <AdminThemeToggle />
-            {onExit && <button onClick={onExit} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 11, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>← Student</button>}
+            {onExit && <button onClick={onExit} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>← Student</button>}
             <button onClick={() => { setAuthed(false); }}
-              style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 11, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>
+              style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>
               Lock 🔒
             </button>
             <button onClick={handleAdminSignOut}
-              style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 11, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>
+              style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>
               Sign Out
             </button>
           </div>
@@ -637,7 +637,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
                 borderTop: active ? `2.5px solid ${T.orange}` : "2.5px solid transparent",
               }}>
               <span style={{ fontSize: 20 }}>{t.icon}</span>
-              <span style={{ fontSize: 10, fontWeight: 600 }}>{t.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{t.label}</span>
             </button>
           );
         })}
@@ -676,19 +676,19 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
       {/* Pre/Post Comparison */}
       {avgPre !== null && avgPost !== null && (
         <div style={{ background: `linear-gradient(135deg, ${T.navyBg}, ${T.deepBg})`, borderRadius: 16, padding: 20, marginBottom: 20, color: "white" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: "rgba(255,255,255,0.6)", marginBottom: 12 }}>Cohort Knowledge Growth</div>
+          <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: "rgba(255,255,255,0.6)", marginBottom: 12 }}>Cohort Knowledge Growth</div>
           <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center" }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>Pre-Test Avg</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Pre-Test Avg</div>
               <div style={{ fontSize: 30, fontWeight: 700, fontFamily: T.mono }}>{avgPre}%</div>
             </div>
             <div style={{ fontSize: 28, color: T.green }}>→</div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 10, color: T.green }}>Post-Test Avg</div>
+              <div style={{ fontSize: 13, color: T.green }}>Post-Test Avg</div>
               <div style={{ fontSize: 30, fontWeight: 700, fontFamily: T.mono, color: T.green }}>{avgPost}%</div>
             </div>
             <div style={{ textAlign: "center", background: "rgba(26,188,156,0.2)", borderRadius: 10, padding: "10px 16px" }}>
-              <div style={{ fontSize: 10, color: T.green }}>Avg Growth</div>
+              <div style={{ fontSize: 13, color: T.green }}>Avg Growth</div>
               <div style={{ fontSize: 26, fontWeight: 700, color: T.green, fontFamily: T.mono }}>+{avgPost - avgPre}%</div>
             </div>
           </div>
@@ -745,7 +745,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
               <span style={{ fontSize: 20 }}>{a.icon}</span>
               <div>
                 <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>{a.label}</div>
-                <div style={{ fontSize: 10, color: T.muted, marginTop: 2 }}>{a.desc}</div>
+                <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>{a.desc}</div>
               </div>
             </div>
           </button>
@@ -776,7 +776,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
             <div style={{ textAlign: "center", marginBottom: 16 }}>
               <div style={{ fontSize: 36, marginBottom: 8 }}>🔄</div>
               <h3 style={{ color: T.navy, fontFamily: T.serif, fontSize: 18, margin: "0 0 4px", fontWeight: 700 }}>Reset Options</h3>
-              <p style={{ color: T.sub, fontSize: 12, margin: 0 }}>Choose what to reset for all {students.length} students</p>
+              <p style={{ color: T.sub, fontSize: 13, margin: 0 }}>Choose what to reset for all {students.length} students</p>
             </div>
             {[
               { key: "resetQuizzes", label: "Reset Quizzes Only", desc: "Clears pre/post tests and weekly quiz scores. Keeps patients, SR, and achievements.", icon: "📝", color: T.orange,
@@ -814,7 +814,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
                 <span style={{ fontSize: 22, flexShrink: 0 }}>{opt.icon}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>{opt.label}</div>
-                  <div style={{ fontSize: 11, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>{opt.desc}</div>
+                  <div style={{ fontSize: 13, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>{opt.desc}</div>
                 </div>
               </button>
             ))}
@@ -877,23 +877,23 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
-                      {s.loginPin && <span style={{ fontSize: 10, background: T.yellowBg, color: T.orange, padding: "1px 6px", borderRadius: 6, fontWeight: 700, fontFamily: T.mono, letterSpacing: 1 }}>PIN {s.loginPin}</span>}
-                      <span style={{ fontSize: 11, background: T.ice, padding: "1px 8px", borderRadius: 8, fontWeight: 600, color: T.navy }}>{lvl.icon} {pts}pts</span>
+                      {s.loginPin && <span style={{ fontSize: 13, background: T.yellowBg, color: T.orange, padding: "1px 6px", borderRadius: 6, fontWeight: 700, fontFamily: T.mono, letterSpacing: 1 }}>PIN {s.loginPin}</span>}
+                      <span style={{ fontSize: 13, background: T.ice, padding: "1px 8px", borderRadius: 8, fontWeight: 600, color: T.navy }}>{lvl.icon} {pts}pts</span>
                     </div>
-                    <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>
+                    <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
                       {(s.patients || []).length} patients • {quizzesDone} quizzes • {s.year || "MS3/MS4"}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     {prePct !== null && (
                       <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 9, color: T.muted, textTransform: "uppercase" }}>Pre</div>
+                        <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase" }}>Pre</div>
                         <div style={{ fontSize: 16, fontWeight: 700, color: T.orange, fontFamily: T.mono }}>{prePct}%</div>
                       </div>
                     )}
                     {postPct !== null && (
                       <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 9, color: T.green, textTransform: "uppercase" }}>Post</div>
+                        <div style={{ fontSize: 13, color: T.green, textTransform: "uppercase" }}>Post</div>
                         <div style={{ fontSize: 16, fontWeight: 700, color: T.green, fontFamily: T.mono }}>{postPct}%</div>
                       </div>
                     )}
@@ -931,10 +931,10 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
               {/* Most seen topics */}
               {seenTopics.length > 0 && (
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Most Seen on Service</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Most Seen on Service</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {seenTopics.slice(0, 8).map(([topic, count]) => (
-                      <span key={topic} style={{ background: T.ice, color: T.navy, fontSize: 11, padding: "4px 10px", borderRadius: 10, fontWeight: 500 }}>
+                      <span key={topic} style={{ background: T.ice, color: T.navy, fontSize: 13, padding: "4px 10px", borderRadius: 10, fontWeight: 500 }}>
                         {topic} <span style={{ fontWeight: 700, color: T.med, fontFamily: T.mono }}>({count})</span>
                       </span>
                     ))}
@@ -944,10 +944,10 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
               {/* Never seen */}
               {neverSeen.length > 0 && (
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Not Yet Encountered</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Not Yet Encountered</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {neverSeen.slice(0, 10).map(topic => (
-                      <span key={topic} style={{ background: T.yellowBg, color: T.goldText, fontSize: 11, padding: "4px 10px", borderRadius: 10, fontWeight: 500 }}>
+                      <span key={topic} style={{ background: T.yellowBg, color: T.goldText, fontSize: 13, padding: "4px 10px", borderRadius: 10, fontWeight: 500 }}>
                         {topic}
                       </span>
                     ))}
@@ -956,15 +956,15 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
               )}
               {/* PKD / APOL1 status */}
               <div style={{ background: T.bg, borderRadius: 10, padding: 10, marginTop: 8 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Key Topic Coverage</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Key Topic Coverage</div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <div style={{ flex: 1, background: pkdSeen > 0 ? T.greenBg : T.yellowBg, borderRadius: 8, padding: "8px 10px", border: `1px solid ${pkdSeen > 0 ? T.greenAlpha : T.goldAlpha}` }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: T.text }}>PKD</div>
-                    <div style={{ fontSize: 10, color: pkdSeen > 0 ? T.greenDk : T.muted }}>{pkdSeen > 0 ? `${pkdSeen} patient${pkdSeen !== 1 ? "s" : ""}` : "Not yet seen"}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>PKD</div>
+                    <div style={{ fontSize: 13, color: pkdSeen > 0 ? T.greenDk : T.muted }}>{pkdSeen > 0 ? `${pkdSeen} patient${pkdSeen !== 1 ? "s" : ""}` : "Not yet seen"}</div>
                   </div>
                   <div style={{ flex: 1, background: apol1Seen > 0 ? T.greenBg : T.yellowBg, borderRadius: 8, padding: "8px 10px", border: `1px solid ${apol1Seen > 0 ? T.greenAlpha : T.goldAlpha}` }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: T.text }}>APOL1</div>
-                    <div style={{ fontSize: 10, color: apol1Seen > 0 ? T.greenDk : T.muted }}>{apol1Seen > 0 ? `${apol1Seen} patient${apol1Seen !== 1 ? "s" : ""}` : "Not yet seen"}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>APOL1</div>
+                    <div style={{ fontSize: 13, color: apol1Seen > 0 ? T.greenDk : T.muted }}>{apol1Seen > 0 ? `${apol1Seen} patient${apol1Seen !== 1 ? "s" : ""}` : "Not yet seen"}</div>
                   </div>
                 </div>
               </div>
@@ -999,9 +999,9 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
                   <span style={{ fontSize: 16, flexShrink: 0 }}>{typeIcons[a.type] || "📌"}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, color: T.text, fontWeight: 600 }}>{a.studentName}</div>
-                    <div style={{ fontSize: 11, color: T.sub }}>{a.label}{a.detail ? ` — ${a.detail}` : ""}</div>
+                    <div style={{ fontSize: 13, color: T.sub }}>{a.label}{a.detail ? ` — ${a.detail}` : ""}</div>
                   </div>
-                  <div style={{ fontSize: 10, color: T.muted, flexShrink: 0, whiteSpace: "nowrap" }}>{formatTime(a.timestamp)}</div>
+                  <div style={{ fontSize: 13, color: T.muted, flexShrink: 0, whiteSpace: "nowrap" }}>{formatTime(a.timestamp)}</div>
                 </div>
               ))}
             </div>
@@ -1025,7 +1025,7 @@ function StatCard({ value, label, color, icon }: { value: string | number; label
     <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", top: 10, right: 12, fontSize: 24, opacity: 0.15 }}>{icon}</div>
       <div style={{ fontSize: 28, fontWeight: 700, color, fontFamily: T.mono }}>{value}</div>
-      <div style={{ fontSize: 11, color: T.sub, marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{label}</div>
     </div>
   );
 }
@@ -1118,7 +1118,7 @@ function AnalyticsTab({ students }: { students: AdminStudent[] }) {
 
   const cardStyle = { background: T.card, borderRadius: 14, padding: 18, marginBottom: 16, border: `1px solid ${T.line}` };
   const titleStyle = { fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 4 };
-  const subStyle = { fontSize: 11, color: T.sub, marginBottom: 14 };
+  const subStyle = { fontSize: 13, color: T.sub, marginBottom: 14 };
 
   return (
     <div style={{ padding: 16 }}>
@@ -1138,11 +1138,11 @@ function AnalyticsTab({ students }: { students: AdminStudent[] }) {
             {(withPre.length > 0 || withPost.length > 0) ? (
               <HistogramChart bins={histData} width={320} height={160} />
             ) : (
-              <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No quiz scores yet</div>
+              <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>No quiz scores yet</div>
             )}
             <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 8 }}>
-              <span style={{ fontSize: 10, color: T.orange }}>● Pre-Test ({withPre.length})</span>
-              <span style={{ fontSize: 10, color: T.green }}>● Post-Test ({withPost.length})</span>
+              <span style={{ fontSize: 13, color: T.orange }}>● Pre-Test ({withPre.length})</span>
+              <span style={{ fontSize: 13, color: T.green }}>● Post-Test ({withPost.length})</span>
             </div>
           </div>
 
@@ -1180,15 +1180,15 @@ function AnalyticsTab({ students }: { students: AdminStudent[] }) {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               <div style={{ textAlign: "center", background: T.ice, borderRadius: 10, padding: 12 }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{srTotal}</div>
-                <div style={{ fontSize: 10, color: T.sub }}>Items in Queue</div>
+                <div style={{ fontSize: 13, color: T.sub }}>Items in Queue</div>
               </div>
               <div style={{ textAlign: "center", background: T.greenBg, borderRadius: 10, padding: 12 }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: T.greenDk, fontFamily: T.mono }}>{srMastered}</div>
-                <div style={{ fontSize: 10, color: T.sub }}>Mastered</div>
+                <div style={{ fontSize: 13, color: T.sub }}>Mastered</div>
               </div>
               <div style={{ textAlign: "center", background: T.yellowBg, borderRadius: 10, padding: 12 }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: T.goldText, fontFamily: T.mono }}>{srTotal > 0 ? Math.round((srMastered / srTotal) * 100) : 0}%</div>
-                <div style={{ fontSize: 10, color: T.sub }}>Mastery Rate</div>
+                <div style={{ fontSize: 13, color: T.sub }}>Mastery Rate</div>
               </div>
             </div>
           </div>
@@ -1243,7 +1243,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode }: { studen
       </div>
 
       {isConnected && (
-        <div style={{ background: T.blueBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 12, color: T.navy, lineHeight: 1.5 }}>
+        <div style={{ background: T.blueBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.navy, lineHeight: 1.5 }}>
           📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code.
         </div>
       )}
@@ -1287,7 +1287,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode }: { studen
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>🎓</div>
           <div style={{ fontSize: 14 }}>No active students</div>
-          <div style={{ fontSize: 12, color: T.muted, marginTop: 4 }}>{isConnected ? "Students will appear when they join with the rotation code" : "Add your first student above"}</div>
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>{isConnected ? "Students will appear when they join with the rotation code" : "Add your first student above"}</div>
         </div>
       )}
 
@@ -1297,7 +1297,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode }: { studen
 
       {completed.length > 0 && (
         <>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.muted, margin: "20px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, margin: "20px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
             Completed Rotations ({completed.length})
           </div>
           {completed.map(s => (
@@ -1320,30 +1320,30 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }: { stud
           style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
-            <span style={{ fontSize: 10, color: "white", background: T.med, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{s.year}</span>
-            {s.loginPin && <span style={{ fontSize: 10, background: T.yellowBg, color: T.orange, padding: "2px 8px", borderRadius: 10, fontWeight: 700, fontFamily: T.mono, letterSpacing: 1 }}>PIN {s.loginPin}</span>}
+            <span style={{ fontSize: 13, color: "white", background: T.med, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{s.year}</span>
+            {s.loginPin && <span style={{ fontSize: 13, background: T.yellowBg, color: T.orange, padding: "2px 8px", borderRadius: 10, fontWeight: 700, fontFamily: T.mono, letterSpacing: 1 }}>PIN {s.loginPin}</span>}
           </div>
-          <div style={{ fontSize: 12, color: T.sub }}>
+          <div style={{ fontSize: 13, color: T.sub }}>
             {(s.patients || []).length} patients • Started {(s as AdminStudent & { startDate?: string }).startDate || new Date(s.addedDate).toLocaleDateString()}
           </div>
           {/* Score bars */}
           <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
             {prePct !== null && (
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 10, color: T.muted }}>Pre:</span>
+                <span style={{ fontSize: 13, color: T.muted }}>Pre:</span>
                 <div style={{ width: 60, height: 6, background: T.grayBg, borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ width: `${prePct}%`, height: "100%", background: T.orange, borderRadius: 3 }} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: T.orange, fontFamily: T.mono }}>{prePct}%</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.orange, fontFamily: T.mono }}>{prePct}%</span>
               </div>
             )}
             {postPct !== null && (
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 10, color: T.muted }}>Post:</span>
+                <span style={{ fontSize: 13, color: T.muted }}>Post:</span>
                 <div style={{ width: 60, height: 6, background: T.grayBg, borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ width: `${postPct}%`, height: "100%", background: T.green, borderRadius: 3 }} />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: T.green, fontFamily: T.mono }}>{postPct}%</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.green, fontFamily: T.mono }}>{postPct}%</span>
               </div>
             )}
           </div>
@@ -1351,12 +1351,12 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }: { stud
         {(onToggle || onRemove) && (
           <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
             {onToggle && (
-              <button onClick={onToggle} style={{ background: "none", border: `1px solid ${dimmed ? T.green : T.muted}`, borderRadius: 6, padding: "4px 8px", fontSize: 10, cursor: "pointer", color: dimmed ? T.green : T.sub }}>
+              <button onClick={onToggle} style={{ background: "none", border: `1px solid ${dimmed ? T.green : T.muted}`, borderRadius: 6, padding: "4px 8px", fontSize: 13, cursor: "pointer", color: dimmed ? T.green : T.sub }}>
                 {dimmed ? "↩ Reactivate" : "✓ Complete"}
               </button>
             )}
             {onRemove && (
-              <button onClick={onRemove} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 10, cursor: "pointer", color: T.muted }}>✕</button>
+              <button onClick={onRemove} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 13, cursor: "pointer", color: T.muted }}>✕</button>
             )}
           </div>
         )}
@@ -1365,7 +1365,7 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }: { stud
   );
 }
 
-const adminLabel: React.CSSProperties = { fontSize: 11, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
+const adminLabel: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 const adminInput: React.CSSProperties = { width: "100%", padding: "10px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", fontFamily: T.sans, outline: "none", background: T.card, color: T.text };
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1384,7 +1384,7 @@ function ContentTab({ navigate, articles, curriculum, clinicGuides }: { navigate
           <div style={{ width: 48, height: 48, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📚</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Weekly Curriculum</div>
-            <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>Edit week titles, subtitles, and topics</div>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Edit week titles, subtitles, and topics</div>
           </div>
           <span style={{ color: T.muted, fontSize: 16 }}>›</span>
         </div>
@@ -1398,7 +1398,7 @@ function ContentTab({ navigate, articles, curriculum, clinicGuides }: { navigate
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>Week {w}: {(curriculum[w] || WEEKLY[w]).title}</div>
-              <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{(articles[w] || []).length} articles</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{(articles[w] || []).length} articles</div>
             </div>
             <span style={{ color: T.muted, fontSize: 14 }}>›</span>
           </div>
@@ -1412,7 +1412,7 @@ function ContentTab({ navigate, articles, curriculum, clinicGuides }: { navigate
           <div style={{ width: 48, height: 48, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📢</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Announcements</div>
-            <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>Post notes or reminders for students</div>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Post notes or reminders for students</div>
           </div>
           <span style={{ color: T.muted, fontSize: 16 }}>›</span>
         </div>
@@ -1425,7 +1425,7 @@ function ContentTab({ navigate, articles, curriculum, clinicGuides }: { navigate
           <div style={{ width: 48, height: 48, borderRadius: 12, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🩺</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Friday Clinic Guides</div>
-            <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>Manage weekly outpatient clinic teaching guides ({clinicGuides.length} generated)</div>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Manage weekly outpatient clinic teaching guides ({clinicGuides.length} generated)</div>
           </div>
           <span style={{ color: T.muted, fontSize: 16 }}>›</span>
         </div>
@@ -1478,7 +1478,7 @@ function ArticleEditor({ week, articles, setArticles, onBack }: { week: number; 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Week {week} Articles</h2>
         <button onClick={() => { setShowAdd(!showAdd); setEditIdx(null); setForm({ title: "", journal: "", year: "", url: "", topic: "", type: "Review" }); }}
-          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.orange, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.orange, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ Add Article"}
         </button>
       </div>
@@ -1533,10 +1533,10 @@ function ArticleEditor({ week, articles, setArticles, onBack }: { week: number; 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, lineHeight: 1.3, wordBreak: "break-word" }}>{a.title}</div>
-              <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{a.journal} ({a.year})</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{a.journal} ({a.year})</div>
               <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                <span style={{ fontSize: 10, fontWeight: 600, color: T.med, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
-                <span style={{ fontSize: 10, fontWeight: 600, color: T.muted, background: T.bg, padding: "2px 8px", borderRadius: 6 }}>{a.topic}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.med, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.muted, background: T.bg, padding: "2px 8px", borderRadius: 6 }}>{a.topic}</span>
               </div>
             </div>
             <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
@@ -1582,7 +1582,7 @@ function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curriculum: W
         if (isEditing) {
           return (
             <div key={w} style={{ background: T.card, borderRadius: 14, padding: 18, marginBottom: 12, border: `2px solid ${T.orange}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: T.orange, marginBottom: 10 }}>EDITING WEEK {w}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.orange, marginBottom: 10 }}>EDITING WEEK {w}</div>
               <div style={{ marginBottom: 10 }}>
                 <label style={adminLabel}>Title</label>
                 <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} style={adminInput} />
@@ -1608,14 +1608,14 @@ function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curriculum: W
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Week {w}: {wk.title}</div>
-                <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{wk.sub}</div>
+                <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{wk.sub}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
                   {wk.topics.map(t => (
-                    <span key={t} style={{ fontSize: 10, background: T.ice, color: T.navy, padding: "2px 8px", borderRadius: 8, fontWeight: 500 }}>{t}</span>
+                    <span key={t} style={{ fontSize: 13, background: T.ice, color: T.navy, padding: "2px 8px", borderRadius: 8, fontWeight: 500 }}>{t}</span>
                   ))}
                 </div>
               </div>
-              <button onClick={() => startEdit(w)} style={{ ...tinyBtn, fontSize: 12 }}>✏️</button>
+              <button onClick={() => startEdit(w)} style={{ ...tinyBtn, fontSize: 13 }}>✏️</button>
             </div>
           </div>
         );
@@ -1644,7 +1644,7 @@ function AnnouncementsEditor({ announcements, setAnnouncements, onBack }: { anno
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Announcements</h2>
         <button onClick={() => setShowAdd(!showAdd)}
-          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.orange, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.orange, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ New"}
         </button>
       </div>
@@ -1686,11 +1686,11 @@ function AnnouncementsEditor({ announcements, setAnnouncements, onBack }: { anno
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{a.title}</span>
                   {a.priority !== "normal" && (
-                    <span style={{ fontSize: 9, fontWeight: 700, color: prioColor, textTransform: "uppercase", background: prioColor + "15", padding: "1px 6px", borderRadius: 4 }}>{a.priority}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: prioColor, textTransform: "uppercase", background: prioColor + "15", padding: "1px 6px", borderRadius: 4 }}>{a.priority}</span>
                   )}
                 </div>
                 {a.body && <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, wordBreak: "break-word" }}>{a.body}</div>}
-                <div style={{ fontSize: 10, color: T.muted, marginTop: 6 }}>{new Date(a.date).toLocaleString()}</div>
+                <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>{new Date(a.date).toLocaleString()}</div>
               </div>
               <button onClick={() => remove(a.id)} style={tinyBtn}>🗑</button>
             </div>
@@ -1702,7 +1702,7 @@ function AnnouncementsEditor({ announcements, setAnnouncements, onBack }: { anno
 }
 
 const backBtn = { background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 };
-const tinyBtn = { background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: "pointer" };
+const tinyBtn = { background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 13, cursor: "pointer" };
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Clinic Guides Editor
@@ -1751,18 +1751,18 @@ function ClinicGuidesEditor({ clinicGuides, setClinicGuides, onBack }: { clinicG
 
       {/* Current / next Friday status */}
       <div style={{ background: T.greenBg, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.green}40` }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: T.greenDk, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 8 }}>This Friday</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.greenDk, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 8 }}>This Friday</div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: T.card, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
             {template?.icon || "📋"}
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{activeTopic}</div>
-            <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{fridayLabel}</div>
-            {currentRecord?.isOverride && <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", marginTop: 4, display: "inline-block" }}>Override</span>}
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{fridayLabel}</div>
+            {currentRecord?.isOverride && <span style={{ fontSize: 13, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", marginTop: 4, display: "inline-block" }}>Override</span>}
           </div>
         </div>
-        <div style={{ fontSize: 11, color: T.sub, marginTop: 8 }}>Rotation default: {rotationTopic}</div>
+        <div style={{ fontSize: 13, color: T.sub, marginTop: 8 }}>Rotation default: {rotationTopic}</div>
       </div>
 
       {/* Actions */}
@@ -1782,7 +1782,7 @@ function ClinicGuidesEditor({ clinicGuides, setClinicGuides, onBack }: { clinicG
       {/* Override controls */}
       <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8 }}>Override Topic</div>
-        <div style={{ fontSize: 12, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>
+        <div style={{ fontSize: 13, color: T.sub, marginBottom: 10, lineHeight: 1.4 }}>
           Change this Friday's topic without affecting the rotation sequence for future weeks.
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1810,9 +1810,9 @@ function ClinicGuidesEditor({ clinicGuides, setClinicGuides, onBack }: { clinicG
               <span style={{ fontSize: 20 }}>{t?.icon || "📋"}</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>{g.topic}</div>
-                <div style={{ fontSize: 11, color: T.sub }}>{new Date(g.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+                <div style={{ fontSize: 13, color: T.sub }}>{new Date(g.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
               </div>
-              {g.isOverride && <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px" }}>Override</span>}
+              {g.isOverride && <span style={{ fontSize: 13, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px" }}>Override</span>}
             </div>
           );
         })
@@ -1951,12 +1951,12 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
         <h3 style={{ fontFamily: T.serif, color: "white", fontSize: 16, margin: "0 0 12px", fontWeight: 700 }}>Rotation Code</h3>
         {rotationCode ? (
           <div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Share this code with students to join:</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Share this code with students to join:</div>
             <div style={{ fontSize: 32, fontFamily: T.mono, fontWeight: 700, letterSpacing: 4, textAlign: "center", background: "rgba(255,255,255,0.1)", borderRadius: 12, padding: "14px 0", marginBottom: 12 }}>
               {rotationCode}
             </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", textAlign: "center", marginBottom: 12 }}>Students enter this code after setting their name to sync data in real-time.</div>
-            <button onClick={handleDisconnect} style={{ width: "100%", padding: "10px 0", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, fontSize: 12, cursor: "pointer" }}>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textAlign: "center", marginBottom: 12 }}>Students enter this code after setting their name to sync data in real-time.</div>
+            <button onClick={handleDisconnect} style={{ width: "100%", padding: "10px 0", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
               Disconnect from Rotation
             </button>
           </div>
@@ -1966,18 +1966,18 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
               Create a rotation to sync student data in real-time via Firebase. Students will enter the generated code to join.
             </div>
             <div style={{ marginBottom: 10 }}>
-              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Rotation Dates (optional)</label>
+              <label style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Rotation Dates (optional)</label>
               <input value={newDates} onChange={e => setNewDates(e.target.value)} placeholder="e.g. Mar 1–28, 2026"
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
               <div>
-                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Location (optional)</label>
+                <label style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Location (optional)</label>
                 <input value={newLocation} onChange={e => setNewLocation(e.target.value)} placeholder="e.g. Good Samaritan"
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
               </div>
               <div>
-                <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Duration</label>
+                <label style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Duration</label>
                 <select value={settings.duration || "4"} onChange={e => update("duration", e.target.value)}
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box", appearance: "none" }}>
                   <option value="1" style={{ color: "#000" }}>1 week</option>
@@ -1988,17 +1988,17 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
               </div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Custom Code (optional)</label>
+              <label style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontWeight: 600, display: "block", marginBottom: 4 }}>Custom Code (optional)</label>
               <input value={newCustomCode} onChange={e => setNewCustomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, ""))} placeholder="e.g. TEST or GS-APR26"
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: "monospace", letterSpacing: 2 }} />
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>If blank, code is auto-generated from location + dates</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>If blank, code is auto-generated from location + dates</div>
             </div>
             <button onClick={handleCreateRotation} disabled={creating}
               style={{ width: "100%", padding: "14px 0", background: T.orange, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: creating ? "wait" : "pointer", opacity: creating ? 0.7 : 1, marginBottom: 16 }}>
               {creating ? "Creating..." : "Create New Rotation"}
             </button>
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 14 }}>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 600 }}>Or rejoin an existing rotation:</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", marginBottom: 8, fontWeight: 600 }}>Or rejoin an existing rotation:</div>
               <div style={{ display: "flex", gap: 8 }}>
                 <input
                   value={rejoinCode}
@@ -2012,7 +2012,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
                   {rejoining ? "..." : "Join"}
                 </button>
               </div>
-              {rejoinError && <div style={{ color: T.accent, fontSize: 11, marginTop: 6 }}>{rejoinError}</div>}
+              {rejoinError && <div style={{ color: T.accent, fontSize: 13, marginTop: 6 }}>{rejoinError}</div>}
             </div>
           </div>
         )}
@@ -2036,12 +2036,12 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <div style={{ fontFamily: T.mono, fontWeight: 700, fontSize: 16, color: T.navy, letterSpacing: 2 }}>{r.code}</div>
                   {rotationCode === r.code && (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: T.green, background: "rgba(26,188,156,0.15)", padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Active</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.green, background: "rgba(26,188,156,0.15)", padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Active</span>
                   )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, color: T.muted, minWidth: 50 }}>Dates:</span>
+                    <span style={{ fontSize: 13, color: T.muted, minWidth: 50 }}>Dates:</span>
                     <input
                       value={r.dates || ""}
                       onChange={e => {
@@ -2050,11 +2050,11 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
                       }}
                       onBlur={e => handleUpdateRotationField(r.code, "dates", e.target.value)}
                       placeholder="e.g. Mar 1–28, 2026"
-                      style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 12, color: T.text, background: T.card, outline: "none" }}
+                      style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, background: T.card, outline: "none" }}
                     />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, color: T.muted, minWidth: 50 }}>Location:</span>
+                    <span style={{ fontSize: 13, color: T.muted, minWidth: 50 }}>Location:</span>
                     <input
                       value={r.location || ""}
                       onChange={e => {
@@ -2063,23 +2063,23 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
                       }}
                       onBlur={e => handleUpdateRotationField(r.code, "location", e.target.value)}
                       placeholder="e.g. City Medical Center"
-                      style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 12, color: T.text, background: T.card, outline: "none" }}
+                      style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, background: T.card, outline: "none" }}
                     />
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: T.muted, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.muted, marginBottom: 10 }}>
                   <span>👥 {r.studentCount} student{r.studentCount !== 1 ? "s" : ""}</span>
                   {r.createdAt && <span>• Created {new Date(r.createdAt).toLocaleDateString()}</span>}
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   {rotationCode !== r.code && (
                     <button onClick={() => handleConnectRotation(r.code)}
-                      style={{ flex: 1, padding: "8px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                      style={{ flex: 1, padding: "8px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                       Connect
                     </button>
                   )}
                   <button onClick={() => handleDeleteRotation(r.code)}
-                    style={{ flex: rotationCode === r.code ? 1 : 0, minWidth: rotationCode === r.code ? 0 : 80, padding: "8px 12px", background: T.redBg, color: T.accent, border: `1px solid ${T.accent}`, borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    style={{ flex: rotationCode === r.code ? 1 : 0, minWidth: rotationCode === r.code ? 0 : 80, padding: "8px 12px", background: T.redBg, color: T.accent, border: `1px solid ${T.accent}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                     Delete
                   </button>
                 </div>
@@ -2108,7 +2108,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
             </select>
           </div>
         </div>
-        <div style={{ fontSize: 11, color: T.muted }}>
+        <div style={{ fontSize: 13, color: T.muted }}>
           Sets the "current week" indicator for students. All content remains accessible regardless of duration.
         </div>
       </div>
@@ -2139,7 +2139,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
           <label style={adminLabel}>Admin PIN</label>
           <input type="password" value={settings.adminPin || ""} onChange={e => update("adminPin", e.target.value)}
             placeholder="Leave blank to keep fallback PIN" style={adminInput} />
-          <div style={{ fontSize: 11, color: T.muted, marginTop: 6 }}>
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>
             Choose a private PIN and avoid sharing it with students.
           </div>
         </div>
@@ -2176,7 +2176,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
         }} style={{ width: "100%", padding: "12px 0", background: T.bg, color: T.text, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 8 }}>
           Export Settings to Clipboard
         </button>
-        <div style={{ fontSize: 11, color: T.muted, textAlign: "center" }}>
+        <div style={{ fontSize: 13, color: T.muted, textAlign: "center" }}>
           All data is saved automatically via persistent storage
         </div>
       </div>
@@ -2330,15 +2330,15 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
           <div>
             <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>{s.name}</h2>
             <div style={{ fontSize: 13, color: T.sub }}>{s.year} • {s.email || "No email"}</div>
-            <div style={{ fontSize: 11, color: T.muted, marginTop: 4, fontFamily: T.mono }}>Record ID: {s.studentId}</div>
+            <div style={{ fontSize: 13, color: T.muted, marginTop: 4, fontFamily: T.mono }}>Record ID: {s.studentId}</div>
             {s.loginPin && (
               <div style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 6, background: T.yellowBg, padding: "4px 10px", borderRadius: 8 }}>
-                <span style={{ fontSize: 11, color: T.sub, fontWeight: 600 }}>Login PIN:</span>
+                <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Login PIN:</span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: T.orange, fontFamily: T.mono, letterSpacing: 2 }}>{s.loginPin}</span>
               </div>
             )}
           </div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: s.status === "active" ? T.green : T.muted, background: s.status === "active" ? "rgba(26,188,156,0.1)" : T.bg, padding: "4px 10px", borderRadius: 8, textTransform: "uppercase" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: s.status === "active" ? T.green : T.muted, background: s.status === "active" ? "rgba(26,188,156,0.1)" : T.bg, padding: "4px 10px", borderRadius: 8, textTransform: "uppercase" }}>
             {s.status}
           </div>
         </div>
@@ -2356,11 +2356,11 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
               </div>
               <div style={{ background: T.yellowBg, borderRadius: 10, padding: "6px 14px" }}>
                 <span style={{ fontWeight: 700, color: T.orange, fontSize: 14, fontFamily: T.mono }}>{pts}</span>
-                <span style={{ fontSize: 11, color: T.sub, marginLeft: 4 }}>pts</span>
+                <span style={{ fontSize: 13, color: T.sub, marginLeft: 4 }}>pts</span>
               </div>
               <div style={{ background: "rgba(26,188,156,0.1)", borderRadius: 10, padding: "6px 14px" }}>
                 <span style={{ fontWeight: 700, color: T.green, fontSize: 14 }}>{earnedCount}</span>
-                <span style={{ fontSize: 11, color: T.sub, marginLeft: 4 }}>/{ACHIEVEMENTS.length} badges</span>
+                <span style={{ fontSize: 13, color: T.sub, marginLeft: 4 }}>/{ACHIEVEMENTS.length} badges</span>
               </div>
               {gam && gam.streaks && gam.streaks.currentDays > 0 && (
                 <div style={{ background: T.redBg, borderRadius: 10, padding: "6px 14px" }}>
@@ -2374,20 +2374,20 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
 
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
           <button onClick={() => { setShowScoreEntry(true); setScoreType("pre"); setScoreForm({ correct: "", total: "25" }); }}
-            style={{ fontSize: 11, color: T.orange, background: T.yellowBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: T.orange, background: T.yellowBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             + Enter Score
           </button>
           <button onClick={() => setShowAddPatient(!showAddPatient)}
             onClickCapture={() => { if (showAddPatient) setShowAllPatTopics(false); }}
-            style={{ fontSize: 11, color: T.green, background: "rgba(26,188,156,0.1)", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: T.green, background: "rgba(26,188,156,0.1)", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             + Log Patient
           </button>
           <button onClick={() => navigate("students", { type: "printStudent", id: String(s.id) })}
-            style={{ fontSize: 11, color: T.med, background: T.blueBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: T.med, background: T.blueBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             Print Report
           </button>
           <button onClick={() => navigate("students", { type: "exportPdf", id: String(s.id) })}
-            style={{ fontSize: 11, color: T.purpleAccent, background: T.purpleBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: T.purpleAccent, background: T.purpleBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             Export PDF
           </button>
         </div>
@@ -2396,11 +2396,11 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
       {/* Device Recovery */}
       <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>Device Recovery</div>
-        <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
           If the student had to join on a new phone/browser, have them join once so a new blank record appears here. Then move this saved progress into that new device-owned record.
         </div>
         {recoveryCandidates.length === 0 ? (
-          <div style={{ fontSize: 12, color: T.muted, fontStyle: "italic" }}>
+          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>
             No other student records available yet. Once the new device joins, refresh this page and select the new record here.
           </div>
         ) : (
@@ -2419,10 +2419,10 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
               })}
             </select>
             <button onClick={handleRecovery} disabled={recoveryBusy}
-              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
+              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
               {recoveryBusy ? "Moving Progress..." : "Move Progress To New Device Record"}
             </button>
-            {recoveryError && <div style={{ fontSize: 11, color: T.accent, marginTop: 8 }}>{recoveryError}</div>}
+            {recoveryError && <div style={{ fontSize: 13, color: T.accent, marginTop: 8 }}>{recoveryError}</div>}
           </>
         )}
       </div>
@@ -2432,7 +2432,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif }}>Attending Feedback</div>
           <button onClick={() => setShowAddFeedback(!showAddFeedback)}
-            style={{ fontSize: 11, color: T.purpleAccent, background: T.purpleBg, border: "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: T.purpleAccent, background: T.purpleBg, border: "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             {showAddFeedback ? "Cancel" : "+ Add"}
           </button>
         </div>
@@ -2440,22 +2440,22 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: showAddFeedback ? 12 : 0 }}>
             {(s.feedbackTags || []).map((ft, i) => (
               <div key={i} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: T.purpleBg, padding: "4px 10px", borderRadius: 8, border: `1px solid ${T.purpleSoft}` }}>
-                <span style={{ fontSize: 11, color: T.purpleAccent, fontWeight: 600 }}>{ft.tag}</span>
-                {ft.note && <span style={{ fontSize: 10, color: T.muted }}>— {ft.note}</span>}
-                <span style={{ fontSize: 9, color: T.muted }}>{new Date(ft.date).toLocaleDateString()}</span>
+                <span style={{ fontSize: 13, color: T.purpleAccent, fontWeight: 600 }}>{ft.tag}</span>
+                {ft.note && <span style={{ fontSize: 13, color: T.muted }}>— {ft.note}</span>}
+                <span style={{ fontSize: 13, color: T.muted }}>{new Date(ft.date).toLocaleDateString()}</span>
                 <button onClick={() => {
                   const updated = (s.feedbackTags || []).filter((_, idx) => idx !== i);
                   updateStudent({ feedbackTags: updated });
-                }} style={{ background: "none", border: "none", color: T.muted, fontSize: 12, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>x</button>
+                }} style={{ background: "none", border: "none", color: T.muted, fontSize: 13, cursor: "pointer", padding: "0 2px", lineHeight: 1 }}>x</button>
               </div>
             ))}
           </div>
         ) : !showAddFeedback && (
-          <div style={{ fontSize: 12, color: T.muted, fontStyle: "italic" }}>No feedback yet</div>
+          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>No feedback yet</div>
         )}
         {showAddFeedback && (
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Quick Tags</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Quick Tags</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
               {FEEDBACK_TAGS.map(tag => (
                 <button key={tag} onClick={() => {
@@ -2464,13 +2464,13 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
                   setFeedbackNote("");
                   setShowAddFeedback(false);
                 }}
-                  style={{ padding: "6px 12px", borderRadius: 20, fontSize: 11, fontWeight: 500, cursor: "pointer", background: T.card, color: T.text, border: `1px solid ${T.line}` }}>
+                  style={{ padding: "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", background: T.card, color: T.text, border: `1px solid ${T.line}` }}>
                   {tag}
                 </button>
               ))}
             </div>
             <input value={feedbackNote} onChange={e => setFeedbackNote(e.target.value)} placeholder="Optional note (e.g. specific topic)"
-              style={{ width: "100%", padding: "8px 10px", fontSize: 12, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box", marginBottom: 8 }} />
+              style={{ width: "100%", padding: "8px 10px", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box", marginBottom: 8 }} />
             <input
               placeholder="Or type a custom tag and press Enter"
               onKeyDown={e => {
@@ -2482,7 +2482,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
                   setShowAddFeedback(false);
                 }
               }}
-              style={{ width: "100%", padding: "8px 10px", fontSize: 12, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box" }} />
+              style={{ width: "100%", padding: "8px 10px", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box" }} />
           </div>
         )}
       </div>
@@ -2490,14 +2490,14 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
       {/* Score Entry */}
       {showScoreEntry && (
         <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.orange}` }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.orange, marginBottom: 10 }}>ENTER SCORE</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.orange, marginBottom: 10 }}>ENTER SCORE</div>
           <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Quiz Type</label>
             <div style={{ display: "flex", gap: 6 }}>
               {["pre", "post", "weekly"].map(t => (
                 <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); }}
                   style={{ flex: 1, padding: "8px 0", background: scoreType === t ? T.navy : T.bg, color: scoreType === t ? "white" : T.sub,
-                    border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
+                    border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
                   {t === "weekly" ? "Weekly" : t + "-Test"}
                 </button>
               ))}
@@ -2537,14 +2537,14 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
       {/* Patient Entry */}
       {showAddPatient && (
         <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.green}` }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.green, marginBottom: 10 }}>LOG PATIENT</div>
-          <div style={{ background: T.yellowBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.goldAlphaMd}`, fontSize: 11, color: T.sub, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.green, marginBottom: 10 }}>LOG PATIENT</div>
+          <div style={{ background: T.yellowBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.goldAlphaMd}`, fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
             <strong style={{ color: T.goldText }}>No PHI:</strong> {PHI_WARNING}
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Initials</label>
             <input value={patForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => { setPatForm({...patForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setPatErrors(prev => ({ ...prev, initials: undefined })); }} placeholder="J.S." style={adminInput} />
-            {patErrors.initials && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>{patErrors.initials}</div>}
+            {patErrors.initials && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.initials}</div>}
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Learning Tags</label>
@@ -2553,7 +2553,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
                 const sel = patForm.topics.includes(t);
                 return (
                   <button key={t} type="button" onClick={() => togglePatTopic(t)}
-                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 11, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
+                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
                       background: sel ? T.orange : T.card, color: sel ? "white" : T.sub,
                       border: sel ? `1.5px solid ${T.orange}` : `1.5px solid ${T.line}` }}>
                     {sel ? "✓ " : ""}{t}
@@ -2565,17 +2565,17 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
               <button
                 type="button"
                 onClick={() => setShowAllPatTopics(prev => !prev)}
-                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.orange, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.orange, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >
                 {showAllPatTopics ? "Show fewer topics" : `More topics (${hiddenAdminTopicCount})`}
               </button>
             )}
-            {(patForm.topics.length === 0 || patErrors.topics) && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>{patErrors.topics || "Select at least one"}</div>}
+            {(patForm.topics.length === 0 || patErrors.topics) && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.topics || "Select at least one"}</div>}
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Diagnosis</label>
             <input value={patForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => { setPatForm({...patForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setPatErrors(prev => ({ ...prev, dx: undefined })); }} placeholder="e.g. AKI from sepsis" style={adminInput} />
-            {patErrors.dx && <div style={{ fontSize: 11, color: T.orange, marginTop: 4 }}>{patErrors.dx}</div>}
+            {patErrors.dx && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.dx}</div>}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={addPatient} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Add Patient</button>
@@ -2587,11 +2587,11 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
       {/* Score cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
         <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Pre-Test</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Pre-Test</div>
           {prePct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.orange, fontFamily: T.mono }}>{prePct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
         </div>
         <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: T.green, textTransform: "uppercase" }}>Post-Test</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.green, textTransform: "uppercase" }}>Post-Test</div>
           {postPct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.green, fontFamily: T.mono }}>{postPct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
         </div>
       </div>
@@ -2612,11 +2612,11 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
           <div key={w} style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${T.line}` }}>
             <div>
               <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>Week {w}</div>
-              <div style={{ fontSize: 11, color: T.muted }}>{ws.length} attempt{ws.length !== 1 ? "s" : ""}</div>
+              <div style={{ fontSize: 13, color: T.muted }}>{ws.length} attempt{ws.length !== 1 ? "s" : ""}</div>
             </div>
             {best !== null ? (
               <div style={{ fontSize: 18, fontWeight: 700, color: best >= 80 ? T.green : best >= 60 ? T.gold : T.accent, fontFamily: T.mono }}>{best}%</div>
-            ) : <div style={{ fontSize: 12, color: T.muted }}>—</div>}
+            ) : <div style={{ fontSize: 13, color: T.muted }}>—</div>}
           </div>
         );
       })}
@@ -2633,10 +2633,10 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
             <div key={i} style={{ padding: "8px 0", borderBottom: i < patients.length - 1 ? `1px solid ${T.line}` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{p.initials}</span>
-                {ts.map(t => <span key={t} style={{ fontSize: 10, color: "white", background: T.med, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
-                <span style={{ fontSize: 10, color: T.muted, marginLeft: "auto" }}>{new Date(p.date).toLocaleDateString()}</span>
+                {ts.map(t => <span key={t} style={{ fontSize: 13, color: "white", background: T.med, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
+                <span style={{ fontSize: 13, color: T.muted, marginLeft: "auto" }}>{new Date(p.date).toLocaleDateString()}</span>
               </div>
-              {p.dx && <div style={{ fontSize: 12, color: T.sub, marginTop: 2, wordBreak: "break-word" }}>{p.dx}</div>}
+              {p.dx && <div style={{ fontSize: 13, color: T.sub, marginTop: 2, wordBreak: "break-word" }}>{p.dx}</div>}
             </div>
             );
           })}
@@ -2694,7 +2694,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
   const srMastered = Object.values(srQueue).filter(i => i.interval > 21).length;
 
   const hdr: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" };
-  const tblTh: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
+  const tblTh: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
   const tblTd: React.CSSProperties = { padding: "8px 10px" };
 
   return (
@@ -2708,9 +2708,9 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
               <div style={{ fontSize: 22, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>Rotation Summary Report</div>
               <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 2 }}>{rotationName}{settings?.dates ? ` — ${settings.dates}` : ""}</div>
             </div>
-            <div style={{ textAlign: "right", fontSize: 11, color: "#5D6D7E" }}>
+            <div style={{ textAlign: "right", fontSize: 13, color: "#5D6D7E" }}>
               <div>Generated {reportDate}</div>
-              <div style={{ marginTop: 2, fontSize: 10, color: "#ABB2B9" }}>&copy; Jonathan Cheng, MD MPH</div>
+              <div style={{ marginTop: 2, fontSize: 13, color: "#ABB2B9" }}>&copy; Jonathan Cheng, MD MPH</div>
             </div>
           </div>
         </div>
@@ -2724,16 +2724,16 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
         {/* Score Summary */}
         <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
           <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#ABB2B9", textTransform: "uppercase" }}>Pre-Test</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#ABB2B9", textTransform: "uppercase" }}>Pre-Test</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: "#E67E22", fontFamily: "'JetBrains Mono', monospace" }}>{pre !== null ? pre + "%" : "—"}</div>
           </div>
           <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Post-Test</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Post-Test</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>{post !== null ? post + "%" : "—"}</div>
           </div>
           {growth !== null && (
             <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: "#E8F8F5" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Growth</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Growth</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
             </div>
           )}
@@ -2742,7 +2742,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
         {/* Weekly Quiz Breakdown */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={hdr}>Weekly Quiz Scores</div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
               <th style={tblTh}>Week</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Attempts</th>
@@ -2768,7 +2768,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
         {/* Curriculum Completion */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={hdr}>Curriculum Completion</div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
               <th style={tblTh}>Week</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Articles</th>
@@ -2790,7 +2790,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={hdr}>Patient Log ({patients.length} patient{patients.length !== 1 ? "s" : ""})</div>
           {patients.length > 0 ? (
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
                 <th style={tblTh}>Patient</th><th style={tblTh}>Diagnosis</th><th style={tblTh}>Topics</th><th style={tblTh}>Date</th><th style={tblTh}>Status</th>
               </tr></thead>
@@ -2807,7 +2807,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
                 );
               })}</tbody>
             </table>
-          ) : <div style={{ fontSize: 12, color: "#ABB2B9", fontStyle: "italic" }}>No patients logged</div>}
+          ) : <div style={{ fontSize: 13, color: "#ABB2B9", fontStyle: "italic" }}>No patients logged</div>}
         </div>
 
         {/* Topic Distribution */}
@@ -2816,7 +2816,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
             <div style={hdr}>Topic Distribution</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).map(([topic, count]) => (
-                <span key={topic} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 12, border: "1px solid #D5DBDB", color: "#2C3E50" }}>{topic} ({count})</span>
+                <span key={topic} style={{ fontSize: 13, padding: "3px 10px", borderRadius: 12, border: "1px solid #D5DBDB", color: "#2C3E50" }}>{topic} ({count})</span>
               ))}
             </div>
           </div>
@@ -2829,11 +2829,11 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
             <div style={{ display: "flex", gap: 16 }}>
               <div style={{ textAlign: "center", padding: 10, border: "1px solid #D5DBDB", borderRadius: 8, flex: 1 }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: "#2980B9" }}>{srTotal}</div>
-                <div style={{ fontSize: 10, color: "#5D6D7E" }}>Total in Queue</div>
+                <div style={{ fontSize: 13, color: "#5D6D7E" }}>Total in Queue</div>
               </div>
               <div style={{ textAlign: "center", padding: 10, border: "1px solid #D5DBDB", borderRadius: 8, flex: 1 }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: "#1ABC9C" }}>{srMastered}</div>
-                <div style={{ fontSize: 10, color: "#5D6D7E" }}>Mastered (&gt;21d)</div>
+                <div style={{ fontSize: 13, color: "#5D6D7E" }}>Mastered (&gt;21d)</div>
               </div>
             </div>
           </div>
@@ -2845,7 +2845,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
             <div style={hdr}>Achievements ({earnedBadges.length}/{ACHIEVEMENTS.length})</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {earnedBadges.map(a => (
-                <span key={a.id} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>{a.icon} {a.title}</span>
+                <span key={a.id} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>{a.icon} {a.title}</span>
               ))}
             </div>
           </div>
@@ -2857,8 +2857,8 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
             <div style={hdr}>Attending Feedback</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {s.feedbackTags!.map((ft, i) => (
-                <span key={i} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
-                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 10 }}>({new Date(ft.date).toLocaleDateString()})</span>
+                <span key={i} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
+                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 13 }}>({new Date(ft.date).toLocaleDateString()})</span>
                 </span>
               ))}
             </div>
@@ -2868,7 +2868,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
         {/* Milestones */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={hdr}>Milestones</div>
-          <div style={{ fontSize: 12, lineHeight: 1.8 }}>
+          <div style={{ fontSize: 13, lineHeight: 1.8 }}>
             {s.addedDate && <div>Joined rotation: {new Date(s.addedDate).toLocaleDateString()}</div>}
             {s.preScore?.date && <div>Pre-test completed: {new Date(s.preScore.date).toLocaleDateString()} ({pre}%)</div>}
             {patients.length > 0 && <div>First patient logged: {new Date(patients[patients.length - 1].date).toLocaleDateString()}</div>}
@@ -2907,9 +2907,9 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
             {rotationName}{hospitalName ? ` — ${hospitalName}` : ""}
           </div>
         </div>
-        <div style={{ textAlign: "right", fontSize: 11, color: "#5D6D7E" }}>
+        <div style={{ textAlign: "right", fontSize: 13, color: "#5D6D7E" }}>
           <div>Generated {reportDate}</div>
-          <div style={{ marginTop: 2, fontSize: 10, color: "#ABB2B9" }}>&copy; Jonathan Cheng, MD MPH</div>
+          <div style={{ marginTop: 2, fontSize: 13, color: "#ABB2B9" }}>&copy; Jonathan Cheng, MD MPH</div>
         </div>
       </div>
     </div>
@@ -2936,30 +2936,30 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
           <div style={{ display: "flex", gap: 20, marginBottom: 24 }}>
             <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: "#2980B9" }}>{activeStudents.length}</div>
-              <div style={{ fontSize: 11, color: "#5D6D7E" }}>Active Students</div>
+              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Active Students</div>
             </div>
             <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C" }}>{students.reduce((sum, s) => sum + (s.patients || []).length, 0)}</div>
-              <div style={{ fontSize: 11, color: "#5D6D7E" }}>Total Patients</div>
+              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Total Patients</div>
             </div>
             <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: "#E67E22" }}>{avgPre !== null ? avgPre + "%" : "—"}</div>
-              <div style={{ fontSize: 11, color: "#5D6D7E" }}>Avg Pre-Test</div>
+              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Avg Pre-Test</div>
             </div>
             <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
               <div style={{ fontSize: 28, fontWeight: 700, color: "#16A085" }}>{avgPost !== null ? avgPost + "%" : "—"}</div>
-              <div style={{ fontSize: 11, color: "#5D6D7E" }}>Avg Post-Test</div>
+              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Avg Post-Test</div>
             </div>
             {avgPre !== null && avgPost !== null && (
               <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8, background: "#E8F8F5" }}>
                 <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C" }}>+{avgPost - avgPre}%</div>
-                <div style={{ fontSize: 11, color: "#5D6D7E" }}>Avg Growth</div>
+                <div style={{ fontSize: 13, color: "#5D6D7E" }}>Avg Growth</div>
               </div>
             )}
           </div>
 
           {/* Student Table */}
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #0F2B3C" }}>
                 <th style={thStyle}>Student</th>
@@ -3039,18 +3039,18 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
         {/* Scores Summary */}
         <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
           <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#ABB2B9", textTransform: "uppercase" }}>Pre-Test</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#ABB2B9", textTransform: "uppercase" }}>Pre-Test</div>
             <div style={{ fontSize: 30, fontWeight: 700, color: "#E67E22", fontFamily: "'JetBrains Mono', monospace" }}>{pre !== null ? pre + "%" : "—"}</div>
-            {s.preScore && <div style={{ fontSize: 10, color: "#ABB2B9" }}>{s.preScore.correct}/{s.preScore.total}</div>}
+            {s.preScore && <div style={{ fontSize: 13, color: "#ABB2B9" }}>{s.preScore.correct}/{s.preScore.total}</div>}
           </div>
           <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Post-Test</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Post-Test</div>
             <div style={{ fontSize: 30, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>{post !== null ? post + "%" : "—"}</div>
-            {s.postScore && <div style={{ fontSize: 10, color: "#ABB2B9" }}>{s.postScore.correct}/{s.postScore.total}</div>}
+            {s.postScore && <div style={{ fontSize: 13, color: "#ABB2B9" }}>{s.postScore.correct}/{s.postScore.total}</div>}
           </div>
           {growth !== null && (
             <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: "#E8F8F5" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Growth</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Growth</div>
               <div style={{ fontSize: 30, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
             </div>
           )}
@@ -3059,7 +3059,7 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
         {/* Weekly Quiz Breakdown */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Weekly Quiz Scores</div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "2px solid #0F2B3C" }}>
                 <th style={thStyle}>Week</th>
@@ -3094,7 +3094,7 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
             Patient Log ({patients.length} patient{patients.length !== 1 ? "s" : ""})
           </div>
           {patients.length > 0 ? (
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid #0F2B3C" }}>
                   <th style={thStyle}>Patient</th>
@@ -3118,7 +3118,7 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
               </tbody>
             </table>
           ) : (
-            <div style={{ fontSize: 12, color: "#ABB2B9", fontStyle: "italic" }}>No patients logged</div>
+            <div style={{ fontSize: 13, color: "#ABB2B9", fontStyle: "italic" }}>No patients logged</div>
           )}
         </div>
 
@@ -3128,7 +3128,7 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Topic Distribution</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).map(([topic, count]) => (
-                <span key={topic} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 12, border: "1px solid #D5DBDB", color: "#2C3E50" }}>
+                <span key={topic} style={{ fontSize: 13, padding: "3px 10px", borderRadius: 12, border: "1px solid #D5DBDB", color: "#2C3E50" }}>
                   {topic} ({count})
                 </span>
               ))}
@@ -3142,7 +3142,7 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Achievements Earned ({earnedBadges.length}/{ACHIEVEMENTS.length})</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {earnedBadges.map(a => (
-                <span key={a.id} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
+                <span key={a.id} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
                   {a.icon} {a.title}
                 </span>
               ))}
@@ -3156,8 +3156,8 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Attending Feedback ({s.feedbackTags!.length})</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {s.feedbackTags!.map((ft, i) => (
-                <span key={i} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
-                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 10 }}>({new Date(ft.date).toLocaleDateString()})</span>
+                <span key={i} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
+                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 13 }}>({new Date(ft.date).toLocaleDateString()})</span>
                 </span>
               ))}
             </div>
@@ -3168,7 +3168,7 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
   );
 }
 
-const thStyle: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
+const thStyle: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
 const tdStyle = { padding: "8px 10px" };
 
 export default AdminPanel;

@@ -31,7 +31,7 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
         </div>
 
         <div style={{ marginBottom: 14 }}>
-          <label style={{ fontSize: 10, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Your Name</label>
+          <label style={{ fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Your Name</label>
           <input
             type="text" placeholder="e.g. Glen Merulus" maxLength={LIMITS.NAME_MAX}
             value={studentName} onChange={e => setStudentName(e.target.value.slice(0, LIMITS.NAME_MAX))}
@@ -43,7 +43,7 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 14 }}>
           <div>
-            <label style={{ fontSize: 10, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>4-Digit PIN</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>4-Digit PIN</label>
             <input
               type="password" inputMode="numeric" pattern="[0-9]*" placeholder="••••" maxLength={4}
               value={studentPin} onChange={e => setStudentPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
@@ -53,7 +53,7 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
             />
           </div>
           <div>
-            <label style={{ fontSize: 10, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Rotation Code</label>
+            <label style={{ fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Rotation Code</label>
             <input
               placeholder="e.g. CMC-MAR26" maxLength={LIMITS.ROTATION_CODE_MAX}
               value={joinCode} onChange={e => { setJoinCode(e.target.value.toUpperCase().slice(0, LIMITS.ROTATION_CODE_MAX)); setJoinError(""); }}
@@ -65,11 +65,11 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
           </div>
         </div>
 
-        <p style={{ fontSize: 11, color: T.muted, margin: "0 0 12px", lineHeight: 1.5 }}>
+        <p style={{ fontSize: 13, color: T.muted, margin: "0 0 12px", lineHeight: 1.5 }}>
           Pick a 4-digit PIN to save your progress. Your attending can restore it if you switch devices.
         </p>
 
-        {joinError && <p style={{ color: T.accent, fontSize: 12, margin: "0 0 12px", fontWeight: 600, textAlign: "center" }}>{joinError}</p>}
+        {joinError && <p style={{ color: T.accent, fontSize: 13, margin: "0 0 12px", fontWeight: 600, textAlign: "center" }}>{joinError}</p>}
 
         <button
           onClick={onJoinRotation}
@@ -79,17 +79,17 @@ export default function LoginScreen({ studentName, setStudentName, studentPin, s
         </button>
 
         <div style={{ marginTop: 16, paddingTop: 12, borderTop: `1px solid ${T.line}`, textAlign: "center" }}>
-          <p style={{ fontSize: 9, color: T.muted, lineHeight: 1.6, margin: "0 0 8px" }}>
+          <p style={{ fontSize: 13, color: T.muted, lineHeight: 1.6, margin: "0 0 8px" }}>
             For educational use only. Not medical advice. Content may not reflect current guidelines. Always use clinical judgment.
           </p>
-          <p style={{ fontSize: 9, color: T.muted, margin: 0 }}>
+          <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>
             &copy; {new Date().getFullYear()} JCheng
           </p>
         </div>
 
         {onAdminToggle && (
           <div style={{ marginTop: 10, textAlign: "center" }}>
-            <button onClick={onAdminToggle} style={{ background: "none", border: "none", color: T.muted, fontSize: 11, cursor: "pointer", padding: "4px 8px" }}>
+            <button onClick={onAdminToggle} style={{ background: "none", border: "none", color: T.muted, fontSize: 13, cursor: "pointer", padding: "4px 8px" }}>
               Admin Login
             </button>
           </div>

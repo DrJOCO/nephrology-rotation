@@ -44,11 +44,11 @@ export default function ClinicGuideHistoryView({ guides, onSelect, onBack }: Pro
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{g.topic}</div>
-                  <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>{formatDate(g.date)}</div>
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{formatDate(g.date)}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   {g.isOverride && (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
                   )}
                   <span style={{ color: T.muted, fontSize: 16 }}>{"\u203A"}</span>
                 </div>

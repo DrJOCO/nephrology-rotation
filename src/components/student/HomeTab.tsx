@@ -344,7 +344,7 @@ function ProgressRing({ value }: { value: number }) {
       </svg>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         <div style={{ fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{value}%</div>
-        <div style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: 0.7 }}>Ready</div>
+        <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", letterSpacing: 0.7 }}>Ready</div>
       </div>
     </div>
   );
@@ -405,7 +405,7 @@ function AssessmentSection({
         >
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9, marginBottom: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9, marginBottom: 6 }}>
                 Assessment
               </div>
               <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 22, fontWeight: 700 }}>
@@ -417,19 +417,19 @@ function AssessmentSection({
                   : "Not required, but it helps Today highlight the topics you already own and the ones that need more teaching and reinforcement."}
               </p>
             </div>
-            <div style={{ background: T.card, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 700, border: `1px solid ${T.line}` }}>
+            <div style={{ background: T.card, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, border: `1px solid ${T.line}` }}>
               Optional
             </div>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-            <span style={{ background: T.yellowBg, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: T.yellowBg, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               25 questions
             </span>
-            <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Topic strengths + gaps
             </span>
-            <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Feeds teaching + review
             </span>
           </div>
@@ -455,7 +455,7 @@ function AssessmentSection({
               >
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>{action.label}</div>
-                  <div style={{ fontSize: 12, color: index === 0 ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
+                  <div style={{ fontSize: 13, color: index === 0 ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
                     {action.meta}
                   </div>
                 </div>
@@ -475,7 +475,7 @@ function AssessmentSection({
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <BadgeCheck size={16} strokeWidth={2} color={T.greenDk} aria-hidden="true" />
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9 }}>
                 Assessment insight
               </div>
             </div>
@@ -487,22 +487,22 @@ function AssessmentSection({
             </p>
           </div>
           <div style={{ background: T.ice, color: T.navy, borderRadius: 16, padding: "10px 12px", minWidth: 90, textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Score</div>
+            <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Score</div>
             <div style={{ fontSize: 24, fontWeight: 700, fontFamily: T.mono }}>{summary.overallPct}%</div>
           </div>
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-          <span style={{ background: T.yellowBg, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+          <span style={{ background: T.yellowBg, color: T.warn, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
             Focus: {summary.recommendedArea.shortLabel}
           </span>
           {summary.strongestAreas[0] && (
-            <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Strongest: {summary.strongestAreas[0].shortLabel}
             </span>
           )}
           {summary.growthPct !== null && (
-            <span style={{ background: summary.growthPct >= 0 ? T.greenBg : T.redBg, color: summary.growthPct >= 0 ? T.greenDk : T.accent, borderRadius: 999, padding: "6px 10px", fontSize: 12, fontWeight: 700 }}>
+            <span style={{ background: summary.growthPct >= 0 ? T.greenBg : T.redBg, color: summary.growthPct >= 0 ? T.greenDk : T.accent, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               {summary.growthPct >= 0 ? "+" : ""}
               {summary.growthPct} pts vs baseline
             </span>
@@ -518,7 +518,7 @@ function AssessmentSection({
                   Week {area.week}: {area.shortLabel}
                 </div>
               </div>
-              <div style={{ fontSize: 12, color: T.sub, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
                 {area.correct}/{area.total} correct
                 {area.missedTopics.length > 0 ? ` · Missed ${area.missedTopics.join(", ")}` : " · Ready for a quick polish pass"}
               </div>
@@ -547,7 +547,7 @@ function AssessmentSection({
             >
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{action!.label}</div>
-                <div style={{ fontSize: 12, color: index === 0 ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
+                <div style={{ fontSize: 13, color: index === 0 ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
                   {action!.meta}
                 </div>
               </div>
@@ -660,7 +660,7 @@ export default function HomeTab({
   return (
     <div style={{ padding: "18px 16px 24px" }}>
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 1.1, marginBottom: 6 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 1.1, marginBottom: 6 }}>
           {headerKicker}
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
@@ -671,7 +671,7 @@ export default function HomeTab({
             </p>
           </div>
           {!online && (
-            <div style={{ background: T.goldAlpha, color: T.warn, border: `1px solid ${T.gold}`, borderRadius: 999, padding: "7px 12px", fontSize: 12, fontWeight: 700 }}>
+            <div style={{ background: T.goldAlpha, color: T.warn, border: `1px solid ${T.gold}`, borderRadius: 999, padding: "7px 12px", fontSize: 13, fontWeight: 700 }}>
               Offline
             </div>
           )}
@@ -681,7 +681,7 @@ export default function HomeTab({
       <div style={{ background: heroStyle.background, borderRadius: 20, padding: 18, border: `1.5px solid ${heroStyle.border}`, marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 16 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9, marginBottom: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.9, marginBottom: 6 }}>
               {heroCard.eyebrow}
             </div>
             <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
@@ -691,7 +691,7 @@ export default function HomeTab({
               {heroCard.body}
             </p>
           </div>
-          <div style={{ background: T.card, color: heroStyle.badge, borderRadius: 999, padding: "6px 10px", fontSize: 11, fontWeight: 700, border: `1px solid ${T.line}`, whiteSpace: "nowrap" }}>
+          <div style={{ background: T.card, color: heroStyle.badge, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, border: `1px solid ${T.line}`, whiteSpace: "nowrap" }}>
             {heroCard.badge}
           </div>
         </div>
@@ -718,7 +718,7 @@ export default function HomeTab({
             >
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{action.label}</div>
-                <div style={{ fontSize: 12, color: index === 0 ? "rgba(255,255,255,0.8)" : T.sub, marginTop: 3 }}>
+                <div style={{ fontSize: 13, color: index === 0 ? "rgba(255,255,255,0.8)" : T.sub, marginTop: 3 }}>
                   {action.meta}
                 </div>
               </div>
@@ -747,7 +747,7 @@ export default function HomeTab({
                 {latestAnnouncement.title}
                 {activeAnnouncements.length > 1 ? ` · +${activeAnnouncements.length - 1} more` : ""}
               </div>
-              <div style={{ fontSize: 11, color: T.muted }}>
+              <div style={{ fontSize: 13, color: T.muted }}>
                 {formatRelativeTime(latestAnnouncement.date, now)}
               </div>
             </div>
@@ -763,7 +763,7 @@ export default function HomeTab({
       <section style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
           <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Due today</h2>
-          <div style={{ fontSize: 11, color: T.muted }}>Two fast wins before the day gets away</div>
+          <div style={{ fontSize: 13, color: T.muted }}>Two fast wins before the day gets away</div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
           <button
@@ -774,7 +774,7 @@ export default function HomeTab({
               <RefreshCw size={18} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Spaced repetition</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Spaced repetition</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{srAction.label}</div>
               <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>{srAction.meta}</div>
             </div>
@@ -788,7 +788,7 @@ export default function HomeTab({
               <ClipboardList size={18} strokeWidth={1.75} color={T.med} aria-hidden="true" />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{learningPlan.label}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{learningPlan.label}</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
                 {learningPlan.remaining > 0 ? `${learningPlan.remaining} item${learningPlan.remaining !== 1 ? "s" : ""} still open` : "Everything for this block is covered"}
               </div>
@@ -835,7 +835,7 @@ export default function HomeTab({
                       <div style={{ fontSize: 15, fontWeight: 700, color: T.navy }}>
                         {patient.initials || "New patient"}
                       </div>
-                      <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>
+                      <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>
                         {patient.room ? `Rm ${patient.room}` : "Room pending"} · Added {new Date(patient.date).toLocaleDateString()}
                       </div>
                     </div>
@@ -849,7 +849,7 @@ export default function HomeTab({
                   {topics.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: patient.notes ? 8 : 0 }}>
                       {topics.slice(0, 3).map((topic) => (
-                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 8px", fontSize: 11, fontWeight: 700 }}>
+                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
                           {topic}
                         </span>
                       ))}
@@ -904,13 +904,13 @@ export default function HomeTab({
               {competencySummary.masteryDetail}. The strongest domain right now is {competencySummary.topDomain.label.toLowerCase()}, and Me now shows exactly which signals are lagging.
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
+              <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "5px 9px", fontSize: 13, fontWeight: 700 }}>
                 Mastery {competencySummary.masteryPercent}%
               </span>
-              <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
+              <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "5px 9px", fontSize: 13, fontWeight: 700 }}>
                 Proficient {competencySummary.proficientCount}
               </span>
-              <span style={{ background: competencySummary.developingCount > 0 ? T.yellowBg : T.blueBg, color: competencySummary.developingCount > 0 ? T.warn : T.med, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 700 }}>
+              <span style={{ background: competencySummary.developingCount > 0 ? T.yellowBg : T.blueBg, color: competencySummary.developingCount > 0 ? T.warn : T.med, borderRadius: 999, padding: "5px 9px", fontSize: 13, fontWeight: 700 }}>
                 Developing {competencySummary.developingCount}
               </span>
             </div>
@@ -923,14 +923,14 @@ export default function HomeTab({
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Sparkles size={16} strokeWidth={1.75} color={T.med} aria-hidden="true" />
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.9 }}>Pearl of the day</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.9 }}>Pearl of the day</div>
             </div>
             <button
               onClick={() => {
                 localStorage.setItem(PEARL_STORAGE_KEY, todayKey);
                 setPearlDismissed(true);
               }}
-              style={{ background: "none", border: "none", color: T.muted, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0 }}
+              style={{ background: "none", border: "none", color: T.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: 0 }}
             >
               Dismiss
             </button>
@@ -944,7 +944,7 @@ export default function HomeTab({
       <section>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
           <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Quick links</h2>
-          <div style={{ fontSize: 11, color: T.muted }}>Still reachable without crowding the main screen</div>
+          <div style={{ fontSize: 13, color: T.muted }}>Still reachable without crowding the main screen</div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
           {quickLinks.map((link) => (
@@ -958,7 +958,7 @@ export default function HomeTab({
               </div>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{link.label}</div>
-                <div style={{ fontSize: 12, color: T.sub, marginTop: 3 }}>{link.meta}</div>
+                <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>{link.meta}</div>
               </div>
               <ArrowRight size={16} strokeWidth={1.75} aria-hidden="true" style={{ color: T.muted, flexShrink: 0 }} />
             </button>

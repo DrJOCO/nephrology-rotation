@@ -6,8 +6,8 @@ import { useIsMobile } from "../../utils/helpers";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
 import type { Patient, SubView } from "../../types";
 
-const errorStyle: CSSProperties = { fontSize: 11, color: T.accent, marginTop: 3, fontWeight: 500 };
-const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 10, color: current > max * 0.9 ? T.accent : T.muted, textAlign: "right", marginTop: 2 });
+const errorStyle: CSSProperties = { fontSize: 13, color: T.accent, marginTop: 3, fontWeight: 500 };
+const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 13, color: current > max * 0.9 ? T.accent : T.muted, textAlign: "right", marginTop: 2 });
 const inputErrorBorder = { borderColor: T.accent };
 
 interface PatientForm {
@@ -59,7 +59,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
   if (isEditing) {
     return (
       <div style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 10, border: `2px solid ${T.med}` }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: T.med, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Editing Patient</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Editing Patient</div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
           <div>
             <label style={inputLabel}>Initials</label>
@@ -93,7 +93,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             <button
               type="button"
               onClick={() => setShowAllEditTopics(prev => !prev)}
-              style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+              style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
             >
               {showAllEditTopics ? "Show fewer topics" : `More topics (${hiddenEditTopicCount})`}
             </button>
@@ -120,7 +120,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
               <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{p.initials}</span>
-              {p.room && <span style={{ fontSize: 11, color: T.sub, background: T.bg, padding: "2px 8px", borderRadius: 4 }}>Rm {p.room}</span>}
+              {p.room && <span style={{ fontSize: 13, color: T.sub, background: T.bg, padding: "2px 8px", borderRadius: 4 }}>Rm {p.room}</span>}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 4 }}>
               {topics.map(t => (
@@ -129,12 +129,12 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             </div>
             {p.dx && <div style={{ fontSize: 13, color: T.text, marginBottom: 2, wordBreak: "break-word" }}>{p.dx}</div>}
             {p.notes && (
-              <div style={{ fontSize: 11, color: T.sub, fontStyle: "italic", marginTop: 4, wordBreak: "break-word", display: "flex", alignItems: "flex-start", gap: 4 }}>
+              <div style={{ fontSize: 13, color: T.sub, fontStyle: "italic", marginTop: 4, wordBreak: "break-word", display: "flex", alignItems: "flex-start", gap: 4 }}>
                 <Lightbulb size={12} strokeWidth={1.75} color={T.warn} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>{p.notes}</span>
               </div>
             )}
-            <div style={{ fontSize: 10, color: T.muted, marginTop: 6 }}>Added {new Date(p.date).toLocaleDateString()}</div>
+            <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>Added {new Date(p.date).toLocaleDateString()}</div>
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: isMobile ? "wrap" : "nowrap", justifyContent: "flex-end" }}>
             {!dimmed && (
@@ -172,7 +172,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             onClick={() => setShowFollowUps(!showFollowUps)}
             aria-expanded={showFollowUps}
             aria-label={`${showFollowUps ? "Collapse" : "Expand"} follow-ups`}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: T.med, fontWeight: 600, padding: "6px 0", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, minHeight: 32 }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.med, fontWeight: 600, padding: "6px 0", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, minHeight: 32 }}
           >
             <ChevronRight size={14} strokeWidth={2} aria-hidden="true" style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }} />
             Follow-ups ({followUps.length})
@@ -181,8 +181,8 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
         {showFollowUps && followUps.map(f => (
           <div key={f.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "4px 0", marginLeft: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: T.muted }}>{new Date(f.date).toLocaleDateString()} {new Date(f.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
-              <div style={{ fontSize: 12, color: T.text, wordBreak: "break-word" }}>{f.note}</div>
+              <div style={{ fontSize: 13, color: T.muted }}>{new Date(f.date).toLocaleDateString()} {new Date(f.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+              <div style={{ fontSize: 13, color: T.text, wordBreak: "break-word" }}>{f.note}</div>
             </div>
             <button
               onClick={() => onRemoveFollowUp(p.id, f.id)}
@@ -201,7 +201,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
                 onChange={e => { setFollowUpText(clampLength(e.target.value, LIMITS.FOLLOWUP_MAX)); setFollowUpError(null); }}
                 onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
                 placeholder="Add follow-up note..."
-                style={{ flex: 1, padding: isMobile ? "8px 12px" : "6px 10px", fontSize: 12, border: `1px solid ${followUpError ? T.accent : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
+                style={{ flex: 1, padding: isMobile ? "8px 12px" : "6px 10px", fontSize: 13, border: `1px solid ${followUpError ? T.accent : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
               <button
                 onClick={handleAddFollowUp}
                 aria-label="Add follow-up note"
@@ -384,8 +384,8 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
       </div>
 
       <div style={{ background: T.yellowBg, borderRadius: 12, padding: 12, marginBottom: 16, border: `1px solid ${T.goldAlphaMd}` }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>No PHI</div>
-        <div style={{ fontSize: 11, color: T.sub, lineHeight: 1.5 }}>{PHI_WARNING}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>No PHI</div>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>{PHI_WARNING}</div>
       </div>
 
       {showAdd && (
@@ -420,7 +420,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
                 const sel = form.topics.includes(t);
                 return (
                 <button key={t} type="button" onClick={() => toggleTopic(t)}
-                    style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
+                    style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
                       background: sel ? T.med : T.card, color: sel ? "white" : T.sub,
                       border: sel ? `1.5px solid ${T.med}` : `1.5px solid ${T.line}` }}>
                     {sel ? "✓ " : ""}{t}
@@ -432,7 +432,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
               <button
                 type="button"
                 onClick={() => setShowAllTopics(prev => !prev)}
-                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >
                 {showAllTopics ? "Show fewer topics" : `More topics (${hiddenAddTopicCount})`}
               </button>
@@ -460,7 +460,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
       {showSuggestions && suggestions.length > 0 && navigate && (
         <div style={{ background: T.purpleBg, borderRadius: 12, padding: 14, marginBottom: 14, border: `1.5px solid ${T.purpleSoft}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: T.purpleAccent }}>Based on this patient, check out:</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.purpleAccent }}>Based on this patient, check out:</div>
             <button onClick={() => setShowSuggestions(false)} style={{ background: "none", border: "none", color: T.muted, fontSize: 14, cursor: "pointer", padding: 0, lineHeight: 1 }}>x</button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -481,7 +481,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏥</div>
           <div style={{ fontSize: 14 }}>No active patients</div>
-          <div style={{ fontSize: 12, color: T.muted, marginTop: 4 }}>Tap "+ Add Patient" to track consults</div>
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Tap "+ Add Patient" to track consults</div>
         </div>
       )}
 
@@ -491,7 +491,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
 
       {discharged.length > 0 && (
         <>
-          <div style={{ fontSize: 12, fontWeight: 700, color: T.muted, margin: "20px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, margin: "20px 0 10px", textTransform: "uppercase", letterSpacing: 0.5 }}>
             Completed / Discharged ({discharged.length})
           </div>
           {discharged.map(p => <PatientCard key={p.id} p={p} topicColor={topicColor} onToggle={() => toggle(p.id)} onRemove={() => remove(p.id)} dimmed
