@@ -5,9 +5,11 @@ import { QUICK_REFS } from "../data/guides";
 import store, { RotationInfo } from "../utils/store";
 import { getCurrentAdminUser, signInAdmin, signOutFirebase } from "../utils/firebase";
 import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, createRotationCode } from "../utils/helpers";
-import { calculatePoints, getLevel, ACHIEVEMENTS } from "../utils/gamification";
+import { calculatePoints, ACHIEVEMENTS } from "../utils/gamification";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { validatePatientForm, clampLength, LIMITS, PHI_WARNING } from "../utils/validation";
+import { buildCompetencySummary } from "../utils/competency";
+import { buildAssessmentSummary } from "../utils/assessmentInsights";
 import { HistogramChart, FunnelChart, HeatmapChart } from "./student/charts";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../data/clinicGuides";
 import { getCurrentOrNextFriday, getClinicTopicForDate, ensureCurrentClinicGuide, overrideClinicGuide, regenerateClinicGuide } from "../utils/clinicRotation";
@@ -17,6 +19,15 @@ type NavigateFn = (t: string, sv?: AdminSubView) => void;
 type WeeklyData = typeof WEEKLY;
 type ArticlesData = typeof ARTICLES;
 type AdminSession = { uid: string; email: string };
+type RotationTiming = { currentWeek: number | null; totalWeeks: number };
+type AdminAssessmentSignal = {
+  mode: "pre" | "post";
+  overallPct: number;
+  comparisonPct: number | null;
+  summary: ReturnType<typeof buildAssessmentSummary> | null;
+  hasDetailedAnswers: boolean;
+  note: string | null;
+};
 
 function getAdminAuthErrorMessage(error: unknown) {
   const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: unknown }).code) : "";
@@ -143,6 +154,116 @@ function buildRecoveredStudent(source: AdminStudent, target: AdminStudent): Admi
     ],
     lastSyncedAt: new Date().toISOString(),
   };
+}
+
+function getScorePct(score: QuizScore | null | undefined): number | null {
+  return score && score.total > 0 ? Math.round((score.correct / score.total) * 100) : null;
+}
+
+function getRotationTiming(settings?: SharedSettings): RotationTiming {
+  const totalWeeks = Math.max(1, parseInt(settings?.duration || "4", 10) || 4);
+  if (!settings?.rotationStart) return { currentWeek: null, totalWeeks };
+
+  const start = new Date(`${settings.rotationStart}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return { currentWeek: null, totalWeeks };
+
+  const week = Math.floor(diffDays / 7) + 1;
+  if (week > totalWeeks) return { currentWeek: null, totalWeeks };
+
+  return { currentWeek: Math.min(week, 4), totalWeeks };
+}
+
+function buildAdminCompetencySnapshot(student: AdminStudent, settings: SharedSettings | undefined, articlesByWeek: ArticlesData) {
+  const { currentWeek, totalWeeks } = getRotationTiming(settings);
+  return buildCompetencySummary({
+    weeklyScores: student.weeklyScores || {},
+    preScore: student.preScore || null,
+    postScore: student.postScore || null,
+    completedItems: student.completedItems,
+    srQueue: student.srQueue || {},
+    currentWeek,
+    totalWeeks,
+    articlesByWeek,
+  });
+}
+
+function buildAdminAssessmentSignal(student: AdminStudent): AdminAssessmentSignal | null {
+  const score = student.postScore || student.preScore;
+  if (!score) return null;
+
+  const mode = student.postScore ? "post" : "pre";
+  const comparisonScore = student.postScore ? student.preScore : null;
+  const overallPct = getScorePct(score) || 0;
+  const comparisonPct = getScorePct(comparisonScore);
+  const hasDetailedAnswers = Boolean(score.answers?.length);
+
+  if (!hasDetailedAnswers) {
+    return {
+      mode,
+      overallPct,
+      comparisonPct,
+      summary: null,
+      hasDetailedAnswers: false,
+      note: "Detailed topic insight appears when the assessment is completed in-app.",
+    };
+  }
+
+  return {
+    mode,
+    overallPct,
+    comparisonPct,
+    summary: buildAssessmentSummary({ mode, score, comparisonScore }),
+    hasDetailedAnswers: true,
+    note: null,
+  };
+}
+
+function buildCohortTeachingSignals(students: AdminStudent[]) {
+  const focusCounts: Record<string, number> = {};
+  const strongestCounts: Record<string, number> = {};
+  let studentsWithAssessments = 0;
+  let detailedAssessments = 0;
+
+  students.forEach((student) => {
+    const signal = buildAdminAssessmentSignal(student);
+    if (!signal) return;
+    studentsWithAssessments += 1;
+    if (!signal.summary) return;
+    detailedAssessments += 1;
+    focusCounts[signal.summary.recommendedArea.shortLabel] = (focusCounts[signal.summary.recommendedArea.shortLabel] || 0) + 1;
+    const strongest = signal.summary.strongestAreas[0]?.shortLabel;
+    if (strongest) strongestCounts[strongest] = (strongestCounts[strongest] || 0) + 1;
+  });
+
+  return {
+    studentsWithAssessments,
+    detailedAssessments,
+    focusAreas: Object.entries(focusCounts)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([label, count]) => ({ label, count })),
+    strongestAreas: Object.entries(strongestCounts)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([label, count]) => ({ label, count })),
+  };
+}
+
+function buildCohortCompetencyNeeds(students: AdminStudent[], settings: SharedSettings | undefined, articlesByWeek: ArticlesData) {
+  const needs: Record<string, number> = {};
+  students.forEach((student) => {
+    const summary = buildAdminCompetencySnapshot(student, settings, articlesByWeek);
+    summary.domains
+      .filter((domain) => domain.tier !== "Proficient")
+      .forEach((domain) => {
+        needs[domain.label] = (needs[domain.label] || 0) + 1;
+      });
+  });
+
+  return Object.entries(needs)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([label, count]) => ({ label, count }));
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -610,13 +731,13 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
       {/* Content */}
       <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
-        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} />}
-        {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} onBack={() => navigate("dashboard")} />}
-        {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} />}
-        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} navigate={navigate} />}
-        {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
-        {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
-        {tab === "analytics" && <AnalyticsTab students={students} />}
+        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} />}
+        {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} articles={articles} onBack={() => navigate("dashboard")} />}
+        {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} />}
+        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} navigate={navigate} settings={settings} articles={articles} />}
+        {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
+        {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
+        {tab === "analytics" && <AnalyticsTab students={students} settings={settings} articles={articles} />}
         {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} />}
         {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
@@ -650,7 +771,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 //  Dashboard Tab
 // ═══════════════════════════════════════════════════════════════════════
 
-function DashboardTab({ students, setStudents, navigate, rotationCode }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string }) {
+function DashboardTab({ students, setStudents, navigate, rotationCode, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData }) {
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const activeStudents = students.filter(s => s.status === "active");
   const totalPatients = students.reduce((sum, s) => sum + (s.patients || []).length, 0);
@@ -660,6 +781,8 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
   const avgPost = activeStudents.filter(s => s.postScore).length > 0
     ? Math.round(activeStudents.filter(s => s.postScore).reduce((sum, s) => sum + (s.postScore!.correct / s.postScore!.total) * 100, 0) / activeStudents.filter(s => s.postScore).length)
     : null;
+  const teachingSignals = buildCohortTeachingSignals(activeStudents);
+  const domainNeeds = buildCohortCompetencyNeeds(activeStudents, settings, articles);
 
   return (
     <div style={{ padding: 16 }}>
@@ -695,6 +818,56 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
         </div>
       )}
 
+      {activeStudents.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginBottom: 20 }}>
+          <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Teaching Signals</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>
+              {teachingSignals.focusAreas[0] ? `Teach next: ${teachingSignals.focusAreas[0].label}` : "Assessment detail still building"}
+            </div>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 10 }}>
+              {teachingSignals.detailedAssessments > 0
+                ? `${teachingSignals.detailedAssessments}/${activeStudents.length} active students have in-app topic-band assessment detail.`
+                : "Detailed week-band insight appears when students complete pre/post assessments in-app."}
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {teachingSignals.focusAreas.slice(0, 3).map((item) => (
+                <span key={item.label} style={{ background: T.redBg, color: T.accent, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 700 }}>
+                  {item.label} ({item.count})
+                </span>
+              ))}
+              {teachingSignals.focusAreas.length === 0 && (
+                <span style={{ background: T.bg, color: T.muted, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 600 }}>
+                  No topic bands yet
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Competency Needs</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>
+              {domainNeeds[0] ? `${domainNeeds[0].label} needs the most reinforcement` : "Waiting on student activity"}
+            </div>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 10 }}>
+              Domains count whenever a student is not yet proficient there, so this reads as a teaching backlog rather than a leaderboard.
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {domainNeeds.slice(0, 3).map((item) => (
+                <span key={item.label} style={{ background: T.yellowBg, color: T.goldText, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 700 }}>
+                  {item.label} ({item.count})
+                </span>
+              ))}
+              {domainNeeds.length === 0 && (
+                <span style={{ background: T.bg, color: T.muted, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 600 }}>
+                  No competency signal yet
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Quick Actions</h3>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
@@ -717,17 +890,20 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
         {[
           { label: "Export CSV", icon: "📥", desc: "Download all student data", action: () => {
-            const headers = ["Name","Year","Status","Patients","Pre-Test %","Post-Test %","Growth %","W1 Best","W2 Best","W3 Best","W4 Best","Quizzes","Points","Level","SR Items","SR Mastered","Activities"];
+            const headers = ["Name","Year","Status","Patients","Pre-Test %","Post-Test %","Growth %","W1 Best","W2 Best","W3 Best","W4 Best","Quizzes","Mastery %","Top Domain","Teaching Focus","Strongest Area","SR Items","SR Mastered","Activities"];
             const rows = students.map(s => {
-              const pre = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : "";
-              const post = s.postScore ? Math.round((s.postScore.correct / s.postScore.total) * 100) : "";
+              const pre = getScorePct(s.preScore) ?? "";
+              const post = getScorePct(s.postScore) ?? "";
               const ws = s.weeklyScores || {};
               const wb = (w: number) => { const a = ws[w] || []; return a.length > 0 ? Math.max(...a.map((x: QuizScore) => Math.round((x.correct / x.total) * 100))) : ""; };
-              const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
+              const competency = buildAdminCompetencySnapshot(s, settings, articles);
+              const assessment = buildAdminAssessmentSignal(s);
+              const teachNext = assessment?.summary?.recommendedArea.shortLabel || (assessment ? "Needs in-app detail" : "");
+              const strongest = assessment?.summary?.strongestAreas[0]?.shortLabel || "";
               const sr = s.srQueue || {};
               const srItems = Object.keys(sr).length;
               const srMastered = Object.values(sr).filter((i: SrItem) => i.interval > 21).length;
-              return [s.name, s.year||"", s.status||"active", (s.patients||[]).length, pre, post, pre && post ? post-pre : "", wb(1), wb(2), wb(3), wb(4), Object.values(ws).flat().length, pts, getLevel(pts).name, srItems, srMastered, (s.activityLog||[]).length];
+              return [s.name, s.year||"", s.status||"active", (s.patients||[]).length, pre, post, pre !== "" && post !== "" ? Number(post) - Number(pre) : "", wb(1), wb(2), wb(3), wb(4), Object.values(ws).flat().length, competency.masteryPercent, competency.topDomain.label, teachNext, strongest, srItems, srMastered, (s.activityLog||[]).length];
             });
             const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
             const blob = new Blob([csv], { type: "text/csv" });
@@ -864,12 +1040,12 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
         <>
           <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Student Overview</h3>
           {activeStudents.map(s => {
-            const prePct = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : null;
-            const postPct = s.postScore ? Math.round((s.postScore.correct / s.postScore.total) * 100) : null;
+            const prePct = getScorePct(s.preScore);
+            const postPct = getScorePct(s.postScore);
             const wkScores = s.weeklyScores || {};
             const quizzesDone = Object.values(wkScores).flat().length;
-            const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
-            const lvl = getLevel(pts);
+            const competency = buildAdminCompetencySnapshot(s, settings, articles);
+            const assessment = buildAdminAssessmentSignal(s);
             return (
               <button key={s.id} onClick={() => navigate("students", { type: "studentDetail", id: String(s.id) })}
                 style={{ display: "block", width: "100%", background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
@@ -878,10 +1054,21 @@ function DashboardTab({ students, setStudents, navigate, rotationCode }: { stude
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
                       {s.loginPin && <span style={{ fontSize: 13, background: T.yellowBg, color: T.orange, padding: "1px 6px", borderRadius: 6, fontWeight: 700, fontFamily: T.mono, letterSpacing: 1 }}>PIN {s.loginPin}</span>}
-                      <span style={{ fontSize: 13, background: T.ice, padding: "1px 8px", borderRadius: 8, fontWeight: 600, color: T.navy }}>{lvl.icon} {pts}pts</span>
+                      <span style={{ fontSize: 13, background: T.ice, padding: "1px 8px", borderRadius: 8, fontWeight: 700, color: T.navy }}>{competency.masteryPercent}% mastery</span>
                     </div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
                       {(s.patients || []).length} patients • {quizzesDone} quizzes • {s.year || "MS3/MS4"}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+                      <span style={{ fontSize: 13, background: T.bg, borderRadius: 999, padding: "4px 9px", color: T.sub, fontWeight: 600 }}>
+                        Top domain: {competency.topDomain.label}
+                      </span>
+                      <span style={{ fontSize: 13, background: competency.developingCount > 0 ? T.yellowBg : T.greenBg, borderRadius: 999, padding: "4px 9px", color: competency.developingCount > 0 ? T.goldText : T.greenDk, fontWeight: 700 }}>
+                        {competency.developingCount} developing domain{competency.developingCount !== 1 ? "s" : ""}
+                      </span>
+                      <span style={{ fontSize: 13, background: assessment?.summary ? T.redBg : T.bg, borderRadius: 999, padding: "4px 9px", color: assessment?.summary ? T.accent : T.muted, fontWeight: 700 }}>
+                        {assessment?.summary ? `Teach next: ${assessment.summary.recommendedArea.shortLabel}` : assessment ? "Awaiting topic detail" : "No assessment yet"}
+                      </span>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -1058,10 +1245,12 @@ function MiniBarChart({ data, width = 280, height = 130 }: { data: { label: stri
 //  Analytics Tab
 // ═══════════════════════════════════════════════════════════════════════
 
-function AnalyticsTab({ students }: { students: AdminStudent[] }) {
+function AnalyticsTab({ students, settings, articles }: { students: AdminStudent[]; settings: SharedSettings; articles: ArticlesData }) {
   const active = students.filter(s => s.status === "active" || s.status === "completed");
   const withPre = active.filter(s => s.preScore);
   const withPost = active.filter(s => s.postScore);
+  const teachingSignals = buildCohortTeachingSignals(active);
+  const domainNeeds = buildCohortCompetencyNeeds(active, settings, articles);
 
   // Score Distribution — group pre and post scores into 5 bins
   const binLabels = ["0-20%", "21-40%", "41-60%", "61-80%", "81-100%"];
@@ -1164,6 +1353,59 @@ function AnalyticsTab({ students }: { students: AdminStudent[] }) {
             </div>
           )}
 
+          <div style={cardStyle}>
+            <div style={titleStyle}>Assessment Focus Areas</div>
+            <div style={subStyle}>
+              {teachingSignals.detailedAssessments > 0
+                ? `Detailed topic-band insight from ${teachingSignals.detailedAssessments} in-app assessments`
+                : "Students need to complete assessments in-app for topic-band teaching guidance"}
+            </div>
+            {teachingSignals.focusAreas.length > 0 ? (
+              <div style={{ display: "grid", gap: 10 }}>
+                {teachingSignals.focusAreas.slice(0, 4).map((item) => (
+                  <div key={item.label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{item.label}</span>
+                      <span style={{ fontSize: 13, color: T.sub }}>{item.count} student{item.count !== 1 ? "s" : ""}</span>
+                    </div>
+                    <div style={{ height: 8, background: T.grayBg, borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ width: `${(item.count / Math.max(teachingSignals.detailedAssessments, 1)) * 100}%`, height: "100%", background: T.accent, borderRadius: 999 }} />
+                    </div>
+                  </div>
+                ))}
+                {teachingSignals.strongestAreas[0] && (
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
+                    Cohort strength: {teachingSignals.strongestAreas[0].label}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>No detailed focus-area breakdown yet</div>
+            )}
+          </div>
+
+          <div style={cardStyle}>
+            <div style={titleStyle}>Competency Domains Needing Teaching</div>
+            <div style={subStyle}>Counts reflect students who are not yet proficient in each domain</div>
+            {domainNeeds.length > 0 ? (
+              <div style={{ display: "grid", gap: 10 }}>
+                {domainNeeds.slice(0, 4).map((item) => (
+                  <div key={item.label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{item.label}</span>
+                      <span style={{ fontSize: 13, color: T.sub }}>{item.count}/{active.length}</span>
+                    </div>
+                    <div style={{ height: 8, background: T.grayBg, borderRadius: 999, overflow: "hidden" }}>
+                      <div style={{ width: `${(item.count / Math.max(active.length, 1)) * 100}%`, height: "100%", background: T.gold, borderRadius: 999 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>No competency data yet</div>
+            )}
+          </div>
+
           {/* 4. Student Engagement */}
           {engagementData.length > 0 && (
             <div style={cardStyle}>
@@ -1202,7 +1444,7 @@ function AnalyticsTab({ students }: { students: AdminStudent[] }) {
 //  Students Tab & Student Roster
 // ═══════════════════════════════════════════════════════════════════════
 
-function StudentsTab({ students, setStudents, navigate, rotationCode }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string }) {
+function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", year: "MS3", startDate: "" });
   const isConnected = !!rotationCode;
@@ -1292,7 +1534,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode }: { studen
       )}
 
       {active.map(s => (
-        <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={isConnected ? null : () => removeStudent(s.id)} />
+        <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={isConnected ? null : () => removeStudent(s.id)} settings={settings} articles={articles} />
       ))}
 
       {completed.length > 0 && (
@@ -1301,7 +1543,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode }: { studen
             Completed Rotations ({completed.length})
           </div>
           {completed.map(s => (
-            <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={isConnected ? null : () => removeStudent(s.id)} dimmed />
+            <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={isConnected ? null : () => removeStudent(s.id)} dimmed settings={settings} articles={articles} />
           ))}
         </>
       )}
@@ -1309,9 +1551,16 @@ function StudentsTab({ students, setStudents, navigate, rotationCode }: { studen
   );
 }
 
-function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }: { student: AdminStudent; navigate: (t: string, sv?: AdminSubView) => void; onToggle: (() => void) | null; onRemove: (() => void) | null; dimmed?: boolean }) {
-  const prePct = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : null;
-  const postPct = s.postScore ? Math.round((s.postScore.correct / s.postScore.total) * 100) : null;
+function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings, articles }: { student: AdminStudent; navigate: (t: string, sv?: AdminSubView) => void; onToggle: (() => void) | null; onRemove: (() => void) | null; dimmed?: boolean; settings: SharedSettings; articles: ArticlesData }) {
+  const prePct = getScorePct(s.preScore);
+  const postPct = getScorePct(s.postScore);
+  const competency = buildAdminCompetencySnapshot(s, settings, articles);
+  const assessment = buildAdminAssessmentSignal(s);
+  const teachingLine = assessment?.summary
+    ? `Teach next: ${assessment.summary.recommendedArea.shortLabel}`
+    : assessment
+      ? "Assessment detail appears when completed in-app"
+      : "No assessment yet";
 
   return (
     <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, opacity: dimmed ? 0.6 : 1 }}>
@@ -1325,6 +1574,17 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed }: { stud
           </div>
           <div style={{ fontSize: 13, color: T.sub }}>
             {(s.patients || []).length} patients • Started {(s as AdminStudent & { startDate?: string }).startDate || new Date(s.addedDate).toLocaleDateString()}
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+            <span style={{ fontSize: 13, background: T.ice, color: T.navy, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
+              {competency.masteryPercent}% mastery
+            </span>
+            <span style={{ fontSize: 13, background: T.bg, color: T.sub, padding: "4px 9px", borderRadius: 999, fontWeight: 600 }}>
+              {competency.profileLine}
+            </span>
+            <span style={{ fontSize: 13, background: assessment?.summary ? T.redBg : T.bg, color: assessment?.summary ? T.accent : T.muted, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
+              {teachingLine}
+            </span>
           </div>
           {/* Score bars */}
           <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
@@ -2188,7 +2448,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
 //  Student Detail View (with score entry & patient logging)
 // ═══════════════════════════════════════════════════════════════════════
 
-function StudentDetailView({ student: s, students, onBack, setStudents, writeStudentToFirestore, recoverStudentToRecord, navigate }: { student: AdminStudent | undefined; students: AdminStudent[]; onBack: () => void; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; recoverStudentToRecord: (sourceStudentId: string, targetStudentId: string) => Promise<string>; navigate: NavigateFn }) {
+function StudentDetailView({ student: s, students, onBack, setStudents, writeStudentToFirestore, recoverStudentToRecord, navigate, settings, articles }: { student: AdminStudent | undefined; students: AdminStudent[]; onBack: () => void; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; recoverStudentToRecord: (sourceStudentId: string, targetStudentId: string) => Promise<string>; navigate: NavigateFn; settings: SharedSettings; articles: ArticlesData }) {
   const [showScoreEntry, setShowScoreEntry] = useState(false);
   const [scoreType, setScoreType] = useState("pre"); // pre, post, weekly
   const [scoreWeek, setScoreWeek] = useState(1);
@@ -2224,10 +2484,14 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
 
   if (!s) return <div style={{ padding: 16 }}>Student not found.</div>;
 
-  const prePct = s.preScore ? Math.round((s.preScore.correct / s.preScore.total) * 100) : null;
-  const postPct = s.postScore ? Math.round((s.postScore.correct / s.postScore.total) * 100) : null;
+  const prePct = getScorePct(s.preScore);
+  const postPct = getScorePct(s.postScore);
   const wkScores = s.weeklyScores || {};
   const patients = s.patients || [];
+  const competency = buildAdminCompetencySnapshot(s, settings, articles);
+  const assessment = buildAdminAssessmentSignal(s);
+  const streakDays = s.gamification?.streaks?.currentDays || 0;
+  const totalQuizAttempts = Object.values(wkScores).flat().length + (s.preScore ? 1 : 0) + (s.postScore ? 1 : 0);
 
   const updateStudent = (updates: Partial<AdminStudent>) => {
     setStudents(prev => prev.map(st => st.id === s.id ? { ...st, ...updates } : st));
@@ -2342,35 +2606,80 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
             {s.status}
           </div>
         </div>
-        {/* Gamification Summary */}
-        {(() => {
-          const gam = s.gamification;
-          const pts = gam ? gam.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
-          const level = getLevel(pts);
-          const earnedCount = gam?.achievements?.length || 0;
-          return (
-            <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <div style={{ background: T.ice, borderRadius: 10, padding: "6px 14px", display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 18 }}>{level.icon}</span>
-                <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{level.name}</span>
-              </div>
-              <div style={{ background: T.yellowBg, borderRadius: 10, padding: "6px 14px" }}>
-                <span style={{ fontWeight: 700, color: T.orange, fontSize: 14, fontFamily: T.mono }}>{pts}</span>
-                <span style={{ fontSize: 13, color: T.sub, marginLeft: 4 }}>pts</span>
-              </div>
-              <div style={{ background: "rgba(26,188,156,0.1)", borderRadius: 10, padding: "6px 14px" }}>
-                <span style={{ fontWeight: 700, color: T.green, fontSize: 14 }}>{earnedCount}</span>
-                <span style={{ fontSize: 13, color: T.sub, marginLeft: 4 }}>/{ACHIEVEMENTS.length} badges</span>
-              </div>
-              {gam && gam.streaks && gam.streaks.currentDays > 0 && (
-                <div style={{ background: T.redBg, borderRadius: 10, padding: "6px 14px" }}>
-                  <span style={{ fontSize: 14 }}>🔥</span>
-                  <span style={{ fontWeight: 700, color: T.accent, fontSize: 14, marginLeft: 4 }}>{gam.streaks.currentDays}d</span>
-                </div>
-              )}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 12 }}>
+          <div style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Competency Snapshot</div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+              <span style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{competency.masteryPercent}%</span>
+              <span style={{ fontSize: 13, color: T.sub }}>{competency.masteryDetail}</span>
             </div>
-          );
-        })()}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+              <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                Top domain: {competency.topDomain.label}
+              </span>
+              <span style={{ background: competency.developingCount > 0 ? T.yellowBg : T.greenBg, color: competency.developingCount > 0 ? T.goldText : T.greenDk, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                {competency.developingCount} developing
+              </span>
+            </div>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>{competency.profileLine}</div>
+          </div>
+
+          <div style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${assessment?.summary ? T.redAlpha : T.line}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Teaching Signal</div>
+            {assessment?.summary ? (
+              <>
+                <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
+                  Teach next: {assessment.summary.recommendedArea.label}
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                  <span style={{ background: T.redBg, color: T.accent, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                    Focus {assessment.summary.recommendedArea.pct}%
+                  </span>
+                  {assessment.summary.strongestAreas[0] && (
+                    <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                      Strongest: {assessment.summary.strongestAreas[0].shortLabel}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
+                  {assessment.summary.detailLine}
+                </div>
+              </>
+            ) : assessment ? (
+              <>
+                <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
+                  Assessment logged at {assessment.overallPct}%
+                </div>
+                <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
+                  {assessment.note}
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
+                  Awaiting assessment signal
+                </div>
+                <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
+                  Once the student completes a pre- or post-assessment, this card will call out what to teach next.
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+          <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+            {patients.length} patient{patients.length !== 1 ? "s" : ""}
+          </span>
+          <span style={{ background: T.bg, color: T.sub, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 600 }}>
+            {totalQuizAttempts} quiz signal{totalQuizAttempts !== 1 ? "s" : ""}
+          </span>
+          {streakDays > 0 && (
+            <span style={{ background: T.redBg, color: T.accent, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+              🔥 {streakDays} day streak
+            </span>
+          )}
+        </div>
 
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
           <button onClick={() => { setShowScoreEntry(true); setScoreType("pre"); setScoreForm({ correct: "", total: "25" }); }}
@@ -2413,7 +2722,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
                 const lastSeen = candidate.lastSyncedAt ? new Date(candidate.lastSyncedAt).toLocaleString() : "not synced yet";
                 return (
                   <option key={candidate.studentId} value={candidate.studentId}>
-                    {candidate.name} • {candidate.studentId.slice(0, 8)}... • {candidate.patients.length} pts • {candidateQuizCount} quizzes • {lastSeen}
+                    {candidate.name} • {candidate.studentId.slice(0, 8)}... • {candidate.patients.length} patients • {candidateQuizCount} quizzes • {lastSeen}
                   </option>
                 );
               })}
@@ -2650,7 +2959,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
 //  Rotation-End Summary (Enhanced PDF Export)
 // ═══════════════════════════════════════════════════════════════════════
 
-function RotationSummaryReport({ student: s, settings, onBack }: { student?: AdminStudent; settings: SharedSettings & { hospitalName?: string }; onBack: () => void }) {
+function RotationSummaryReport({ student: s, settings, articles, onBack }: { student?: AdminStudent; settings: SharedSettings & { hospitalName?: string }; articles: ArticlesData; onBack: () => void }) {
   useEffect(() => {
     const timer = setTimeout(() => window.print(), 500);
     return () => clearTimeout(timer);
@@ -2666,8 +2975,8 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
   const growth = pre !== null && post !== null ? post - pre : null;
   const wkScores = s.weeklyScores || {};
   const patients = s.patients || [];
-  const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
-  const lvl = getLevel(pts);
+  const competency = buildAdminCompetencySnapshot(s, settings, articles);
+  const assessment = buildAdminAssessmentSignal(s);
   const earned = s.gamification?.achievements || [];
   const earnedBadges = ACHIEVEMENTS.filter(a => earned.includes(a.id));
   const completed = s.completedItems || { articles: {}, studySheets: {}, cases: {} };
@@ -2681,8 +2990,8 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
 
   // Completed items per week
   const weeklyCompletion = [1, 2, 3, 4].map(w => {
-    const arts = (ARTICLES[w] || []).length;
-    const artsDone = (ARTICLES[w] || []).filter(a => completed.articles[a.url]).length;
+    const arts = (articles[w] || []).length;
+    const artsDone = (articles[w] || []).filter(a => completed.articles[a.url]).length;
     const sheets = (STUDY_SHEETS[w] || []).length;
     const sheetsDone = (STUDY_SHEETS[w] || []).filter(sh => completed.studySheets[sh.id]).length;
     return { week: w, articles: { done: artsDone, total: arts }, sheets: { done: sheetsDone, total: sheets } };
@@ -2718,7 +3027,9 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
         {/* Student Info */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 20, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>{s.name}</div>
-          <div style={{ fontSize: 13, color: "#5D6D7E" }}>{s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {lvl.icon} {lvl.name} ({pts} pts)</div>
+          <div style={{ fontSize: 13, color: "#5D6D7E" }}>
+            {s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {competency.masteryPercent}% mastery • Top domain {competency.topDomain.label}
+          </div>
         </div>
 
         {/* Score Summary */}
@@ -2737,6 +3048,33 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
               <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
             </div>
           )}
+        </div>
+
+        <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Competency Snapshot</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: "#0F2B3C", fontFamily: "'JetBrains Mono', monospace" }}>{competency.masteryPercent}%</div>
+            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>{competency.masteryDetail}</div>
+            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+              {competency.developingCount} developing domain{competency.developingCount !== 1 ? "s" : ""} • {competency.profileLine}
+            </div>
+          </div>
+          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: assessment?.summary ? "#FEF5F5" : "#F8F9FA" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Teaching Signal</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#0F2B3C" }}>
+              {assessment?.summary ? `Teach next: ${assessment.summary.recommendedArea.label}` : assessment ? `Assessment logged: ${assessment.overallPct}%` : "Awaiting assessment"}
+            </div>
+            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+              {assessment?.summary
+                ? assessment.summary.detailLine
+                : assessment?.note || "Once a pre/post assessment is completed in-app, this section highlights weak and strong topic bands."}
+            </div>
+            {assessment?.summary?.strongestAreas[0] && (
+              <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+                Strongest area: {assessment.summary.strongestAreas[0].label}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Weekly Quiz Breakdown */}
@@ -2885,7 +3223,7 @@ function RotationSummaryReport({ student: s, settings, onBack }: { student?: Adm
 //  Printable Report (Cohort & Individual)
 // ═══════════════════════════════════════════════════════════════════════
 
-function PrintableReport({ mode, students, student, settings, onBack }: { mode: string; students: AdminStudent[]; student?: AdminStudent; settings: SharedSettings & { hospitalName?: string }; onBack: () => void }) {
+function PrintableReport({ mode, students, student, settings, articles, onBack }: { mode: string; students: AdminStudent[]; student?: AdminStudent; settings: SharedSettings & { hospitalName?: string }; articles: ArticlesData; onBack: () => void }) {
   const reportDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const rotationName = settings?.attendingName || "Nephrology Rotation";
   const hospitalName = settings?.hospitalName || "";
@@ -2969,7 +3307,8 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
                 <th style={{ ...thStyle, textAlign: "center" }}>Pre-Test</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Post-Test</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Growth</th>
-                <th style={{ ...thStyle, textAlign: "center" }}>Level</th>
+                <th style={{ ...thStyle, textAlign: "center" }}>Mastery</th>
+                <th style={{ ...thStyle, textAlign: "center" }}>Teach Next</th>
               </tr>
             </thead>
             <tbody>
@@ -2979,8 +3318,8 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
                 const growth = pre !== null && post !== null ? post - pre : null;
                 const wkScores = s.weeklyScores || {};
                 const quizCount = Object.values(wkScores).flat().length;
-                const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
-                const lvl = getLevel(pts);
+                const competency = buildAdminCompetencySnapshot(s, settings, articles);
+                const assessment = buildAdminAssessmentSignal(s);
                 return (
                   <tr key={s.id || i} style={{ borderBottom: "1px solid #D5DBDB", background: i % 2 === 0 ? "white" : "#F8F9FA" }}>
                     <td style={tdStyle}><strong>{s.name}</strong></td>
@@ -2992,7 +3331,8 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
                     <td style={{ ...tdStyle, textAlign: "center", color: growth !== null && growth > 0 ? "#1ABC9C" : "#5D6D7E", fontWeight: 600 }}>
                       {growth !== null ? (growth > 0 ? "+" : "") + growth + "%" : "—"}
                     </td>
-                    <td style={{ ...tdStyle, textAlign: "center" }}>{lvl.icon} {lvl.name} ({pts}pts)</td>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>{competency.masteryPercent}% · {competency.topDomain.label}</td>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>{assessment?.summary?.recommendedArea.shortLabel || (assessment ? "Needs detail" : "—")}</td>
                   </tr>
                 );
               })}
@@ -3012,8 +3352,8 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
   const growth = pre !== null && post !== null ? post - pre : null;
   const wkScores = s.weeklyScores || {};
   const patients = s.patients || [];
-  const pts = s.gamification ? s.gamification.points : calculatePoints(s as Parameters<typeof calculatePoints>[0]);
-  const lvl = getLevel(pts);
+  const competency = buildAdminCompetencySnapshot(s, settings, articles);
+  const assessment = buildAdminAssessmentSignal(s);
   const earned = s.gamification?.achievements || [];
   const earnedBadges = ACHIEVEMENTS.filter(a => earned.includes(a.id));
 
@@ -3033,7 +3373,7 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
         {/* Student Header */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 20, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>{s.name}</div>
-          <div style={{ fontSize: 13, color: "#5D6D7E" }}>{s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {lvl.icon} {lvl.name} ({pts} pts)</div>
+          <div style={{ fontSize: 13, color: "#5D6D7E" }}>{s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {competency.masteryPercent}% mastery • Top domain {competency.topDomain.label}</div>
         </div>
 
         {/* Scores Summary */}
@@ -3054,6 +3394,33 @@ function PrintableReport({ mode, students, student, settings, onBack }: { mode: 
               <div style={{ fontSize: 30, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
             </div>
           )}
+        </div>
+
+        <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
+          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Competency Snapshot</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: "#0F2B3C", fontFamily: "'JetBrains Mono', monospace" }}>{competency.masteryPercent}%</div>
+            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>{competency.masteryDetail}</div>
+            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+              {competency.profileLine} • {competency.developingCount} developing domain{competency.developingCount !== 1 ? "s" : ""}
+            </div>
+          </div>
+          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: assessment?.summary ? "#FEF5F5" : "#F8F9FA" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Teaching Signal</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#0F2B3C" }}>
+              {assessment?.summary ? `Teach next: ${assessment.summary.recommendedArea.label}` : assessment ? `Assessment logged: ${assessment.overallPct}%` : "Awaiting assessment"}
+            </div>
+            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+              {assessment?.summary
+                ? assessment.summary.detailLine
+                : assessment?.note || "Detailed topic-band insight appears after an in-app assessment run."}
+            </div>
+            {assessment?.summary?.strongestAreas[0] && (
+              <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+                Strongest area: {assessment.summary.strongestAreas[0].label}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Weekly Quiz Breakdown */}
