@@ -266,12 +266,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
 
-  // Phase 3a (spec §01/§03): new 5-tab IA — today · library · patients · team · me.
-  // Old tab ids ("home", "guide", "refs", "progress") are aliased so existing call sites
-  // across sub-views keep working. Phase 3b+ will sweep call sites to use the new ids directly.
-  const TAB_ALIASES: Record<string, string> = { home: "today", guide: "library", refs: "library", progress: "me" };
-  const normalizeTab = (t: string) => TAB_ALIASES[t] ?? t;
-  const navigate = (t: string, sv: SubView = null) => { setTab(normalizeTab(t)); setSubView(sv); window.scrollTo(0, 0); };
+  // Phase 3 (spec §01/§03): 5-tab IA — today · library · patients · team · me.
+  // Old tab ids were aliased during 3a; Phase 3b removed the alias shim after all
+  // call sites were canonicalized (commit 4da55c6).
+  const navigate = (t: string, sv: SubView = null) => { setTab(t); setSubView(sv); window.scrollTo(0, 0); };
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
     setBookmarks(prev => {
