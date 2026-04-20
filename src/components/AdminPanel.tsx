@@ -14,7 +14,7 @@ import { buildAssessmentSummary } from "../utils/assessmentInsights";
 import { HistogramChart, FunnelChart, HeatmapChart } from "./student/charts";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../data/clinicGuides";
 import { getCurrentOrNextFriday, getClinicTopicForDate, ensureCurrentClinicGuide, overrideClinicGuide, regenerateClinicGuide } from "../utils/clinicRotation";
-import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, Patient, QuizScore, WeeklyScores, Gamification, FeedbackTag, ClinicGuideRecord, CompletedItems, Bookmarks, ActivityLogEntry } from "../types";
+import type { AdminSubView, AdminStudent, Announcement, SharedSettings, SrItem, Patient, QuizScore, WeeklyScores, Gamification, FeedbackTag, ClinicGuideRecord, CompletedItems, Bookmarks, ActivityLogEntry, ReflectionEntry } from "../types";
 
 type NavigateFn = (t: string, sv?: AdminSubView) => void;
 type WeeklyData = typeof WEEKLY;
@@ -155,6 +155,16 @@ function mergeActivityLog(source: ActivityLogEntry[] = [], target: ActivityLogEn
     .slice(-50);
 }
 
+function mergeReflections(source: ReflectionEntry[] = [], target: ReflectionEntry[] = []): ReflectionEntry[] {
+  const deduped = new Map<string, ReflectionEntry>();
+  [...source, ...target].forEach((entry) => {
+    deduped.set(entry.id || `${entry.dayKey}|${entry.submittedAt}`, entry);
+  });
+  return Array.from(deduped.values())
+    .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
+    .slice(-30);
+}
+
 function buildRecoveredStudent(source: AdminStudent, target: AdminStudent): AdminStudent {
   const sourcePatients = source.patients || [];
   const targetPatients = target.patients || [];
@@ -190,6 +200,7 @@ function buildRecoveredStudent(source: AdminStudent, target: AdminStudent): Admi
     },
     srQueue: { ...(source.srQueue || {}), ...(target.srQueue || {}) },
     activityLog: mergedActivityLog,
+    reflections: mergeReflections(source.reflections, target.reflections),
     completedItems: mergeCompletedItems(source.completedItems, target.completedItems),
     bookmarks: mergeBookmarks(source.bookmarks, target.bookmarks),
     feedbackTags: [
@@ -1054,6 +1065,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         gamification: s.gamification || null,
         srQueue: s.srQueue || {},
         activityLog: s.activityLog || [],
+        reflections: s.reflections || [],
         feedbackTags: s.feedbackTags || [],
         completedItems: s.completedItems || undefined,
         bookmarks: s.bookmarks || undefined,
@@ -1107,6 +1119,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
       gamification: merged.gamification,
       srQueue: merged.srQueue,
       activityLog: merged.activityLog,
+      reflections: merged.reflections,
       completedItems: merged.completedItems,
       bookmarks: merged.bookmarks,
       feedbackTags: merged.feedbackTags,
@@ -1214,6 +1227,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             postScore: (snap.postScore || existing.postScore || null) as QuizScore | null,
             srQueue: (snap.srQueue || existing.srQueue || {}) as AdminStudent["srQueue"],
             activityLog: (snap.activityLog || existing.activityLog || []) as AdminStudent["activityLog"],
+            reflections: (snap.reflections || existing.reflections || []) as AdminStudent["reflections"],
             lastSyncedAt: snap.updatedAt || new Date().toISOString(),
           };
           const pos = result.findIndex(s => s.id === existing.id);
@@ -1237,6 +1251,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
           gamification: undefined,
           srQueue: snap.srQueue || {},
           activityLog: snap.activityLog || [],
+          reflections: snap.reflections || [],
           lastSyncedAt: snap.updatedAt || new Date().toISOString(),
         } as AdminStudent);
         created += 1;
@@ -1365,7 +1380,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
       {/* Content */}
       <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
-        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} />}
+        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} articles={articles} onBack={() => navigate("dashboard")} />}
         {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} />}
         {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} navigate={navigate} settings={settings} articles={articles} />}
@@ -1405,7 +1420,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 //  Dashboard Tab
 // ═══════════════════════════════════════════════════════════════════════
 
-function DashboardTab({ students, setStudents, navigate, rotationCode, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData }) {
+function DashboardTab({ students, setStudents, navigate, rotationCode, settings, articles, writeStudentToFirestore }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void }) {
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const [selectedPlanTopic, setSelectedPlanTopic] = useState("");
   const [copiedPlanTopic, setCopiedPlanTopic] = useState<string | null>(null);
@@ -1990,25 +2005,25 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
                 action: () => {
                   const reset = { weeklyScores: {}, preScore: null, postScore: null };
                   setStudents(prev => prev.map(s => ({ ...s, ...reset })));
-                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                  students.forEach(s => { if (s.studentId) writeStudentToFirestore(s.studentId, reset); });
                 }},
               { key: "resetSR", label: "Reset Spaced Repetition Only", desc: "Clears the SR queue. Keeps quizzes, patients, and achievements.", icon: "🔁", color: T.purple,
                 action: () => {
                   const reset = { srQueue: {} };
                   setStudents(prev => prev.map(s => ({ ...s, ...reset })));
-                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                  students.forEach(s => { if (s.studentId) writeStudentToFirestore(s.studentId, reset); });
                 }},
               { key: "resetPatients", label: "Reset Patients Only", desc: "Clears the patient log. Keeps quizzes, SR, and achievements.", icon: "🏥", color: T.med,
                 action: () => {
                   const reset = { patients: [] };
                   setStudents(prev => prev.map(s => ({ ...s, ...reset })));
-                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                  students.forEach(s => { if (s.studentId) writeStudentToFirestore(s.studentId, reset); });
                 }},
               { key: "resetAll", label: "Reset Everything", desc: "Clears ALL progress: quizzes, patients, SR, achievements, and activity.", icon: "⚠️", color: T.accent,
                 action: () => {
                   const reset = { patients: [], weeklyScores: {}, preScore: null, postScore: null, gamification: { points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } }, completedItems: { articles: {}, studySheets: {}, cases: {} }, srQueue: {}, activityLog: [] };
                   setStudents(prev => prev.map(s => ({ ...s, ...reset })));
-                  students.forEach(s => { if (s.studentId) store.setStudentData(s.studentId, reset); });
+                  students.forEach(s => { if (s.studentId) writeStudentToFirestore(s.studentId, reset); });
                 }},
             ].map(opt => (
               <button key={opt.key} onClick={() => {
@@ -2198,7 +2213,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
         const recent = allActivity.slice(0, 15);
         if (recent.length === 0) return null;
 
-        const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄", article: "📄", study_sheet: "🗂️" };
+        const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄", article: "📄", study_sheet: "🗂️", reflection: "💭" };
         const formatTime = (ts: string) => {
           const d = new Date(ts);
           const month = d.getMonth() + 1;
@@ -3823,6 +3838,62 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
                 }
               }}
               style={{ width: "100%", padding: "8px 10px", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box" }} />
+          </div>
+        )}
+      </div>
+
+      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 10 }}>
+          Student Reflections
+        </div>
+        {(s.reflections || []).length > 0 ? (
+          <div style={{ display: "grid", gap: 10 }}>
+            {(s.reflections || [])
+              .slice()
+              .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+              .slice(0, 4)
+              .map((entry) => (
+                <div key={entry.id} style={{ background: T.bg, borderRadius: 12, padding: "12px 14px", border: `1px solid ${T.line}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", flexWrap: "wrap", marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
+                      {new Date(entry.submittedAt).toLocaleDateString()}
+                    </div>
+                    <div style={{ fontSize: 13, color: T.muted }}>
+                      {new Date(entry.submittedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                    What they saw
+                  </div>
+                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55, marginBottom: 8 }}>
+                    {entry.saw || "Not entered."}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                    What still feels unclear
+                  </div>
+                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>
+                    {entry.unclear || "Nothing specific flagged."}
+                  </div>
+                  {(entry.topics.length > 0 || entry.seededQuestionKeys.length > 0) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                      {entry.topics.map((topic) => (
+                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                          {topic}
+                        </span>
+                      ))}
+                      {entry.seededQuestionKeys.length > 0 && (
+                        <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                          {entry.seededQuestionKeys.length} SR card{entry.seededQuestionKeys.length !== 1 ? "s" : ""} queued
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>
+            No student reflections yet.
           </div>
         )}
       </div>

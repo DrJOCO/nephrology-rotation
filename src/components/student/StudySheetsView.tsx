@@ -2,6 +2,7 @@ import { useState, CSSProperties } from "react";
 import { T, WEEKLY, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { backBtnStyle } from "./shared";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
+import { getTopicContent } from "../../utils/topicMapping";
 
 const imgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 10, marginBottom: 6, border: `1px solid ${T.line}` };
 const captionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.4 };
@@ -46,6 +47,32 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
               <div style={{ padding: "4px 16px 20px" }}>
                 {/* Hero image */}
                 {(() => { const hero = getStudySheetHero(sheet.id); return hero ? <img src={hero} alt={`${sheet.title} overview`} style={{ ...imgStyle, marginTop: 12 }} /> : null; })()}
+
+                {sheet.topics && sheet.topics.length > 0 && (
+                  <div style={{ marginTop: 14, marginBottom: 18 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+                      More On This Topic
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {sheet.topics.map(topic => {
+                        const content = getTopicContent(topic);
+                        const resourceCount = content.articles.length + content.quizWeeks.length + content.trials.length + content.resources.length;
+                        return (
+                          <button
+                            key={topic}
+                            onClick={() => navigate("today", { type: "topicDetail", topic, source: "studySheets", week })}
+                            style={{ background: T.blueBg, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", cursor: "pointer", textAlign: "left" }}
+                          >
+                            <span style={{ display: "block", fontSize: 13, fontWeight: 700, color: T.med }}>{topic}</span>
+                            <span style={{ display: "block", fontSize: 13, color: T.sub, marginTop: 2 }}>
+                              {resourceCount} linked item{resourceCount !== 1 ? "s" : ""}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {sheet.sections.map((section, secIdx) => (
                   <div key={secIdx} style={{ marginBottom: 20 }}>

@@ -6,6 +6,7 @@ import {
   Brain,
   ChevronRight,
   ClipboardList,
+  Download,
   Megaphone,
   RefreshCw,
   Sparkles,
@@ -25,6 +26,7 @@ import type {
   CompletedItems,
   Patient,
   QuizScore,
+  ReflectionEntry,
   SubView,
   WeeklyScores,
 } from "../../types";
@@ -51,6 +53,11 @@ interface HomeTabProps {
   online?: boolean;
   clinicGuides?: ClinicGuideRecord[];
   competencySummary: CompetencySummary;
+  reflections: ReflectionEntry[];
+  onSubmitReflection: (payload: { saw: string; unclear: string }) => Promise<ReflectionEntry | null>;
+  installPromptVariant: "native" | "ios" | null;
+  onInstallApp: () => Promise<void>;
+  onDismissInstallPrompt: () => void;
 }
 
 interface NavAction {
@@ -578,15 +585,31 @@ export default function HomeTab({
   online = true,
   clinicGuides = [],
   competencySummary,
+  reflections,
+  onSubmitReflection,
+  installPromptVariant,
+  onInstallApp,
+  onDismissInstallPrompt,
 }: HomeTabProps) {
   const isMobile = useIsMobile();
   const now = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toDateKey(now), [now]);
   const [pearlDismissed, setPearlDismissed] = useState(false);
+  const [reflectionSaw, setReflectionSaw] = useState("");
+  const [reflectionUnclear, setReflectionUnclear] = useState("");
+  const [reflectionError, setReflectionError] = useState("");
+  const [savingReflection, setSavingReflection] = useState(false);
 
   useEffect(() => {
     setPearlDismissed(localStorage.getItem(PEARL_STORAGE_KEY) === todayKey);
   }, [todayKey]);
+
+  const todayReflection = useMemo(
+    () => (reflections || [])
+      .filter((entry) => entry.dayKey === todayKey)
+      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0] || null,
+    [reflections, todayKey],
+  );
 
   const activePatients = useMemo(
     () => (patients || [])
@@ -656,6 +679,26 @@ export default function HomeTab({
     wrap: { background: `linear-gradient(135deg, ${T.yellowBg} 0%, ${T.card} 100%)`, border: T.gold, badge: T.goldText },
   };
   const heroStyle = heroToneStyles[heroCard.tone];
+
+  const handleReflectionSubmit = async () => {
+    if (!reflectionSaw.trim() && !reflectionUnclear.trim()) {
+      setReflectionError("Add what you saw or what still feels unclear before saving.");
+      return;
+    }
+
+    setSavingReflection(true);
+    setReflectionError("");
+    try {
+      await onSubmitReflection({ saw: reflectionSaw, unclear: reflectionUnclear });
+      setReflectionSaw("");
+      setReflectionUnclear("");
+    } catch (error) {
+      console.warn("Reflection save failed:", error);
+      setReflectionError("Couldn't save the reflection right now. Try again in a moment.");
+    } finally {
+      setSavingReflection(false);
+    }
+  };
 
   return (
     <div style={{ padding: "18px 16px 24px" }}>
@@ -758,6 +801,53 @@ export default function HomeTab({
             )}
           </div>
         </div>
+      )}
+
+      {installPromptVariant && (
+        <section style={{ marginBottom: 14 }}>
+          <div style={{ background: `linear-gradient(135deg, ${T.blueBg} 0%, ${T.card} 100%)`, borderRadius: 18, padding: 16, border: `1px solid ${T.line}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ width: 38, height: 38, borderRadius: 12, background: T.card, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Download size={18} strokeWidth={1.75} color={T.med} aria-hidden="true" />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>
+                    Install
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>
+                    Keep this on the home screen
+                  </div>
+                  <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.55, maxWidth: 560 }}>
+                    {installPromptVariant === "native"
+                      ? "It loads faster, feels more like an app, and students are much more likely to keep opening it between rounds."
+                      : "On iPhone or iPad, open Safari's Share menu and choose Add to Home Screen so this stays one tap away."}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={onDismissInstallPrompt}
+                style={{ background: "none", border: "none", color: T.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: 0 }}
+              >
+                Dismiss
+              </button>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {installPromptVariant === "native" ? (
+                <button
+                  onClick={() => { void onInstallApp(); }}
+                  style={{ background: T.accent, color: "white", border: "none", borderRadius: 12, padding: "10px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700 }}
+                >
+                  Install app
+                </button>
+              ) : (
+                <div style={{ background: T.card, color: T.navy, borderRadius: 12, padding: "10px 12px", fontSize: 13, fontWeight: 600, border: `1px solid ${T.line}` }}>
+                  Safari → Share → Add to Home Screen
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       )}
 
       <section style={{ marginBottom: 16 }}>
@@ -916,6 +1006,111 @@ export default function HomeTab({
             </div>
           </div>
         </div>
+      </section>
+
+      <section style={{ background: todayReflection ? T.greenBg : T.card, borderRadius: 18, border: `1px solid ${todayReflection ? T.greenAlpha : T.line}`, padding: "16px 16px", marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 10 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <ClipboardList size={16} strokeWidth={1.75} color={todayReflection ? T.greenDk : T.med} aria-hidden="true" />
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8 }}>
+                End-of-day reflection
+              </div>
+            </div>
+            <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
+              {todayReflection ? "Today's reflection is saved" : "Close the loop in 30 seconds"}
+            </h2>
+            <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.55, maxWidth: 560 }}>
+              {todayReflection
+                ? "Your attending can already see this in the dashboard, and tomorrow's review queue will pull from it."
+                : "A quick reflection helps surface tomorrow's teaching targets and seeds the right spaced-repetition cards."}
+            </p>
+          </div>
+          {todayReflection && (
+            <div style={{ background: T.card, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, border: `1px solid ${T.greenAlpha}` }}>
+              Submitted
+            </div>
+          )}
+        </div>
+
+        {todayReflection ? (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: todayReflection.topics.length > 0 || todayReflection.seededQuestionKeys.length > 0 ? 12 : 0 }}>
+              <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: "12px 14px" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>
+                  What you saw
+                </div>
+                <div style={{ fontSize: 14, color: T.text, lineHeight: 1.6 }}>
+                  {todayReflection.saw || "Not entered today."}
+                </div>
+              </div>
+              <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: "12px 14px" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>
+                  What still feels unclear
+                </div>
+                <div style={{ fontSize: 14, color: T.text, lineHeight: 1.6 }}>
+                  {todayReflection.unclear || "Nothing specific flagged today."}
+                </div>
+              </div>
+            </div>
+
+            {(todayReflection.topics.length > 0 || todayReflection.seededQuestionKeys.length > 0) && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {todayReflection.topics.map((topic) => (
+                  <span key={topic} style={{ background: T.card, color: T.navy, borderRadius: 999, padding: "5px 9px", fontSize: 13, fontWeight: 700, border: `1px solid ${T.line}` }}>
+                    {topic}
+                  </span>
+                ))}
+                {todayReflection.seededQuestionKeys.length > 0 && (
+                  <span style={{ background: T.card, color: T.med, borderRadius: 999, padding: "5px 9px", fontSize: 13, fontWeight: 700, border: `1px solid ${T.line}` }}>
+                    {todayReflection.seededQuestionKeys.length} review card{todayReflection.seededQuestionKeys.length !== 1 ? "s" : ""} added for tomorrow
+                  </span>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, marginBottom: 12 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>
+                  What did you see today?
+                </label>
+                <textarea
+                  value={reflectionSaw}
+                  onChange={(event) => { setReflectionSaw(event.target.value); setReflectionError(""); }}
+                  placeholder="One or two patients, topics, or decisions that stood out."
+                  rows={3}
+                  style={{ width: "100%", boxSizing: "border-box", resize: "vertical", borderRadius: 14, border: `1px solid ${T.line}`, background: T.card, padding: "12px 14px", fontSize: 14, fontFamily: T.sans, color: T.text, outline: "none", lineHeight: 1.5 }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>
+                  What didn't click yet?
+                </label>
+                <textarea
+                  value={reflectionUnclear}
+                  onChange={(event) => { setReflectionUnclear(event.target.value); setReflectionError(""); }}
+                  placeholder="What still feels fuzzy, easy to mix up, or worth revisiting tomorrow?"
+                  rows={3}
+                  style={{ width: "100%", boxSizing: "border-box", resize: "vertical", borderRadius: 14, border: `1px solid ${T.line}`, background: T.card, padding: "12px 14px", fontSize: 14, fontFamily: T.sans, color: T.text, outline: "none", lineHeight: 1.5 }}
+                />
+              </div>
+            </div>
+            {reflectionError && (
+              <div style={{ fontSize: 13, color: T.accent, marginBottom: 10 }}>
+                {reflectionError}
+              </div>
+            )}
+            <button
+              onClick={() => { void handleReflectionSubmit(); }}
+              disabled={savingReflection}
+              style={{ background: savingReflection ? T.muted : T.accent, color: "white", border: "none", borderRadius: 12, padding: "11px 16px", cursor: savingReflection ? "not-allowed" : "pointer", fontSize: 14, fontWeight: 700 }}
+            >
+              {savingReflection ? "Saving..." : "Save reflection"}
+            </button>
+          </>
+        )}
       </section>
 
       {!pearlDismissed && (

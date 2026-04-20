@@ -55,7 +55,7 @@ export type SubView =
   | { type: "refDetail"; id: string }
   | { type: "trialLibrary"; searchTrial?: string }
   | { type: "browseByTopic" }
-  | { type: "topicDetail"; topic: string }
+  | { type: "topicDetail"; topic: string; source?: "studySheets" | "articles" | "browseByTopic"; week?: number }
   | { type: "clinicGuide"; date: string }
   | { type: "clinicGuideHistory" }
   | { type: "inpatientGuide"; topic: string }
@@ -111,6 +111,16 @@ export interface ActivityLogEntry {
   label: string;
   detail: string;
   timestamp: string;
+}
+
+export interface ReflectionEntry {
+  id: string;
+  dayKey: string;
+  submittedAt: string;
+  saw: string;
+  unclear: string;
+  topics: string[];
+  seededQuestionKeys: string[];
 }
 
 export interface SrItem {
@@ -174,6 +184,7 @@ export interface AdminStudent {
   gamification?: Gamification;
   srQueue: SrQueue;
   activityLog: ActivityLogEntry[];
+  reflections?: ReflectionEntry[];
   completedItems?: CompletedItems;
   bookmarks?: Bookmarks;
   feedbackTags?: FeedbackTag[];
@@ -352,11 +363,21 @@ export interface TopicExposure {
 }
 
 /** Mapping from a topic to all associated content across weeks */
+export interface TopicLinkedResource {
+  group: "podcasts" | "websites" | "guidelines" | "tools";
+  name: string;
+  desc: string;
+  url: string;
+  tag: string;
+}
+
 export interface TopicContentIndex {
   studySheets: { week: number; id: string }[];
   articles: { week: number; url: string }[];
   cases: { week: number; id: string }[];
   quizWeeks: number[];
+  trials: string[];
+  resources: TopicLinkedResource[];
 }
 
 // ─── Search data sources ──────────────────────────────────────────

@@ -10,7 +10,8 @@ import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamif
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { buildCompetencySummary } from "../utils/competency";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
-import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord } from "../types";
+import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
+import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../types";
 
 // Critical-path components (eager)
 import ThemeToggle from "./student/ThemeToggle";
@@ -49,6 +50,15 @@ const LazyFallback = () => (
   </div>
 );
 
+const INSTALL_PROMPT_DISMISSED_KEY = "neph_installPromptDismissed";
+const JOINED_AT_KEY = "neph_joinedAt";
+const INSTALL_PROMPT_DELAY_MS = 18 * 60 * 60 * 1000;
+
+interface DeferredInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 
 function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const isMobile = useIsMobile();
@@ -84,7 +94,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [bookmarks, setBookmarks] = useState<Bookmarks>({ trials: [], articles: [], cases: [], studySheets: [] });
   const [srQueue, setSrQueue] = useState<SrQueue>({});
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
+  const [reflections, setReflections] = useState<ReflectionEntry[]>([]);
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
+  const [installPromptEvent, setInstallPromptEvent] = useState<DeferredInstallPromptEvent | null>(null);
+  const [installPromptDismissed, setInstallPromptDismissed] = useState(() => localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === "1");
   // Phase 1 (spec §12): accessible logout confirmation — replaces window.confirm.
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   // Phase 2 (spec §01): profile sheet holds name, code, theme toggle, end-session.
@@ -92,7 +106,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const online = useOnline();
   const [pendingSyncCount, setPendingSyncCount] = useState(() => store.getPendingSyncCount());
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastLocalWriteRef = useRef<number>(0);
+  const latestStudentUpdateRef = useRef<string | null>(null);
   const loginAttemptsRef = useRef<{ count: number; lockedUntil: number }>({ count: 0, lockedUntil: 0 });
 
   useEffect(() => {
@@ -106,6 +120,30 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      const promptEvent = event as DeferredInstallPromptEvent;
+      if (typeof promptEvent.prompt !== "function") return;
+      event.preventDefault?.();
+      setInstallPromptEvent(promptEvent);
+    };
+
+    const handleInstalled = () => {
+      setInstallPromptEvent(null);
+      setInstallPromptDismissed(true);
+      localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, "1");
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt as EventListener);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt as EventListener);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, []);
+
   useEffect(() => store.onPendingSyncChanged(setPendingSyncCount), []);
 
   useEffect(() => {
@@ -115,6 +153,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
+  };
+
+  const noteStudentUpdatedAt = (updatedAt: string) => {
+    latestStudentUpdateRef.current = updatedAt;
   };
 
   // Load from storage on mount
@@ -136,6 +178,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       const name = await store.get<string>("neph_name");
       const pin = await store.get<string>("neph_pin");
       const sidFromStore = await store.get<string>("neph_studentId");
+      const storedJoinedAt = await store.get<string>(JOINED_AT_KEY);
       const pts = await store.get<Patient[]>("neph_patients");
       const ws = await store.get<WeeklyScores>("neph_weeklyScores");
       const pre = await store.get<QuizScore>("neph_preScore");
@@ -149,6 +192,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (!sessionStudentId && sidFromStore) setStudentId(sidFromStore);
       if (name) { setStudentName(name); setNameSet(true); }
       if (pin) setStudentPin(pin);
+      if (storedJoinedAt) setJoinedAt(storedJoinedAt);
       if (pts) setPatients(pts);
       if (ws) setWeeklyScores(ws);
       if (pre) setPreScore(pre);
@@ -159,9 +203,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (sharedSettingsData) setSharedSettings(sharedSettingsData);
       const sharedClinicGuides = await store.getShared<ClinicGuideRecord[]>(SHARED_KEYS.clinicGuides);
       const loadedGuides = sharedClinicGuides || [];
-      const { guides: updatedGuides, newGuide } = ensureCurrentClinicGuide(loadedGuides);
+      const { guides: updatedGuides } = ensureCurrentClinicGuide(loadedGuides);
       setClinicGuides(updatedGuides);
-      if (newGuide) store.setShared(SHARED_KEYS.clinicGuides, updatedGuides);
       const completed = await store.get<CompletedItems>("neph_completedItems");
       if (completed) setCompletedItems(completed);
       const savedBookmarks = await store.get<Bookmarks>("neph_bookmarks");
@@ -170,6 +213,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (savedSrQueue) setSrQueue(savedSrQueue);
       const savedLog = await store.get<ActivityLogEntry[]>("neph_activityLog");
       if (savedLog) setActivityLog(savedLog);
+      const savedReflections = await store.get<ReflectionEntry[]>("neph_reflections");
+      if (savedReflections) setReflections(savedReflections);
       const savedGamification = await store.get<Gamification>("neph_gamification");
       if (savedGamification) setGamification(savedGamification);
       setLoading(false);
@@ -188,6 +233,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     store.set("neph_bookmarks", bookmarks);
     store.set("neph_srQueue", srQueue);
     store.set("neph_activityLog", activityLog);
+    store.set("neph_reflections", reflections);
     store.set("neph_gamification", gamification);
 
     // Auto-sync to Firestore (debounced)
@@ -196,7 +242,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       syncTimerRef.current = setTimeout(() => {
         const updatedAt = new Date().toISOString();
         const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
-        lastLocalWriteRef.current = Date.now();
+        noteStudentUpdatedAt(updatedAt);
         store.setStudentData(studentId, {
           name: studentName,
           loginPin: studentPin,
@@ -209,6 +255,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           bookmarks,
           srQueue,
           activityLog,
+          reflections,
           updatedAt,
         });
         store.setTeamSnapshot(studentId, buildTeamSnapshot({
@@ -220,7 +267,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         }));
       }, 2000);
     }
-  }, [patients, weeklyScores, preScore, postScore, studentName, nameSet, loading, completedItems, bookmarks, srQueue, activityLog, gamification, studentId]);
+  }, [patients, weeklyScores, preScore, postScore, studentName, nameSet, loading, completedItems, bookmarks, srQueue, activityLog, reflections, gamification, studentId]);
 
   // Gamification recompute — intentionally excludes `gamification` from deps to prevent infinite loop
   useEffect(() => {
@@ -258,8 +305,12 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   useEffect(() => {
     if (!store.getRotationCode() || !studentId || !nameSet) return;
     const unsub = store.onStudentDataChanged(studentId, (data) => {
-      // Skip snapshots triggered by our own writes (within 3s)
-      if (Date.now() - lastLocalWriteRef.current < 3000) return;
+      const incomingUpdatedAt = typeof data.updatedAt === "string" ? data.updatedAt : null;
+      if (incomingUpdatedAt) {
+        const latestKnownUpdatedAt = latestStudentUpdateRef.current;
+        if (latestKnownUpdatedAt && incomingUpdatedAt <= latestKnownUpdatedAt) return;
+        latestStudentUpdateRef.current = incomingUpdatedAt;
+      }
       if (data.patients) setPatients(data.patients);
       if (data.weeklyScores) setWeeklyScores(data.weeklyScores);
       // Use hasOwnProperty so admin resets that null-out scores still apply
@@ -270,6 +321,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (data.bookmarks) setBookmarks(data.bookmarks);
       if (data.srQueue) setSrQueue(data.srQueue);
       if (data.activityLog) setActivityLog(data.activityLog);
+      if (data.reflections) setReflections(data.reflections);
     });
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
@@ -292,7 +344,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
     const updatedAt = new Date().toISOString();
     const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
-    lastLocalWriteRef.current = Date.now();
+    noteStudentUpdatedAt(updatedAt);
 
     await Promise.all([
       store.setStudentData(studentId, {
@@ -307,6 +359,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         bookmarks,
         srQueue,
         activityLog,
+        reflections,
         updatedAt,
       }),
       store.setTeamSnapshot(studentId, buildTeamSnapshot({
@@ -359,6 +412,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       // If this same device has already joined before, restore that existing doc.
       const sid = user.uid;
       setStudentId(sid);
+      const localJoinedAt = joinedAt || await store.get<string>(JOINED_AT_KEY);
 
       const existingData = await store.getStudentData(sid);
       if (existingData) {
@@ -372,13 +426,22 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         if (existingData.bookmarks) setBookmarks(existingData.bookmarks);
         if (existingData.srQueue) setSrQueue(existingData.srQueue);
         if (existingData.activityLog) setActivityLog(existingData.activityLog);
+        if (existingData.reflections) setReflections(existingData.reflections);
+        const restoredJoinedAt = typeof existingData.joinedAt === "string" ? existingData.joinedAt : localJoinedAt;
+        if (restoredJoinedAt) {
+          setJoinedAt(restoredJoinedAt);
+          await store.set(JOINED_AT_KEY, restoredJoinedAt);
+        }
+        const updatedAt = new Date().toISOString();
+        noteStudentUpdatedAt(updatedAt);
         await store.setStudentData(sid, {
           name: studentName,
           loginPin: studentPin,
-          updatedAt: new Date().toISOString(),
+          updatedAt,
         });
       } else {
         // New device/session — create a new student Firestore doc owned by this UID
+        const newJoinedAt = new Date().toISOString();
         await store.setStudentData(sid, {
           name: studentName,
           loginPin: studentPin,
@@ -387,9 +450,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           preScore,
           postScore,
           gamification,
-          joinedAt: new Date().toISOString(),
+          joinedAt: newJoinedAt,
           status: "active",
         });
+        setJoinedAt(newJoinedAt);
+        await store.set(JOINED_AT_KEY, newJoinedAt);
       }
 
       // Persist locally
@@ -398,11 +463,48 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       await store.set("neph_name", studentName);
       await store.set("neph_pin", studentPin);
       await store.set("neph_studentId", sid);
+      if (existingData && !localJoinedAt && typeof existingData.joinedAt !== "string") {
+        const fallbackJoinedAt = new Date().toISOString();
+        setJoinedAt(fallbackJoinedAt);
+        await store.set(JOINED_AT_KEY, fallbackJoinedAt);
+      }
     } catch (e) {
       console.error("Join rotation error:", e);
       setJoinError("Unable to start the secure student session. Check Firebase Auth and your internet connection.");
     }
     setJoining(false);
+  };
+
+  const handleSubmitReflection = async ({ saw, unclear }: { saw: string; unclear: string }) => {
+    const entry = buildReflectionEntry({
+      saw,
+      unclear,
+      fallbackWeek: currentWeek || 1,
+      srQueue,
+    });
+    const nextReflections = [...reflections.filter((item) => item.dayKey !== entry.dayKey), entry].slice(-30);
+    setReflections(nextReflections);
+    setSrQueue((prev) => addReflectionItemsToSrQueue(prev, entry.seededQuestionKeys));
+    logActivity("reflection", "End-of-day reflection", buildReflectionActivityDetail(entry));
+    return entry;
+  };
+
+  const dismissInstallPrompt = () => {
+    setInstallPromptDismissed(true);
+    localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, "1");
+  };
+
+  const handleInstallApp = async () => {
+    if (!installPromptEvent) return;
+    try {
+      await installPromptEvent.prompt();
+      await installPromptEvent.userChoice;
+    } catch (error) {
+      console.warn("Install prompt failed:", error);
+    } finally {
+      setInstallPromptEvent(null);
+      dismissInstallPrompt();
+    }
   };
 
 
@@ -418,7 +520,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       console.warn("Student sign-out failed:", e);
     }
 
-    ["neph_name", "neph_pin", "neph_studentId", "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog"].forEach(k => localStorage.removeItem(k));
+    ["neph_name", "neph_pin", "neph_studentId", "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
     store.setRotationCode(null);
     // Reset all state
     setStudentName("");
@@ -437,6 +539,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setBookmarks({ trials: [], articles: [], cases: [], studySheets: [] });
     setSrQueue({});
     setActivityLog([]);
+    setReflections([]);
+    setJoinedAt(null);
     setTab("today");
     setSubView(null);
   };
@@ -471,6 +575,22 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     totalWeeks,
     articlesByWeek: articles,
   }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles]);
+  const installPromptVariant = useMemo(() => {
+    if (typeof window === "undefined" || !nameSet || installPromptDismissed || !joinedAt) return null;
+    const joinedMs = new Date(joinedAt).getTime();
+    if (Number.isNaN(joinedMs) || Date.now() - joinedMs < INSTALL_PROMPT_DELAY_MS) return null;
+
+    const inStandaloneMode = window.matchMedia("(display-mode: standalone)").matches
+      || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+    if (inStandaloneMode) return null;
+
+    if (installPromptEvent) return "native";
+
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isIos = /iphone|ipad|ipod/.test(userAgent);
+    const isSafari = /safari/.test(userAgent) && !/crios|fxios|edgios/.test(userAgent);
+    return isIos && isSafari ? "ios" : null;
+  }, [installPromptDismissed, installPromptEvent, joinedAt, nameSet]);
 
   if (loading) return (
     <div style={{ minHeight: "100vh", background: T.navyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -629,7 +749,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
       <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + env(safe-area-inset-bottom, 0px))` }}>
-        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} clinicGuides={clinicGuides} competencySummary={competencySummary} />}
+        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} clinicGuides={clinicGuides} competencySummary={competencySummary} reflections={reflections} onSubmitReflection={handleSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={handleInstallApp} onDismissInstallPrompt={dismissInstallPrompt} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
@@ -664,7 +784,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <AssessmentResultsView mode="post" score={postScore} comparisonScore={preScore} navigate={navigate} srDueCount={getDueItems(srQueue).length} />
         )}
         {tab === "today" && subView?.type === "articles" && (
-          <ArticlesView week={subView.week} onBack={() => navigate("today")} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
+          <ArticlesView week={subView.week} onBack={() => navigate("today")} navigate={navigate} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
             const article = (articles[subView.week] || []).find((item) => item.url === url);
             const wasCompleted = Boolean(completedItems.articles[url]);
             setCompletedItems(prev => {
@@ -719,6 +839,24 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         )}
         {tab === "today" && subView?.type === "browseByTopic" && (
           <TopicBrowseView onBack={() => navigate("today")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} />
+        )}
+        {tab === "today" && subView?.type === "topicDetail" && (
+          <TopicBrowseView
+            onBack={() => {
+              if (subView.source === "studySheets" && typeof subView.week === "number") {
+                navigate("today", { type: "studySheets", week: subView.week });
+                return;
+              }
+              if (subView.source === "articles" && typeof subView.week === "number") {
+                navigate("today", { type: "articles", week: subView.week });
+                return;
+              }
+              navigate("today", { type: "browseByTopic" });
+            }}
+            navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void}
+            completedItems={completedItems}
+            initialTopic={subView.topic}
+          />
         )}
         {tab === "today" && subView?.type === "extraPractice" && (() => {
           const dueKeys = getDueItems(srQueue);

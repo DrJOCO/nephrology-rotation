@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { T, TOPICS, ARTICLES, STUDY_SHEETS } from "../../data/constants";
+import { useEffect, useState } from "react";
+import { T, TOPICS, ARTICLES, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
 import { useIsMobile } from "../../utils/helpers";
@@ -8,6 +8,7 @@ import { backBtnStyle } from "./shared";
 interface TopicBrowseViewProps {
   onBack: () => void;
   navigate: (tab: string, sv?: Record<string, unknown> | null) => void;
+  initialTopic?: string | null;
   completedItems?: {
     articles?: Record<string, boolean>;
     studySheets?: Record<string, boolean>;
@@ -15,16 +16,36 @@ interface TopicBrowseViewProps {
   };
 }
 
-export default function TopicBrowseView({ onBack, navigate, completedItems }: TopicBrowseViewProps) {
+const resourceGroupLabels = {
+  podcasts: "Podcast",
+  websites: "Website",
+  guidelines: "Guideline",
+  tools: "Tool",
+} as const;
+
+export default function TopicBrowseView({ onBack, navigate, completedItems, initialTopic = null }: TopicBrowseViewProps) {
   const isMobile = useIsMobile();
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(initialTopic);
   const completed = completedItems || {};
+
+  useEffect(() => {
+    setSelectedTopic(initialTopic);
+  }, [initialTopic]);
 
   if (selectedTopic) {
     const content = getTopicContent(selectedTopic);
     return (
       <div style={{ padding: 16 }}>
-        <button onClick={() => setSelectedTopic(null)} style={backBtnStyle}>{"\u2190"} All Topics</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          <button onClick={() => (initialTopic ? onBack() : setSelectedTopic(null))} style={backBtnStyle}>
+            {"\u2190"} {initialTopic ? "Back" : "All Topics"}
+          </button>
+          {initialTopic && (
+            <button onClick={() => setSelectedTopic(null)} style={{ ...backBtnStyle, color: T.navy, borderColor: T.line }}>
+              Browse All Topics
+            </button>
+          )}
+        </div>
         <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>{selectedTopic}</h2>
         <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>All available resources for this topic</p>
 
@@ -114,8 +135,50 @@ export default function TopicBrowseView({ onBack, navigate, completedItems }: To
           </div>
         )}
 
+        {/* Trials */}
+        {content.trials.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Landmark Trials</div>
+            {content.trials.map(trialName => {
+              const trial = ALL_LANDMARK_TRIALS.find(item => item.name === trialName);
+              if (!trial) return null;
+              return (
+                <button key={trial.name} onClick={() => navigate("library", { type: "trialLibrary", searchTrial: trial.name })}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.yellowBg, border: `1px solid ${T.goldAlpha}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{trial.name}</div>
+                    <div style={{ fontSize: 13, color: T.muted }}>{trial.journal} ({trial.year})</div>
+                  </div>
+                  <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* External resources */}
+        {content.resources.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>More App Resources</div>
+            {content.resources.map(resource => (
+              <a key={resource.url} href={resource.url} target="_blank" rel="noopener noreferrer"
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, textAlign: "left", textDecoration: "none" }}>
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{resource.group === "podcasts" ? "\uD83C\uDFA7" : resource.group === "guidelines" ? "\uD83D\uDCCB" : resource.group === "tools" ? "\uD83D\uDEE0" : "\uD83C\uDF10"}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{resource.name}</div>
+                  <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.45 }}>
+                    {resourceGroupLabels[resource.group]} • {resource.tag}
+                  </div>
+                </div>
+                <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u2197"}</span>
+              </a>
+            ))}
+          </div>
+        )}
+
         {/* No content fallback */}
-        {content.studySheets.length === 0 && content.articles.length === 0 && content.cases.length === 0 && content.quizWeeks.length === 0 && (
+        {content.studySheets.length === 0 && content.articles.length === 0 && content.cases.length === 0 && content.quizWeeks.length === 0 && content.trials.length === 0 && content.resources.length === 0 && (
           <div style={{ background: T.card, borderRadius: 12, padding: 20, border: `1px dashed ${T.line}`, textAlign: "center" }}>
             <div style={{ fontSize: 13, color: T.muted }}>No dedicated content yet for this topic. Content is being expanded.</div>
           </div>
@@ -136,7 +199,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems }: To
         {topicsWithContent.map(topic => {
           const hasContent = topicHasContent(topic);
           const content = getTopicContent(topic);
-          const totalItems = content.studySheets.length + content.articles.length + content.cases.length;
+          const totalItems = content.studySheets.length + content.articles.length + content.cases.length + content.quizWeeks.length + content.trials.length + content.resources.length;
           return (
             <button key={topic} onClick={() => setSelectedTopic(topic)}
               style={{ background: T.card, borderRadius: 10, padding: "12px 10px", border: `1px solid ${hasContent ? T.line : T.line}`, cursor: "pointer", textAlign: "left", opacity: hasContent ? 1 : 0.6 }}>

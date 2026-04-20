@@ -2,6 +2,14 @@ import { useState } from "react";
 import { T, RESOURCES } from "../../data/constants";
 import { backBtnStyle } from "./shared";
 
+function isCurbsidersResource(url: string) {
+  return url.includes("thecurbsiders.com");
+}
+
+function getCurbsidersAppleSearchUrl(name: string) {
+  return `https://podcasts.apple.com/us/search?term=${encodeURIComponent(`${name} The Curbsiders`)}`;
+}
+
 export default function ResourcesView({ onBack }) {
   const [activeTab, setActiveTab] = useState("podcasts");
   const tabList = [
@@ -66,9 +74,13 @@ export default function ResourcesView({ onBack }) {
       {/* Resource cards */}
       {activeData.map((r, i) => {
         const tc = tagColors[r.tag] || { bg: T.ice, text: T.med };
+        const hasCurbsidersFallback = isCurbsidersResource(r.url);
+        const appleSearchUrl = hasCurbsidersFallback ? getCurbsidersAppleSearchUrl(r.name) : null;
+        const primaryUrl = appleSearchUrl || r.url;
+        const primaryLabel = hasCurbsidersFallback ? "Open Episode" : "Open Resource";
         return (
-          <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "block", background: T.card, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${T.line}`, textDecoration: "none", transition: "box-shadow 0.2s" }}
+          <div key={i}
+            style={{ display: "block", background: T.card, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${T.line}`, transition: "box-shadow 0.2s" }}
             onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
             onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
@@ -78,10 +90,27 @@ export default function ResourcesView({ onBack }) {
                   <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{r.tag}</span>
                 </div>
                 <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45, wordBreak: "break-word" }}>{r.desc}</div>
+                {hasCurbsidersFallback && (
+                  <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.45, marginTop: 8 }}>
+                    Curbsiders pages can be flaky sometimes. If the episode page does not open, use the Apple Podcasts fallback.
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+                  <a href={primaryUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: 13, fontWeight: 700, color: "white", background: T.navy, padding: "8px 12px", borderRadius: 8, textDecoration: "none" }}>
+                    {primaryLabel}
+                  </a>
+                  {appleSearchUrl && (
+                    <a href={r.url} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 13, fontWeight: 700, color: T.med, background: T.blueBg, padding: "8px 12px", borderRadius: 8, textDecoration: "none", border: `1px solid ${T.line}` }}>
+                      Curbsiders Notes
+                    </a>
+                  )}
+                </div>
               </div>
               <span style={{ color: T.muted, fontSize: 14, flexShrink: 0, marginTop: 2 }}>{"\u2197"}</span>
             </div>
-          </a>
+          </div>
         );
       })}
 

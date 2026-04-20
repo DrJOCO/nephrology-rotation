@@ -1,7 +1,8 @@
 import { T, WEEKLY } from "../../data/constants";
 import { backBtnStyle } from "./shared";
+import { getTopicContent } from "../../utils/topicMapping";
 
-export default function ArticlesView({ week, onBack, curriculum, articles, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
+export default function ArticlesView({ week, onBack, navigate, curriculum, articles, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const arts = articles[week] || [];
   const wk = curriculum[week] || WEEKLY[week];
   const readCount = arts.filter(a => (completedItems?.articles || {})[a.url]).length;
@@ -26,6 +27,8 @@ export default function ArticlesView({ week, onBack, curriculum, articles, compl
       {arts.map((a, i) => {
         const tc = typeColors[a.type] || typeColors.Review;
         const isRead = (completedItems?.articles || {})[a.url];
+        const topicContent = getTopicContent(a.topic);
+        const linkedCount = topicContent.studySheets.length + topicContent.articles.length + topicContent.quizWeeks.length + topicContent.trials.length + topicContent.resources.length;
         return (
           <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 10 }}>
             <div
@@ -45,6 +48,15 @@ export default function ArticlesView({ week, onBack, curriculum, articles, compl
                     <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
                     <span style={{ fontSize: 13, fontWeight: 600, color: T.muted, background: T.bg, padding: "2px 8px", borderRadius: 6 }}>{a.topic}</span>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("today", { type: "topicDetail", topic: a.topic, source: "articles", week });
+                    }}
+                    style={{ marginTop: 8, background: T.blueBg, color: T.med, border: `1px solid ${T.line}`, borderRadius: 8, padding: "8px 10px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                  >
+                    More on {a.topic} in the app • {linkedCount} links
+                  </button>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
                     <span style={{ fontSize: 13, color: T.muted }}>Can&#39;t access?</span>
                     <a href={`https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(a.title)}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
