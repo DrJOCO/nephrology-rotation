@@ -640,7 +640,7 @@ export const STUDY_SHEETS = {
           items: [
             "1. Stabilize the heart: Calcium gluconate 1 g IV (10 mL of 10%) over 2\u20133 min \u2014 repeat after 5 min if ECG changes persist; use CaCl\u2082 (500\u20131000 mg) via central line only",
             "2. Shift K\u207a into cells: Insulin 10U IV + D50 (check glucose!), albuterol nebs, \u00b1 sodium bicarb (if acidotic)",
-            "3. Remove K\u207a from body: Kayexalate (slow), Lokelma/Veltassa (newer binders), furosemide (if making urine), dialysis (definitive)",
+            "3. Remove K\u207a from body: furosemide (if making urine) \u2014 fast, cheap. Newer GI binders (sodium zirconium cyclosilicate / Lokelma, patiromer / Veltassa) work over hours and are the preferred binder class now. Hemodialysis is definitive. SPS / Kayexalate has slow, unpredictable onset + GI-necrosis risk \u2014 UK Kidney Association 2023 and most modern guidelines do NOT recommend it for acute emergencies.",
             "4. Monitor: Repeat K\u207a in 1\u20132h, continuous telemetry, repeat ECG",
           ],
         },
@@ -955,11 +955,11 @@ export const STUDY_SHEETS = {
         {
           heading: "General Treatment \u2014 All ADPKD Patients",
           items: [
-            "BP target with ACEi/ARB: \u2264110/75 if age 18\u201350 and eGFR >60 (HALT-PKD); otherwise standard CKD targets",
+            "BP target with ACEi/ARB (KDIGO 2025): home target \u2264110/75 is reserved for ages 18\u201349 with CKD G1\u2013G2 and BP >130/85 (HALT-PKD A). For BP already between 110/75 and 130/85, or for patients outside that age/GFR window, individualize toward standard CKD targets.",
             "Sodium restriction <2 g/day",
             "Fluid intake >3 L/day if eGFR \u226530 and no hyponatremia risk (suppresses vasopressin/cAMP)",
             "Avoid chronic NSAIDs and other nephrotoxins",
-            "Avoid SGLT2i in ADPKD unless needed for heart failure \u2014 ADPKD was excluded from pivotal trials and SGLT2i may raise vasopressin",
+            "SGLT2i and GLP-1 RAs: KDIGO 2025 does NOT recommend these specifically for ADPKD until more data are available (ADPKD was excluded from pivotal SGLT2i CKD trials). If a co-indication like heart failure or diabetes exists, standard guideline-directed use is reasonable.",
           ],
         },
         {
@@ -1118,7 +1118,7 @@ export const STUDY_SHEETS = {
           heading: "PD Peritonitis \u2014 The Big Complication",
           items: [
             "Suspect when: Cloudy effluent (most reliable sign!) + abdominal pain \u00b1 fever. Can present without systemic signs",
-            "Diagnosis: Effluent WBC >100/\u03bcL with >50% PMNs. Send effluent for cell count + gram stain + culture (blood culture bottles!)",
+            "Diagnosis (ISPD 2022): Effluent WBC >100/\u03bcL with >50% PMNs, AFTER a dwell time of at least 2 hours. In APD or short-dwell patients, the dwell may be <2 h and the absolute WBC can be falsely low \u2014 PMN percentage becomes more informative. Send effluent for cell count + gram stain + culture (blood culture bottles).",
             "Most common organisms: Gram-positive cocci (S. epidermidis, S. aureus) = ~60%. Gram-negative = ~25%. Culture-negative = ~15%",
             "Empiric treatment (ISPD 2022): center-specific IP (intraperitoneal) regimen covering gram-positive + gram-negative. Common options: (a) IP vancomycin OR first-gen cephalosporin for gram-positive, PLUS (b) IP third-gen cephalosporin (ceftazidime) OR aminoglycoside (gentamicin) for gram-negative. IP cefepime monotherapy is also acceptable. Pick based on local sensitivities, MRSA rates, and prior cultures.",
             "Duration: Typically 14-21 days. Fungal peritonitis or refractory peritonitis \u2192 remove the catheter",

@@ -898,7 +898,7 @@ She drains 2L of cloudy effluent. Effluent studies: WBC 650/\u03bcL with 90% PMN
             "Yes \u2014 but only if the gram stain is positive",
           ],
           answer: 2,
-          explanation: "PD peritonitis is diagnosed when the effluent WBC is >100/\u03bcL with >50% PMNs. This patient has WBC 650 with 90% PMNs \u2014 clearly meets criteria. Cloudy effluent is the most reliable clinical sign. Fever is NOT required (many PD peritonitis patients are afebrile). Gram stain positivity is helpful but not required \u2014 it's positive in only ~40% of cases. Culture-negative peritonitis (~15% of cases) is still treated as peritonitis.",
+          explanation: "ISPD 2022 diagnoses PD peritonitis when the effluent WBC is >100/\u03bcL with >50% PMNs, after a dwell time of at least 2 hours (in APD/short dwells the absolute WBC can be falsely low \u2014 lean on the PMN percentage). This patient has WBC 650 with 90% PMNs \u2014 clearly meets criteria. Cloudy effluent is the most reliable clinical sign. Fever is NOT required (many PD peritonitis patients are afebrile). Gram stain positivity is helpful but not required \u2014 it's positive in only ~40% of cases. Culture-negative peritonitis is still treated as peritonitis.",
         },
         {
           q: "What is the BEST initial antibiotic regimen?",
@@ -909,7 +909,7 @@ She drains 2L of cloudy effluent. Effluent studies: WBC 650/\u03bcL with 90% PMN
             "IP fluconazole empirically to cover fungal peritonitis",
           ],
           answer: 1,
-          explanation: "ISPD 2022 guidelines recommend empiric IP vancomycin (for gram-positive coverage) + IP gentamicin or ceftazidime (for gram-negative coverage). IP administration is essential because IV antibiotics alone do NOT achieve adequate concentrations in the peritoneal cavity. The gram-positive cocci in clusters suggest S. aureus or S. epidermidis \u2014 vancomycin provides excellent coverage. Tailor antibiotics when culture and sensitivity results return at 48-72 hours.",
+          explanation: "ISPD 2022 empiric therapy is center-specific and covers BOTH gram-positive and gram-negative organisms intraperitoneally. Common IP regimens: (a) vancomycin OR a first-generation cephalosporin for gram-positive, PLUS (b) a third-generation cephalosporin (eg, ceftazidime) OR an aminoglycoside (eg, gentamicin) for gram-negative. IP cefepime monotherapy is also acceptable. Pick based on local sensitivities and MRSA rates. IP administration is essential because IV antibiotics alone do NOT achieve adequate peritoneal concentrations. Tailor when cultures return.",
         },
         {
           q: "After 5 days of appropriate IP antibiotics, the effluent remains cloudy and cultures now grow Candida albicans. What is the next step?",

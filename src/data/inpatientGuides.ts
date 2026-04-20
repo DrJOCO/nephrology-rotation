@@ -756,7 +756,7 @@ export const INPATIENT_GUIDES: Record<
       "Cloudy effluent is peritonitis until proven otherwise. The single most important step is sending the effluent for cell count and culture (in blood culture bottles!) before starting antibiotics. IP antibiotics are the standard — not IV.",
     beforeRounds: [
       "Effluent appearance (cloudy = #1 sign)",
-      "Effluent cell count (>100 WBC/μL with >50% PMNs = peritonitis)",
+      "Effluent cell count (ISPD 2022: >100 WBC/μL with >50% PMNs, after a dwell ≥2 h — in APD/short dwells, lean on the PMN percentage)",
       "Effluent gram stain and culture results",
       "Abdominal symptoms (pain, tenderness, rebound)",
       "Fever and vital signs",
