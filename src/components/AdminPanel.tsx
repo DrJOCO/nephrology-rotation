@@ -316,6 +316,11 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
 
+  useEffect(() => {
+    if (!firebaseAdmin) return;
+    void store.flushPendingSyncQueue();
+  }, [firebaseAdmin]);
+
   const loadLocalAdminData = useCallback(async () => {
     const s = await store.get<AdminStudent[]>("admin_students");
     const a = await store.get<ArticlesData>("admin_articles");

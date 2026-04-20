@@ -2,6 +2,12 @@ import { getFirebase } from "./firebase";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FirestoreData = Record<string, any>;
+type PendingSyncData = Record<string, unknown> | unknown[];
+type PendingSyncItem =
+  | { kind: "setShared"; rotationCode: string; key: string; data: PendingSyncData; updatedAt: string }
+  | { kind: "setStudentData"; rotationCode: string; studentId: string; data: Record<string, unknown>; updatedAt: string }
+  | { kind: "setTeamSnapshot"; rotationCode: string; studentId: string; data: Record<string, unknown>; updatedAt: string }
+  | { kind: "updateRotation"; rotationCode: string; data: Record<string, unknown>; updatedAt: string };
 
 export interface RotationInfo {
   code: string;
@@ -21,23 +27,177 @@ const KEY_TO_FIELD: Record<string, string> = {
   neph_shared_clinicGuides: "clinicGuides",
 };
 
+const PENDING_SYNC_KEY = "neph_pendingSyncQueue";
+const PENDING_SYNC_EVENT = "neph:pending-sync-changed";
+const rotationDocCacheKey = (code: string) => `neph_rotation_doc_${code}`;
+const studentDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_student_${studentId}`;
+const teamDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_team_${studentId}`;
+
 let rotationCode: string | null = localStorage.getItem("neph_rotationCode") || null;
+
+function readJson<T>(key: string): T | null {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) as T : null;
+  } catch (error) {
+    console.warn(`Failed to read ${key}:`, error);
+    return null;
+  }
+}
+
+function writeJson(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Failed to write ${key}:`, error);
+  }
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function mergePayload<T extends PendingSyncData | Record<string, unknown>>(existing: T | null | undefined, next: T): T {
+  if (isPlainObject(existing) && isPlainObject(next)) {
+    return { ...existing, ...next } as T;
+  }
+  return next;
+}
+
+function emitPendingSyncChanged(queue: PendingSyncItem[]): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(PENDING_SYNC_EVENT, { detail: { count: queue.length } }));
+}
+
+function readPendingSyncQueue(): PendingSyncItem[] {
+  return readJson<PendingSyncItem[]>(PENDING_SYNC_KEY) || [];
+}
+
+function writePendingSyncQueue(queue: PendingSyncItem[]): void {
+  writeJson(PENDING_SYNC_KEY, queue);
+  emitPendingSyncChanged(queue);
+}
+
+function sameQueueScope(a: PendingSyncItem, b: PendingSyncItem): boolean {
+  if (a.kind !== b.kind || a.rotationCode !== b.rotationCode) return false;
+  if (a.kind === "setShared" && b.kind === "setShared") return a.key === b.key;
+  if (a.kind === "updateRotation" && b.kind === "updateRotation") return true;
+  if ((a.kind === "setStudentData" || a.kind === "setTeamSnapshot") && (b.kind === "setStudentData" || b.kind === "setTeamSnapshot")) {
+    return a.kind === b.kind && a.studentId === b.studentId;
+  }
+  return false;
+}
+
+function queuePendingSync(item: PendingSyncItem): void {
+  const queue = readPendingSyncQueue();
+  const existingIndex = queue.findIndex((queued) => sameQueueScope(queued, item));
+  if (existingIndex === -1) {
+    writePendingSyncQueue([...queue, item]);
+    return;
+  }
+
+  const existing = queue[existingIndex];
+  const merged = { ...existing, updatedAt: item.updatedAt } as PendingSyncItem;
+
+  if (existing.kind === "setShared" && item.kind === "setShared") {
+    merged.data = mergePayload(existing.data, item.data);
+  } else if (existing.kind === "setStudentData" && item.kind === "setStudentData") {
+    merged.data = mergePayload(existing.data, item.data);
+  } else if (existing.kind === "setTeamSnapshot" && item.kind === "setTeamSnapshot") {
+    merged.data = mergePayload(existing.data, item.data);
+  } else if (existing.kind === "updateRotation" && item.kind === "updateRotation") {
+    merged.data = mergePayload(existing.data, item.data);
+  }
+
+  const nextQueue = queue.slice();
+  nextQueue[existingIndex] = merged;
+  writePendingSyncQueue(nextQueue);
+}
+
+function clearQueuedSync(item: PendingSyncItem): void {
+  const queue = readPendingSyncQueue();
+  const nextQueue = queue.filter((queued) => !sameQueueScope(queued, item));
+  if (nextQueue.length !== queue.length) writePendingSyncQueue(nextQueue);
+}
+
+function cacheRotationDoc(code: string, data: Record<string, unknown>): void {
+  const existing = readJson<Record<string, unknown>>(rotationDocCacheKey(code));
+  const merged = mergePayload(existing, data);
+  writeJson(rotationDocCacheKey(code), merged);
+  if (rotationCode === code) {
+    Object.entries(KEY_TO_FIELD).forEach(([sharedKey, field]) => {
+      if (Object.prototype.hasOwnProperty.call(merged, field)) {
+        writeJson(sharedKey, merged[field]);
+      }
+    });
+  }
+}
+
+function cacheSharedValue(key: string, value: unknown): void {
+  writeJson(key, value);
+  if (!rotationCode) return;
+  const field = KEY_TO_FIELD[key];
+  if (field) cacheRotationDoc(rotationCode, { [field]: value });
+}
+
+function cacheStudentDoc(code: string, studentId: string, data: Record<string, unknown>): void {
+  const existing = readJson<Record<string, unknown>>(studentDocCacheKey(code, studentId));
+  writeJson(studentDocCacheKey(code, studentId), mergePayload(existing, data));
+}
+
+function cacheTeamDoc(code: string, studentId: string, data: Record<string, unknown>): void {
+  const existing = readJson<Record<string, unknown>>(teamDocCacheKey(code, studentId));
+  writeJson(teamDocCacheKey(code, studentId), mergePayload(existing, data));
+}
+
+async function flushPendingSyncQueue(): Promise<number> {
+  const queue = readPendingSyncQueue();
+  if (queue.length === 0) return 0;
+
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    emitPendingSyncChanged(queue);
+    return queue.length;
+  }
+
+  const remaining: PendingSyncItem[] = [];
+
+  for (const item of queue) {
+    try {
+      const { db, fs } = await getFirebase();
+      if (item.kind === "setShared") {
+        const field = KEY_TO_FIELD[item.key];
+        if (!field) continue;
+        await fs.updateDoc(fs.doc(db, "rotations", item.rotationCode), { [field]: item.data });
+      } else if (item.kind === "setStudentData") {
+        await fs.setDoc(fs.doc(db, "rotations", item.rotationCode, "students", item.studentId), item.data, { merge: true });
+      } else if (item.kind === "setTeamSnapshot") {
+        await fs.setDoc(fs.doc(db, "rotations", item.rotationCode, "team", item.studentId), item.data, { merge: true });
+      } else if (item.kind === "updateRotation") {
+        await fs.updateDoc(fs.doc(db, "rotations", item.rotationCode), item.data);
+      }
+    } catch (error) {
+      console.warn("Queued sync flush failed:", error);
+      remaining.push(item);
+    }
+  }
+
+  writePendingSyncQueue(remaining);
+  return remaining.length;
+}
 
 const store = {
   // ─── Private storage (always localStorage) ───────────────────────
   async get<T = unknown>(key: string): Promise<T | null> {
-    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
-    catch (e) { console.warn("store.get parse error:", e); return null; }
+    return readJson<T>(key);
   },
   async set(key: string, val: unknown): Promise<void> {
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("store.set failed:", e); }
+    writeJson(key, val);
   },
 
   // ─── Shared storage (Firestore when connected, localStorage fallback) ───
   async getShared<T = unknown>(key: string): Promise<T | null> {
     if (!rotationCode) {
-      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
-      catch { return null; }
+      return readJson<T>(key);
     }
     try {
       const { db, fs } = await getFirebase();
@@ -45,23 +205,35 @@ const store = {
       if (key.startsWith("neph_shared_student_")) {
         const studentId = key.replace("neph_shared_student_", "");
         const snap = await fs.getDoc(fs.doc(db, "rotations", rotationCode, "students", studentId));
-        return snap.exists() ? (snap.data() as T) : null;
+        if (!snap.exists()) return null;
+        const data = snap.data() as T;
+        writeJson(key, data);
+        cacheStudentDoc(rotationCode, studentId, snap.data());
+        return data;
       }
       // Rotation-level data
       const field = KEY_TO_FIELD[key];
       if (!field) return null;
       const snap = await fs.getDoc(fs.doc(db, "rotations", rotationCode));
-      return snap.exists() ? ((snap.data()[field] as T) ?? null) : null;
+      if (!snap.exists()) return null;
+      const value = (snap.data()[field] as T) ?? null;
+      if (value !== null) cacheSharedValue(key, value);
+      cacheRotationDoc(rotationCode, snap.data());
+      return value;
     } catch (e) {
       console.warn("Firestore getShared failed, falling back to localStorage:", e);
-      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
-      catch { return null; }
+      return readJson<T>(key);
     }
   },
 
-  async setShared(key: string, val: FirestoreData): Promise<void> {
+  async setShared(key: string, val: FirestoreData | unknown[]): Promise<void> {
+    cacheSharedValue(key, val);
     if (!rotationCode) {
-      try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("setShared localStorage fallback failed:", e); }
+      return;
+    }
+    const queued: PendingSyncItem = { kind: "setShared", rotationCode, key, data: val, updatedAt: new Date().toISOString() };
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      queuePendingSync(queued);
       return;
     }
     try {
@@ -70,16 +242,19 @@ const store = {
       if (key.startsWith("neph_shared_student_")) {
         const studentId = key.replace("neph_shared_student_", "");
         await fs.setDoc(fs.doc(db, "rotations", rotationCode, "students", studentId), val, { merge: true });
+        cacheStudentDoc(rotationCode, studentId, val as Record<string, unknown>);
+        clearQueuedSync(queued);
         return;
       }
       // Rotation-level data
       const field = KEY_TO_FIELD[key];
       if (field) {
         await fs.updateDoc(fs.doc(db, "rotations", rotationCode), { [field]: val });
+        clearQueuedSync(queued);
       }
     } catch (e) {
-      console.warn("Firestore setShared failed, saving to localStorage:", e);
-      try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { console.warn("setShared fallback failed:", e); }
+      console.warn("Firestore setShared failed, queueing for retry:", e);
+      queuePendingSync(queued);
     }
   },
 
@@ -111,16 +286,36 @@ const store = {
   getRotationCode(): string | null {
     return rotationCode;
   },
+  getPendingSyncCount(): number {
+    return readPendingSyncQueue().length;
+  },
+  onPendingSyncChanged(callback: (count: number) => void): () => void {
+    if (typeof window === "undefined") return () => {};
+    const handler = (event: Event) => {
+      const nextCount = event instanceof CustomEvent && typeof event.detail?.count === "number"
+        ? event.detail.count
+        : readPendingSyncQueue().length;
+      callback(nextCount);
+    };
+    callback(readPendingSyncQueue().length);
+    window.addEventListener(PENDING_SYNC_EVENT, handler);
+    return () => window.removeEventListener(PENDING_SYNC_EVENT, handler);
+  },
+  async flushPendingSyncQueue(): Promise<number> {
+    return flushPendingSyncQueue();
+  },
 
   // ─── Create a new rotation document ──────────────────────────────
   async createRotation(code: string, data: Record<string, unknown>): Promise<void> {
     const { db, fs } = await getFirebase();
-    await fs.setDoc(fs.doc(db, "rotations", code), {
+    const payload = {
       ...data,
       createdAt: new Date().toISOString(),
-    });
+    };
+    await fs.setDoc(fs.doc(db, "rotations", code), payload);
     rotationCode = code;
     localStorage.setItem("neph_rotationCode", code);
+    cacheRotationDoc(code, payload);
   },
 
   // ─── Read full rotation document (for hydrating admin state) ─────
@@ -130,10 +325,14 @@ const store = {
       if (!docId) return null;
       const { db, fs } = await getFirebase();
       const snap = await fs.getDoc(fs.doc(db, "rotations", docId));
-      return snap.exists() ? snap.data() : null;
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      cacheRotationDoc(docId, data);
+      return data;
     } catch (e) {
       console.warn("getRotationData failed:", e);
-      return null;
+      const docId = code || rotationCode;
+      return docId ? readJson<FirestoreData>(rotationDocCacheKey(docId)) : null;
     }
   },
 
@@ -153,7 +352,11 @@ const store = {
     const code = rotationCode;
     getFirebase().then(({ db, fs }) => {
       unsub = fs.onSnapshot(fs.collection(db, "rotations", code, "students"), (snap) => {
-        const students = snap.docs.map(d => ({ studentId: d.id, ...d.data() }));
+        const students = snap.docs.map(d => {
+          const data = { studentId: d.id, ...d.data() };
+          cacheStudentDoc(code, d.id, data);
+          return data;
+        });
         callback(students);
       }, (err) => {
         console.warn("Students listener error:", err);
@@ -169,7 +372,11 @@ const store = {
     const code = rotationCode;
     getFirebase().then(({ db, fs }) => {
       unsub = fs.onSnapshot(fs.collection(db, "rotations", code, "team"), (snap) => {
-        const snapshots = snap.docs.map(d => ({ studentId: d.id, ...d.data() }));
+        const snapshots = snap.docs.map(d => {
+          const data = { studentId: d.id, ...d.data() };
+          cacheTeamDoc(code, d.id, data);
+          return data;
+        });
         callback(snapshots);
       }, (err) => {
         console.warn("Team listener error:", err);
@@ -185,7 +392,10 @@ const store = {
     const code = rotationCode;
     getFirebase().then(({ db, fs }) => {
       unsub = fs.onSnapshot(fs.doc(db, "rotations", code), (snap) => {
-        if (snap.exists()) callback(snap.data());
+        if (snap.exists()) {
+          cacheRotationDoc(code, snap.data());
+          callback(snap.data());
+        }
       }, (err) => {
         console.warn("Rotation listener error:", err);
       });
@@ -200,7 +410,10 @@ const store = {
     const code = rotationCode;
     getFirebase().then(({ db, fs }) => {
       unsub = fs.onSnapshot(fs.doc(db, "rotations", code, "students", studentId), (snap) => {
-        if (snap.exists()) callback(snap.data());
+        if (snap.exists()) {
+          cacheStudentDoc(code, studentId, snap.data());
+          callback(snap.data());
+        }
       }, (err) => {
         console.warn("Student data listener error:", err);
       });
@@ -211,24 +424,41 @@ const store = {
   // ─── Write student data to Firestore directly ────────────────────
   async setStudentData(studentId: string, data: Record<string, unknown>): Promise<void> {
     if (!rotationCode) return;
+    cacheStudentDoc(rotationCode, studentId, data);
+    const queued: PendingSyncItem = { kind: "setStudentData", rotationCode, studentId, data, updatedAt: new Date().toISOString() };
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      queuePendingSync(queued);
+      return;
+    }
     try {
       const { db, fs } = await getFirebase();
       const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
       await fs.setDoc(studentRef, data, { merge: true });
+      clearQueuedSync(queued);
     } catch (e) {
-      console.warn("setStudentData failed:", e);
+      console.warn("setStudentData failed, queueing for retry:", e);
+      queuePendingSync(queued);
     }
   },
 
   // ─── Write sanitized team snapshot to Firestore ──────────────────
   async setTeamSnapshot(studentId: string, data: object): Promise<void> {
     if (!rotationCode || !studentId) return;
+    const payload = data as Record<string, unknown>;
+    cacheTeamDoc(rotationCode, studentId, payload);
+    const queued: PendingSyncItem = { kind: "setTeamSnapshot", rotationCode, studentId, data: payload, updatedAt: new Date().toISOString() };
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      queuePendingSync(queued);
+      return;
+    }
     try {
       const { db, fs } = await getFirebase();
       const teamRef = fs.doc(db, "rotations", rotationCode, "team", studentId);
-      await fs.setDoc(teamRef, data, { merge: true });
+      await fs.setDoc(teamRef, payload, { merge: true });
+      clearQueuedSync(queued);
     } catch (e) {
-      console.warn("setTeamSnapshot failed:", e);
+      console.warn("setTeamSnapshot failed, queueing for retry:", e);
+      queuePendingSync(queued);
     }
   },
 
@@ -238,10 +468,13 @@ const store = {
     try {
       const { db, fs } = await getFirebase();
       const snap = await fs.getDoc(fs.doc(db, "rotations", rotationCode, "students", studentId));
-      return snap.exists() ? snap.data() : null;
+      if (!snap.exists()) return null;
+      const data = snap.data();
+      cacheStudentDoc(rotationCode, studentId, data);
+      return data;
     } catch (e) {
       console.warn("getStudentData failed:", e);
-      return null;
+      return readJson<FirestoreData>(studentDocCacheKey(rotationCode, studentId));
     }
   },
 
@@ -278,11 +511,19 @@ const store = {
 
   // ─── Update rotation metadata ───────────────────────────────────
   async updateRotation(code: string, data: Record<string, unknown>): Promise<void> {
+    cacheRotationDoc(code, data);
+    const queued: PendingSyncItem = { kind: "updateRotation", rotationCode: code, data, updatedAt: new Date().toISOString() };
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      queuePendingSync(queued);
+      return;
+    }
     try {
       const { db, fs } = await getFirebase();
       await fs.updateDoc(fs.doc(db, "rotations", code), data);
+      clearQueuedSync(queued);
     } catch (e) {
-      console.warn("updateRotation failed:", e);
+      console.warn("updateRotation failed, queueing for retry:", e);
+      queuePendingSync(queued);
     }
   },
 
@@ -319,6 +560,7 @@ const store = {
         rotationCode = null;
         localStorage.removeItem("neph_rotationCode");
       }
+      localStorage.removeItem(rotationDocCacheKey(code));
     } catch (e) {
       console.warn("deleteRotation failed:", e);
       throw e;

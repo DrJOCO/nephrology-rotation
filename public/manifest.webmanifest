@@ -1,0 +1,24 @@
+{
+  "name": "Nephrology Rotation",
+  "short_name": "Nephro",
+  "description": "Clinical nephrology rotation companion with offline-ready study and patient prep.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F4EFE3",
+  "theme_color": "#0F2B3C",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -90,6 +90,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   // Phase 2 (spec §01): profile sheet holds name, code, theme toggle, end-session.
   const [profileOpen, setProfileOpen] = useState(false);
   const online = useOnline();
+  const [pendingSyncCount, setPendingSyncCount] = useState(() => store.getPendingSyncCount());
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLocalWriteRef = useRef<number>(0);
   const loginAttemptsRef = useRef<{ count: number; lockedUntil: number }>({ count: 0, lockedUntil: 0 });
@@ -104,6 +105,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useEffect(() => store.onPendingSyncChanged(setPendingSyncCount), []);
+
+  useEffect(() => {
+    if (!online) return;
+    void store.flushPendingSyncQueue();
+  }, [online, studentId, nameSet]);
 
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
@@ -586,19 +594,26 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         </div>
       </div>
       {/* Offline banner — spec §11. Sits between header and content, soft warm tone. */}
-      {!online && (
+      {(!online || pendingSyncCount > 0) && (
         <div
           role="status" aria-live="polite"
           style={{
-            background: T.goldAlpha, color: T.warn,
+            background: online ? T.ice : T.goldAlpha,
+            color: online ? T.med : T.warn,
             borderBottom: `1px solid ${T.line}`,
             padding: "8px 16px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 8,
             fontFamily: T.sans,
           }}
         >
-          <WifiOff size={14} strokeWidth={2} aria-hidden="true" />
-          <span>Offline · Changes sync when reconnected.</span>
+          {online ? <Activity size={14} strokeWidth={2} aria-hidden="true" /> : <WifiOff size={14} strokeWidth={2} aria-hidden="true" />}
+          <span>
+            {!online
+              ? pendingSyncCount > 0
+                ? `Offline · ${pendingSyncCount} queued update${pendingSyncCount !== 1 ? "s" : ""}. Changes sync when reconnected.`
+                : "Offline · Changes sync when reconnected."
+              : `Reconnected · Syncing ${pendingSyncCount} queued update${pendingSyncCount !== 1 ? "s" : ""}.`}
+          </span>
         </div>
       )}
       {profileOpen && (
