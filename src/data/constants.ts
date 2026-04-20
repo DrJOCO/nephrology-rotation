@@ -769,8 +769,8 @@ export const STUDY_SHEETS = {
         {
           heading: "Current Induction Regimens (2024\u201325)",
           items: [
-            "Lupus nephritis (class III/IV \u00b1 V): preferred is TRIPLE therapy \u2014 glucocorticoids + MMF + ONE of {belimumab (BLISS-LN), a CNI (voclosporin per AURORA, or tacrolimus), or obinutuzumab (REGENCY)}. Voclosporin only if eGFR >45.",
-            "Lupus nephritis alternative: if MMF not tolerated, glucocorticoids + cyclophosphamide (Euro-Lupus low-dose) \u00b1 belimumab.",
+            "Lupus nephritis (class III/IV \u00b1 V): KDIGO 2024 offers several initial options \u2014 glucocorticoids PLUS (a) MPAA (MMF/EC-MPS) alone, (b) low-dose IV cyclophosphamide (Euro-Lupus), (c) belimumab + MPAA or CYC (BLISS-LN), or (d) MPAA + a CNI (voclosporin per AURORA, or tacrolimus) when kidney function is not severely impaired. Triple regimens including belimumab or a CNI are increasingly used but are not universally the 'preferred' choice \u2014 individualize by proteinuria, eGFR, tolerability, fertility, and access.",
+            "Practical notes: voclosporin requires eGFR >45. Cyclophosphamide stays useful for rapidly deteriorating kidney function or severe extrarenal disease.",
             "ANCA vasculitis induction: glucocorticoids + rituximab OR cyclophosphamide; add AVACOPAN (C5aR inhibitor) to allow rapid steroid taper (ADVOCATE).",
             "Primary membranous nephropathy (high risk): rituximab preferred over CNI (MENTOR).",
             "IgA nephropathy: optimize supportive care first (ACEi/ARB + SGLT2i); add sparsentan or atrasentan for persistent proteinuria. If still high-risk progression, consider TRF-budesonide (Nefecon) or systemic steroids (low-dose TESTING); iptacopan is an emerging option.",
