@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { BookOpen, Stethoscope, Activity, Users, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home } from "lucide-react";
-import { T, WEEKLY, ARTICLES } from "../data/constants";
+import { T, WEEKLY, ARTICLES, STUDY_SHEETS } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems } from "../utils/spacedRepetition";
 import store from "../utils/store";
@@ -665,12 +665,17 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         )}
         {tab === "today" && subView?.type === "articles" && (
           <ArticlesView week={subView.week} onBack={() => navigate("today")} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
+            const article = (articles[subView.week] || []).find((item) => item.url === url);
+            const wasCompleted = Boolean(completedItems.articles[url]);
             setCompletedItems(prev => {
               const next = { ...prev, articles: { ...prev.articles } };
               if (next.articles[url]) delete next.articles[url];
               else next.articles[url] = true;
               return next;
             });
+            if (!wasCompleted) {
+              logActivity("article", `Week ${subView.week} Article`, article?.topic || article?.title || "Article completed");
+            }
           }} />
         )}
         {tab === "today" && subView?.type === "trials" && (
@@ -678,12 +683,17 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         )}
         {tab === "today" && subView?.type === "studySheets" && (
           <StudySheetsView week={subView.week} onBack={() => navigate("today")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
+            const sheet = (STUDY_SHEETS[subView.week] || []).find((item) => item.id === sheetId);
+            const wasCompleted = Boolean(completedItems.studySheets[sheetId]);
             setCompletedItems(prev => {
               const next = { ...prev, studySheets: { ...prev.studySheets } };
               if (next.studySheets[sheetId]) delete next.studySheets[sheetId];
               else next.studySheets[sheetId] = true;
               return next;
             });
+            if (!wasCompleted) {
+              logActivity("study_sheet", `Week ${subView.week} Study Sheet`, sheet?.title || "Study sheet completed");
+            }
           }} />
         )}
         {tab === "today" && subView?.type === "cases" && (

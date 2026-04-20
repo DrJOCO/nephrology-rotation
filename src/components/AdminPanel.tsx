@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { T, TOPICS, WEEKLY, ARTICLES, STUDY_SHEETS, FEEDBACK_TAGS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
+import { WEEKLY_CASES } from "../data/cases";
 import { QUICK_REFS } from "../data/guides";
 import store, { RotationInfo } from "../utils/store";
 import { getCurrentAdminUser, signInAdmin, signOutFirebase } from "../utils/firebase";
@@ -20,6 +21,26 @@ type WeeklyData = typeof WEEKLY;
 type ArticlesData = typeof ARTICLES;
 type AdminSession = { uid: string; email: string };
 type RotationTiming = { currentWeek: number | null; totalWeeks: number };
+type DailyBriefStudent = {
+  student: AdminStudent;
+  masteryPercent: number;
+  studySignals: string[];
+  serviceTopics: string[];
+  teachNext: string;
+  teachWhy: string;
+  askTomorrow: string;
+  lastTouched: string | null;
+};
+type DailyAttendingBrief = {
+  todayLabel: string;
+  tomorrowLabel: string;
+  recommendationTopic: string;
+  recommendationReason: string;
+  recommendationBridge: string | null;
+  studyCoverage: Array<{ label: string; count: number }>;
+  serviceCoverage: Array<{ label: string; count: number }>;
+  students: DailyBriefStudent[];
+};
 type AdminAssessmentSignal = {
   mode: "pre" | "post";
   overallPct: number;
@@ -264,6 +285,203 @@ function buildCohortCompetencyNeeds(students: AdminStudent[], settings: SharedSe
   return Object.entries(needs)
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([label, count]) => ({ label, count }));
+}
+
+const CASE_META_BY_ID = new Map<string, { title: string; week: number; topics: string[] }>(
+  Object.entries(WEEKLY_CASES).flatMap(([week, cases]) =>
+    (cases || []).map((item) => [item.id, { title: item.title, week: Number(week), topics: item.topics || [] }] as const)
+  )
+);
+
+function isWithinHours(timestamp: string | null | undefined, hours: number): boolean {
+  if (!timestamp) return false;
+  const time = new Date(timestamp).getTime();
+  if (Number.isNaN(time)) return false;
+  return Date.now() - time <= hours * 60 * 60 * 1000;
+}
+
+function formatBriefDate(date: Date): string {
+  return date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+}
+
+function formatBriefRelative(timestamp: string | null): string | null {
+  if (!timestamp) return null;
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const targetStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const diffDays = Math.round((todayStart - targetStart) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return `Updated today ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  if (diffDays === 1) return `Updated yesterday ${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+  return `Updated ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+}
+
+function countTopicsFromPatients(patients: Patient[]): Array<{ label: string; count: number }> {
+  const counts: Record<string, number> = {};
+  patients.forEach((patient) => {
+    const topics = patient.topics?.length ? patient.topics : patient.topic ? [patient.topic] : [];
+    topics.forEach((topic) => {
+      counts[topic] = (counts[topic] || 0) + 1;
+    });
+  });
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([label, count]) => ({ label, count }));
+}
+
+function buildStudentStudySignals(student: AdminStudent): string[] {
+  const signals: string[] = [];
+
+  [1, 2, 3, 4].forEach((week) => {
+    const attempts = (student.weeklyScores || {})[week] || [];
+    if (attempts.some((attempt) => isWithinHours(attempt.date, 36))) {
+      signals.push(`${WEEKLY[week].title} quiz`);
+    }
+  });
+
+  if (isWithinHours(student.preScore?.date, 36)) signals.push("Pre-assessment");
+  if (isWithinHours(student.postScore?.date, 36)) signals.push("Post-assessment");
+
+  Object.entries(student.completedItems?.cases || {}).forEach(([caseId, result]) => {
+    if (!isWithinHours(result.date, 36)) return;
+    const meta = CASE_META_BY_ID.get(caseId);
+    signals.push(meta ? `${meta.title} case` : "Clinical case");
+  });
+
+  const recentActivity = (student.activityLog || []).filter((entry) => isWithinHours(entry.timestamp, 36));
+  const articleDetails = recentActivity
+    .filter((entry) => entry.type === "article")
+    .map((entry) => entry.detail || entry.label)
+    .filter(Boolean);
+  const studySheetDetails = recentActivity
+    .filter((entry) => entry.type === "study_sheet")
+    .map((entry) => entry.detail || entry.label)
+    .filter(Boolean);
+  const srReviews = recentActivity.filter((entry) => entry.type === "sr_review").length;
+
+  articleDetails.slice(0, 2).forEach((detail) => signals.push(`Article: ${detail}`));
+  studySheetDetails.slice(0, 2).forEach((detail) => signals.push(`Sheet: ${detail}`));
+  if (srReviews > 0) signals.push(`${srReviews} SR review${srReviews !== 1 ? "s" : ""}`);
+
+  return Array.from(new Set(signals)).slice(0, 4);
+}
+
+function getStudentServiceTopics(student: AdminStudent): string[] {
+  const activePatients = (student.patients || []).filter((patient) => patient.status === "active");
+  const candidatePatients = activePatients.length > 0
+    ? activePatients
+    : (student.patients || []).filter((patient) => isWithinHours(patient.date, 96));
+  return countTopicsFromPatients(candidatePatients).slice(0, 3).map((item) => item.label);
+}
+
+function getStudentLastTouched(student: AdminStudent): string | null {
+  const timestamps = [
+    student.lastSyncedAt || null,
+    student.preScore?.date || null,
+    student.postScore?.date || null,
+    ...(student.activityLog || []).map((entry) => entry.timestamp),
+    ...(student.patients || []).map((patient) => patient.date),
+    ...Object.values(student.weeklyScores || {}).flat().map((score) => score.date),
+    ...Object.values(student.completedItems?.cases || {}).map((result) => result.date),
+  ].filter(Boolean) as string[];
+
+  if (timestamps.length === 0) return null;
+  return timestamps.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+}
+
+function buildDailyAttendingBrief(students: AdminStudent[], settings: SharedSettings | undefined, articlesByWeek: ArticlesData): DailyAttendingBrief {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const studyCoverageCounts: Record<string, number> = {};
+  const serviceCoverage = countTopicsFromPatients(
+    students.flatMap((student) => (student.patients || []).filter((patient) => patient.status === "active"))
+  );
+  const teachingSignals = buildCohortTeachingSignals(students);
+  const domainNeeds = buildCohortCompetencyNeeds(students, settings, articlesByWeek);
+
+  const studentBriefs = students.map<DailyBriefStudent>((student) => {
+    const competency = buildAdminCompetencySnapshot(student, settings, articlesByWeek);
+    const assessment = buildAdminAssessmentSignal(student);
+    const serviceTopics = getStudentServiceTopics(student);
+    const studySignals = buildStudentStudySignals(student);
+    studySignals.forEach((signal) => {
+      studyCoverageCounts[signal] = (studyCoverageCounts[signal] || 0) + 1;
+    });
+
+    const gapDomain = competency.domains
+      .filter((domain) => domain.tier !== "Proficient")
+      .sort((a, b) => a.progress - b.progress || a.label.localeCompare(b.label))[0];
+    const missedTopic = assessment?.summary?.recommendedArea.missedTopics[0] || null;
+    const serviceAnchor = serviceTopics[0] || null;
+    const teachNext = assessment?.summary?.recommendedArea.label || gapDomain?.label || serviceAnchor || competency.topDomain.label;
+    const teachWhy = assessment?.summary
+      ? assessment.summary.detailLine
+      : gapDomain
+        ? `${gapDomain.label} is still ${gapDomain.tier.toLowerCase()} and ${gapDomain.progressLabel.toLowerCase()}`
+        : serviceAnchor
+          ? `${serviceAnchor} is active on service and worth reinforcing explicitly`
+          : competency.masteryDetail;
+
+    let askTomorrow = `Ask ${student.name.split(" ")[0]} to teach back ${teachNext}.`;
+    if (missedTopic && serviceAnchor) {
+      askTomorrow = `Ask ${student.name.split(" ")[0]} to apply ${missedTopic} to a ${serviceAnchor} patient.`;
+    } else if (missedTopic) {
+      askTomorrow = `Ask ${student.name.split(" ")[0]} for a one-minute approach to ${missedTopic}.`;
+    } else if (serviceAnchor) {
+      askTomorrow = `Ask ${student.name.split(" ")[0]} how they would work up ${serviceAnchor} on rounds.`;
+    }
+
+    return {
+      student,
+      masteryPercent: competency.masteryPercent,
+      studySignals,
+      serviceTopics,
+      teachNext,
+      teachWhy,
+      askTomorrow,
+      lastTouched: getStudentLastTouched(student),
+    };
+  }).sort((a, b) => {
+    if (a.studySignals.length !== b.studySignals.length) return b.studySignals.length - a.studySignals.length;
+    return a.student.name.localeCompare(b.student.name);
+  });
+
+  const studyCoverage = Object.entries(studyCoverageCounts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 6)
+    .map(([label, count]) => ({ label, count }));
+
+  const topAssessmentFocus = teachingSignals.focusAreas[0];
+  const topDomainNeed = domainNeeds[0];
+  const topServiceTopic = serviceCoverage[0];
+  const recommendationTopic = topAssessmentFocus?.label || topDomainNeed?.label || topServiceTopic?.label || "Current consult themes";
+  const reasonParts = [
+    topAssessmentFocus ? `${topAssessmentFocus.count} student${topAssessmentFocus.count !== 1 ? "s" : ""} show this as the top assessment focus` : null,
+    topDomainNeed ? `${topDomainNeed.count} student${topDomainNeed.count !== 1 ? "s are" : " is"} not yet proficient in ${topDomainNeed.label}` : null,
+    topServiceTopic ? `${topServiceTopic.count} active patient${topServiceTopic.count !== 1 ? "s" : ""} are touching ${topServiceTopic.label}` : null,
+  ].filter(Boolean) as string[];
+
+  let recommendationBridge: string | null = null;
+  if (topAssessmentFocus && topServiceTopic && topAssessmentFocus.label !== topServiceTopic.label) {
+    recommendationBridge = `Bridge the study gap in ${topAssessmentFocus.label} to current service exposure in ${topServiceTopic.label}.`;
+  } else if (topServiceTopic) {
+    recommendationBridge = `Anchor tomorrow's teaching in ${topServiceTopic.label} so it stays clinically grounded.`;
+  }
+
+  return {
+    todayLabel: formatBriefDate(today),
+    tomorrowLabel: formatBriefDate(tomorrow),
+    recommendationTopic,
+    recommendationReason: reasonParts.length > 0 ? reasonParts.join(" · ") : "This reflects the strongest current learning need across the rotation.",
+    recommendationBridge,
+    studyCoverage,
+    serviceCoverage: serviceCoverage.slice(0, 6),
+    students: studentBriefs,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -788,10 +1006,122 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
     : null;
   const teachingSignals = buildCohortTeachingSignals(activeStudents);
   const domainNeeds = buildCohortCompetencyNeeds(activeStudents, settings, articles);
+  const dailyBrief = activeStudents.length > 0 ? buildDailyAttendingBrief(activeStudents, settings, articles) : null;
 
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Dashboard</h2>
+
+      {dailyBrief && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ background: `linear-gradient(135deg, ${T.navyBg}, ${T.deepBg})`, borderRadius: 18, padding: 20, color: "white", marginBottom: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8, color: "rgba(255,255,255,0.65)", marginBottom: 6 }}>
+                  Daily Attending Brief · {dailyBrief.todayLabel}
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 700, fontFamily: T.serif, marginBottom: 8 }}>
+                  Teach tomorrow: {dailyBrief.recommendationTopic}
+                </div>
+                <div style={{ fontSize: 13, lineHeight: 1.6, color: "rgba(255,255,255,0.88)", maxWidth: 720 }}>
+                  {dailyBrief.recommendationReason}
+                </div>
+                {dailyBrief.recommendationBridge && (
+                  <div style={{ fontSize: 13, lineHeight: 1.6, color: "rgba(255,255,255,0.72)", marginTop: 8 }}>
+                    {dailyBrief.recommendationBridge}
+                  </div>
+                )}
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: "12px 14px", minWidth: 180 }}>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.58)", textTransform: "uppercase", letterSpacing: 0.7, marginBottom: 4 }}>Next teaching day</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "white" }}>{dailyBrief.tomorrowLabel}</div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.72)", marginTop: 6 }}>
+                  {dailyBrief.students.length} student{dailyBrief.students.length !== 1 ? "s" : ""} in the brief
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, marginTop: 16 }}>
+              <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "rgba(255,255,255,0.58)", marginBottom: 8 }}>
+                  Recent Study
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {dailyBrief.studyCoverage.length > 0 ? dailyBrief.studyCoverage.map((item) => (
+                    <span key={item.label} style={{ background: "rgba(255,255,255,0.12)", color: "white", borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 600 }}>
+                      {item.label} ({item.count})
+                    </span>
+                  )) : (
+                    <span style={{ color: "rgba(255,255,255,0.72)", fontSize: 13 }}>No recent study activity logged yet</span>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, color: "rgba(255,255,255,0.58)", marginBottom: 8 }}>
+                  On Service Now
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {dailyBrief.serviceCoverage.length > 0 ? dailyBrief.serviceCoverage.map((item) => (
+                    <span key={item.label} style={{ background: "rgba(255,255,255,0.12)", color: "white", borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 600 }}>
+                      {item.label} ({item.count})
+                    </span>
+                  )) : (
+                    <span style={{ color: "rgba(255,255,255,0.72)", fontSize: 13 }}>No active patient topics yet</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
+            {dailyBrief.students.map((brief) => (
+              <button
+                key={brief.student.id}
+                onClick={() => navigate("students", { type: "studentDetail", id: String(brief.student.id) })}
+                style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: 16, textAlign: "left", cursor: "pointer" }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: T.navy }}>{brief.student.name}</div>
+                    <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{brief.student.year || "MS3/MS4"}</div>
+                  </div>
+                  <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                    {brief.masteryPercent}%
+                  </span>
+                </div>
+
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Studied Recently</div>
+                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+                    {brief.studySignals.length > 0 ? brief.studySignals.join(" · ") : "No recent study activity logged"}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Clinical Exposure</div>
+                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+                    {brief.serviceTopics.length > 0 ? brief.serviceTopics.join(", ") : "No active patient topics logged"}
+                  </div>
+                </div>
+
+                <div style={{ background: T.ice, borderRadius: 12, padding: "10px 11px", marginBottom: 10 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Teach Next</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{brief.teachNext}</div>
+                  <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 4 }}>{brief.teachWhy}</div>
+                </div>
+
+                <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 8 }}>
+                  <strong style={{ color: T.navy }}>Ask tomorrow:</strong> {brief.askTomorrow}
+                </div>
+                {brief.lastTouched && (
+                  <div style={{ fontSize: 13, color: T.muted }}>{formatBriefRelative(brief.lastTouched)}</div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
@@ -1172,7 +1502,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
         const recent = allActivity.slice(0, 15);
         if (recent.length === 0) return null;
 
-        const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄" };
+        const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄", article: "📄", study_sheet: "🗂️" };
         const formatTime = (ts: string) => {
           const d = new Date(ts);
           const month = d.getMonth() + 1;
