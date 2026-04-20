@@ -804,7 +804,7 @@ Tacrolimus trough level: 3.2 ng/mL (goal: 6-10). Urinalysis: trace protein, no b
             "Recurrent primary disease"
           ],
           answer: 1,
-          explanation: "The clinical picture strongly suggests acute T-cell mediated rejection: (1) Rising creatinine, (2) History of immunosuppression non-adherence, (3) Subtherapeutic tacrolimus level (3.2 vs. goal 6-10). Non-adherence is one of the leading causes of acute rejection and graft loss. CNI toxicity would be expected with HIGH tacrolimus levels, not low. BK nephropathy typically occurs earlier (1-6 months) and is associated with over-immunosuppression. A transplant biopsy (Banff classification) is needed to confirm."
+          explanation: "The clinical picture strongly suggests acute T-cell mediated rejection: (1) rising creatinine, (2) history of immunosuppression non-adherence, (3) subtherapeutic tacrolimus level (3.2 vs. goal 6\u201310). Non-adherence is one of the leading causes of acute rejection and graft loss. CNI toxicity would typically be expected with HIGH tacrolimus levels, not low. BK viremia peaks around 2\u20136 months but BK-associated nephropathy (BKVAN) has a median presentation of 8\u201312 months and can occur up to 24 months post-transplant \u2014 don't rule it out by timing alone; a plasma BK PCR and a biopsy are appropriate. Note also that prerenal / volume / obstructive causes are still common at any post-transplant interval. Final confirmation of rejection and distinction from AMR or CNI toxicity requires a transplant biopsy with Banff scoring."
         },
         {
           q: "What is the gold standard for diagnosing transplant rejection?",
