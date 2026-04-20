@@ -832,7 +832,7 @@ export const GUIDE_DATA = {
           "Has RRT been discussed? Patient's understanding and goals?",
           "Modality preference: in-center HD, home HD, PD, transplant?",
           "Transplant evaluation: referred? Living donor options?",
-          "Access planning: fistula referral if HD likely (6+ months lead time!)",
+          "Access planning (KDOQI 2019 'ESKD Life-Plan'): trajectory-based — refer for vascular access assessment/creation around eGFR 15–20 when HD is the likely modality, earlier if decline is rapid. Avoid fixed '6-month lead time' rules; the goal is a mature usable access when the patient actually needs it.",
           "Hep B vaccination: start the series EARLY in CKD when possible — seroconversion is better at higher eGFR. Completion before starting dialysis is ideal but not required; if HD starts before the series is done, continue with the high-dose dialysis schedule and check anti-HBs titers.",
           "Social support: transportation, caregiver, financial resources?",
           "Advance directives: does the patient want dialysis?",

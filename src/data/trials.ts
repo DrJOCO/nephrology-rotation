@@ -419,6 +419,13 @@ export const LANDMARK_TRIALS = {
       takeaway: "Atrasentan (selective endothelin A receptor antagonist) reduced proteinuria vs placebo in IgAN patients on top of maximally tolerated RAAS blockade (and in many cases SGLT2i).",
       details: "Design: Multinational phase 3 double-blind RCT. N=270 IgAN patients with UPCR \u22651 g/g despite max ACEi/ARB. Arms: Atrasentan 0.75 mg daily vs placebo. Primary endpoint: change in 24h UPCR at week 36 \u2014 36.1% greater reduction with atrasentan. No clinically meaningful eGFR or heart failure signal.",
       significance: "FDA-approved in 2025 for IgAN patients at risk of rapid progression. Adds a targeted endothelin pathway option alongside sparsentan (dual) and ACEi/ARB + SGLT2i supportive care." },
+    { name: "VISIONARY (Sibeprenlimab)", category: "IgAN Therapeutics",
+      full_title: "Sibeprenlimab in Primary IgA Nephropathy",
+      journal: "NEJM", year: 2025,
+      url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2506947",
+      takeaway: "Sibeprenlimab (anti-APRIL monoclonal antibody) cut UPCR vs placebo in primary IgAN at risk of progression.",
+      details: "Design: Multinational phase 3 double-blind RCT. N=510 adults with biopsy-proven primary IgAN and proteinuria \u22651 g/d despite max ACEi/ARB. Arms: Monthly subcutaneous sibeprenlimab vs placebo. Interim at 9 months: ~47% relative reduction in UPCR vs placebo, with favorable eGFR-slope trend. Sibeprenlimab targets APRIL (A Proliferation-Inducing Ligand), upstream of galactose-deficient IgA1 production.",
+      significance: "Received FDA accelerated approval (Voyxact) in November 2025 for adults with primary IgAN at risk of rapid disease progression. Joins iptacopan and the endothelin-pathway drugs as an immunosuppression-sparing option added on top of ACEi/ARB + SGLT2i supportive care." },
 
     // \u2500\u2500 FSGS \u2500\u2500
     { name: "DUPLEX (Sparsentan in FSGS)", category: "FSGS Therapeutics",
@@ -427,7 +434,7 @@ export const LANDMARK_TRIALS = {
       url: "https://www.nejm.org/doi/full/10.1056/NEJMoa2308550",
       takeaway: "In primary FSGS, sparsentan (dual endothelin/angiotensin receptor antagonist) reduced proteinuria significantly more than irbesartan through 108 weeks.",
       details: "Design: Multinational phase 3 double-blind RCT. N=371 primary FSGS patients aged 8\u201375 with UPCR \u22651.5 g/g. Arms: Sparsentan 400 mg daily vs Irbesartan 300 mg daily on top of supportive care. Interim (36 weeks): 50% UPCR reduction with sparsentan vs 32% with irbesartan. At 108 weeks, sparsentan maintained greater proteinuria reduction. eGFR slope trend favored sparsentan but did not reach significance.",
-      significance: "Supports full FDA approval of sparsentan for primary FSGS in adults and children \u22658 years, on top of ACEi/ARB and supportive care. First approved disease-targeted therapy for FSGS beyond immunosuppression." },
+      significance: "Led to FDA approval of sparsentan (Filspari) for FSGS. The labeled indication is narrower than 'all primary FSGS' \u2014 it is for patients \u22658 years with FSGS WITHOUT nephrotic syndrome, as an add-on to RAAS blockade to slow proteinuria progression. Patients with active nephrotic syndrome should still be treated with glucocorticoids \u00b1 CNIs per KDIGO 2021 GN guidance." },
 
     // \u2500\u2500 C3 Glomerulopathy / aHUS / TTP \u2500\u2500
     { name: "APPEAR-C3G (Iptacopan for C3G)", category: "Complement-mediated Kidney Disease",
