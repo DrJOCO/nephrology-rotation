@@ -766,13 +766,28 @@ export const STUDY_SHEETS = {
             "Contraindications: Single kidney (relative), bleeding disorder, uncontrolled HTN, small kidneys (CKD \u2014 won\u2019t change management)",
           ],
         },
+        {
+          heading: "Current Induction Regimens (2024\u201325)",
+          items: [
+            "Lupus nephritis (class III/IV \u00b1 V): preferred is TRIPLE therapy \u2014 glucocorticoids + MMF + ONE of {belimumab (BLISS-LN), a CNI (voclosporin per AURORA, or tacrolimus), or obinutuzumab (REGENCY)}. Voclosporin only if eGFR >45.",
+            "Lupus nephritis alternative: if MMF not tolerated, glucocorticoids + cyclophosphamide (Euro-Lupus low-dose) \u00b1 belimumab.",
+            "ANCA vasculitis induction: glucocorticoids + rituximab OR cyclophosphamide; add AVACOPAN (C5aR inhibitor) to allow rapid steroid taper (ADVOCATE).",
+            "Primary membranous nephropathy (high risk): rituximab preferred over CNI (MENTOR).",
+            "IgA nephropathy: optimize supportive care first (ACEi/ARB + SGLT2i); add sparsentan or atrasentan for persistent proteinuria. If still high-risk progression, consider TRF-budesonide (Nefecon) or systemic steroids (low-dose TESTING); iptacopan is an emerging option.",
+          ],
+        },
       ],
       trialCallouts: [
         { trial: "MENTOR", pearl: "At 24 months, rituximab maintained remission in 60% of primary membranous nephropathy patients vs 20% with cyclosporine \u2014 cyclosporine patients relapsed after stopping. Rituximab is now first-line for high-risk MN." },
         { trial: "TESTING", pearl: "Reduced-dose steroids work in IgA nephropathy (proteinuria >1 g/day) after max supportive care." },
         { trial: "RAVE", pearl: "Rituximab was non-inferior to cyclophosphamide for ANCA vasculitis remission induction, and SUPERIOR for relapsing disease." },
+        { trial: "ADVOCATE (Avacopan)", pearl: "Avacopan (C5a receptor inhibitor) allowed rapid steroid taper in AAV with superior sustained remission at 52 weeks. FDA-approved 2021 as adjunct to CYC or RTX induction." },
         { trial: "STOP-IgAN", pearl: "Adding immunosuppression to optimized supportive care (ACEi/ARB + BP control) did NOT improve outcomes in IgAN. Supportive care first." },
         { trial: "PEXIVAS", pearl: "Plasma exchange did NOT reduce death or ESKD in severe ANCA vasculitis. Removed PLEX from standard ANCA protocols." },
+        { trial: "BLISS-LN (Belimumab for LN)", pearl: "Adding belimumab to standard MMF (or CYC) + steroids improved renal response at 2 years in active lupus nephritis. FDA-approved 2020 \u2014 a cornerstone of modern triple therapy." },
+        { trial: "AURORA-1 (Voclosporin)", pearl: "Adding voclosporin to MMF + steroids doubled complete renal response at 1 year in active lupus nephritis (41% vs 23%). FDA-approved 2021 \u2014 use only if eGFR >45." },
+        { trial: "PROTECT (Sparsentan)", pearl: "Sparsentan (dual endothelin/angiotensin blocker) cut IgAN proteinuria nearly in half vs irbesartan and slowed eGFR decline at 2 years." },
+        { trial: "NefIgArd (Nefecon / TRF-budesonide)", pearl: "Gut-targeted 9-month budesonide reduced proteinuria and slowed eGFR decline in high-risk IgAN; benefit persisted after stopping. KDIGO 2025 lists it first-line immunosuppressive option." },
       ],
     },
     {
@@ -1014,7 +1029,7 @@ export const STUDY_SHEETS = {
         {
           heading: "Vascular Access Hierarchy",
           items: [
-            "AVF (fistula) > AVG (graft) > TDC (tunneled catheter) \u2014 \u2018Fistula First\u2019 initiative",
+            "Hierarchy in most patients: AVF (fistula) > AVG (graft) > TDC (tunneled catheter). The older \u2018Fistula First\u2019 slogan has been replaced by the KDOQI 2019 \u2018ESKD Life-Plan\u2019 \u2014 choose access based on the whole patient (anatomy, life expectancy, preferences), but avoid TDCs for long-term use whenever possible.",
             "AVF: Best long-term patency, lowest infection. Needs 2\u20133 months to mature. Thrill on palpation, bruit on auscultation",
             "AVG: Use in 2\u20133 weeks. Higher thrombosis/infection risk than AVF",
             "TDC: Immediate use but highest infection and mortality risk. Bridge only",
