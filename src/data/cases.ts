@@ -107,7 +107,7 @@ The cardiology fellow asks for your recommendations on preventing contrast-induc
             "Use of ACE inhibitor"
           ],
           answer: 1,
-          explanation: "While all of these are risk factors, pre-existing CKD (especially eGFR <30) is the single strongest predictor of contrast-associated AKI. The Mehran risk score assigns the highest point values to eGFR <40 and use of intra-aortic balloon pump. Diabetes amplifies the risk but primarily because of its association with CKD. The risk is negligible with eGFR >60."
+          explanation: "While all of these are risk factors, pre-existing CKD (especially eGFR <30) is the single strongest predictor of contrast-associated AKI. The Mehran risk score assigns the highest point values to eGFR <40 and use of intra-aortic balloon pump. Diabetes amplifies the risk but primarily because of its association with CKD. Per ACR/NKF consensus, the risk in patients with eGFR \u226530 is low and in many cases not clearly distinguishable from coincidental AKI \u2014 do not withhold clinically indicated contrast solely on this basis; hydrate when feasible and avoid other nephrotoxins around the exam."
         }
       ]
     },
@@ -261,7 +261,7 @@ Labs: CK 82,000 U/L, Cr 4.2 mg/dL (baseline unknown, assumed normal), BUN 52, K+
             "IV normal saline at 500 mL/h to enhance renal K+ excretion",
           ],
           answer: 1,
-          explanation: "With ECG changes (peaked T waves), the first step is ALWAYS IV calcium gluconate \u2014 it stabilizes the cardiac membrane within minutes, protecting against arrhythmia. It does NOT lower K+ levels. After calcium, give insulin + D50 (shifts K+ into cells in 15-30 min), then consider albuterol nebs. K+ removal (kayexalate, furosemide, or dialysis) is step 3. Fluids help but are not the immediate priority when ECG is abnormal.",
+          explanation: "With ECG changes (peaked T waves), the first step is ALWAYS IV calcium gluconate 1 g (10 mL of 10%) over 2\u20133 min \u2014 it stabilizes the cardiac membrane within minutes, protecting against arrhythmia. It does NOT lower K+ levels. After calcium, shift K+ intracellularly with insulin 10 U IV + D50 (onset ~15\u201330 min), \u00b1 albuterol nebs, \u00b1 sodium bicarbonate if acidemic. Removing K+ from the body (step 3) is best achieved in an emergency with IV furosemide (if urinating) or hemodialysis. Newer GI binders (sodium zirconium cyclosilicate / Lokelma, patiromer / Veltassa) work over hours. SPS / kayexalate is slow, unpredictable, and carries GI-necrosis risk; UK Kidney Association 2023 and most modern guidelines do NOT recommend it for acute emergencies. Fluids help but are not the immediate priority when ECG is abnormal.",
         },
         {
           q: "What is the target urine output for IV fluid resuscitation in rhabdomyolysis?",

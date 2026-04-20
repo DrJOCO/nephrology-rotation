@@ -833,7 +833,7 @@ export const GUIDE_DATA = {
           "Modality preference: in-center HD, home HD, PD, transplant?",
           "Transplant evaluation: referred? Living donor options?",
           "Access planning: fistula referral if HD likely (6+ months lead time!)",
-          "Hep B vaccination status (must complete before dialysis)",
+          "Hep B vaccination: start the series EARLY in CKD when possible — seroconversion is better at higher eGFR. Completion before starting dialysis is ideal but not required; if HD starts before the series is done, continue with the high-dose dialysis schedule and check anti-HBs titers.",
           "Social support: transportation, caregiver, financial resources?",
           "Advance directives: does the patient want dialysis?",
           "Conservative management discussed if appropriate (elderly, comorbid)?",

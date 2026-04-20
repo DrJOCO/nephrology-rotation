@@ -731,7 +731,7 @@ export const INPATIENT_GUIDES: Record<
       "3. Audit the 4 pillars: ACEi/ARB (max dose?), SGLT2i (started?), Finerenone (eligible?), GLP-1 RA (started?)",
       "4. BP optimization: Target SBP <120 (SPRINT)",
       "5. Glycemic control: HbA1c <7% (individualize in elderly/CKD)",
-      "6. Cardiovascular risk: Statin for all CKD patients. Aspirin if indicated",
+      "6. Cardiovascular risk: statin per KDIGO lipid guidance (non-dialysis CKD adults ≥50 y; age 18–49 by standard ASCVD risk) — do NOT start de novo once on dialysis; aspirin per usual ASCVD indications",
     ],
     discussionQuestions: [
       "What are the 4 pillars of DKD therapy and the key trial supporting each?",
