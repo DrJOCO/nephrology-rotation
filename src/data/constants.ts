@@ -879,6 +879,112 @@ export const STUDY_SHEETS = {
         { trial: "FLOW", pearl: "Semaglutide: 24% kidney risk reduction in DKD. First GLP-1 RA kidney trial. Fourth pillar. Stopped early." },
       ],
     },
+    {
+      id: "adpkd-cheatsheet",
+      icon: "\u{1FAE7}",
+      title: "ADPKD: Genetics to Tolvaptan",
+      subtitle: "The most common monogenic cause of ESKD",
+      topics: ["Polycystic Kidney Disease", "CKD", "Hypertension"],
+      sections: [
+        {
+          heading: "Genetics & Epidemiology",
+          items: [
+            "Prevalence ~1 in 1000 live births \u2014 the most common monogenic cause of CKD/ESKD",
+            "PKD1 (chromosome 16): ~78% of families. More severe, earlier ESKD (median ~55 y)",
+            "PKD2 (chromosome 4): ~14% of families. Milder, later ESKD (median ~70 y) \u2014 still not benign",
+            "Rare genotypes: GANAB, DNAJB11, IFT140, ALG9 \u2014 usually milder, atypical imaging",
+            "Risk factors for faster progression: PKD1 truncating mutation, male sex, early symptoms, large TKV, hypertension",
+          ],
+        },
+        {
+          heading: "Clinical Presentation \u2014 Think ADPKD When You See",
+          items: [
+            "Hypertension \u2014 earliest finding, often years before eGFR drops",
+            "Flank/abdominal pain \u2014 from cyst hemorrhage, stones, or infection (most common symptom)",
+            "Hematuria \u2014 gross or micro, often after cyst rupture",
+            "Proteinuria \u2014 usually sub-nephrotic; heavy proteinuria should push you toward another diagnosis",
+            "Nephrolithiasis (~20%) \u2014 uric acid or calcium oxalate",
+            "Cyst infection: fever + focal flank pain; blood cultures often positive",
+            "Palpable kidneys or incidental enlarged cystic kidneys on imaging",
+          ],
+        },
+        {
+          heading: "Diagnosis \u2014 Ultrasound Criteria (Pei, with family history)",
+          items: [
+            "Age 15\u201339 y: \u22653 cysts total (unilateral or bilateral)",
+            "Age 40\u201359 y: \u22652 cysts in EACH kidney",
+            "Age \u226560 y: \u22654 cysts in EACH kidney",
+            "No family history: \u226510 cysts (\u22655 mm) in EACH kidney \u2014 and offer genetic testing",
+            "CT/MRI if ultrasound equivocal, for donor evaluation, or to characterize complex cysts/masses",
+          ],
+        },
+        {
+          heading: "When to Send Genetic Testing (PKD NGS panel)",
+          items: [
+            "Equivocal imaging, especially living-donor evaluation",
+            "Atypical presentation or sporadic ADPKD without a family history",
+            "Syndromic features suggesting a non-PKD1/2 cause",
+            "Reproductive counseling or pre-implantation diagnosis",
+            "Known rare-genotype family",
+          ],
+        },
+        {
+          heading: "Risk Stratification \u2014 Who Gets Tolvaptan?",
+          items: [
+            "Mayo Imaging Classification is preferred: uses age, height, and total kidney volume (TKV) on CT-no-contrast or MRI-no-gadolinium",
+            "Class 1C, 1D, 1E = HIGH RISK for progression to ESKD \u2192 tolvaptan candidates",
+            "Class 2 = atypical imaging (asymmetric, unilateral, segmental) \u2014 usually slower",
+            "If TKV not available: PROPKD score, rapid eGFR decline (\u22652.5\u20133 mL/min/yr), early HTN (<35 y), or early gross hematuria",
+          ],
+        },
+        {
+          heading: "General Treatment \u2014 All ADPKD Patients",
+          items: [
+            "BP target with ACEi/ARB: \u2264110/75 if age 18\u201350 and eGFR >60 (HALT-PKD); otherwise standard CKD targets",
+            "Sodium restriction <2 g/day",
+            "Fluid intake >3 L/day if eGFR \u226530 and no hyponatremia risk (suppresses vasopressin/cAMP)",
+            "Avoid chronic NSAIDs and other nephrotoxins",
+            "Avoid SGLT2i in ADPKD unless needed for heart failure \u2014 ADPKD was excluded from pivotal trials and SGLT2i may raise vasopressin",
+          ],
+        },
+        {
+          heading: "Tolvaptan \u2014 The Only Disease-Modifying Drug",
+          items: [
+            "Who: high-risk adults (Mayo 1C/1D/1E) with eGFR \u226525 mL/min/1.73 m\u00b2",
+            "Slows eGFR decline and TKV growth \u2014 does NOT cure",
+            "Aquaretic: expect polyuria, nocturia, thirst \u2014 counsel on 3\u20134 L/day free water",
+            "Hepatotoxicity is the big safety issue: monthly LFTs \u00d718 months, then q3 months; REMS program enrollment required",
+            "Contraindicated with liver impairment (except uncomplicated polycystic liver disease)",
+            "Cost and adherence (polyuria) are the main real-world limitations",
+          ],
+        },
+        {
+          heading: "Extrarenal \u2014 Don\u2019t Miss These",
+          items: [
+            "Intracranial aneurysms (~8\u201312%) \u2014 SCREEN with time-of-flight MRA (no gadolinium) if: prior SAH, family h/o aneurysm/SAH/unexplained sudden death, upcoming major surgery, high-risk job, or chronic anticoagulation",
+            "Rescreen every 5 y if family h/o intracranial bleed/CVA",
+            "Hepatic cysts: common, usually asymptomatic; women > men (estrogen); symptomatic massive PLD \u2192 aspiration/sclerosis, fenestration, resection, or transplant",
+            "Cardiac: MVP ~25%, aortic regurgitation, pericardial effusions (echo only if symptomatic)",
+            "Colonic diverticula (higher perforation risk, esp. post-transplant), abdominal wall/inguinal hernias, seminal vesicle cysts",
+            "New sudden severe headache in an ADPKD patient = SAH until proven otherwise",
+          ],
+        },
+        {
+          heading: "Cyst Complications \u2014 Quick Management",
+          items: [
+            "Cyst pain: acetaminophen \u2192 tramadol; avoid chronic NSAIDs; refractory \u2192 cyst aspiration/sclerosis or laparoscopic fenestration",
+            "Hematuria: usually self-limited; hydration and rest; rule out stone/infection/malignancy",
+            "Cyst infection: lipophilic antibiotics (fluoroquinolone, TMP-SMX) for weeks \u2014 beta-lactams penetrate cysts poorly",
+            "ESKD: all modalities work; PD is feasible despite large kidneys; transplant outcomes equal or better than non-ADPKD",
+            "Nephrectomy: reserved for disabling mass effect, recurrent infection, suspected RCC, or to make room for transplant",
+          ],
+        },
+      ],
+      trialCallouts: [
+        { trial: "TEMPO 3:4", pearl: "Tolvaptan slowed TKV growth and eGFR decline in early ADPKD. First disease-modifying therapy \u2014 led to FDA approval." },
+        { trial: "REPRISE", pearl: "Extended tolvaptan benefit to later-stage ADPKD (eGFR 25\u201365). Supports use across a wide range of ADPKD stages." },
+      ],
+    },
   ],
   4: [
     {
@@ -1117,7 +1223,7 @@ export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWee
   "Fluid Management":     { studySheets: ["sodium-cheatsheet"],             quizWeeks: [2] },
   "Calcium/Phosphorus":   { studySheets: ["potassium-acidbase-cheatsheet"], quizWeeks: [2] },
   "Proteinuria":          { studySheets: ["gn-nephrotic-cheatsheet"],       quizWeeks: [3] },
-  "Polycystic Kidney Disease": { studySheets: ["ckd-sglt2i-cheatsheet"],   quizWeeks: [3] },
+  "Polycystic Kidney Disease": { studySheets: ["adpkd-cheatsheet", "ckd-sglt2i-cheatsheet"], quizWeeks: [3] },
   "APOL1-Associated Kidney Disease": { studySheets: ["gn-nephrotic-cheatsheet"], quizWeeks: [3] },
   "Hepatorenal Syndrome": { studySheets: ["hrs-contrast-rhabdo-cheatsheet"], quizWeeks: [1] },
   "Contrast-Associated AKI": { studySheets: ["hrs-contrast-rhabdo-cheatsheet"], quizWeeks: [1] },
