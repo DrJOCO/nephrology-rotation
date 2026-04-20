@@ -41,6 +41,20 @@ type DailyAttendingBrief = {
   serviceCoverage: Array<{ label: string; count: number }>;
   students: DailyBriefStudent[];
 };
+type TeachingPlanResource = {
+  kind: "Article" | "Study sheet" | "Case" | "Quiz";
+  title: string;
+  detail: string;
+};
+type TeachingPlanOption = {
+  topic: string;
+  rationale: string;
+  targetStudents: DailyBriefStudent[];
+  openingPrompt: string;
+  steps: string[];
+  resources: TeachingPlanResource[];
+  copyText: string;
+};
 type AdminAssessmentSignal = {
   mode: "pre" | "post";
   overallPct: number;
@@ -482,6 +496,251 @@ function buildDailyAttendingBrief(students: AdminStudent[], settings: SharedSett
     serviceCoverage: serviceCoverage.slice(0, 6),
     students: studentBriefs,
   };
+}
+
+function normalizeTopicLabel(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+const TEACHING_TOPIC_META = [
+  {
+    label: "Foundations",
+    aliases: ["foundations", "aki foundations", "aki & foundations", ...WEEKLY[1].topics],
+    weeks: [1],
+    steps: [
+      "Start with the classification frame: what syndrome is this and what is the first fork in the road?",
+      "Walk through the first diagnostic move you expect on rounds and what finding would change management.",
+      "Finish with one escalation trigger or common pitfall students should remember tomorrow morning.",
+    ],
+  },
+  {
+    label: "Electrolytes",
+    aliases: ["electrolytes", "electrolytes acid base", "electrolytes & acid-base", ...WEEKLY[2].topics],
+    weeks: [2],
+    steps: [
+      "Open with volume and osmolality: what bucket is this patient in before anyone reaches for treatment?",
+      "Teach the first-line correction strategy and the one number students must keep rechecking.",
+      "Close with a safety pearl on rate limits, telemetry, or when to call for urgent dialysis support.",
+    ],
+  },
+  {
+    label: "Glomerular / CKD",
+    aliases: ["glomerular ckd", "glomerular / ckd", "glomerular", "ckd", ...WEEKLY[3].topics],
+    weeks: [3],
+    steps: [
+      "Differentiate the core syndrome first: nephritic, nephrotic, progressive CKD, or proteinuria-first disease.",
+      "Name the next highest-yield diagnostic test, serology, or biopsy question that clarifies the case.",
+      "End with the disease-modifying treatment or follow-up plan you expect the student to propose.",
+    ],
+  },
+  {
+    label: "Therapeutics",
+    aliases: ["therapeutics", "therapeutics integration", "therapeutics & integration", ...WEEKLY[4].topics],
+    weeks: [4],
+    steps: [
+      "Start with the decision point: what therapy, modality, or access choice is being made here?",
+      "Teach the key indication, contraindication, or complication that changes the plan.",
+      "Finish with one practical management pearl students can use on consults or discharge planning.",
+    ],
+  },
+  {
+    label: "AKI",
+    aliases: ["aki", "post renal aki", "contrast associated aki", "hepatorenal syndrome", "rhabdomyolysis"],
+    weeks: [1],
+    steps: [
+      "Define the AKI phenotype and what history or urine data splits the differential fastest.",
+      "State the immediate management move before the full workup comes back.",
+      "Name the AEIOU-style or consult-level trigger that should change the urgency.",
+    ],
+  },
+  {
+    label: "CKD",
+    aliases: ["ckd", "diabetic kidney disease", "sglt2 inhibitors", "anemia of ckd", "hypertension"],
+    weeks: [3],
+    steps: [
+      "Frame the patient by CKD stage, albuminuria, and progression risk rather than just the creatinine.",
+      "Teach the next disease-modifying medication or lab target you want them to remember.",
+      "Close with what follow-up or complication surveillance should happen next.",
+    ],
+  },
+  {
+    label: "Dialysis",
+    aliases: ["dialysis", "dialysis access", "peritoneal dialysis", "diuretics"],
+    weeks: [4],
+    steps: [
+      "Clarify whether the issue is an indication for dialysis, a modality choice, or access troubleshooting.",
+      "Teach the first operational decision you want students to make confidently.",
+      "End with one complication or counseling pearl they should carry onto rounds.",
+    ],
+  },
+  {
+    label: "Glomerular",
+    aliases: ["glomerulonephritis", "nephrotic syndrome", "kidney biopsy", "proteinuria", "apol1 associated kidney disease"],
+    weeks: [3],
+    steps: [
+      "Open by separating inflammatory GN from proteinuric or chronic glomerular disease.",
+      "Teach the one serology or biopsy clue that changes the whole differential.",
+      "Finish with the urgent treatment or referral threshold students should not miss.",
+    ],
+  },
+  {
+    label: "Transplant",
+    aliases: ["transplant"],
+    weeks: [4],
+    steps: [
+      "Frame the issue as infection, rejection, drug toxicity, or chronic allograft management.",
+      "Teach the highest-yield monitoring or medication principle for the inpatient team.",
+      "Close with one transplant-specific pitfall worth checking the next day.",
+    ],
+  },
+];
+
+function findTeachingTopicMeta(topic: string) {
+  const normalized = normalizeTopicLabel(topic);
+  return TEACHING_TOPIC_META.find((entry) =>
+    entry.aliases.some((alias) => {
+      const normalizedAlias = normalizeTopicLabel(alias);
+      return normalized === normalizedAlias || normalized.includes(normalizedAlias) || normalizedAlias.includes(normalized);
+    })
+  );
+}
+
+function topicMatchesAny(topic: string, candidates: string[]): boolean {
+  const normalized = normalizeTopicLabel(topic);
+  return candidates.some((candidate) => {
+    const normalizedCandidate = normalizeTopicLabel(candidate);
+    return normalized === normalizedCandidate || normalized.includes(normalizedCandidate) || normalizedCandidate.includes(normalized);
+  });
+}
+
+function pickTeachingPlanResources(topic: string, targetStudents: DailyBriefStudent[], articlesByWeek: ArticlesData): TeachingPlanResource[] {
+  const meta = findTeachingTopicMeta(topic);
+  const weeks = meta?.weeks || [1];
+  const aliases = meta?.aliases || [topic];
+
+  const articleCandidates = weeks.flatMap((week) =>
+    (articlesByWeek[week] || [])
+      .filter((article) => topicMatchesAny(article.topic, aliases) || week === weeks[0])
+      .map((article) => {
+        const completed = targetStudents.filter((student) => student.student.completedItems?.articles?.[article.url]).length;
+        return { week, title: article.title, topic: article.topic, completed, total: targetStudents.length };
+      })
+  );
+  articleCandidates.sort((a, b) => a.completed - b.completed || a.week - b.week || a.title.localeCompare(b.title));
+
+  const sheetCandidates = weeks.flatMap((week) =>
+    (STUDY_SHEETS[week] || [])
+      .filter((sheet) => (sheet.topics || []).some((sheetTopic: string) => topicMatchesAny(sheetTopic, aliases)) || week === weeks[0])
+      .map((sheet) => {
+        const completed = targetStudents.filter((student) => student.student.completedItems?.studySheets?.[sheet.id]).length;
+        return { week, id: sheet.id, title: sheet.title, completed, total: targetStudents.length };
+      })
+  );
+  sheetCandidates.sort((a, b) => a.completed - b.completed || a.week - b.week || a.title.localeCompare(b.title));
+
+  const caseCandidates = weeks.flatMap((week) =>
+    (WEEKLY_CASES[week] || [])
+      .filter((item) => (item.topics || []).some((caseTopic) => topicMatchesAny(caseTopic, aliases)) || week === weeks[0])
+      .map((item) => {
+        const completed = targetStudents.filter((student) => student.student.completedItems?.cases?.[item.id]).length;
+        return { week, id: item.id, title: item.title, completed, total: targetStudents.length };
+      })
+  );
+  caseCandidates.sort((a, b) => a.completed - b.completed || a.week - b.week || a.title.localeCompare(b.title));
+
+  const quizWeek = weeks[0];
+  const quizDone = targetStudents.filter((student) => ((student.student.weeklyScores || {})[quizWeek] || []).length > 0).length;
+
+  const resources: TeachingPlanResource[] = [];
+  if (articleCandidates[0]) {
+    resources.push({
+      kind: "Article",
+      title: articleCandidates[0].title,
+      detail: `Week ${articleCandidates[0].week} · ${articleCandidates[0].topic} · ${articleCandidates[0].completed}/${articleCandidates[0].total} target learners already read it`,
+    });
+  }
+  if (sheetCandidates[0]) {
+    resources.push({
+      kind: "Study sheet",
+      title: sheetCandidates[0].title,
+      detail: `Week ${sheetCandidates[0].week} · ${sheetCandidates[0].completed}/${sheetCandidates[0].total} target learners already completed it`,
+    });
+  }
+  if (caseCandidates[0]) {
+    resources.push({
+      kind: "Case",
+      title: caseCandidates[0].title,
+      detail: `Week ${caseCandidates[0].week} · ${caseCandidates[0].completed}/${caseCandidates[0].total} target learners already finished it`,
+    });
+  }
+  resources.push({
+    kind: "Quiz",
+    title: `Week ${quizWeek} quiz`,
+    detail: `${quizDone}/${targetStudents.length} target learners have attempted this quiz`,
+  });
+
+  return resources;
+}
+
+function buildTeachingPlanOptions(dailyBrief: DailyAttendingBrief, settings: SharedSettings | undefined, articlesByWeek: ArticlesData): TeachingPlanOption[] {
+  const candidateTopics = Array.from(new Set([
+    dailyBrief.recommendationTopic,
+    dailyBrief.serviceCoverage[0]?.label,
+    dailyBrief.students[0]?.teachNext,
+    dailyBrief.students.find((student) => student.serviceTopics[0])?.serviceTopics[0],
+  ].filter(Boolean) as string[]));
+
+  return candidateTopics.map((topic) => {
+    const meta = findTeachingTopicMeta(topic);
+    const aliases = meta?.aliases || [topic];
+    const targetStudents = dailyBrief.students
+      .filter((student) =>
+        topicMatchesAny(student.teachNext, aliases)
+        || student.serviceTopics.some((item) => topicMatchesAny(item, aliases))
+        || student.studySignals.some((item) => topicMatchesAny(item, aliases))
+      )
+      .sort((a, b) => a.masteryPercent - b.masteryPercent || a.student.name.localeCompare(b.student.name))
+      .slice(0, 4);
+
+    const impacted = targetStudents.length > 0 ? targetStudents : dailyBrief.students.slice(0, 3);
+    const resources = pickTeachingPlanResources(topic, impacted, articlesByWeek);
+    const serviceAnchor = dailyBrief.serviceCoverage.find((item) => topicMatchesAny(item.label, aliases)) || dailyBrief.serviceCoverage[0] || null;
+    const openingPrompt = impacted[0]?.askTomorrow || `Open with a quick case discussion on ${topic}.`;
+    const rationaleParts = [
+      `${impacted.length} learner${impacted.length !== 1 ? "s" : ""} are strong targets for this topic`,
+      serviceAnchor ? `${serviceAnchor.count} active patient${serviceAnchor.count !== 1 ? "s are" : " is"} touching ${serviceAnchor.label}` : null,
+      settings?.attendingName ? `Built for ${settings.attendingName}'s next teaching touchpoint` : null,
+    ].filter(Boolean) as string[];
+    const steps = [
+      `Open: ${openingPrompt}`,
+      ...(meta?.steps || [
+        "Teach the core framework, the next best step, and the common pitfall.",
+        "Anchor the concept to one current patient before closing.",
+        "Assign one short follow-up resource so the loop continues after rounds.",
+      ]),
+    ].slice(0, 3);
+    const resourceLine = resources.map((resource) => `${resource.kind}: ${resource.title}`).join(" | ");
+    const copyText = [
+      `Tomorrow teaching plan: ${topic}`,
+      `Why this topic: ${rationaleParts.join(" · ")}`,
+      `Target learners: ${impacted.map((student) => student.student.name).join(", ")}`,
+      "5-minute flow:",
+      ...steps.map((step, index) => `${index + 1}. ${step}`),
+      "Follow-up:",
+      ...resources.map((resource) => `- ${resource.kind}: ${resource.title} (${resource.detail})`),
+      `Suggested assignment line: Review ${resourceLine}.`,
+    ].join("\n");
+
+    return {
+      topic,
+      rationale: rationaleParts.join(" · "),
+      targetStudents: impacted,
+      openingPrompt,
+      steps,
+      resources,
+      copyText,
+    };
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -996,6 +1255,8 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
 function DashboardTab({ students, setStudents, navigate, rotationCode, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData }) {
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
+  const [selectedPlanTopic, setSelectedPlanTopic] = useState("");
+  const [copiedPlanTopic, setCopiedPlanTopic] = useState<string | null>(null);
   const activeStudents = students.filter(s => s.status === "active");
   const totalPatients = students.reduce((sum, s) => sum + (s.patients || []).length, 0);
   const avgPre = activeStudents.filter(s => s.preScore).length > 0
@@ -1007,6 +1268,45 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
   const teachingSignals = buildCohortTeachingSignals(activeStudents);
   const domainNeeds = buildCohortCompetencyNeeds(activeStudents, settings, articles);
   const dailyBrief = activeStudents.length > 0 ? buildDailyAttendingBrief(activeStudents, settings, articles) : null;
+  const teachingPlans = dailyBrief ? buildTeachingPlanOptions(dailyBrief, settings, articles) : [];
+
+  useEffect(() => {
+    if (teachingPlans.length === 0) {
+      if (selectedPlanTopic) setSelectedPlanTopic("");
+      return;
+    }
+    if (!teachingPlans.some((plan) => plan.topic === selectedPlanTopic)) {
+      setSelectedPlanTopic(teachingPlans[0].topic);
+    }
+  }, [selectedPlanTopic, teachingPlans]);
+
+  useEffect(() => {
+    if (!copiedPlanTopic) return;
+    const timer = window.setTimeout(() => {
+      setCopiedPlanTopic((current) => (current === copiedPlanTopic ? null : current));
+    }, 1800);
+    return () => window.clearTimeout(timer);
+  }, [copiedPlanTopic]);
+
+  const selectedTeachingPlan = teachingPlans.find((plan) => plan.topic === selectedPlanTopic) || teachingPlans[0] || null;
+
+  const copyTeachingPlan = useCallback(async (plan: TeachingPlanOption) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(plan.copyText);
+      } else {
+        const el = document.createElement("textarea");
+        el.value = plan.copyText;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+      }
+      setCopiedPlanTopic(plan.topic);
+    } catch (error) {
+      console.warn("Teaching plan copy failed:", error);
+    }
+  }, []);
 
   return (
     <div style={{ padding: 16 }}>
@@ -1073,6 +1373,162 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
               </div>
             </div>
           </div>
+
+          {selectedTeachingPlan && (
+            <div style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: 18, marginBottom: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                    Teaching Plan Generator
+                  </div>
+                  <div style={{ fontSize: 24, fontWeight: 700, fontFamily: T.serif, color: T.navy, marginBottom: 6 }}>
+                    Tomorrow's mini-lesson: {selectedTeachingPlan.topic}
+                  </div>
+                  <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, maxWidth: 760 }}>
+                    Built from today's study activity, current patient mix, and each learner's next teaching gap.
+                  </div>
+                </div>
+                <button
+                  onClick={() => { void copyTeachingPlan(selectedTeachingPlan); }}
+                  style={{
+                    background: copiedPlanTopic === selectedTeachingPlan.topic ? T.ice : T.navy,
+                    color: copiedPlanTopic === selectedTeachingPlan.topic ? T.navy : "white",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: "11px 14px",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {copiedPlanTopic === selectedTeachingPlan.topic ? "Copied" : "Copy teaching plan"}
+                </button>
+              </div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "stretch" }}>
+                <div style={{ flex: "0 0 250px", minWidth: 250, background: T.bg, borderRadius: 14, padding: 14, border: `1px solid ${T.line}` }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+                    Plan Options
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {teachingPlans.map((plan, index) => {
+                      const isSelected = plan.topic === selectedTeachingPlan.topic;
+                      return (
+                        <button
+                          key={plan.topic}
+                          onClick={() => setSelectedPlanTopic(plan.topic)}
+                          style={{
+                            background: isSelected ? T.ice : T.card,
+                            color: isSelected ? T.navy : T.text,
+                            border: `1px solid ${isSelected ? T.med : T.line}`,
+                            borderRadius: 12,
+                            padding: "11px 12px",
+                            textAlign: "left",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", marginBottom: 4 }}>
+                            <span style={{ fontSize: 14, fontWeight: 700 }}>{plan.topic}</span>
+                            {index === 0 && (
+                              <span style={{ background: T.yellowBg, color: T.goldText, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
+                                Best fit
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 13, color: isSelected ? T.sub : T.muted, lineHeight: 1.5 }}>
+                            {plan.targetStudents.length} learner{plan.targetStudents.length !== 1 ? "s" : ""} to target
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ flex: "1 1 420px", minWidth: 280, display: "grid", gap: 12 }}>
+                  <div style={{ background: T.bg, borderRadius: 14, padding: 14, border: `1px solid ${T.line}` }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+                      Why This Topic
+                    </div>
+                    <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>
+                      {selectedTeachingPlan.rationale}
+                    </div>
+                  </div>
+
+                  <div style={{ background: T.ice, borderRadius: 14, padding: 14 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+                      Open With
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: T.navy, lineHeight: 1.5 }}>
+                      {selectedTeachingPlan.openingPrompt}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                    <div style={{ background: T.card, borderRadius: 14, padding: 14, border: `1px solid ${T.line}` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+                        Target Learners
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {selectedTeachingPlan.targetStudents.map((brief) => (
+                          <button
+                            key={brief.student.id}
+                            onClick={() => navigate("students", { type: "studentDetail", id: String(brief.student.id) })}
+                            style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, color: T.navy, cursor: "pointer" }}
+                          >
+                            {brief.student.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ background: T.card, borderRadius: 14, padding: 14, border: `1px solid ${T.line}` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
+                        5-Minute Flow
+                      </div>
+                      <div style={{ display: "grid", gap: 8 }}>
+                        {selectedTeachingPlan.steps.map((step, index) => (
+                          <div key={step} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                            <span style={{ width: 22, height: 22, borderRadius: 999, background: T.ice, color: T.navy, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                              {index + 1}
+                            </span>
+                            <span style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: T.card, borderRadius: 14, padding: 14, border: `1px solid ${T.line}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                        Assign After Rounds
+                      </div>
+                      <button
+                        onClick={() => navigate("content")}
+                        style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, color: T.navy, cursor: "pointer" }}
+                      >
+                        Open content
+                      </button>
+                    </div>
+                    <div style={{ display: "grid", gap: 8 }}>
+                      {selectedTeachingPlan.resources.map((resource) => (
+                        <div key={`${resource.kind}-${resource.title}`} style={{ background: T.bg, borderRadius: 12, padding: 12, border: `1px solid ${T.line}` }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", marginBottom: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{resource.title}</span>
+                            <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
+                              {resource.kind}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>{resource.detail}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
             {dailyBrief.students.map((brief) => (
