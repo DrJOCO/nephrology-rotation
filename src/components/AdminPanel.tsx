@@ -55,6 +55,19 @@ type TeachingPlanOption = {
   resources: TeachingPlanResource[];
   copyText: string;
 };
+type ExposureCurriculumGapTopic = {
+  label: string;
+  serviceCount: number;
+  studyCount: number;
+  serviceLearners: string[];
+  studyLearners: string[];
+  overlapLearners: string[];
+};
+type ExposureCurriculumGap = {
+  seeingButNotStudying: ExposureCurriculumGapTopic[];
+  studyingButNotSeeing: ExposureCurriculumGapTopic[];
+  aligned: ExposureCurriculumGapTopic[];
+};
 type AdminAssessmentSignal = {
   mode: "pre" | "post";
   overallPct: number;
@@ -304,6 +317,11 @@ function buildCohortCompetencyNeeds(students: AdminStudent[], settings: SharedSe
 const CASE_META_BY_ID = new Map<string, { title: string; week: number; topics: string[] }>(
   Object.entries(WEEKLY_CASES).flatMap(([week, cases]) =>
     (cases || []).map((item) => [item.id, { title: item.title, week: Number(week), topics: item.topics || [] }] as const)
+  )
+);
+const STUDY_SHEET_META_BY_ID = new Map<string, { title: string; week: number; topics: string[] }>(
+  Object.entries(STUDY_SHEETS).flatMap(([week, sheets]) =>
+    (sheets || []).map((sheet) => [sheet.id, { title: sheet.title, week: Number(week), topics: sheet.topics || [] }] as const)
   )
 );
 
@@ -598,6 +616,8 @@ const TEACHING_TOPIC_META = [
 function findTeachingTopicMeta(topic: string) {
   const normalized = normalizeTopicLabel(topic);
   return TEACHING_TOPIC_META.find((entry) =>
+    entry.aliases.some((alias) => normalizeTopicLabel(alias) === normalized)
+  ) || TEACHING_TOPIC_META.find((entry) =>
     entry.aliases.some((alias) => {
       const normalizedAlias = normalizeTopicLabel(alias);
       return normalized === normalizedAlias || normalized.includes(normalizedAlias) || normalizedAlias.includes(normalized);
@@ -611,6 +631,138 @@ function topicMatchesAny(topic: string, candidates: string[]): boolean {
     const normalizedCandidate = normalizeTopicLabel(candidate);
     return normalized === normalizedCandidate || normalized.includes(normalizedCandidate) || normalizedCandidate.includes(normalized);
   });
+}
+
+function canonicalizeTopicLabel(topic: string): string {
+  const normalized = topic.trim();
+  if (!normalized) return "";
+  return findTeachingTopicMeta(normalized)?.label || normalized;
+}
+
+function getStudentExposureTopics(student: AdminStudent): string[] {
+  const activePatients = (student.patients || []).filter((patient) => patient.status === "active");
+  const candidatePatients = activePatients.length > 0
+    ? activePatients
+    : (student.patients || []).filter((patient) => isWithinHours(patient.date, 96));
+  const topics = new Set<string>();
+  candidatePatients.forEach((patient) => {
+    const patientTopics = patient.topics?.length ? patient.topics : patient.topic ? [patient.topic] : [];
+    patientTopics.forEach((topic) => {
+      const canonical = canonicalizeTopicLabel(topic);
+      if (canonical) topics.add(canonical);
+    });
+  });
+  return Array.from(topics);
+}
+
+function getStudentStudiedTopics(student: AdminStudent, articlesByWeek: ArticlesData): string[] {
+  const articleTopicByUrl = new Map<string, string>(
+    Object.values(articlesByWeek).flatMap((items) =>
+      (items || []).map((article) => [article.url, article.topic] as const)
+    )
+  );
+  const articleTopicByTitle = new Map<string, string>(
+    Object.values(articlesByWeek).flatMap((items) =>
+      (items || []).map((article) => [article.title, article.topic] as const)
+    )
+  );
+  const studySheetTopicsByTitle = new Map<string, string[]>(
+    Array.from(STUDY_SHEET_META_BY_ID.values()).map((sheet) => [sheet.title, sheet.topics] as const)
+  );
+  const topics = new Set<string>();
+  const addTopic = (topic: string | null | undefined) => {
+    if (!topic) return;
+    const canonical = canonicalizeTopicLabel(topic);
+    if (canonical) topics.add(canonical);
+  };
+
+  Object.entries(student.weeklyScores || {}).forEach(([weekKey, attempts]) => {
+    if ((attempts || []).length === 0) return;
+    const week = Number(weekKey);
+    (WEEKLY[week as keyof typeof WEEKLY]?.topics || []).forEach((topic) => addTopic(topic));
+  });
+
+  Object.keys(student.completedItems?.articles || {}).forEach((url) => {
+    addTopic(articleTopicByUrl.get(url));
+  });
+
+  Object.keys(student.completedItems?.studySheets || {}).forEach((id) => {
+    (STUDY_SHEET_META_BY_ID.get(id)?.topics || []).forEach((topic) => addTopic(topic));
+  });
+
+  Object.keys(student.completedItems?.cases || {}).forEach((caseId) => {
+    (CASE_META_BY_ID.get(caseId)?.topics || []).forEach((topic) => addTopic(topic));
+  });
+
+  (student.activityLog || [])
+    .filter((entry) => entry.type === "article" || entry.type === "study_sheet")
+    .forEach((entry) => {
+      if (entry.type === "article") {
+        addTopic(articleTopicByTitle.get(entry.detail || entry.label) || entry.detail || entry.label);
+        return;
+      }
+      (studySheetTopicsByTitle.get(entry.detail || entry.label) || []).forEach((topic) => addTopic(topic));
+    });
+
+  return Array.from(topics);
+}
+
+function buildExposureCurriculumGap(students: AdminStudent[], articlesByWeek: ArticlesData): ExposureCurriculumGap {
+  const topicMap = new Map<string, {
+    label: string;
+    serviceLearners: Set<string>;
+    studyLearners: Set<string>;
+  }>();
+
+  const ensureTopic = (label: string) => {
+    if (!topicMap.has(label)) {
+      topicMap.set(label, {
+        label,
+        serviceLearners: new Set<string>(),
+        studyLearners: new Set<string>(),
+      });
+    }
+    return topicMap.get(label)!;
+  };
+
+  students.forEach((student) => {
+    const name = student.name;
+    getStudentExposureTopics(student).forEach((topic) => {
+      ensureTopic(topic).serviceLearners.add(name);
+    });
+    getStudentStudiedTopics(student, articlesByWeek).forEach((topic) => {
+      ensureTopic(topic).studyLearners.add(name);
+    });
+  });
+
+  const topics = Array.from(topicMap.values()).map((entry) => {
+    const serviceLearners = Array.from(entry.serviceLearners).sort((a, b) => a.localeCompare(b));
+    const studyLearners = Array.from(entry.studyLearners).sort((a, b) => a.localeCompare(b));
+    const overlapLearners = serviceLearners.filter((name) => entry.studyLearners.has(name));
+    return {
+      label: entry.label,
+      serviceCount: serviceLearners.length,
+      studyCount: studyLearners.length,
+      serviceLearners,
+      studyLearners,
+      overlapLearners,
+    };
+  });
+
+  return {
+    seeingButNotStudying: topics
+      .filter((topic) => topic.serviceCount > topic.studyCount)
+      .sort((a, b) => (b.serviceCount - b.studyCount) - (a.serviceCount - a.studyCount) || b.serviceCount - a.serviceCount || a.label.localeCompare(b.label))
+      .slice(0, 4),
+    studyingButNotSeeing: topics
+      .filter((topic) => topic.studyCount > topic.serviceCount)
+      .sort((a, b) => (b.studyCount - b.serviceCount) - (a.studyCount - a.serviceCount) || b.studyCount - a.studyCount || a.label.localeCompare(b.label))
+      .slice(0, 4),
+    aligned: topics
+      .filter((topic) => topic.serviceCount > 0 && topic.studyCount > 0 && topic.serviceCount === topic.studyCount)
+      .sort((a, b) => Math.min(b.serviceCount, b.studyCount) - Math.min(a.serviceCount, a.studyCount) || b.serviceCount - a.serviceCount || a.label.localeCompare(b.label))
+      .slice(0, 4),
+  };
 }
 
 function pickTeachingPlanResources(topic: string, targetStudents: DailyBriefStudent[], articlesByWeek: ArticlesData): TeachingPlanResource[] {
@@ -1269,6 +1421,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
   const domainNeeds = buildCohortCompetencyNeeds(activeStudents, settings, articles);
   const dailyBrief = activeStudents.length > 0 ? buildDailyAttendingBrief(activeStudents, settings, articles) : null;
   const teachingPlans = dailyBrief ? buildTeachingPlanOptions(dailyBrief, settings, articles) : [];
+  const exposureGap = activeStudents.length > 0 ? buildExposureCurriculumGap(activeStudents, articles) : null;
 
   useEffect(() => {
     if (teachingPlans.length === 0) {
@@ -1526,6 +1679,93 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {exposureGap && (
+            <div style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: 18, marginBottom: 12 }}>
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                  Clinical Exposure vs Curriculum Gap
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 700, fontFamily: T.serif, color: T.navy, marginBottom: 6 }}>
+                  See what the service is surfacing and what still needs teaching backup
+                </div>
+                <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, maxWidth: 760 }}>
+                  This compares current clinical exposure with completed study, cases, and quiz work so you can tell whether to reinforce what is showing up on service or fill a curriculum hole.
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+                {[
+                  {
+                    title: "Seeing But Not Studying",
+                    subtitle: "Best candidates for tomorrow's reinforcement",
+                    items: exposureGap.seeingButNotStudying,
+                    background: T.redBg,
+                    accent: T.accent,
+                    empty: "Service topics and study coverage are not drifting apart right now.",
+                  },
+                  {
+                    title: "Studying But Not Seeing",
+                    subtitle: "Useful for previews or backup teaching",
+                    items: exposureGap.studyingButNotSeeing,
+                    background: T.yellowBg,
+                    accent: T.goldText,
+                    empty: "The current curriculum is tracking closely with what is actually showing up clinically.",
+                  },
+                  {
+                    title: "Well Aligned",
+                    subtitle: "Topics where study and service are moving together",
+                    items: exposureGap.aligned,
+                    background: T.greenBg,
+                    accent: T.greenDk,
+                    empty: "No exact overlaps yet between service and completed study signals.",
+                  },
+                ].map((section) => (
+                  <div key={section.title} style={{ background: T.bg, borderRadius: 14, padding: 14, border: `1px solid ${T.line}` }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: section.accent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                      {section.title}
+                    </div>
+                    <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 10 }}>
+                      {section.subtitle}
+                    </div>
+
+                    <div style={{ display: "grid", gap: 10 }}>
+                      {section.items.length > 0 ? section.items.map((item) => (
+                        <div key={item.label} style={{ background: section.background, borderRadius: 12, padding: 12 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{item.label}</span>
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                              <span style={{ background: "rgba(255,255,255,0.7)", color: T.navy, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
+                                Service {item.serviceCount}
+                              </span>
+                              <span style={{ background: "rgba(255,255,255,0.7)", color: T.navy, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
+                                Studied {item.studyCount}
+                              </span>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>
+                            {section.title === "Well Aligned"
+                              ? `${item.overlapLearners.length} learner${item.overlapLearners.length !== 1 ? "s are" : " is"} both seeing and studying this topic.`
+                              : `${item.serviceCount} learner${item.serviceCount !== 1 ? "s are" : " is"} seeing this clinically while ${item.studyCount} ${item.studyCount === 1 ? "has" : "have"} already covered it in study.`}
+                          </div>
+                          <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 6 }}>
+                            <strong style={{ color: T.navy }}>On service:</strong> {item.serviceLearners.length > 0 ? item.serviceLearners.slice(0, 3).join(", ") : "None yet"}
+                          </div>
+                          <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 2 }}>
+                            <strong style={{ color: T.navy }}>Studied:</strong> {item.studyLearners.length > 0 ? item.studyLearners.slice(0, 3).join(", ") : "No study signal yet"}
+                          </div>
+                        </div>
+                      )) : (
+                        <div style={{ background: T.card, borderRadius: 12, padding: 12, border: `1px dashed ${T.line}`, fontSize: 13, color: T.muted, lineHeight: 1.6 }}>
+                          {section.empty}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
