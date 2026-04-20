@@ -431,14 +431,14 @@ export const INPATIENT_GUIDES: Record<
       "Signs of infection (SBP, UTI, pneumonia)",
       "Volume status and hemodynamics",
       "Urine Na, urine output, UA with microscopy",
-      "Whether IV albumin challenge has been started",
+      "Whether adequate IV albumin volume resuscitation has been given (ICA/ADQI 2024 no longer mandates a fixed 48h 1 g/kg/day albumin protocol — use clinical judgment)",
       "Renal ultrasound to rule out obstruction",
       "Whether patient is listed for liver transplant",
     ],
     thirtySecondSummary:
-      "\"AKI in a cirrhotic with ascites, Cr from __ to __, urine Na __, no evidence of shock/nephrotoxins/obstruction. Albumin challenge x2 days with no improvement. This is consistent with HRS-AKI. MELD is __.\"",
+      "\"AKI in a cirrhotic with ascites, Cr from __ to __, urine Na __, no evidence of shock/nephrotoxins/obstruction. No improvement after adequate volume resuscitation with albumin and withdrawal of diuretics. This is consistent with HRS-AKI by ICA/ADQI 2024 criteria. MELD is __.\"",
     howToPresent:
-      "\"This is a __-year-old with decompensated cirrhosis (etiology __), MELD __, admitted for __, now with AKI (Cr __ from baseline __). We have ruled out prerenal (albumin challenge x2 days without improvement), obstruction (normal US), nephrotoxins (none), and GN (bland sediment, no significant proteinuria). Diagnostic paracentesis showed __. This meets ICA criteria for HRS-AKI.\"",
+      "\"This is a __-year-old with decompensated cirrhosis (etiology __), MELD __, admitted for __, now with AKI (Cr __ from baseline __). We have ruled out prerenal (no improvement after adequate albumin resuscitation), obstruction (normal US), nephrotoxins (none), and GN (bland sediment, no significant proteinuria). Diagnostic paracentesis showed __. This meets the ICA/ADQI 2024 criteria for HRS-AKI.\"",
     topDifferentialBuckets: [
       "Prerenal / volume-responsive AKI (most common in cirrhotics — 44%)",
       "ATN (from sepsis, hemorrhage, nephrotoxins — 30%)",
@@ -454,7 +454,7 @@ export const INPATIENT_GUIDES: Record<
       "ACLF (acute-on-chronic liver failure) — multiorgan failure with extremely high mortality",
     ],
     commonMistakes: [
-      "Diagnosing HRS without completing the 2-day albumin challenge",
+      "Diagnosing HRS without first giving adequate volume resuscitation (the 2024 ADQI/ICA update focuses on clinically adequate resuscitation rather than a rigid 2-day 1 g/kg/day protocol)",
       "Missing SBP as the precipitant (always paracentese!)",
       "Stopping diuretics too late — hold them early when AKI develops",
       "Using FENa to differentiate HRS from ATN (unreliable in cirrhotics)",
@@ -797,11 +797,11 @@ export const INPATIENT_GUIDES: Record<
     assessmentFramework: [
       "1. Confirm peritonitis: Cloudy effluent + WBC >100/μL with >50% PMNs",
       "2. SEND CULTURES (in blood culture bottles) before antibiotics",
-      "3. Start empiric IP vancomycin + IP gentamicin (or IP ceftazidime) per ISPD guidelines",
+      "3. Start empiric IP antibiotics per ISPD 2022 — regimen should be center-specific and cover gram-positive plus gram-negative. Common choices: IP vancomycin (or first-gen cephalosporin) + IP ceftazidime (or IP aminoglycoside such as gentamicin). IP cefepime monotherapy is also acceptable.",
       "4. Examine exit site and tunnel for concurrent infection",
       "5. Tailor antibiotics to culture results at 48-72h",
-      "6. Duration: 14-21 days. If not improving by day 5 → consider catheter removal",
-      "7. Catheter removal: Fungal, refractory (day 5), relapsing, tunnel infection",
+      "6. Duration: 14-21 days. If not clinically improving by day 5 → consider catheter removal, but ISPD 2022 allows expectant management beyond day 5 if effluent WBC is clearly trending toward normal",
+      "7. Catheter removal: Fungal, refractory (no improvement by day 5 with rising/plateaued effluent WBC), relapsing, peritonitis with tunnel/exit-site infection",
     ],
     discussionQuestions: [
       "Why are IP antibiotics preferred over IV for PD peritonitis?",

@@ -1105,7 +1105,7 @@ export const STUDY_SHEETS = {
             "Suspect when: Cloudy effluent (most reliable sign!) + abdominal pain \u00b1 fever. Can present without systemic signs",
             "Diagnosis: Effluent WBC >100/\u03bcL with >50% PMNs. Send effluent for cell count + gram stain + culture (blood culture bottles!)",
             "Most common organisms: Gram-positive cocci (S. epidermidis, S. aureus) = ~60%. Gram-negative = ~25%. Culture-negative = ~15%",
-            "Empiric treatment (ISPD 2022 preferred): IP (intraperitoneal) vancomycin + IP ceftazidime. Alternatives: IP cefepime, or IP vancomycin + an IP aminoglycoside (gentamicin) \u2014 pick based on local sensitivities and prior cultures",
+            "Empiric treatment (ISPD 2022): center-specific IP (intraperitoneal) regimen covering gram-positive + gram-negative. Common options: (a) IP vancomycin OR first-gen cephalosporin for gram-positive, PLUS (b) IP third-gen cephalosporin (ceftazidime) OR aminoglycoside (gentamicin) for gram-negative. IP cefepime monotherapy is also acceptable. Pick based on local sensitivities, MRSA rates, and prior cultures.",
             "Duration: Typically 14-21 days. Fungal peritonitis or refractory peritonitis \u2192 remove the catheter",
             "Prevention: Sterile exchange technique, exit site care, prophylactic antibiotics before procedures, mupirocin at exit site",
           ],

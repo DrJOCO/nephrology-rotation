@@ -87,9 +87,9 @@ export const LANDMARK_TRIALS = {
   2: [
     // ── CKD Acid-Base ──
     { name: "BiCARB (CKD Bicarb Supplementation)", category: "CKD Acid-Base",
-      full_title: "Oral Sodium Bicarbonate for CKD: A Systematic Review and Meta-Analysis",
-      journal: "Kidney International Reports", year: 2023,
-      url: "https://www.kireports.org/article/S2468-0249(23)01400-3/fulltext",
+      full_title: "Sodium bicarbonate in older adults with chronic kidney disease and mild acidosis (BiCARB randomised controlled trial)",
+      journal: "BMC Medicine", year: 2020,
+      url: "https://bmcmedicine.biomedcentral.com/articles/10.1186/s12916-020-01542-9",
       takeaway: "Older meta-analyses suggested oral bicarb slowed GFR decline in CKD with bicarb <22, but the BiCARB RCT (2020, The Lancet) and subsequent trials did NOT confirm a kidney-failure benefit. KDIGO 2024 now only suggests considering oral alkali around bicarb <18.",
       details: "Design: Multiple RCTs and meta-analyses. The UK BiCARB RCT (2020, N=300 older adults, eGFR <30, bicarb <22): NaHCO3 vs placebo for 2 y \u2014 NO difference in physical function, eGFR, or hospitalizations. Earlier smaller trials (de Brito-Ashurst 2009, UBI 2019) had suggested benefit but were open-label or single-center. Typical dosing studied: 0.3\u20131.0 mEq/kg/day. The signal for benefit is strongest when bicarb is very low.",
       significance: "KDIGO 2024 no longer supports routine alkali therapy for mild CKD acidosis; it suggests considering oral alkali when bicarb is <18 mEq/L, weighed against the sodium load. Not a first-line CKD intervention \u2014 SGLT2i, ACEi/ARB, and BP control come first." },
