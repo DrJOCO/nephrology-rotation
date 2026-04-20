@@ -485,7 +485,7 @@ export const STUDY_SHEETS = {
           items: [
             "Treat the cause: volume for pre-renal, relieve obstruction for post-renal",
             "Hold nephrotoxins (NSAIDs, aminoglycosides, contrast if possible)",
-            "No magic RRT dose \u2014 standard dosing is fine (ATN Trial: 25 mL/kg/h)",
+            "No magic RRT dose \u2014 standard dosing is fine (ATN Trial: 35 vs 20 mL/kg/h \u2014 no benefit to higher; KDIGO delivered dose target 20\u201325 mL/kg/h)",
             "Don\u2019t rush to dialysis \u2014 watchful waiting is safe unless urgent indications (STARRT-AKI)",
             "Emergent dialysis indications = AEIOU: Acidosis, Electrolytes (K\u207a), Ingestion, Overload, Uremia",
           ],
@@ -550,8 +550,8 @@ export const STUDY_SHEETS = {
         {
           heading: "Hepatorenal Syndrome (HRS-AKI)",
           items: [
-            "Diagnosis of exclusion in cirrhosis + ascites: AKI + no shock + no nephrotoxins + no obstruction + no improvement after 2 days of IV albumin (1 g/kg/day, max 100 g/day)",
-            "Old classification (Type 1/2) is retired \u2192 now HRS-AKI per ICA/ADQI 2024",
+            "Diagnosis of exclusion in cirrhosis + ascites: AKI + no shock + no nephrotoxins + no obstruction + no improvement after adequate volume resuscitation (ADQI/ICA 2024 no longer requires a fixed 48h albumin challenge; use clinical judgment based on volume status)",
+            "Old classification (Type 1/2) is retired \u2192 now HRS-AKI per ICA/ADQI consensus",
             "Pathophysiology: Splanchnic vasodilation \u2192 \u2193 effective arterial volume \u2192 \u2191 RAAS/SNS \u2192 renal vasoconstriction",
             "Treatment: Terlipressin + albumin (CONFIRM trial) \u2014 FDA-approved 2022. Alternative: norepinephrine + albumin or midodrine/octreotide + albumin",
             "Key pearl: Always rule out SBP first (do a diagnostic paracentesis even if asymptomatic)",
@@ -582,7 +582,7 @@ export const STUDY_SHEETS = {
         },
       ],
       trialCallouts: [
-        { trial: "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)", pearl: "Terlipressin + albumin improved HRS-AKI reversal vs albumin alone (32% vs 17%). FDA-approved 2022 but watch for respiratory failure in volume-overloaded patients." },
+        { trial: "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)", pearl: "Terlipressin + albumin improved HRS-AKI reversal vs albumin alone (39% vs 18%). FDA-approved 2022 but watch for respiratory failure in volume-overloaded patients." },
         { trial: "PRESERVE", pearl: "NAC and IV sodium bicarbonate did NOT prevent contrast-AKI. Simple IV hydration is all you need." },
       ],
     },
@@ -607,10 +607,10 @@ export const STUDY_SHEETS = {
         {
           heading: "Correction Rate Limits (Critical!)",
           items: [
-            "Acute (<48h) or symptomatic: Can correct faster initially (1\u20132 mEq/L/h for first 3\u20134h)",
-            "Chronic (>48h or unknown): Correct \u22648 mEq/L in first 24h (\u22646 for high-risk: liver disease, alcoholism, malnutrition, hypokalemia)",
+            "Symptomatic (seizures, obtundation, herniation risk): repeated 3% saline boluses (100\u2013150 mL over 10 min, up to 3 doses) to get an early 4\u20136 mEq/L rise \u2014 endpoint is symptom resolution, not an hourly rate",
+            "Chronic (>48h or unknown): target 4\u20136 mEq/L in 24h, and do NOT exceed 8 mEq/L in any 24h period (cap at 8 is enough \u2014 lower threshold if high-risk for ODS: Na \u2264105, liver disease, alcohol use, malnutrition, hypokalemia)",
             "Overcorrection beyond these limits risks osmotic demyelination syndrome (ODS)",
-            "If overcorrecting: Give DDAVP 2 mcg IV q8h + D5W to re-lower sodium",
+            "If overcorrecting: DDAVP 1\u20132 mcg IV/SC q6\u20138h + D5W to re-lower sodium (proactive DDAVP clamp + 3% saline is a reasonable strategy in high-risk patients)",
           ],
         },
         {
@@ -638,7 +638,7 @@ export const STUDY_SHEETS = {
         {
           heading: "Hyperkalemia Emergency Protocol",
           items: [
-            "1. Stabilize the heart: Calcium gluconate 1\u20133g IV (or CaCl\u2082 via central line) \u2014 works in minutes",
+            "1. Stabilize the heart: Calcium gluconate 1 g IV (10 mL of 10%) over 2\u20133 min \u2014 repeat after 5 min if ECG changes persist; use CaCl\u2082 (500\u20131000 mg) via central line only",
             "2. Shift K\u207a into cells: Insulin 10U IV + D50 (check glucose!), albuterol nebs, \u00b1 sodium bicarb (if acidotic)",
             "3. Remove K\u207a from body: Kayexalate (slow), Lokelma/Veltassa (newer binders), furosemide (if making urine), dialysis (definitive)",
             "4. Monitor: Repeat K\u207a in 1\u20132h, continuous telemetry, repeat ECG",
@@ -683,7 +683,7 @@ export const STUDY_SHEETS = {
       ],
       trialCallouts: [
         { trial: "PRESERVE", pearl: "NAC and bicarb do NOT prevent contrast nephropathy. Best prevention: adequate hydration with any isotonic crystalloid." },
-        { trial: "BiCARB (CKD Bicarb Supplementation)", pearl: "Oral bicarb in CKD with metabolic acidosis (bicarb <22) slows GFR decline. KDIGO recommends target bicarb \u226522." },
+        { trial: "BiCARB (CKD Bicarb Supplementation)", pearl: "Older trials suggested oral bicarb for bicarb <22 slowed GFR decline, but BiCARB (2020) and later RCTs did NOT confirm a kidney-failure benefit. KDIGO 2024 now only suggests considering oral alkali around bicarb <18." },
       ],
     },
     {
@@ -768,7 +768,7 @@ export const STUDY_SHEETS = {
         },
       ],
       trialCallouts: [
-        { trial: "MENTOR", pearl: "Rituximab \u2265 cyclosporine for membranous nephropathy, with fewer relapses (4% vs 31%). Now first-line." },
+        { trial: "MENTOR", pearl: "At 24 months, rituximab maintained remission in 60% of primary membranous nephropathy patients vs 20% with cyclosporine \u2014 cyclosporine patients relapsed after stopping. Rituximab is now first-line for high-risk MN." },
         { trial: "TESTING", pearl: "Reduced-dose steroids work in IgA nephropathy (proteinuria >1 g/day) after max supportive care." },
         { trial: "RAVE", pearl: "Rituximab was non-inferior to cyclophosphamide for ANCA vasculitis remission induction, and SUPERIOR for relapsing disease." },
         { trial: "STOP-IgAN", pearl: "Adding immunosuppression to optimized supportive care (ACEi/ARB + BP control) did NOT improve outcomes in IgAN. Supportive care first." },
@@ -827,7 +827,7 @@ export const STUDY_SHEETS = {
         { trial: "CREDENCE", pearl: "First SGLT2i kidney trial. 30% reduction in kidney failure in diabetic CKD. Stopped early for overwhelming benefit." },
         { trial: "FIDELIO-DKD", pearl: "Finerenone: 18% kidney risk reduction on top of ACEi/ARB. Third pillar of DKD therapy." },
         { trial: "FLOW", pearl: "Semaglutide: 24% kidney risk reduction. GLP-1 RAs are now the fourth pillar. Stopped early." },
-        { trial: "SPRINT", pearl: "SBP <120 reduced CV death 27%. KDIGO recommends targeting standardized office SBP <120 mm Hg when tolerated." },
+        { trial: "SPRINT", pearl: "Intensive SBP <120 vs <140 reduced the primary CV composite 25% and all-cause mortality 27%. KDIGO recommends targeting standardized office SBP <120 mm Hg in CKD when tolerated." },
         { trial: "SHARP", pearl: "Simvastatin/ezetimibe reduced atherosclerotic events 17% in CKD. The practical takeaway is to start statins before dialysis, not after dialysis has already begun." },
       ],
     },
@@ -962,7 +962,7 @@ export const STUDY_SHEETS = {
           heading: "Extrarenal \u2014 Don\u2019t Miss These",
           items: [
             "Intracranial aneurysms (~8\u201312%) \u2014 SCREEN with time-of-flight MRA (no gadolinium) if: prior SAH, family h/o aneurysm/SAH/unexplained sudden death, upcoming major surgery, high-risk job, or chronic anticoagulation",
-            "Rescreen every 5 y if family h/o intracranial bleed/CVA",
+            "If the first screen is negative, individualize rescreening (KDIGO 2025 suggests ~5\u201310 y intervals) \u2014 sooner in those with strong family history of aneurysm/SAH, longer in lower-risk patients",
             "Hepatic cysts: common, usually asymptomatic; women > men (estrogen); symptomatic massive PLD \u2192 aspiration/sclerosis, fenestration, resection, or transplant",
             "Cardiac: MVP ~25%, aortic regurgitation, pericardial effusions (echo only if symptomatic)",
             "Colonic diverticula (higher perforation risk, esp. post-transplant), abdominal wall/inguinal hernias, seminal vesicle cysts",
@@ -1105,7 +1105,7 @@ export const STUDY_SHEETS = {
             "Suspect when: Cloudy effluent (most reliable sign!) + abdominal pain \u00b1 fever. Can present without systemic signs",
             "Diagnosis: Effluent WBC >100/\u03bcL with >50% PMNs. Send effluent for cell count + gram stain + culture (blood culture bottles!)",
             "Most common organisms: Gram-positive cocci (S. epidermidis, S. aureus) = ~60%. Gram-negative = ~25%. Culture-negative = ~15%",
-            "Empiric treatment: IP (intraperitoneal) vancomycin + IP gentamicin (or IP cefepime/ceftazidime for gram-negative coverage) \u2014 ISPD 2022 guidelines",
+            "Empiric treatment (ISPD 2022 preferred): IP (intraperitoneal) vancomycin + IP ceftazidime. Alternatives: IP cefepime, or IP vancomycin + an IP aminoglycoside (gentamicin) \u2014 pick based on local sensitivities and prior cultures",
             "Duration: Typically 14-21 days. Fungal peritonitis or refractory peritonitis \u2192 remove the catheter",
             "Prevention: Sterile exchange technique, exit site care, prophylactic antibiotics before procedures, mupirocin at exit site",
           ],
@@ -1117,7 +1117,7 @@ export const STUDY_SHEETS = {
             "Hold PD before abdominal surgery (drain abdomen). Resume per surgeon + nephrologist",
             "If admitted with peritonitis: Drain effluent, send cultures, start empiric IP antibiotics, hold exchanges until effluent clears",
             "Don\u2019t use IV antibiotics alone for PD peritonitis \u2014 IP dosing is essential for adequate peritoneal levels",
-            "Catheter removal indications: Fungal peritonitis, refractory peritonitis (effluent not clearing by day 5), relapsing peritonitis, tunnel infection",
+            "Catheter removal indications (ISPD 2022): Fungal peritonitis, refractory peritonitis (no clinical improvement after 5 days \u2014 but expectant management is reasonable if effluent WBC is clearly trending down), relapsing peritonitis, catheter-related peritonitis with tunnel/exit-site infection",
             "Switch to HD temporarily if PD catheter removed or peritonitis is severe \u2014 place temporary HD catheter if needed",
           ],
         },

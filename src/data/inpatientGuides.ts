@@ -465,8 +465,8 @@ export const INPATIENT_GUIDES: Record<
       "1. Confirm AKI by KDIGO criteria (Cr rise ≥0.3 or ≥1.5× baseline)",
       "2. Rule out nephrotoxins, shock, obstruction (US), and GN (UA/sediment)",
       "3. Diagnostic paracentesis to rule out SBP",
-      "4. Start IV albumin 1 g/kg/day (max 100g) × 2 days + hold diuretics",
-      "5. If no improvement → diagnose HRS-AKI → start terlipressin + albumin",
+      "4. Give adequate volume resuscitation with IV albumin + hold diuretics (ICA/ADQI 2024 no longer requires a rigid 1 g/kg/day × 2-day protocol — judge adequacy clinically)",
+      "5. If Cr does not improve with adequate volume + no other cause → diagnose HRS-AKI → start terlipressin + albumin (check for volume overload first)",
       "6. Assess transplant candidacy — definitive treatment is liver transplant",
     ],
     discussionQuestions: [
@@ -781,7 +781,7 @@ export const INPATIENT_GUIDES: Record<
     redFlags: [
       "Fungal peritonitis (yeast on gram stain or culture) — REMOVE catheter immediately",
       "Fecal flora or polymicrobial culture — consider surgical abdomen (perforation, ischemic bowel)",
-      "Effluent not clearing by day 5 of appropriate antibiotics — refractory peritonitis, remove catheter",
+      "Refractory peritonitis — no clinical improvement after ~5 days of appropriate IP antibiotics. ISPD 2022 allows expectant management beyond day 5 if effluent WBC is clearly trending down; otherwise remove catheter",
       "Relapsing peritonitis (same organism within 4 weeks) — catheter removal usually needed",
       "Tunnel infection (tenderness/erythema along catheter track) — catheter may need removal",
       "Peritoneal membrane failure after repeated episodes — may need to transition to HD permanently",

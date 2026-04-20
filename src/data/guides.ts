@@ -166,9 +166,10 @@ export const QUICK_REFS: QuickRef[] = [
       sections: [
         { heading: "Correction Rate Limits",
           items: [
-            "Chronic hyponatremia (>48h or unknown): ≤6-8 mEq/L per 24h",
-            "High-risk patients (Na <105, alcoholism, malnutrition, hypokalemia): ≤6 mEq/L per 24h",
-            "Acute hyponatremia (<48h, known cause): can correct faster but still monitor closely",
+            "Target: 4-6 mEq/L rise in 24h (relieves symptoms, avoids ODS)",
+            "Hard cap: ≤8 mEq/L in any 24h period — even if target not reached, do not exceed this",
+            "High-risk for ODS (Na ≤105, alcoholism, malnutrition, liver disease, hypokalemia): stay toward the low end (4-6 mEq/L)",
+            "Symptomatic (seizure/herniation): repeated 100-150 mL boluses of 3% saline over 10 min (up to 3 doses) to drive the initial 4-6 mEq/L rise — not a slow hourly drip",
             "OVERCORRECTION → Osmotic Demyelination Syndrome (ODS): devastating, often irreversible",
           ]},
         { heading: "Corrected Na⁺ for Hyperglycemia",
