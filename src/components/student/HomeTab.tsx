@@ -666,9 +666,14 @@ export default function HomeTab({
 
   const quickLinks: NavAction[] = [
     makeAction("Browse topics", "See all content by nephrology concept", "today", { type: "browseByTopic" }),
-    ...(totalBookmarks > 0
-      ? [makeAction("Saved items", `${totalBookmarks} bookmark${totalBookmarks !== 1 ? "s" : ""}`, "today", { type: "bookmarks" })]
-      : []),
+    makeAction(
+      "Saved items",
+      totalBookmarks > 0
+        ? `${totalBookmarks} bookmark${totalBookmarks !== 1 ? "s" : ""}`
+        : "Tap ☆ on any sheet, case, article, or trial to save it here",
+      "today",
+      { type: "bookmarks" },
+    ),
     makeAction("Resources", "Podcasts, guidelines, and websites", "today", { type: "resources" }),
   ];
 

@@ -8,7 +8,7 @@ export const WEEKLY_CASES = {
     // ─── Week 1: AKI & Fluid Management ─────────────────────────────
     {
       id: "w1c1",
-      title: "AKI in Sepsis",
+      title: "Fever, Flank Pain, and Hypotension",
       category: "Acute Kidney Injury",
       difficulty: "Beginner",
       topics: ["AKI", "Fluid Management"],
@@ -66,7 +66,7 @@ Labs: Cr 3.8 mg/dL (baseline 1.1), BUN 62 mg/dL, K+ 5.1 mEq/L, bicarb 18 mEq/L, 
     },
     {
       id: "w1c2",
-      title: "Contrast-Induced AKI Prevention",
+      title: "CKD Patient Before Cardiac Catheterization",
       category: "Acute Kidney Injury",
       difficulty: "Intermediate",
       topics: ["AKI", "CKD"],
@@ -171,7 +171,7 @@ His Foley catheter was just flushed and is patent. Current IVF: D5 0.45% NaCl at
     },
     {
       id: "w1c4",
-      title: "AKI in Decompensated Cirrhosis",
+      title: "Cirrhosis with Rising Creatinine",
       category: "Hepatorenal Syndrome",
       difficulty: "Intermediate",
       topics: ["Hepatorenal Syndrome", "AKI"],
@@ -231,7 +231,7 @@ A diagnostic paracentesis shows 380 PMNs/\u03bcL in the ascitic fluid.`,
     },
     {
       id: "w1c5",
-      title: "Found Down with Muscle Injury",
+      title: "Found Down with Dark Urine",
       category: "Rhabdomyolysis",
       difficulty: "Beginner",
       topics: ["Rhabdomyolysis", "AKI"],
@@ -282,7 +282,7 @@ Labs: CK 82,000 U/L, Cr 4.2 mg/dL (baseline unknown, assumed normal), BUN 52, K+
     // ─── Week 2: Electrolytes & Acid-Base ────────────────────────────
     {
       id: "w2c1",
-      title: "Severe Hyponatremia",
+      title: "Seizure After a New Prescription",
       category: "Electrolytes",
       topics: ["Hyponatremia", "Fluid Management"],
       difficulty: "Intermediate",
@@ -340,7 +340,7 @@ Physical exam: Appears euvolemic, no edema, JVP normal, mucous membranes moist.`
     },
     {
       id: "w2c2",
-      title: "Hyperkalemia Emergency",
+      title: "Weakness and Palpitations on CKD Meds",
       category: "Electrolytes",
       topics: ["Hyperkalemia"],
       difficulty: "Beginner",
@@ -386,7 +386,7 @@ ECG shows wide QRS complexes, peaked T waves, and loss of P waves.`,
     },
     {
       id: "w2c3",
-      title: "Complex Acid-Base Disorder",
+      title: "Unresponsive with Abnormal Labs",
       category: "Acid-Base",
       topics: ["Acid-Base"],
       difficulty: "Advanced",
@@ -499,7 +499,7 @@ The primary team pages nephrology because they are concerned about "acute kidney
     // ─── Week 3: Glomerular Disease & CKD ────────────────────────────
     {
       id: "w3c1",
-      title: "Nephrotic Syndrome Workup",
+      title: "Edema and Foamy Urine",
       category: "Glomerular Disease",
       topics: ["Nephrotic Syndrome", "Proteinuria", "Kidney Biopsy", "APOL1-Associated Kidney Disease"],
       difficulty: "Intermediate",
@@ -558,7 +558,7 @@ Renal ultrasound shows bilateral 12 cm kidneys with increased cortical echogenic
     },
     {
       id: "w3c2",
-      title: "ANCA Vasculitis with RPGN",
+      title: "Rapidly Rising Cr with Hemoptysis",
       category: "Glomerular Disease",
       topics: ["Glomerulonephritis", "Kidney Biopsy"],
       difficulty: "Advanced",
@@ -616,7 +616,7 @@ CXR shows bilateral pulmonary infiltrates. Anti-MPO (p-ANCA) is strongly positiv
     },
     {
       id: "w3c3",
-      title: "CKD Management and SGLT2 Inhibitors",
+      title: "Stable CKD Clinic Follow-Up",
       category: "CKD",
       topics: ["CKD", "Hypertension", "Proteinuria"],
       difficulty: "Intermediate",
@@ -728,7 +728,7 @@ She has not been started on an SGLT2 inhibitor, finerenone, or GLP-1 RA.`,
     // ─── Week 4: Dialysis, Transplant & Stones ──────────────────────
     {
       id: "w4c1",
-      title: "Dialysis Initiation Decision",
+      title: "Advanced CKD with New Symptoms",
       category: "Dialysis",
       topics: ["Dialysis", "Dialysis Access", "CKD", "Anemia of CKD", "CKD-MBD"],
       difficulty: "Intermediate",
@@ -785,7 +785,7 @@ Exam: BP 158/92, bilateral 2+ pitting edema. AV fistula was placed 3 months ago 
     },
     {
       id: "w4c2",
-      title: "Kidney Transplant Rejection",
+      title: "Transplant Patient with Rising Cr",
       category: "Transplant",
       topics: ["Transplant", "Kidney Biopsy"],
       difficulty: "Advanced",

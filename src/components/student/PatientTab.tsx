@@ -1,6 +1,6 @@
 import { useState, useEffect, CSSProperties } from "react";
 import { Pencil, RotateCcw, Check, X, Plus, ChevronRight, Lightbulb } from "lucide-react";
-import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../../data/constants";
+import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS, TOPIC_KEYWORDS } from "../../data/constants";
 import { inputLabel, inputStyle } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
@@ -30,6 +30,17 @@ function getHiddenTopicCount(selectedTopics: string[], expanded: boolean): numbe
   if (expanded) return 0;
   const selectedExtraTopics = ADDITIONAL_PATIENT_TOPICS.filter(topic => selectedTopics.includes(topic));
   return ADDITIONAL_PATIENT_TOPICS.length - selectedExtraTopics.length;
+}
+
+function suggestTopicsFromText(text: string, alreadySelected: string[]): string[] {
+  const q = text.toLowerCase();
+  if (q.trim().length < 2) return [];
+  const matches: string[] = [];
+  for (const { topic, keywords } of TOPIC_KEYWORDS) {
+    if (alreadySelected.includes(topic)) continue;
+    if (keywords.some(k => q.includes(k))) matches.push(topic);
+  }
+  return matches.slice(0, 5);
 }
 
 function summarizeTopics(topics: string[]): string {
@@ -97,6 +108,21 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
         <div style={{ marginBottom: 10 }}>
           <label style={inputLabel}>Diagnosis</label>
           <input value={editForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => onEditChange({...editForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)})} style={inputStyle} />
+          {(() => {
+            const suggested = suggestTopicsFromText(editForm.dx, editForm.topics);
+            if (suggested.length === 0) return null;
+            return (
+              <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
+                {suggested.map(t => (
+                  <button key={t} type="button" onClick={() => onEditToggleTopic(t)}
+                    style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.blueBg, color: T.med, border: `1px dashed ${T.med}` }}>
+                    + {t}
+                  </button>
+                ))}
+              </div>
+            );
+          })()}
         </div>
         <div style={{ marginBottom: 10 }}>
           <label style={inputLabel}>Learning Tags</label>
@@ -453,6 +479,21 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
               onChange={e => { setForm({...form, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setFormErrors(prev => ({...prev, dx: undefined})); }}
               placeholder="e.g. AKI in setting of sepsis" style={{...inputStyle, ...(formErrors.dx ? inputErrorBorder : {})}} />
             {formErrors.dx && <div style={errorStyle}>{formErrors.dx}</div>}
+            {(() => {
+              const suggested = suggestTopicsFromText(form.dx, form.topics);
+              if (suggested.length === 0) return null;
+              return (
+                <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                  <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
+                  {suggested.map(t => (
+                    <button key={t} type="button" onClick={() => toggleTopic(t)}
+                      style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.blueBg, color: T.med, border: `1px dashed ${T.med}` }}>
+                      + {t}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={inputLabel}>Learning Tags (pick the main one or two)</label>

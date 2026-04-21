@@ -270,31 +270,36 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
         const done = (completedItems?.cases || {})[c.id];
         const diff = diffColors[c.difficulty] || diffColors.Beginner;
         return (
-          <button key={c.id} onClick={() => setActiveCase(c)}
-            style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, marginBottom: 10, border: done ? `2px solid ${T.green}` : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", position: "relative" }}>
-            <div style={{ position: "absolute", top: 10, right: 12, display: "flex", alignItems: "center", gap: 6 }}>
-              <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(c.id); }} style={{ background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.gold : T.muted, cursor: "pointer", padding: "8px", margin: "-8px", lineHeight: 1 }}>
-                {(bookmarks?.cases || []).includes(c.id) ? "★" : "☆"}
-              </button>
-              {done && (
-                <span style={{ fontSize: 13, fontWeight: 700, color: T.green, background: T.greenBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
-                  ✓ {done.score}/{done.total}
-                </span>
-              )}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 22 }}>🏥</span>
-              <div>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
-                <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{c.category} • {c.questions.length} questions</div>
+          <div key={c.id} style={{ position: "relative", marginBottom: 10 }}>
+            <button onClick={() => setActiveCase(c)}
+              style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, border: done ? `2px solid ${T.green}` : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
+              <div style={{ position: "absolute", top: 10, right: 12, display: "flex", alignItems: "center", gap: 6, paddingLeft: 40 }}>
+                {done && (
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.green, background: T.greenBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
+                    ✓ {done.score}/{done.total}
+                  </span>
+                )}
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: diff.text, background: diff.bg, padding: "2px 8px", borderRadius: 6, border: `1px solid ${diff.border}` }}>
-                {c.difficulty}
-              </span>
-            </div>
-          </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingRight: 40 }}>
+                <span style={{ fontSize: 22 }}>🏥</span>
+                <div>
+                  <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{c.category} • {c.questions.length} questions</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: diff.text, background: diff.bg, padding: "2px 8px", borderRadius: 6, border: `1px solid ${diff.border}` }}>
+                  {c.difficulty}
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleBookmark(c.id); }}
+              aria-label={(bookmarks?.cases || []).includes(c.id) ? `Unbookmark ${c.title}` : `Bookmark ${c.title}`}
+              style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.gold : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+              {(bookmarks?.cases || []).includes(c.id) ? "★" : "☆"}
+            </button>
+          </div>
         );
       })}
       {cases.length > 2 && <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 16, padding: 0, fontWeight: 600 }}>

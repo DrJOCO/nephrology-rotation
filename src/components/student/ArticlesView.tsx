@@ -70,12 +70,16 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12, flexShrink: 0 }}>
               <button onClick={() => onToggleBookmark(a.url)}
+                aria-label={(bookmarks?.articles || []).includes(a.url) ? `Unbookmark ${a.title}` : `Bookmark ${a.title}`}
+                title={(bookmarks?.articles || []).includes(a.url) ? "Bookmarked" : "Save for later"}
                 style={{ width: 40, height: 40, borderRadius: 20, border: `1.5px solid ${(bookmarks?.articles || []).includes(a.url) ? T.gold : T.line}`, background: (bookmarks?.articles || []).includes(a.url) ? T.yellowBg : T.card, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: (bookmarks?.articles || []).includes(a.url) ? T.gold : T.muted }}>
                 {(bookmarks?.articles || []).includes(a.url) ? "\u2605" : "\u2606"}
               </button>
               <button onClick={() => onToggleComplete(a.url)}
-                style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.green : T.line}`, background: isRead ? T.green : T.card, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                {isRead && <span style={{ color: "white", fontSize: 16, fontWeight: 700 }}>{"\u2713"}</span>}
+                aria-label={isRead ? `Mark ${a.title} unread` : `Mark ${a.title} as read`}
+                title={isRead ? "Read — click to undo" : "Mark as read"}
+                style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.green : T.med}`, background: isRead ? T.green : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, fontWeight: 700, color: isRead ? "white" : T.med }}>
+                {"\u2713"}
               </button>
             </div>
           </div>

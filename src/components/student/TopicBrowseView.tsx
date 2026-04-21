@@ -109,7 +109,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
                   <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83C\uDFE5"}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{cs.title}</div>
-                    <div style={{ fontSize: 13, color: T.muted }}>Week {c.week} \u2022 {cs.difficulty} {done ? " \u2022 Done" : ""}</div>
+                    <div style={{ fontSize: 13, color: T.muted }}>Week {c.week} {"\u2022"} {cs.difficulty} {done ? " \u2022 Done" : ""}</div>
                   </div>
                   <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
                 </button>

@@ -44,18 +44,46 @@ export const TOPICS = [
 
 export const COMMON_PATIENT_TOPICS = [
   "AKI",
-  "CKD",
-  "Hyponatremia",
   "Hyperkalemia",
-  "Acid-Base",
-  "Fluid Management",
-  "Dialysis",
-  "Transplant",
-  "Hepatorenal Syndrome",
-  "Contrast-Associated AKI",
-  "Rhabdomyolysis",
+  "Hyponatremia",
+  "CKD",
   "Cardiorenal Syndrome",
-  "Diabetic Kidney Disease",
+  "Hepatorenal Syndrome",
+  "Dialysis",
+  "Acid-Base",
+];
+
+// Keyword → topic map for auto-suggesting tags from the free-text consult reason.
+// Keys are lowercased substrings checked against the dx field.
+export const TOPIC_KEYWORDS: Array<{ topic: string; keywords: string[] }> = [
+  { topic: "AKI", keywords: ["aki", "acute kidney", "rising cr", "rising creatinine", "atn", "tubular necrosis", "oliguria", "anuria"] },
+  { topic: "CKD", keywords: ["ckd", "chronic kidney", "esrd", "eskd", "kidney disease"] },
+  { topic: "Hyperkalemia", keywords: ["hyperkalemia", "high k", "elevated k", "k 6", "k 7", "k+ 6", "k+ 7", "peaked t"] },
+  { topic: "Hypokalemia", keywords: ["hypokalemia", "low k", "k 2", "k 3"] },
+  { topic: "Hyponatremia", keywords: ["hyponatremia", "low sodium", "low na", "siadh", "na 12", "na 11"] },
+  { topic: "Hypernatremia", keywords: ["hypernatremia", "high sodium", "high na", "na 15", "na 16"] },
+  { topic: "Acid-Base", keywords: ["acid-base", "acidosis", "alkalosis", "anion gap", "agma", "nagma", "bicarb", "hco3"] },
+  { topic: "Fluid Management", keywords: ["volume overload", "hypovolemia", "fluid overload", "dehydration", "diuresis", "euvolemic"] },
+  { topic: "Dialysis", keywords: ["dialysis", "hemodialysis", "rrt", "crrt", "cvvhdf", "cvvh", "hd "] },
+  { topic: "Peritoneal Dialysis", keywords: ["peritoneal dialysis", "pd ", "tenckhoff", "cloudy effluent", "peritonitis"] },
+  { topic: "Transplant", keywords: ["transplant", "rejection", "tacrolimus", "dsa", "allograft"] },
+  { topic: "Hepatorenal Syndrome", keywords: ["hrs", "hepatorenal", "cirrhosis", "ascites", "terlipressin"] },
+  { topic: "Contrast-Associated AKI", keywords: ["contrast", "cin", "cardiac cath", "iodinated"] },
+  { topic: "Rhabdomyolysis", keywords: ["rhabdo", "rhabdomyolysis", "myoglobin", "high ck", "ck "] },
+  { topic: "Cardiorenal Syndrome", keywords: ["cardiorenal", "chf", "hfref", "hfpef", "heart failure", "diuresis"] },
+  { topic: "Diabetic Kidney Disease", keywords: ["diabetic nephropathy", "dkd", "diabetic kidney"] },
+  { topic: "SGLT2 Inhibitors", keywords: ["sglt2", "dapagliflozin", "empagliflozin", "canagliflozin"] },
+  { topic: "Glomerulonephritis", keywords: ["gn ", "glomerulonephritis", "nephritic", "rbc cast", "anca", "pauci-immune", "rpgn"] },
+  { topic: "Nephrotic Syndrome", keywords: ["nephrotic", "foamy urine", "membranous", "fsgs", "minimal change"] },
+  { topic: "Proteinuria", keywords: ["proteinuria", "uacr", "albuminuria"] },
+  { topic: "Kidney Stones", keywords: ["stone", "nephrolithiasis", "calculus", "ureteral"] },
+  { topic: "AIN", keywords: ["ain", "interstitial nephritis", "eosinophil"] },
+  { topic: "Urinalysis", keywords: ["urinalysis", "ua ", "sediment", "hematuria"] },
+  { topic: "Hypertension", keywords: ["hypertension", "htn", "high bp", "resistant htn"] },
+  { topic: "Diuretics", keywords: ["diuretic", "furosemide", "lasix", "metolazone", "thiazide"] },
+  { topic: "Calcium/Phosphorus", keywords: ["hypercalcemia", "hypocalcemia", "hyperphosphatemia", "calcium", "phosphorus"] },
+  { topic: "Polycystic Kidney Disease", keywords: ["polycystic", "pkd", "adpkd"] },
+  { topic: "APOL1-Associated Kidney Disease", keywords: ["apol1", "apol-1"] },
 ];
 
 export const ADDITIONAL_PATIENT_TOPICS = TOPICS.filter(topic => !COMMON_PATIENT_TOPICS.includes(topic));

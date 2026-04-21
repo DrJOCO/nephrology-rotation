@@ -4,15 +4,14 @@ import type { Trial, Bookmarks } from "../../types";
 
 export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookmark }: { trial: Trial; isOpen: boolean; onToggle: () => void; isBookmarked: boolean; onToggleBookmark?: (name: string) => void }) {
   return (
-    <div style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.gold : T.line}`, overflow: "hidden", transition: "border 0.2s" }}>
+    <div style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.gold : T.line}`, overflow: "hidden", transition: "border 0.2s", position: "relative" }}>
       <button onClick={onToggle}
         style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.yellowBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: 9, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 2, flex: 1 }}>{trial.name}</div>
-              {onToggleBookmark && <button onClick={(e) => { e.stopPropagation(); onToggleBookmark(trial.name); }} style={{ background: "none", border: "none", fontSize: 16, color: isBookmarked ? T.gold : T.muted, cursor: "pointer", flexShrink: 0, padding: "8px", margin: "-8px", lineHeight: 1 }}>{isBookmarked ? "\u2605" : "\u2606"}</button>}
+              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 2, flex: 1, paddingRight: onToggleBookmark ? 32 : 0 }}>{trial.name}</div>
             </div>
             <div style={{ fontSize: 13, color: T.sub }}>{trial.journal} ({trial.year})</div>
             <div style={{ fontSize: 13, color: T.text, marginTop: 5, lineHeight: 1.45, fontStyle: "italic" }}>{trial.takeaway}</div>
@@ -20,6 +19,14 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
           <span style={{ color: T.muted, fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
         </div>
       </button>
+      {onToggleBookmark && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleBookmark(trial.name); }}
+          aria-label={isBookmarked ? `Unbookmark ${trial.name}` : `Bookmark ${trial.name}`}
+          style={{ position: "absolute", top: 10, right: 40, background: "none", border: "none", fontSize: 16, color: isBookmarked ? T.gold : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+          {isBookmarked ? "\u2605" : "\u2606"}
+        </button>
+      )}
       {isOpen && (
         <div style={{ padding: "0 14px 14px" }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>Full Title</div>
