@@ -20,6 +20,7 @@ import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { buildCompetencySummary } from "../utils/competency";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
+import { LIMITS } from "../utils/validation";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../types";
 import type { User } from "firebase/auth";
 
@@ -154,6 +155,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [installPromptDismissed, setInstallPromptDismissed] = useState(() => localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === "1");
   // Phase 1 (spec §12): accessible logout confirmation — replaces window.confirm.
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [joinConfirmOpen, setJoinConfirmOpen] = useState(false);
   // Phase 2 (spec §01): profile sheet holds name, code, theme toggle, end-session.
   const [profileOpen, setProfileOpen] = useState(false);
   const online = useOnline();
@@ -251,6 +253,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const noteStudentUpdatedAt = (updatedAt: string) => {
     latestStudentUpdateRef.current = updatedAt;
+  };
+
+  const loadStudentDataForRotation = async (code: string, studentIdToLoad: string) => {
+    const previousRotationCode = store.getRotationCode();
+    store.setRotationCode(code);
+    try {
+      return await store.getStudentData(studentIdToLoad);
+    } finally {
+      store.setRotationCode(previousRotationCode);
+    }
   };
 
   // Load from storage on mount
@@ -441,6 +453,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (data.srQueue) setSrQueue(data.srQueue);
       if (data.activityLog) setActivityLog(data.activityLog);
       if (data.reflections) setReflections(data.reflections);
+      if (typeof data.name === "string" && data.name.trim()) {
+        setStudentName(data.name);
+        store.set("neph_name", data.name);
+      }
     });
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
@@ -499,6 +515,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const handleSendStudentSignInLink = async () => {
     const normalizedEmail = normalizeEmail(studentEmail);
+    if (!studentName.trim()) {
+      setAuthError("Enter your name before sending the secure sign-in link.");
+      return;
+    }
     if (!normalizedEmail) {
       setAuthError("Enter your email address first.");
       return;
@@ -544,7 +564,39 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setAuthSubmitting(false);
   };
 
-  const handleJoinRotation = async () => {
+  const handleUpdateStudentName = async (nextName: string) => {
+    const trimmedName = nextName.trim().slice(0, LIMITS.NAME_MAX);
+    if (!trimmedName) {
+      throw new Error("Enter your name before saving.");
+    }
+
+    setStudentName(trimmedName);
+    setNameSet(true);
+    await store.set("neph_name", trimmedName);
+
+    if (!store.getRotationCode() || !studentId) return;
+
+    const updatedAt = new Date().toISOString();
+    const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
+    noteStudentUpdatedAt(updatedAt);
+
+    await Promise.all([
+      store.setStudentData(studentId, {
+        name: trimmedName,
+        ...studentSyncIdentity,
+        updatedAt,
+      }),
+      store.setTeamSnapshot(studentId, buildTeamSnapshot({
+        studentId,
+        name: trimmedName,
+        patients,
+        points,
+        updatedAt,
+      })),
+    ]);
+  };
+
+  const handleJoinRotation = async (skipEmailProfileConfirm = false) => {
     const normalizedName = studentName.trim();
     const normalizedJoinCode = joinCode.trim().toUpperCase();
     const requiresGuestPin = authMode === "guest";
@@ -599,13 +651,21 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       // Reset attempts on successful validation
       attempts.count = 0;
       attempts.lockedUntil = 0;
+
+      const sid = user.uid;
+      const existingData = await loadStudentDataForRotation(normalizedJoinCode, sid);
+      if (authMode === "email_link" && !existingData && !skipEmailProfileConfirm) {
+        setJoinConfirmOpen(true);
+        setJoining(false);
+        return;
+      }
+
       // Set rotation code first so store methods work
       store.setRotationCode(normalizedJoinCode);
       setRotationCodeState(normalizedJoinCode);
       setJoinCode(normalizedJoinCode);
-
-      const sid = user.uid;
       setStudentId(sid);
+
       const localJoinedAt = joinedAt || await store.get<string>(JOINED_AT_KEY);
       const normalizedEmail = normalizeEmail(user.email || studentEmail);
       const studentIdentity = user.isAnonymous
@@ -614,8 +674,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             authType: "email_link" as const,
             ...(normalizedEmail ? { email: normalizedEmail } : {}),
           };
-
-      const existingData = await store.getStudentData(sid);
       if (existingData) {
         // Returning student on the same account — restore their data
         if (existingData.patients) setPatients(existingData.patients);
@@ -881,6 +939,19 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           onCancel={() => setLogoutConfirmOpen(false)}
         />
       )}
+      {joinConfirmOpen && (
+        <ConfirmSheet
+          title="Confirm your student account"
+          message={`You're about to create this rotation account as ${studentName.trim()} with ${normalizeEmail(studentEmail)} and join ${joinCode.trim().toUpperCase()}. If the name needs a tweak later, you can update it from Profile.`}
+          confirmLabel="Looks right"
+          cancelLabel="Edit details"
+          onConfirm={() => {
+            setJoinConfirmOpen(false);
+            void handleJoinRotation(true);
+          }}
+          onCancel={() => setJoinConfirmOpen(false)}
+        />
+      )}
       {/* Header — Phase 2 (spec §01): collapsed 48px light title bar.
           Name, rotation code, theme, end-session moved to ProfileSheet.
           Kept inline: title, streak chip (or offline chip), search, profile button. */}
@@ -973,9 +1044,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       {profileOpen && (
         <ProfileSheet
           studentName={studentName}
+          studentEmail={studentEmail}
           rotationCode={rotationCode}
           competencyLine={competencySummary.profileLine}
           streakDays={gamification.streaks?.currentDays ?? 0}
+          onUpdateStudentName={handleUpdateStudentName}
           onEndSession={requestLogout}
           onClose={() => setProfileOpen(false)}
         />
@@ -1263,20 +1336,49 @@ function LibraryHub({
 // signal, theme toggle, sign out. ESC to close. Click backdrop to close.
 // ─────────────────────────────────────────────────────────────────────────
 function ProfileSheet({
-  studentName, rotationCode, competencyLine, streakDays, onEndSession, onClose,
+  studentName, studentEmail, rotationCode, competencyLine, streakDays, onUpdateStudentName, onEndSession, onClose,
 }: {
-  studentName: string; rotationCode: string | null; competencyLine: string;
+  studentName: string; studentEmail: string; rotationCode: string | null; competencyLine: string;
   streakDays: number;
+  onUpdateStudentName: (nextName: string) => Promise<void>;
   onEndSession: () => void; onClose: () => void;
 }) {
+  const [draftName, setDraftName] = useState(studentName);
+  const [savingName, setSavingName] = useState(false);
+  const [nameMessage, setNameMessage] = useState("");
+  const [nameError, setNameError] = useState("");
+
   // Phase 2.5: ESC to close + focus trap + focus return to opener on unmount.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  useEffect(() => {
+    setDraftName(studentName);
+  }, [studentName]);
+
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef);
+
+  const trimmedDraftName = draftName.trim();
+  const canSaveName = Boolean(trimmedDraftName && trimmedDraftName !== studentName.trim() && !savingName);
+
+  const handleSaveName = async () => {
+    if (!canSaveName) return;
+    setSavingName(true);
+    setNameError("");
+    setNameMessage("");
+    try {
+      await onUpdateStudentName(trimmedDraftName);
+      setNameMessage("Display name updated.");
+    } catch (error) {
+      setNameError(error instanceof Error ? error.message : "Unable to save your name right now.");
+    }
+    setSavingName(false);
+  };
+
   return (
     <div
       role="dialog" aria-modal="true" aria-labelledby="profile-sheet-title"
@@ -1308,8 +1410,77 @@ function ProfileSheet({
         <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Student</div>
           <div style={{ fontSize: 16, fontWeight: 600, color: T.ink, marginBottom: 8 }}>{studentName || "—"}</div>
+          <div style={{ fontSize: 13, color: T.ink2, lineHeight: 1.5, marginBottom: 12 }}>
+            {studentEmail
+              ? "Use the same email later to reopen this account. If your display name is off, you can fix it here."
+              : "This display name appears throughout the rotation. You can update it here anytime."}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Display Name
+            </label>
+            <input
+              type="text"
+              value={draftName}
+              maxLength={LIMITS.NAME_MAX}
+              onChange={(event) => {
+                setDraftName(event.target.value.slice(0, LIMITS.NAME_MAX));
+                if (nameError) setNameError("");
+                if (nameMessage) setNameMessage("");
+              }}
+              placeholder="Your display name"
+              style={{
+                width: "100%",
+                minHeight: 44,
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: `1px solid ${nameError ? T.accent : T.line}`,
+                background: T.surface2,
+                color: T.ink,
+                fontSize: 14,
+                boxSizing: "border-box",
+              }}
+            />
+            {studentEmail && (
+              <div style={{ fontSize: 12, color: T.ink2 }}>
+                Account email: {studentEmail}
+              </div>
+            )}
+            {(nameMessage || nameError) && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: nameError ? T.accent : T.greenDk,
+                  background: nameError ? T.redBg : T.greenBg,
+                  border: `1px solid ${nameError ? T.redAlpha : T.greenAlpha}`,
+                  borderRadius: 10,
+                  padding: "8px 10px",
+                  lineHeight: 1.45,
+                }}
+              >
+                {nameError || nameMessage}
+              </div>
+            )}
+            <button
+              onClick={() => void handleSaveName()}
+              disabled={!canSaveName}
+              style={{
+                minHeight: 44,
+                borderRadius: 12,
+                border: "none",
+                background: canSaveName ? `linear-gradient(135deg, ${T.med}, ${T.navy})` : T.surface2,
+                color: canSaveName ? "white" : T.muted,
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: canSaveName ? "pointer" : "default",
+                boxShadow: canSaveName ? "0 10px 24px rgba(0,0,0,0.18)" : "none",
+              }}
+            >
+              {savingName ? "Saving..." : "Save display name"}
+            </button>
+          </div>
           {rotationCode && (
-            <span style={{ display: "inline-block", fontSize: 13, fontFamily: T.mono, letterSpacing: 1, color: T.ink2, background: T.surface2, border: `1px solid ${T.line}`, padding: "4px 10px", borderRadius: 999 }}>
+            <span style={{ display: "inline-block", fontSize: 13, fontFamily: T.mono, letterSpacing: 1, color: T.ink2, background: T.surface2, border: `1px solid ${T.line}`, padding: "4px 10px", borderRadius: 999, marginTop: 12 }}>
               {rotationCode}
             </span>
           )}

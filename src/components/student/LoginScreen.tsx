@@ -47,6 +47,7 @@ export default function LoginScreen({
   const isMobile = useIsMobile();
   const usingGuest = authMode === "guest";
   const rotationCodeLocked = authMode === "email_link" && !emailLinkReady;
+  const canSendEmailLink = Boolean(studentName.trim() && studentEmail.trim() && !authSubmitting);
   const canJoin = Boolean(
     studentName.trim()
     && joinCode.length >= 4
@@ -190,7 +191,7 @@ export default function LoginScreen({
             <label style={fieldLabelStyle}>Your Name</label>
             <input
               type="text"
-              placeholder="e.g. Glen Merulus"
+              placeholder="e.g. Nora Phron"
               maxLength={LIMITS.NAME_MAX}
               value={studentName}
               onChange={e => setStudentName(e.target.value.slice(0, LIMITS.NAME_MAX))}
@@ -244,7 +245,7 @@ export default function LoginScreen({
                   onKeyDown={e => {
                     if (e.key === "Enter") {
                       if (needsEmailLinkCompletion) onCompleteEmailLinkSignIn();
-                      else if (!emailLinkReady) onSendSignInLink();
+                      else if (!emailLinkReady && canSendEmailLink) onSendSignInLink();
                       else if (canJoin) onJoinRotation();
                     }
                   }}
@@ -255,7 +256,7 @@ export default function LoginScreen({
               </div>
 
               {!emailLinkReady && (
-                <div style={{ background: T.surface2, borderRadius: 16, padding: 14, marginBottom: 12, border: `1px solid ${needsEmailLinkCompletion ? T.goldAlpha : T.line}` }}>
+                <div style={{ background: T.surface2, borderRadius: 16, padding: 14, marginBottom: 12, border: `1px solid ${needsEmailLinkCompletion ? T.goldAlpha : canSendEmailLink ? T.redAlpha : T.line}` }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: needsEmailLinkCompletion ? T.goldText : T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
                     {needsEmailLinkCompletion ? "Step 2 of 2" : "Step 1 of 2"}
                   </div>
@@ -264,21 +265,46 @@ export default function LoginScreen({
                       ? "Open the secure email link, then come back here and confirm the same address to finish sign-in."
                       : "Send yourself a secure email link before entering the rotation code."}
                   </div>
+                  {!needsEmailLinkCompletion && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                      <span style={{
+                        background: canSendEmailLink ? T.greenBg : T.grayBg,
+                        color: canSendEmailLink ? T.greenDk : T.muted,
+                        border: `1px solid ${canSendEmailLink ? T.greenAlpha : T.line}`,
+                        borderRadius: 999,
+                        padding: "4px 9px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}>
+                        {canSendEmailLink ? "Ready to send" : "Add name + email"}
+                      </span>
+                      <span style={{ fontSize: 12, color: T.muted }}>
+                        The button activates once both fields are filled.
+                      </span>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={needsEmailLinkCompletion ? onCompleteEmailLinkSignIn : onSendSignInLink}
-                    disabled={!studentEmail.trim() || authSubmitting}
+                    disabled={needsEmailLinkCompletion ? !studentEmail.trim() || authSubmitting : !canSendEmailLink}
                     style={{
                       width: "100%",
                       padding: "11px 0",
-                      background: studentEmail.trim() && !authSubmitting ? T.navy : T.muted,
-                      color: "white",
+                      background: needsEmailLinkCompletion
+                        ? (studentEmail.trim() && !authSubmitting ? `linear-gradient(135deg, ${T.gold}, ${T.orange})` : T.grayBg)
+                        : (canSendEmailLink ? `linear-gradient(135deg, ${T.med}, ${T.deepBg})` : T.grayBg),
+                      color: needsEmailLinkCompletion
+                        ? (studentEmail.trim() && !authSubmitting ? "white" : T.muted)
+                        : (canSendEmailLink ? "white" : T.muted),
                       border: "none",
                       borderRadius: 12,
                       fontSize: 13,
                       fontWeight: 700,
-                      cursor: studentEmail.trim() && !authSubmitting ? "pointer" : "default",
-                      opacity: studentEmail.trim() && !authSubmitting ? 1 : 0.7,
+                      cursor: (needsEmailLinkCompletion ? studentEmail.trim() && !authSubmitting : canSendEmailLink) ? "pointer" : "default",
+                      opacity: (needsEmailLinkCompletion ? studentEmail.trim() && !authSubmitting : canSendEmailLink) ? 1 : 0.9,
+                      boxShadow: (needsEmailLinkCompletion ? studentEmail.trim() && !authSubmitting : canSendEmailLink) ? "0 12px 24px rgba(0,0,0,0.18)" : "none",
+                      transform: (needsEmailLinkCompletion ? studentEmail.trim() && !authSubmitting : canSendEmailLink) ? "translateY(0)" : "none",
+                      transition: "background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, color 0.18s ease",
                     }}
                   >
                     {authSubmitting ? "Working..." : needsEmailLinkCompletion ? "Complete secure sign-in" : "Send secure sign-in link"}

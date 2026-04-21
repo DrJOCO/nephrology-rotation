@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { T, TOPICS, WEEKLY, ARTICLES, STUDY_SHEETS, FEEDBACK_TAGS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
 import { WEEKLY_CASES } from "../data/cases";
@@ -1597,15 +1597,19 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
                 <button
                   onClick={() => { void copyTeachingPlan(selectedTeachingPlan); }}
                   style={{
-                    background: copiedPlanTopic === selectedTeachingPlan.topic ? T.ice : T.navy,
-                    color: copiedPlanTopic === selectedTeachingPlan.topic ? T.navy : "white",
-                    border: "none",
+                    background: copiedPlanTopic === selectedTeachingPlan.topic
+                      ? T.greenBg
+                      : `linear-gradient(135deg, ${T.med}, ${T.deepBg})`,
+                    color: copiedPlanTopic === selectedTeachingPlan.topic ? T.greenDk : "white",
+                    border: `1px solid ${copiedPlanTopic === selectedTeachingPlan.topic ? T.greenAlpha : T.line}`,
                     borderRadius: 10,
                     padding: "11px 14px",
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
                     whiteSpace: "nowrap",
+                    boxShadow: copiedPlanTopic === selectedTeachingPlan.topic ? "none" : "0 12px 24px rgba(0,0,0,0.16)",
+                    transition: "background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease",
                   }}
                 >
                   {copiedPlanTopic === selectedTeachingPlan.topic ? "Copied" : "Copy teaching plan"}
@@ -1791,10 +1795,10 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
                           <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", marginBottom: 6 }}>
                             <span style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{item.label}</span>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                              <span style={{ background: "rgba(255,255,255,0.7)", color: T.navy, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
+                              <span style={{ background: T.card, color: T.text, border: `1px solid ${T.greenAlpha}`, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
                                 Service {item.serviceCount}
                               </span>
-                              <span style={{ background: "rgba(255,255,255,0.7)", color: T.navy, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
+                              <span style={{ background: T.card, color: T.text, border: `1px solid ${T.goldAlphaMd}`, borderRadius: 999, padding: "3px 8px", fontSize: 13, fontWeight: 700 }}>
                                 Studied {item.studyCount}
                               </span>
                             </div>
@@ -2624,7 +2628,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode, settings, 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
               <label style={adminLabel}>Student Name *</label>
-              <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Glen Merulus" style={adminInput} />
+              <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="e.g. Nora Phron" style={adminInput} />
             </div>
             <div>
               <label style={adminLabel}>Year</label>
@@ -3583,6 +3587,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
   const [scoreWeek, setScoreWeek] = useState(1);
   const [scoreForm, setScoreForm] = useState({ correct: "", total: "" });
   const [showAddPatient, setShowAddPatient] = useState(false);
+  const [patientStudentIds, setPatientStudentIds] = useState<string[]>(() => s?.studentId ? [s.studentId] : []);
   const [patForm, setPatForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
   const [patErrors, setPatErrors] = useState<Record<string, string | undefined>>({});
   const [showAllPatTopics, setShowAllPatTopics] = useState(false);
@@ -3591,6 +3596,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
   const [recoveryTargetId, setRecoveryTargetId] = useState("");
   const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [recoveryError, setRecoveryError] = useState("");
+  const patientEntryRef = useRef<HTMLDivElement>(null);
   const togglePatTopic = (t: string) => {
     setPatForm(prev => ({ ...prev, topics: prev.topics.includes(t) ? prev.topics.filter((x: string) => x !== t) : [...prev.topics, t] }));
     setPatErrors(prev => ({ ...prev, topics: undefined }));
@@ -3611,6 +3617,26 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
     }
   }, [recoveryCandidates, recoveryTargetId]);
 
+  useEffect(() => {
+    if (!s?.studentId) {
+      setPatientStudentIds([]);
+      return;
+    }
+    setPatientStudentIds(current => {
+      const availableIds = new Set(students.map(student => student.studentId));
+      const filtered = current.filter(studentId => availableIds.has(studentId));
+      return showAddPatient ? (filtered.length > 0 ? filtered : [s.studentId]) : [s.studentId];
+    });
+  }, [showAddPatient, s?.studentId, students]);
+
+  useEffect(() => {
+    if (!showAddPatient) return;
+    const timeoutId = window.setTimeout(() => {
+      patientEntryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 40);
+    return () => window.clearTimeout(timeoutId);
+  }, [showAddPatient]);
+
   if (!s) return <div style={{ padding: 16 }}>Student not found.</div>;
 
   const prePct = getScorePct(s.preScore);
@@ -3621,6 +3647,11 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
   const assessment = buildAdminAssessmentSignal(s);
   const streakDays = s.gamification?.streaks?.currentDays || 0;
   const totalQuizAttempts = Object.values(wkScores).flat().length + (s.preScore ? 1 : 0) + (s.postScore ? 1 : 0);
+  const patientAssignmentCandidates = [...students].sort((a, b) => {
+    if (a.studentId === s.studentId) return -1;
+    if (b.studentId === s.studentId) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   const updateStudent = (updates: Partial<AdminStudent>) => {
     setStudents(prev => prev.map(st => st.id === s.id ? { ...st, ...updates } : st));
@@ -3665,12 +3696,52 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
       setPatErrors(errors);
       return;
     }
-    const p = { ...patForm, id: Date.now(), date: new Date().toISOString(), status: "active" as const, followUps: [] } as Patient;
-    updateStudent({ patients: [...patients, p] });
+    const selectedStudentIds = Array.from(new Set(patientStudentIds));
+    if (selectedStudentIds.length === 0) {
+      setPatErrors(prev => ({ ...prev, assignment: "Select at least one student" }));
+      return;
+    }
+
+    const assignedAt = new Date().toISOString();
+    const assignmentMap = new Map(
+      students
+        .filter(student => selectedStudentIds.includes(student.studentId))
+        .map((student, index) => {
+          const nextPatient = {
+            ...patForm,
+            id: `${Date.now()}-${index}-${student.studentId}`,
+            date: assignedAt,
+            status: "active" as const,
+            followUps: [],
+          } as Patient;
+          return [student.studentId, {
+            patients: [...(student.patients || []), nextPatient],
+            lastSyncedAt: assignedAt,
+          }];
+        })
+    );
+
+    setStudents(prev => prev.map(student => {
+      const assignment = assignmentMap.get(student.studentId);
+      return assignment ? { ...student, patients: assignment.patients, lastSyncedAt: assignment.lastSyncedAt } : student;
+    }));
+    assignmentMap.forEach((assignment, studentId) => {
+      writeStudentToFirestore(studentId, { patients: assignment.patients });
+    });
+
     setPatForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
     setPatErrors({});
     setShowAllPatTopics(false);
     setShowAddPatient(false);
+  };
+
+  const togglePatientAssignment = (studentId: string) => {
+    setPatientStudentIds(prev => (
+      prev.includes(studentId)
+        ? prev.filter(id => id !== studentId)
+        : [...prev, studentId]
+    ));
+    setPatErrors(prev => ({ ...prev, assignment: undefined }));
   };
 
   const topicCounts: Record<string, number> = {};
@@ -3711,6 +3782,14 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
       setRecoveryError(error instanceof Error ? error.message : "Recovery failed.");
     }
     setRecoveryBusy(false);
+  };
+
+  const detailSectionHeadingStyle: React.CSSProperties = {
+    color: T.navy,
+    fontSize: 15,
+    margin: "0 0 10px",
+    fontFamily: T.serif,
+    fontWeight: 700,
   };
 
   return (
@@ -3818,7 +3897,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
           <button onClick={() => setShowAddPatient(!showAddPatient)}
             onClickCapture={() => { if (showAddPatient) setShowAllPatTopics(false); }}
             style={{ fontSize: 13, color: T.green, background: "rgba(26,188,156,0.1)", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
-            + Log Patient
+            {showAddPatient ? "Close patient form" : "+ Log / Assign Patient"}
           </button>
           <button onClick={() => navigate("students", { type: "printStudent", id: String(s.id) })}
             style={{ fontSize: 13, color: T.med, background: T.blueBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
@@ -3831,37 +3910,261 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
         </div>
       </div>
 
-      {/* Device Recovery */}
-      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>Device Recovery</div>
-        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
-          If the student had to join on a new phone/browser, have them join once so a new blank record appears here. Then move this saved progress into that new device-owned record.
-        </div>
-        {recoveryCandidates.length === 0 ? (
-          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>
-            No other student records available yet. Once the new device joins, refresh this page and select the new record here.
+      {/* Quick Entry */}
+      {(showScoreEntry || showAddPatient) && (
+        <h3 style={detailSectionHeadingStyle}>Quick Entry</h3>
+      )}
+
+      {/* Score Entry */}
+      {showScoreEntry && (
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.orange}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.orange, marginBottom: 10 }}>ENTER SCORE</div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={adminLabel}>Quiz Type</label>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["pre", "post", "weekly"].map(t => (
+                <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); }}
+                  style={{ flex: 1, padding: "8px 0", background: scoreType === t ? `linear-gradient(135deg, ${T.med}, ${T.deepBg})` : T.bg, color: scoreType === t ? "white" : T.sub,
+                    border: scoreType === t ? `1px solid ${T.redAlpha}` : `1px solid ${T.line}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
+                  {t === "weekly" ? "Weekly" : t + "-Test"}
+                </button>
+              ))}
+            </div>
           </div>
-        ) : (
-          <>
-            <label style={adminLabel}>New Device Record</label>
-            <select value={recoveryTargetId} onChange={e => setRecoveryTargetId(e.target.value)}
-              style={{ ...adminInput, marginBottom: 10 }}>
-              {recoveryCandidates.map(candidate => {
-                const candidateQuizCount = Object.values(candidate.weeklyScores || {}).flat().length;
-                const lastSeen = candidate.lastSyncedAt ? new Date(candidate.lastSyncedAt).toLocaleString() : "not synced yet";
+          {scoreType === "weekly" && (
+            <div style={{ marginBottom: 10 }}>
+              <label style={adminLabel}>Week #</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[1,2,3,4].map(w => (
+                  <button key={w} onClick={() => setScoreWeek(w)}
+                    style={{ flex: 1, padding: "8px 0", background: scoreWeek === w ? T.med : T.bg, color: scoreWeek === w ? "white" : T.sub,
+                      border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    Wk {w}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+            <div>
+              <label style={adminLabel}>Correct</label>
+              <input type="number" value={scoreForm.correct} onChange={e => setScoreForm({...scoreForm, correct: e.target.value})} placeholder="e.g. 18" style={{...adminInput, fontFamily: T.mono}} />
+            </div>
+            <div>
+              <label style={adminLabel}>Total Questions</label>
+              <input type="number" value={scoreForm.total} onChange={e => setScoreForm({...scoreForm, total: e.target.value})} placeholder="e.g. 25" style={{...adminInput, fontFamily: T.mono}} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={saveScore} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save Score</button>
+            <button onClick={() => setShowScoreEntry(false)} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Patient Entry */}
+      {showAddPatient && (
+        <div ref={patientEntryRef} style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.green}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.green, marginBottom: 10 }}>LOG PATIENT</div>
+          <div style={{ background: T.yellowBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.goldAlphaMd}`, fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
+            <strong style={{ color: T.goldText }}>No PHI:</strong> {PHI_WARNING}
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={adminLabel}>Assign To</label>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 8 }}>
+              Select one or more students when they shared the same consult.
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {patientAssignmentCandidates.map(student => {
+                const selected = patientStudentIds.includes(student.studentId);
                 return (
-                  <option key={candidate.studentId} value={candidate.studentId}>
-                    {candidate.name} • {candidate.studentId.slice(0, 8)}... • {candidate.patients.length} patients • {candidateQuizCount} quizzes • {lastSeen}
-                  </option>
+                  <button
+                    key={student.studentId}
+                    type="button"
+                    onClick={() => togglePatientAssignment(student.studentId)}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 16,
+                      fontSize: 13,
+                      fontWeight: selected ? 700 : 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      background: selected ? T.med : T.bg,
+                      color: selected ? "white" : T.sub,
+                      border: selected ? `1.5px solid ${T.med}` : `1.5px solid ${T.line}`,
+                    }}
+                  >
+                    {selected ? "✓ " : ""}{student.name}
+                  </button>
                 );
               })}
-            </select>
-            <button onClick={handleRecovery} disabled={recoveryBusy}
-              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
-              {recoveryBusy ? "Moving Progress..." : "Move Progress To New Device Record"}
+            </div>
+            <div style={{ fontSize: 13, color: T.muted, marginTop: 8 }}>
+              {patientStudentIds.length === 1
+                ? "1 student selected"
+                : `${patientStudentIds.length} students selected`}
+            </div>
+            {patErrors.assignment && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.assignment}</div>}
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={adminLabel}>Initials</label>
+            <input value={patForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => { setPatForm({...patForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setPatErrors(prev => ({ ...prev, initials: undefined })); }} placeholder="J.S." style={adminInput} />
+            {patErrors.initials && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.initials}</div>}
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={adminLabel}>Learning Tags</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+              {visibleAdminTopics.map(t => {
+                const sel = patForm.topics.includes(t);
+                return (
+                  <button key={t} type="button" onClick={() => togglePatTopic(t)}
+                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
+                      background: sel ? T.orange : T.card, color: sel ? "white" : T.sub,
+                      border: sel ? `1.5px solid ${T.orange}` : `1.5px solid ${T.line}` }}>
+                    {sel ? "✓ " : ""}{t}
+                  </button>
+                );
+              })}
+            </div>
+            {(hiddenAdminTopicCount > 0 || showAllPatTopics) && (
+              <button
+                type="button"
+                onClick={() => setShowAllPatTopics(prev => !prev)}
+                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.orange, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                {showAllPatTopics ? "Show fewer topics" : `More topics (${hiddenAdminTopicCount})`}
+              </button>
+            )}
+            {(patForm.topics.length === 0 || patErrors.topics) && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.topics || "Select at least one"}</div>}
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={adminLabel}>Diagnosis</label>
+            <input value={patForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => { setPatForm({...patForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setPatErrors(prev => ({ ...prev, dx: undefined })); }} placeholder="e.g. AKI from sepsis" style={adminInput} />
+            {patErrors.dx && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.dx}</div>}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={addPatient} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              {patientStudentIds.length > 1 ? `Add to ${patientStudentIds.length} Students` : "Add Patient"}
             </button>
-            {recoveryError && <div style={{ fontSize: 13, color: T.accent, marginTop: 8 }}>{recoveryError}</div>}
-          </>
+            <button onClick={() => { setShowAllPatTopics(false); setShowAddPatient(false); }} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      <h3 style={detailSectionHeadingStyle}>Assessment &amp; Progress</h3>
+
+      {/* Score cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Pre-Test</div>
+          {prePct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.orange, fontFamily: T.mono }}>{prePct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
+        </div>
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.green, textTransform: "uppercase" }}>Post-Test</div>
+          {postPct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.green, fontFamily: T.mono }}>{postPct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
+        </div>
+      </div>
+
+      {prePct !== null && postPct !== null && (
+        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, textAlign: "center", borderLeft: `4px solid ${T.green}` }}>
+          <span style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>Growth: </span>
+          <span style={{ fontSize: 20, fontWeight: 700, color: T.green, fontFamily: T.mono }}>+{postPct - prePct}%</span>
+        </div>
+      )}
+
+      {/* Weekly Scores */}
+      <h3 style={detailSectionHeadingStyle}>Weekly Quizzes</h3>
+      {[1,2,3,4].map(w => {
+        const ws = wkScores[w] || [];
+        const best = ws.length > 0 ? Math.max(...ws.map(x => Math.round((x.correct/x.total)*100))) : null;
+        return (
+          <div key={w} style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${T.line}` }}>
+            <div>
+              <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>Week {w}</div>
+              <div style={{ fontSize: 13, color: T.muted }}>{ws.length} attempt{ws.length !== 1 ? "s" : ""}</div>
+            </div>
+            {best !== null ? (
+              <div style={{ fontSize: 18, fontWeight: 700, color: best >= 80 ? T.green : best >= 60 ? T.gold : T.accent, fontFamily: T.mono }}>{best}%</div>
+            ) : <div style={{ fontSize: 13, color: T.muted }}>—</div>}
+          </div>
+        );
+      })}
+
+      {/* Patients */}
+      <h3 style={detailSectionHeadingStyle}>Patient Log ({patients.length})</h3>
+      {patients.length === 0 ? (
+        <div style={{ background: T.card, borderRadius: 10, padding: 20, textAlign: "center", color: T.muted, border: `1px solid ${T.line}` }}>No patients logged</div>
+      ) : (
+        <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
+          {patients.map((p, i) => {
+            const ts = p.topics || (p.topic ? [p.topic] : []);
+            return (
+            <div key={i} style={{ padding: "8px 0", borderBottom: i < patients.length - 1 ? `1px solid ${T.line}` : "none" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{p.initials}</span>
+                {ts.map(t => <span key={t} style={{ fontSize: 13, color: "white", background: T.med, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
+                <span style={{ fontSize: 13, color: T.muted, marginLeft: "auto" }}>{new Date(p.date).toLocaleDateString()}</span>
+              </div>
+              {p.dx && <div style={{ fontSize: 13, color: T.sub, marginTop: 2, wordBreak: "break-word" }}>{p.dx}</div>}
+            </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 10 }}>
+          Student Reflections
+        </div>
+        {(s.reflections || []).length > 0 ? (
+          <div style={{ display: "grid", gap: 10 }}>
+            {(s.reflections || [])
+              .slice()
+              .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+              .slice(0, 4)
+              .map((entry) => (
+                <div key={entry.id} style={{ background: T.bg, borderRadius: 12, padding: "12px 14px", border: `1px solid ${T.line}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", flexWrap: "wrap", marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
+                      {new Date(entry.submittedAt).toLocaleDateString()}
+                    </div>
+                    <div style={{ fontSize: 13, color: T.muted }}>
+                      {new Date(entry.submittedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                    What they saw
+                  </div>
+                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55, marginBottom: 8 }}>
+                    {entry.saw || "Not entered."}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+                    What still feels unclear
+                  </div>
+                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>
+                    {entry.unclear || "Nothing specific flagged."}
+                  </div>
+                  {(entry.topics.length > 0 || entry.seededQuestionKeys.length > 0) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                      {entry.topics.map((topic) => (
+                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                          {topic}
+                        </span>
+                      ))}
+                      {entry.seededQuestionKeys.length > 0 && (
+                        <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                          {entry.seededQuestionKeys.length} SR card{entry.seededQuestionKeys.length !== 1 ? "s" : ""} queued
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>
+            No student reflections yet.
+          </div>
         )}
       </div>
 
@@ -3925,217 +4228,42 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
         )}
       </div>
 
-      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 10 }}>
-          Student Reflections
+      {/* Device Recovery */}
+      <div style={{ background: T.bg, borderRadius: 14, padding: 16, marginTop: 16, border: `1px dashed ${T.line}` }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
+          Advanced
         </div>
-        {(s.reflections || []).length > 0 ? (
-          <div style={{ display: "grid", gap: 10 }}>
-            {(s.reflections || [])
-              .slice()
-              .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
-              .slice(0, 4)
-              .map((entry) => (
-                <div key={entry.id} style={{ background: T.bg, borderRadius: 12, padding: "12px 14px", border: `1px solid ${T.line}` }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", flexWrap: "wrap", marginBottom: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
-                      {new Date(entry.submittedAt).toLocaleDateString()}
-                    </div>
-                    <div style={{ fontSize: 13, color: T.muted }}>
-                      {new Date(entry.submittedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-                    What they saw
-                  </div>
-                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55, marginBottom: 8 }}>
-                    {entry.saw || "Not entered."}
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-                    What still feels unclear
-                  </div>
-                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>
-                    {entry.unclear || "Nothing specific flagged."}
-                  </div>
-                  {(entry.topics.length > 0 || entry.seededQuestionKeys.length > 0) && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-                      {entry.topics.map((topic) => (
-                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
-                          {topic}
-                        </span>
-                      ))}
-                      {entry.seededQuestionKeys.length > 0 && (
-                        <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
-                          {entry.seededQuestionKeys.length} SR card{entry.seededQuestionKeys.length !== 1 ? "s" : ""} queued
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+        <div style={{ fontSize: 15, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>Device Recovery</div>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
+          Only use this if the student had to join on a new phone or browser and a second blank record was created.
+        </div>
+        {recoveryCandidates.length === 0 ? (
+          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>
+            No other student records available yet. Once the new device joins, refresh this page and select the new record here.
           </div>
         ) : (
-          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>
-            No student reflections yet.
-          </div>
-        )}
-      </div>
-
-      {/* Score Entry */}
-      {showScoreEntry && (
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.orange}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.orange, marginBottom: 10 }}>ENTER SCORE</div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Quiz Type</label>
-            <div style={{ display: "flex", gap: 6 }}>
-              {["pre", "post", "weekly"].map(t => (
-                <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); }}
-                  style={{ flex: 1, padding: "8px 0", background: scoreType === t ? T.navy : T.bg, color: scoreType === t ? "white" : T.sub,
-                    border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
-                  {t === "weekly" ? "Weekly" : t + "-Test"}
-                </button>
-              ))}
-            </div>
-          </div>
-          {scoreType === "weekly" && (
-            <div style={{ marginBottom: 10 }}>
-              <label style={adminLabel}>Week #</label>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[1,2,3,4].map(w => (
-                  <button key={w} onClick={() => setScoreWeek(w)}
-                    style={{ flex: 1, padding: "8px 0", background: scoreWeek === w ? T.med : T.bg, color: scoreWeek === w ? "white" : T.sub,
-                      border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                    Wk {w}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-            <div>
-              <label style={adminLabel}>Correct</label>
-              <input type="number" value={scoreForm.correct} onChange={e => setScoreForm({...scoreForm, correct: e.target.value})} placeholder="e.g. 18" style={{...adminInput, fontFamily: T.mono}} />
-            </div>
-            <div>
-              <label style={adminLabel}>Total Questions</label>
-              <input type="number" value={scoreForm.total} onChange={e => setScoreForm({...scoreForm, total: e.target.value})} placeholder="e.g. 25" style={{...adminInput, fontFamily: T.mono}} />
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={saveScore} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save Score</button>
-            <button onClick={() => setShowScoreEntry(false)} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {/* Patient Entry */}
-      {showAddPatient && (
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.green}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.green, marginBottom: 10 }}>LOG PATIENT</div>
-          <div style={{ background: T.yellowBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.goldAlphaMd}`, fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
-            <strong style={{ color: T.goldText }}>No PHI:</strong> {PHI_WARNING}
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Initials</label>
-            <input value={patForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => { setPatForm({...patForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setPatErrors(prev => ({ ...prev, initials: undefined })); }} placeholder="J.S." style={adminInput} />
-            {patErrors.initials && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.initials}</div>}
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Learning Tags</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-              {visibleAdminTopics.map(t => {
-                const sel = patForm.topics.includes(t);
+          <>
+            <label style={adminLabel}>New Device Record</label>
+            <select value={recoveryTargetId} onChange={e => setRecoveryTargetId(e.target.value)}
+              style={{ ...adminInput, marginBottom: 10 }}>
+              {recoveryCandidates.map(candidate => {
+                const candidateQuizCount = Object.values(candidate.weeklyScores || {}).flat().length;
+                const lastSeen = candidate.lastSyncedAt ? new Date(candidate.lastSyncedAt).toLocaleString() : "not synced yet";
                 return (
-                  <button key={t} type="button" onClick={() => togglePatTopic(t)}
-                    style={{ padding: "5px 10px", borderRadius: 16, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
-                      background: sel ? T.orange : T.card, color: sel ? "white" : T.sub,
-                      border: sel ? `1.5px solid ${T.orange}` : `1.5px solid ${T.line}` }}>
-                    {sel ? "✓ " : ""}{t}
-                  </button>
+                  <option key={candidate.studentId} value={candidate.studentId}>
+                    {candidate.name} • {candidate.studentId.slice(0, 8)}... • {candidate.patients.length} patients • {candidateQuizCount} quizzes • {lastSeen}
+                  </option>
                 );
               })}
-            </div>
-            {(hiddenAdminTopicCount > 0 || showAllPatTopics) && (
-              <button
-                type="button"
-                onClick={() => setShowAllPatTopics(prev => !prev)}
-                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.orange, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
-              >
-                {showAllPatTopics ? "Show fewer topics" : `More topics (${hiddenAdminTopicCount})`}
-              </button>
-            )}
-            {(patForm.topics.length === 0 || patErrors.topics) && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.topics || "Select at least one"}</div>}
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Diagnosis</label>
-            <input value={patForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => { setPatForm({...patForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setPatErrors(prev => ({ ...prev, dx: undefined })); }} placeholder="e.g. AKI from sepsis" style={adminInput} />
-            {patErrors.dx && <div style={{ fontSize: 13, color: T.orange, marginTop: 4 }}>{patErrors.dx}</div>}
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={addPatient} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Add Patient</button>
-            <button onClick={() => { setShowAllPatTopics(false); setShowAddPatient(false); }} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {/* Score cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Pre-Test</div>
-          {prePct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.orange, fontFamily: T.mono }}>{prePct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
-        </div>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.green, textTransform: "uppercase" }}>Post-Test</div>
-          {postPct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.green, fontFamily: T.mono }}>{postPct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
-        </div>
+            </select>
+            <button onClick={handleRecovery} disabled={recoveryBusy}
+              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
+              {recoveryBusy ? "Moving Progress..." : "Move Progress To New Device Record"}
+            </button>
+            {recoveryError && <div style={{ fontSize: 13, color: T.accent, marginTop: 8 }}>{recoveryError}</div>}
+          </>
+        )}
       </div>
-
-      {prePct !== null && postPct !== null && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, textAlign: "center", borderLeft: `4px solid ${T.green}` }}>
-          <span style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>Growth: </span>
-          <span style={{ fontSize: 20, fontWeight: 700, color: T.green, fontFamily: T.mono }}>+{postPct - prePct}%</span>
-        </div>
-      )}
-
-      {/* Weekly Scores */}
-      <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Weekly Quizzes</h3>
-      {[1,2,3,4].map(w => {
-        const ws = wkScores[w] || [];
-        const best = ws.length > 0 ? Math.max(...ws.map(x => Math.round((x.correct/x.total)*100))) : null;
-        return (
-          <div key={w} style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${T.line}` }}>
-            <div>
-              <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>Week {w}</div>
-              <div style={{ fontSize: 13, color: T.muted }}>{ws.length} attempt{ws.length !== 1 ? "s" : ""}</div>
-            </div>
-            {best !== null ? (
-              <div style={{ fontSize: 18, fontWeight: 700, color: best >= 80 ? T.green : best >= 60 ? T.gold : T.accent, fontFamily: T.mono }}>{best}%</div>
-            ) : <div style={{ fontSize: 13, color: T.muted }}>—</div>}
-          </div>
-        );
-      })}
-
-      {/* Patients */}
-      <h3 style={{ color: T.navy, fontSize: 15, margin: "16px 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Patient Log ({patients.length})</h3>
-      {patients.length === 0 ? (
-        <div style={{ background: T.card, borderRadius: 10, padding: 20, textAlign: "center", color: T.muted, border: `1px solid ${T.line}` }}>No patients logged</div>
-      ) : (
-        <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
-          {patients.map((p, i) => {
-            const ts = p.topics || (p.topic ? [p.topic] : []);
-            return (
-            <div key={i} style={{ padding: "8px 0", borderBottom: i < patients.length - 1 ? `1px solid ${T.line}` : "none" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                <span style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{p.initials}</span>
-                {ts.map(t => <span key={t} style={{ fontSize: 13, color: "white", background: T.med, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
-                <span style={{ fontSize: 13, color: T.muted, marginLeft: "auto" }}>{new Date(p.date).toLocaleDateString()}</span>
-              </div>
-              {p.dx && <div style={{ fontSize: 13, color: T.sub, marginTop: 2, wordBreak: "break-word" }}>{p.dx}</div>}
-            </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
