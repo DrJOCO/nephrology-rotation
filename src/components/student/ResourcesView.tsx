@@ -52,6 +52,38 @@ export default function ResourcesView({ onBack }) {
   };
 
   const activeData = tabList.find(t => t.id === activeTab)?.data || [];
+  const activeTabStyle = {
+    border: `1px solid ${T.med}`,
+    background: T.redAlpha,
+    color: T.med,
+    boxShadow: "none",
+  };
+  const inactiveTabStyle = {
+    border: `1px solid ${T.line}`,
+    background: T.grayBg,
+    color: T.text,
+    boxShadow: "none",
+  };
+  const primaryActionStyle = {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "white",
+    background: T.deepBg,
+    padding: "8px 12px",
+    borderRadius: 8,
+    textDecoration: "none",
+    border: `1px solid ${T.deepBg}`,
+  };
+  const secondaryActionStyle = {
+    fontSize: 13,
+    fontWeight: 700,
+    color: T.sub,
+    background: T.grayBg,
+    padding: "8px 12px",
+    borderRadius: 8,
+    textDecoration: "none",
+    border: `1px solid ${T.line}`,
+  };
 
   return (
     <div style={{ padding: 16 }}>
@@ -63,9 +95,8 @@ export default function ResourcesView({ onBack }) {
       <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto" }}>
         {tabList.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ padding: "8px 14px", borderRadius: 20, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
-              background: activeTab === t.id ? T.navy : T.ice,
-              color: activeTab === t.id ? "white" : T.text }}>
+            style={{ padding: "8px 14px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+              ...(activeTab === t.id ? activeTabStyle : inactiveTabStyle) }}>
             {t.label}
           </button>
         ))}
@@ -97,12 +128,12 @@ export default function ResourcesView({ onBack }) {
                 )}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
                   <a href={primaryUrl} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize: 13, fontWeight: 700, color: "white", background: T.navy, padding: "8px 12px", borderRadius: 8, textDecoration: "none" }}>
+                    style={primaryActionStyle}>
                     {primaryLabel}
                   </a>
                   {appleSearchUrl && (
                     <a href={r.url} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 13, fontWeight: 700, color: T.med, background: T.blueBg, padding: "8px 12px", borderRadius: 8, textDecoration: "none", border: `1px solid ${T.line}` }}>
+                      style={secondaryActionStyle}>
                       Curbsiders Notes
                     </a>
                   )}

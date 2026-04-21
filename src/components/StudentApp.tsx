@@ -4,7 +4,16 @@ import { T, WEEKLY, ARTICLES, STUDY_SHEETS } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems } from "../utils/spacedRepetition";
 import store from "../utils/store";
-import { ensureStudentSession, signOutFirebase } from "../utils/firebase";
+import {
+  clearSavedStudentSignInEmail,
+  completeStudentSignInLink,
+  ensureGuestStudentSession,
+  getCurrentStudentUser,
+  getSavedStudentSignInEmail,
+  isStudentEmailLink,
+  sendStudentSignInLink,
+  signOutFirebase,
+} from "../utils/firebase";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
 import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
@@ -12,6 +21,7 @@ import { buildCompetencySummary } from "../utils/competency";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../types";
+import type { User } from "firebase/auth";
 
 // Critical-path components (eager)
 import ThemeToggle from "./student/ThemeToggle";
@@ -53,10 +63,46 @@ const LazyFallback = () => (
 const INSTALL_PROMPT_DISMISSED_KEY = "neph_installPromptDismissed";
 const JOINED_AT_KEY = "neph_joinedAt";
 const INSTALL_PROMPT_DELAY_MS = 18 * 60 * 60 * 1000;
+const STUDENT_EMAIL_KEY = "neph_studentEmail";
 
 interface DeferredInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function clearEmailLinkParamsFromUrl(): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (!url.search && !url.hash) return;
+  url.search = "";
+  url.hash = "";
+  window.history.replaceState({}, document.title, url.toString());
+}
+
+function formatStudentAuthError(error: unknown): string {
+  const code = typeof error === "object" && error && "code" in error && typeof error.code === "string"
+    ? error.code
+    : "";
+  const message = error instanceof Error ? error.message : "";
+
+  if (code === "auth/invalid-email") return "Enter a valid email address.";
+  if (code === "auth/invalid-action-code" || code === "auth/expired-action-code") {
+    return "That sign-in link is no longer valid. Send a fresh link and try again.";
+  }
+  if (code === "auth/operation-not-allowed") {
+    return "Enable Email link sign-in in Firebase Authentication before using this flow.";
+  }
+  if (code === "auth/unauthorized-continue-uri" || code === "auth/invalid-continue-uri") {
+    return "Add this app URL to Firebase Authentication authorized domains before using email sign-in.";
+  }
+  if (message === "auth/invalid-action-link") {
+    return "Open the email sign-in link again to finish signing in.";
+  }
+  return message || "Unable to finish student sign-in right now.";
 }
 
 
@@ -76,6 +122,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [postScore, setPostScore] = useState<QuizScore | null>(null);
   const [studentName, setStudentName] = useState("");
   const [studentPin, setStudentPin] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
+  const [authMode, setAuthMode] = useState<"guest" | "email_link">("guest");
+  const [authSessionKind, setAuthSessionKind] = useState<"none" | "guest" | "email_link">("none");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
+  const [needsEmailLinkCompletion, setNeedsEmailLinkCompletion] = useState(false);
   const [nameSet, setNameSet] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [studentId, setStudentId] = useState("");
@@ -108,6 +161,47 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestStudentUpdateRef = useRef<string | null>(null);
   const loginAttemptsRef = useRef<{ count: number; lockedUntil: number }>({ count: 0, lockedUntil: 0 });
+  const studentSyncIdentity = useMemo(() => {
+    const normalizedEmail = normalizeEmail(studentEmail);
+    if (authSessionKind === "email_link") {
+      return {
+        authType: "email_link",
+        ...(normalizedEmail ? { email: normalizedEmail } : {}),
+      };
+    }
+    return {
+      authType: "guest",
+      ...(studentPin ? { loginPin: studentPin } : {}),
+    };
+  }, [authSessionKind, studentEmail, studentPin]);
+
+  const applyStudentUser = async (user: User | null) => {
+    if (!user) {
+      setStudentId("");
+      setAuthSessionKind("none");
+      return;
+    }
+
+    setStudentId(user.uid);
+    await store.set("neph_studentId", user.uid);
+
+    if (user.isAnonymous) {
+      setAuthSessionKind("guest");
+      setAuthMode("guest");
+      return;
+    }
+
+    const normalizedEmail = normalizeEmail(user.email || studentEmail || getSavedStudentSignInEmail());
+    setAuthSessionKind("email_link");
+    setAuthMode("email_link");
+    setNeedsEmailLinkCompletion(false);
+    if (normalizedEmail) {
+      setStudentEmail(normalizedEmail);
+      await store.set(STUDENT_EMAIL_KEY, normalizedEmail);
+    }
+  };
+
+  const emailLinkReady = authSessionKind === "email_link";
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -166,13 +260,35 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     ensureThemeStyles();
     (async () => {
       let sessionStudentId = "";
+      const savedEmail = normalizeEmail((await store.get<string>(STUDENT_EMAIL_KEY)) || getSavedStudentSignInEmail());
+      if (savedEmail) {
+        setStudentEmail(savedEmail);
+      }
+
       try {
-        const user = await ensureStudentSession();
-        sessionStudentId = user.uid;
-        setStudentId(user.uid);
-        await store.set("neph_studentId", user.uid);
+        const pendingEmailLink = await isStudentEmailLink();
+        if (pendingEmailLink) {
+          setAuthMode("email_link");
+          if (savedEmail) {
+            const completedUser = await completeStudentSignInLink(savedEmail);
+            sessionStudentId = completedUser.uid;
+            await applyStudentUser(completedUser);
+            clearEmailLinkParamsFromUrl();
+            setAuthNotice(`Signed in as ${savedEmail}.`);
+          } else {
+            setNeedsEmailLinkCompletion(true);
+            setAuthNotice("Confirm your email to finish signing in on this device.");
+          }
+        } else {
+          const user = await getCurrentStudentUser();
+          sessionStudentId = user?.uid || "";
+          await applyStudentUser(user);
+        }
       } catch (e) {
         console.warn("Student session init failed:", e);
+        setAuthMode("email_link");
+        setNeedsEmailLinkCompletion(true);
+        setAuthError(formatStudentAuthError(e));
       }
 
       const name = await store.get<string>("neph_name");
@@ -219,6 +335,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (savedGamification) setGamification(savedGamification);
       setLoading(false);
     })();
+  // `applyStudentUser` depends on `studentEmail`, but we only want bootstrap once.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save on changes (consolidated)
@@ -229,6 +347,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     store.set("neph_preScore", preScore);
     store.set("neph_postScore", postScore);
     if (nameSet) store.set("neph_name", studentName);
+    if (studentEmail) store.set(STUDENT_EMAIL_KEY, normalizeEmail(studentEmail));
     store.set("neph_completedItems", completedItems);
     store.set("neph_bookmarks", bookmarks);
     store.set("neph_srQueue", srQueue);
@@ -245,7 +364,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         noteStudentUpdatedAt(updatedAt);
         store.setStudentData(studentId, {
           name: studentName,
-          loginPin: studentPin,
+          ...studentSyncIdentity,
           patients,
           weeklyScores,
           preScore,
@@ -267,7 +386,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         }));
       }, 2000);
     }
-  }, [patients, weeklyScores, preScore, postScore, studentName, nameSet, loading, completedItems, bookmarks, srQueue, activityLog, reflections, gamification, studentId]);
+  }, [patients, weeklyScores, preScore, postScore, studentName, nameSet, loading, completedItems, bookmarks, srQueue, activityLog, reflections, gamification, studentId, studentEmail, studentSyncIdentity]);
 
   // Gamification recompute — intentionally excludes `gamification` from deps to prevent infinite loop
   useEffect(() => {
@@ -349,7 +468,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     await Promise.all([
       store.setStudentData(studentId, {
         name: studentName,
-        loginPin: studentPin,
+        ...studentSyncIdentity,
         patients,
         weeklyScores,
         preScore,
@@ -372,8 +491,69 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     ]);
   };
 
+  const handleAuthModeChange = (nextMode: "guest" | "email_link") => {
+    setAuthMode(nextMode);
+    setAuthError("");
+    setAuthNotice("");
+  };
+
+  const handleSendStudentSignInLink = async () => {
+    const normalizedEmail = normalizeEmail(studentEmail);
+    if (!normalizedEmail) {
+      setAuthError("Enter your email address first.");
+      return;
+    }
+
+    setAuthSubmitting(true);
+    setAuthError("");
+    setAuthNotice("");
+    try {
+      await sendStudentSignInLink(normalizedEmail);
+      await store.set(STUDENT_EMAIL_KEY, normalizedEmail);
+      setAuthMode("email_link");
+      setNeedsEmailLinkCompletion(false);
+      setAuthNotice(`Check ${normalizedEmail} for your secure sign-in link.`);
+    } catch (error) {
+      console.error("Student sign-in link failed:", error);
+      setAuthError(formatStudentAuthError(error));
+    }
+    setAuthSubmitting(false);
+  };
+
+  const handleCompleteStudentEmailLink = async () => {
+    const normalizedEmail = normalizeEmail(studentEmail);
+    if (!normalizedEmail) {
+      setAuthError("Enter the same email address that received the sign-in link.");
+      return;
+    }
+
+    setAuthSubmitting(true);
+    setAuthError("");
+    setAuthNotice("");
+    try {
+      const user = await completeStudentSignInLink(normalizedEmail);
+      await applyStudentUser(user);
+      clearEmailLinkParamsFromUrl();
+      await store.set(STUDENT_EMAIL_KEY, normalizedEmail);
+      setNeedsEmailLinkCompletion(false);
+      setAuthNotice(`Signed in as ${normalizedEmail}.`);
+    } catch (error) {
+      console.error("Student email sign-in completion failed:", error);
+      setAuthError(formatStudentAuthError(error));
+    }
+    setAuthSubmitting(false);
+  };
+
   const handleJoinRotation = async () => {
-    if (!studentName.trim() || studentPin.length !== 4 || joinCode.length < 4) return;
+    const normalizedName = studentName.trim();
+    const normalizedJoinCode = joinCode.trim().toUpperCase();
+    const requiresGuestPin = authMode === "guest";
+    if (!normalizedName || normalizedJoinCode.length < 4) return;
+    if (requiresGuestPin && studentPin.length !== 4) return;
+    if (authMode === "email_link" && !emailLinkReady) {
+      setAuthError("Finish email sign-in before joining this rotation.");
+      return;
+    }
 
     // Rate limiting: block after 5 failed attempts for 30 seconds
     const now = Date.now();
@@ -386,9 +566,9 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
     setJoining(true);
     setJoinError("");
+    setAuthError("");
     try {
-      const user = await ensureStudentSession();
-      const exists = await store.validateRotationCode(joinCode);
+      const exists = await store.validateRotationCode(normalizedJoinCode);
       if (!exists) {
         attempts.count++;
         if (attempts.count >= 5) {
@@ -401,22 +581,43 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         setJoining(false);
         return;
       }
+
+      let user: User;
+      if (authMode === "email_link") {
+        const signedInUser = await getCurrentStudentUser();
+        if (!signedInUser || signedInUser.isAnonymous) {
+          setAuthError("Finish email sign-in before joining this rotation.");
+          setJoining(false);
+          return;
+        }
+        user = signedInUser;
+      } else {
+        user = await ensureGuestStudentSession();
+        await applyStudentUser(user);
+      }
+
       // Reset attempts on successful validation
       attempts.count = 0;
       attempts.lockedUntil = 0;
       // Set rotation code first so store methods work
-      store.setRotationCode(joinCode);
-      setRotationCodeState(joinCode);
+      store.setRotationCode(normalizedJoinCode);
+      setRotationCodeState(normalizedJoinCode);
+      setJoinCode(normalizedJoinCode);
 
-      // Student records are owned by the anonymous auth UID for this device/session.
-      // If this same device has already joined before, restore that existing doc.
       const sid = user.uid;
       setStudentId(sid);
       const localJoinedAt = joinedAt || await store.get<string>(JOINED_AT_KEY);
+      const normalizedEmail = normalizeEmail(user.email || studentEmail);
+      const studentIdentity = user.isAnonymous
+        ? { authType: "guest" as const, loginPin: studentPin }
+        : {
+            authType: "email_link" as const,
+            ...(normalizedEmail ? { email: normalizedEmail } : {}),
+          };
 
       const existingData = await store.getStudentData(sid);
       if (existingData) {
-        // Returning student on the same device/session — restore their data
+        // Returning student on the same account — restore their data
         if (existingData.patients) setPatients(existingData.patients);
         if (existingData.weeklyScores) setWeeklyScores(existingData.weeklyScores);
         if (existingData.preScore) setPreScore(existingData.preScore);
@@ -427,6 +628,12 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         if (existingData.srQueue) setSrQueue(existingData.srQueue);
         if (existingData.activityLog) setActivityLog(existingData.activityLog);
         if (existingData.reflections) setReflections(existingData.reflections);
+        if (typeof existingData.name === "string" && existingData.name.trim()) {
+          setStudentName(existingData.name);
+        }
+        if (typeof existingData.loginPin === "string" && existingData.loginPin.trim()) {
+          setStudentPin(existingData.loginPin);
+        }
         const restoredJoinedAt = typeof existingData.joinedAt === "string" ? existingData.joinedAt : localJoinedAt;
         if (restoredJoinedAt) {
           setJoinedAt(restoredJoinedAt);
@@ -435,16 +642,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         const updatedAt = new Date().toISOString();
         noteStudentUpdatedAt(updatedAt);
         await store.setStudentData(sid, {
-          name: studentName,
-          loginPin: studentPin,
+          name: typeof existingData.name === "string" && existingData.name.trim() ? existingData.name : normalizedName,
+          ...studentIdentity,
           updatedAt,
         });
       } else {
-        // New device/session — create a new student Firestore doc owned by this UID
+        // First join on this account for this rotation
         const newJoinedAt = new Date().toISOString();
         await store.setStudentData(sid, {
-          name: studentName,
-          loginPin: studentPin,
+          name: normalizedName,
+          ...studentIdentity,
           patients,
           weeklyScores,
           preScore,
@@ -460,9 +667,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       // Persist locally
       setNameSet(true);
       if (!localStorage.getItem("neph_hasSeenOnboarding")) setShowOnboarding(true);
-      await store.set("neph_name", studentName);
-      await store.set("neph_pin", studentPin);
+      await store.set("neph_name", (typeof existingData?.name === "string" && existingData.name.trim()) ? existingData.name : normalizedName);
+      if (user.isAnonymous) {
+        await store.set("neph_pin", studentPin);
+      } else {
+        localStorage.removeItem("neph_pin");
+      }
       await store.set("neph_studentId", sid);
+      if (!user.isAnonymous && normalizedEmail) {
+        await store.set(STUDENT_EMAIL_KEY, normalizedEmail);
+      }
       if (existingData && !localJoinedAt && typeof existingData.joinedAt !== "string") {
         const fallbackJoinedAt = new Date().toISOString();
         setJoinedAt(fallbackJoinedAt);
@@ -520,12 +734,20 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       console.warn("Student sign-out failed:", e);
     }
 
-    ["neph_name", "neph_pin", "neph_studentId", "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
+    clearSavedStudentSignInEmail();
+    ["neph_name", "neph_pin", "neph_studentId", STUDENT_EMAIL_KEY, "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
     store.setRotationCode(null);
     // Reset all state
     setStudentName("");
     setStudentPin("");
+    setStudentEmail("");
     setStudentId("");
+    setAuthMode("guest");
+    setAuthSessionKind("none");
+    setAuthSubmitting(false);
+    setAuthError("");
+    setAuthNotice("");
+    setNeedsEmailLinkCompletion(false);
     setNameSet(false);
     setRotationCodeState("");
     setJoinCode("");
@@ -598,15 +820,25 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     </div>
   );
 
-  // Combined onboarding screen (name + PIN + rotation code)
+  // Combined onboarding screen (name + auth choice + rotation code)
   if (!nameSet) {
     return (
       <LoginScreen
         studentName={studentName} setStudentName={setStudentName}
         studentPin={studentPin} setStudentPin={setStudentPin}
+        studentEmail={studentEmail} setStudentEmail={setStudentEmail}
+        authMode={authMode}
+        onAuthModeChange={handleAuthModeChange}
         joinCode={joinCode} setJoinCode={setJoinCode}
         joinError={joinError} setJoinError={setJoinError}
         joining={joining}
+        authSubmitting={authSubmitting}
+        authError={authError}
+        authNotice={authNotice}
+        emailLinkReady={emailLinkReady}
+        needsEmailLinkCompletion={needsEmailLinkCompletion}
+        onSendSignInLink={handleSendStudentSignInLink}
+        onCompleteEmailLinkSignIn={handleCompleteStudentEmailLink}
         onJoinRotation={handleJoinRotation}
         onAdminToggle={onAdminToggle}
       />
@@ -639,9 +871,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       )}
       {logoutConfirmOpen && (
         <ConfirmSheet
-          title="End this student session?"
-          message="You'll start a new secure session next time you join. An attending can recover older progress if needed."
-          confirmLabel="End session"
+          title="Sign out on this device?"
+          message={authSessionKind === "email_link"
+            ? "Your progress stays tied to your student account. You can sign back in here or on another device."
+            : "Guest progress stays saved, but it remains tied to this device session unless an attending recovers it."}
+          confirmLabel="Sign out"
           cancelLabel="Cancel"
           onConfirm={() => void handleLogout()}
           onCancel={() => setLogoutConfirmOpen(false)}
@@ -961,7 +1195,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <FaqView onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
-        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} />}
+        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}
         </Suspense>
@@ -1026,7 +1260,7 @@ function LibraryHub({
 // ─────────────────────────────────────────────────────────────────────────
 // ProfileSheet — Phase 2 (spec §01). Right-side sheet surfacing the items
 // that used to live in the cramped header: name, rotation code, competency
-// signal, theme toggle, end session. ESC to close. Click backdrop to close.
+// signal, theme toggle, sign out. ESC to close. Click backdrop to close.
 // ─────────────────────────────────────────────────────────────────────────
 function ProfileSheet({
   studentName, rotationCode, competencyLine, streakDays, onEndSession, onClose,
@@ -1110,7 +1344,7 @@ function ProfileSheet({
           <ThemeToggle variant="sheet" />
         </div>
 
-        {/* End session pushed to the bottom */}
+        {/* Sign out pushed to the bottom */}
         <div style={{ marginTop: "auto", paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
           <button
             onClick={() => { onClose(); onEndSession(); }}
@@ -1123,7 +1357,7 @@ function ProfileSheet({
             }}
           >
             <LogOut size={16} strokeWidth={1.75} aria-hidden="true" />
-            End session
+            Sign out
           </button>
         </div>
       </div>

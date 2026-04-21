@@ -1,5 +1,7 @@
 import type { User } from "firebase/auth";
 
+const STUDENT_EMAIL_LINK_KEY = "neph_emailForSignIn";
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -40,7 +42,42 @@ export async function waitForAuthUser(): Promise<User | null> {
   });
 }
 
-export async function ensureStudentSession(): Promise<User> {
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function getStudentEmailLinkUrl(): string {
+  if (typeof window === "undefined") return "";
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  return url.toString();
+}
+
+export function getSavedStudentSignInEmail(): string {
+  if (typeof window === "undefined") return "";
+  return normalizeEmail(window.localStorage.getItem(STUDENT_EMAIL_LINK_KEY) || "");
+}
+
+export function clearSavedStudentSignInEmail(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(STUDENT_EMAIL_LINK_KEY);
+}
+
+export async function getCurrentStudentUser(): Promise<User | null> {
+  const user = await waitForAuthUser();
+  if (!user) return null;
+  if (!user.isAnonymous) {
+    try {
+      if (await hasAdminDoc(user.uid)) return null;
+    } catch (error) {
+      console.warn("Student auth check failed:", error);
+    }
+  }
+  return user;
+}
+
+export async function ensureGuestStudentSession(): Promise<User> {
   const { auth, authMod } = await getFirebase();
   await waitForAuthUser();
   if (auth.currentUser?.isAnonymous) return auth.currentUser;
@@ -55,6 +92,48 @@ async function hasAdminDoc(uid: string): Promise<boolean> {
   const { db, fs } = await getFirebase();
   const snap = await fs.getDoc(fs.doc(db, "admins", uid));
   return snap.exists();
+}
+
+export async function isStudentEmailLink(url = (typeof window !== "undefined" ? window.location.href : "")): Promise<boolean> {
+  if (!url) return false;
+  const { auth, authMod } = await getFirebase();
+  return authMod.isSignInWithEmailLink(auth, url);
+}
+
+export async function sendStudentSignInLink(email: string): Promise<void> {
+  const normalizedEmail = normalizeEmail(email);
+  const { auth, authMod } = await getFirebase();
+  await authMod.sendSignInLinkToEmail(auth, normalizedEmail, {
+    url: getStudentEmailLinkUrl(),
+    handleCodeInApp: true,
+  });
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(STUDENT_EMAIL_LINK_KEY, normalizedEmail);
+  }
+}
+
+export async function completeStudentSignInLink(
+  email: string,
+  url = (typeof window !== "undefined" ? window.location.href : ""),
+): Promise<User> {
+  const normalizedEmail = normalizeEmail(email);
+  const { auth, authMod } = await getFirebase();
+  if (!authMod.isSignInWithEmailLink(auth, url)) {
+    throw new Error("auth/invalid-action-link");
+  }
+
+  let user: User;
+  if (auth.currentUser?.isAnonymous) {
+    const credential = authMod.EmailAuthProvider.credentialWithLink(normalizedEmail, url);
+    const linked = await authMod.linkWithCredential(auth.currentUser, credential);
+    user = linked.user;
+  } else {
+    const cred = await authMod.signInWithEmailLink(auth, normalizedEmail, url);
+    user = cred.user;
+  }
+
+  clearSavedStudentSignInEmail();
+  return user;
 }
 
 export async function getCurrentAdminUser(): Promise<User | null> {

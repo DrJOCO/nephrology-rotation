@@ -18,6 +18,8 @@ interface PatientForm {
   notes: string;
 }
 
+type ActivityLogger = (type: string, label: string, detail?: string) => void;
+
 function getVisibleTopicOptions(selectedTopics: string[], expanded: boolean): string[] {
   if (expanded) return TOPICS;
   const selectedExtraTopics = ADDITIONAL_PATIENT_TOPICS.filter(topic => selectedTopics.includes(topic));
@@ -28,6 +30,28 @@ function getHiddenTopicCount(selectedTopics: string[], expanded: boolean): numbe
   if (expanded) return 0;
   const selectedExtraTopics = ADDITIONAL_PATIENT_TOPICS.filter(topic => selectedTopics.includes(topic));
   return ADDITIONAL_PATIENT_TOPICS.length - selectedExtraTopics.length;
+}
+
+function summarizeTopics(topics: string[]): string {
+  const cleanTopics = topics.filter(Boolean);
+  if (cleanTopics.length === 0) return "No topics";
+  if (cleanTopics.length <= 2) return cleanTopics.join(", ");
+  return `${cleanTopics.slice(0, 2).join(", ")} +${cleanTopics.length - 2}`;
+}
+
+function buildPatientUpdateDetail(previous: Patient | undefined, next: PatientForm): string {
+  if (!previous) return summarizeTopics(next.topics);
+
+  const previousTopics = previous.topics || (previous.topic ? [previous.topic] : []);
+  const topicsChanged = previousTopics.join("|") !== next.topics.join("|");
+  const notesChanged = (previous.notes || "").trim() !== next.notes.trim();
+  const diagnosisChanged = (previous.dx || "").trim() !== next.dx.trim();
+
+  if (notesChanged && next.notes.trim() && !(previous.notes || "").trim()) return "Teaching note added";
+  if (topicsChanged) return summarizeTopics(next.topics);
+  if (diagnosisChanged) return "Diagnosis updated";
+  if (notesChanged) return "Teaching note updated";
+  return "Details updated";
 }
 
 function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; topicColor: (topic: string) => string; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: string | number, note: string) => void; onRemoveFollowUp: (patientId: string | number, followUpId: number) => void }) {
@@ -226,7 +250,7 @@ interface TopicSuggestion {
   nav: [string, SubView];
 }
 
-export default function PatientTab({ patients, setPatients, navigate }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void }) {
+export default function PatientTab({ patients, setPatients, navigate, onLogActivity }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
@@ -270,6 +294,7 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
       notes: form.notes.trim(),
     };
     setPatients(prev => [{ ...sanitized, id: Date.now(), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
+    onLogActivity?.("patient", "Patient added", summarizeTopics(sanitized.topics));
 
     // Compute topic suggestions
     if (navigate) {
@@ -309,8 +334,20 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
     setShowAdd(false);
   };
 
-  const toggle = (id: string | number) => setPatients(prev => prev.map(p => p.id === id ? { ...p, status: p.status === "active" ? "discharged" : "active" } : p));
-  const remove = (id: string | number) => setPatients(prev => prev.filter(p => p.id !== id));
+  const toggle = (id: string | number) => {
+    const patient = patients.find(p => p.id === id);
+    if (!patient) return;
+    const nextStatus = patient.status === "active" ? "discharged" : "active";
+    setPatients(prev => prev.map(p => p.id === id ? { ...p, status: nextStatus } : p));
+    onLogActivity?.("patient", nextStatus === "discharged" ? "Patient discharged" : "Patient reactivated", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
+  };
+  const remove = (id: string | number) => {
+    const patient = patients.find(p => p.id === id);
+    setPatients(prev => prev.filter(p => p.id !== id));
+    if (patient) {
+      onLogActivity?.("patient", "Patient removed", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
+    }
+  };
 
   const startEdit = (patient: Patient) => {
     setEditingId(patient.id);
@@ -338,16 +375,20 @@ export default function PatientTab({ patients, setPatients, navigate }: { patien
       topics: editForm.topics,
       notes: editForm.notes.trim(),
     };
+    const existing = patients.find(p => p.id === editingId);
     setPatients(prev => prev.map(p => p.id === editingId ? { ...p, ...sanitized } : p));
+    onLogActivity?.("patient", "Patient updated", buildPatientUpdateDetail(existing, sanitized));
     cancelEdit();
   };
 
   const addFollowUp = (patientId: string | number, noteText: string) => {
     if (!noteText.trim()) return;
+    const patient = patients.find(p => p.id === patientId);
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
       followUps: [...(p.followUps || []), { id: Date.now(), date: new Date().toISOString(), note: noteText.trim() }]
     } : p));
+    onLogActivity?.("follow_up", "Follow-up added", summarizeTopics(patient?.topics || (patient?.topic ? [patient.topic] : [])));
   };
 
   const removeFollowUp = (patientId: string | number, followUpId: number) => {

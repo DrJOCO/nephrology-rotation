@@ -1139,7 +1139,6 @@ export default function HomeTab({
       <section>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
           <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Quick links</h2>
-          <div style={{ fontSize: 13, color: T.muted }}>Still reachable without crowding the main screen</div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
           {quickLinks.map((link) => (

@@ -361,6 +361,32 @@ function formatBriefRelative(timestamp: string | null): string | null {
   return `Updated ${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 }
 
+function getMinutesSince(timestamp: string | null | undefined): number | null {
+  if (!timestamp) return null;
+  const time = new Date(timestamp).getTime();
+  if (Number.isNaN(time)) return null;
+  return Math.max(0, Math.round((Date.now() - time) / 60000));
+}
+
+function getSyncTone(timestamp: string | null | undefined): {
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+} {
+  const minutes = getMinutesSince(timestamp);
+  if (minutes === null) {
+    return { label: "No sync yet", bg: T.yellowBg, text: T.goldText, border: T.goldAlpha };
+  }
+  if (minutes <= 5) {
+    return { label: "Live", bg: T.greenBg, text: T.greenDk, border: T.greenAlpha };
+  }
+  if (minutes <= 30) {
+    return { label: "Recent", bg: T.blueBg, text: T.med, border: T.line };
+  }
+  return { label: "Stale", bg: T.redBg, text: T.accent, border: T.redAlpha };
+}
+
 function countTopicsFromPatients(patients: Patient[]): Array<{ label: string; count: number }> {
   const counts: Record<string, number> = {};
   patients.forEach((patient) => {
@@ -1437,6 +1463,18 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
   const dailyBrief = activeStudents.length > 0 ? buildDailyAttendingBrief(activeStudents, settings, articles) : null;
   const teachingPlans = dailyBrief ? buildTeachingPlanOptions(dailyBrief, settings, articles) : [];
   const exposureGap = activeStudents.length > 0 ? buildExposureCurriculumGap(activeStudents, articles) : null;
+  const sortedBySync = [...activeStudents].sort((a, b) => (b.lastSyncedAt || "").localeCompare(a.lastSyncedAt || ""));
+  const latestSync = sortedBySync[0]?.lastSyncedAt || null;
+  const syncedInLast10 = activeStudents.filter((student) => {
+    const minutes = getMinutesSince(student.lastSyncedAt || null);
+    return minutes !== null && minutes <= 10;
+  }).length;
+  const staleStudents = activeStudents.filter((student) => {
+    const minutes = getMinutesSince(student.lastSyncedAt || null);
+    return minutes === null || minutes > 60;
+  });
+  const neverSynced = activeStudents.filter((student) => !student.lastSyncedAt).length;
+  const latestSyncTone = getSyncTone(latestSync);
 
   useEffect(() => {
     if (teachingPlans.length === 0) {
@@ -1842,6 +1880,43 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
         <StatCard value={avgPost !== null ? avgPost + "%" : "—"} label="Avg Post-Test" color={T.greenDk} icon="📊" />
       </div>
 
+      {activeStudents.length > 0 && (
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 20, border: `1px solid ${T.line}` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 10 }}>
+            <div>
+              <h3 style={{ color: T.navy, fontSize: 15, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Live Sync Status</h3>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
+                {latestSync ? formatBriefRelative(latestSync) : "No student device has synced yet."}
+              </div>
+            </div>
+            <span style={{ background: latestSyncTone.bg, color: latestSyncTone.text, border: `1px solid ${latestSyncTone.border}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, whiteSpace: "nowrap" }}>
+              {latestSyncTone.label}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: staleStudents.length > 0 ? 10 : 0 }}>
+            <span style={{ background: T.bg, color: T.text, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 600 }}>
+              {syncedInLast10}/{activeStudents.length} synced in the last 10 min
+            </span>
+            <span style={{ background: staleStudents.length > 0 ? T.redBg : T.greenBg, color: staleStudents.length > 0 ? T.accent : T.greenDk, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 700 }}>
+              {staleStudents.length} stale over 60 min
+            </span>
+            {neverSynced > 0 && (
+              <span style={{ background: T.yellowBg, color: T.goldText, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 700 }}>
+                {neverSynced} not synced yet
+              </span>
+            )}
+          </div>
+
+          {staleStudents.length > 0 && (
+            <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.5 }}>
+              Check these learners first: {staleStudents.slice(0, 3).map((student) => student.name).join(", ")}
+              {staleStudents.length > 3 ? ` +${staleStudents.length - 3} more` : ""}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Pre/Post Comparison */}
       {avgPre !== null && avgPost !== null && (
         <div style={{ background: `linear-gradient(135deg, ${T.navyBg}, ${T.deepBg})`, borderRadius: 16, padding: 20, marginBottom: 20, color: "white" }}>
@@ -2092,6 +2167,8 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
             const quizzesDone = Object.values(wkScores).flat().length;
             const competency = buildAdminCompetencySnapshot(s, settings, articles);
             const assessment = buildAdminAssessmentSignal(s);
+            const syncTone = getSyncTone(s.lastSyncedAt || null);
+            const syncCopy = formatBriefRelative(s.lastSyncedAt || null) || "No student sync yet";
             return (
               <button key={s.id} onClick={() => navigate("students", { type: "studentDetail", id: String(s.id) })}
                 style={{ display: "block", width: "100%", background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
@@ -2104,6 +2181,12 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
                     </div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
                       {(s.patients || []).length} patients • {quizzesDone} quizzes • {s.year || "MS3/MS4"}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                      <span style={{ fontSize: 13, background: syncTone.bg, color: syncTone.text, border: `1px solid ${syncTone.border}`, borderRadius: 999, padding: "4px 9px", fontWeight: 700 }}>
+                        {syncTone.label}
+                      </span>
+                      <span style={{ fontSize: 13, color: T.muted }}>{syncCopy}</span>
                     </div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
                       <span style={{ fontSize: 13, background: T.bg, borderRadius: 999, padding: "4px 9px", color: T.sub, fontWeight: 600 }}>
@@ -2213,7 +2296,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
         const recent = allActivity.slice(0, 15);
         if (recent.length === 0) return null;
 
-        const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄", article: "📄", study_sheet: "🗂️", reflection: "💭" };
+        const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄", article: "📄", study_sheet: "🗂️", reflection: "💭", patient: "🩺", follow_up: "📌" };
         const formatTime = (ts: string) => {
           const d = new Date(ts);
           const month = d.getMonth() + 1;
