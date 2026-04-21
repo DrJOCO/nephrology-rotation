@@ -68,7 +68,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             <span style={{ fontSize: 28 }}>🏥</span>
             <div>
               <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{caseData.title}</h2>
-              <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{caseData.category} • {caseData.difficulty}</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{caseData.difficulty}</div>
             </div>
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Clinical Scenario</div>
@@ -284,7 +284,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
                 <span style={{ fontSize: 22 }}>🏥</span>
                 <div>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
-                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{c.category} • {c.questions.length} questions</div>
+                  <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{c.questions.length} questions</div>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
