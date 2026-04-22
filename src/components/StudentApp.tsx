@@ -1,24 +1,8 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { BookOpen, Stethoscope, Activity, Users, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home } from "lucide-react";
 import { T, WEEKLY, ARTICLES, STUDY_SHEETS } from "../data/constants";
-import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey, TOPIC_REINFORCEMENT_BANK, topicToSlug } from "../data/quizzes";
+import { PRE_QUIZ, POST_QUIZ, TOPIC_REINFORCEMENT_BANK, WEEKLY_QUIZZES, getQuestionByKey, resolveReinforcementTopic, topicToSlug } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems, seedTopicReinforcementSr } from "../utils/spacedRepetition";
-
-function extractMissedTopics(
-  answers: Array<{ qIdx: number; correct: boolean }>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  questions: any[],
-): string[] {
-  const topics = new Set<string>();
-  for (const a of answers) {
-    if (a.correct) continue;
-    const q = questions[a.qIdx];
-    if (q && typeof q.topic === "string" && TOPIC_REINFORCEMENT_BANK[q.topic]) {
-      topics.add(q.topic);
-    }
-  }
-  return Array.from(topics);
-}
 import store from "../utils/store";
 import {
   clearSavedStudentSignInEmail,
@@ -88,6 +72,21 @@ const STUDENT_YEAR_OPTIONS = ["MS3", "MS4"] as const;
 interface DeferredInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+function extractMissedTopics(
+  answers: Array<{ qIdx: number; correct: boolean }>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  questions: any[],
+): string[] {
+  const topics = new Set<string>();
+  for (const a of answers) {
+    if (a.correct) continue;
+    const q = questions[a.qIdx];
+    const topic = resolveReinforcementTopic(q);
+    if (topic) topics.add(topic);
+  }
+  return Array.from(topics);
 }
 
 function normalizeEmail(email: string): string {

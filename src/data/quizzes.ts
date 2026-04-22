@@ -43,8 +43,8 @@ export const PRE_QUIZ_BY_WEEK = {
       choices:["Lactic acidosis from shock","Hyperchloremic non-anion-gap metabolic acidosis from the saline","AKI with retained fixed acids","DKA"], answer:1,
       explanation:"0.9% NaCl has 154 mEq/L of Cl⁻ (supraphysiologic). Large volumes dilute bicarb and drive up chloride — producing a predictable hyperchloremic, normal-AG metabolic acidosis. The SMART and SALT-ED trials showed balanced crystalloids (LR, Plasma-Lyte) reduce major adverse kidney events compared to high-volume NS." },
     { q:"A patient with eGFR 22 has Ca²⁺ 8.0, phosphorus 5.9, intact PTH 280, and 25-OH vitamin D 35 ng/mL (normal). Which best explains her secondary hyperparathyroidism?",
-      choices:["Nutritional vitamin D deficiency","Reduced calcitriol from loss of renal 1-α-hydroxylase activity and FGF-23 suppression","Autonomous parathyroid adenoma","Calcium supplementation"], answer:1,
-      explanation:"The 25-OH vitamin D (nutritional form) is normal, so deficiency is excluded. The damaged proximal tubule can't convert 25-OH D to active 1,25-(OH)₂D (calcitriol), and rising FGF-23 further suppresses 1-α-hydroxylase. The result is low active vitamin D, low calcium, and high phosphate — all stimulating PTH. Autonomous adenoma = tertiary hyperPTH." },
+      choices:["Nutritional vitamin D deficiency","Reduced calcitriol from loss of renal 1-α-hydroxylase activity, amplified by increased FGF-23","Autonomous parathyroid adenoma","Calcium supplementation"], answer:1,
+      explanation:"The 25-OH vitamin D (nutritional form) is normal, so deficiency is excluded. The damaged proximal tubule cannot convert 25-OH vitamin D to active 1,25-(OH)₂D (calcitriol), and rising FGF-23 further suppresses 1-α-hydroxylase. The result is low active vitamin D, low calcium, and high phosphate — all stimulating PTH. Autonomous adenoma would suggest tertiary hyperparathyroidism." },
     { q:"A 32-year-old is found unresponsive. Labs: pH 7.10, HCO₃⁻ 6, anion gap 32, osmolar gap 38. The most likely ingestion is:",
       choices:["Aspirin","A toxic alcohol (methanol or ethylene glycol)","Acetaminophen","Iron"], answer:1,
       explanation:"An elevated anion gap metabolic acidosis PLUS an elevated osmolar gap is the classic fingerprint of toxic alcohol ingestion — methanol or ethylene glycol. Parent alcohol raises the osm gap; its metabolites (formic acid, glycolic/oxalic acid) produce the AG acidosis. Early fomepizole and dialysis are life-saving; don't wait for levels." },
@@ -52,7 +52,7 @@ export const PRE_QUIZ_BY_WEEK = {
   3: [
     { q:"A 45-year-old man presents with 3+ lower-extremity edema. Labs: UACR 4,200 mg/g (~5 g/day), serum albumin 2.3 g/dL, LDL 220. UA is bland without RBC casts. He meets criteria for:",
       choices:["Nephritic syndrome","Nephrotic syndrome","Isolated asymptomatic proteinuria","Orthostatic proteinuria"], answer:1,
-      explanation:"Nephrotic syndrome requires the full pentad: >3.5 g/day proteinuria, hypoalbuminemia, edema, hyperlipidemia, and (often) lipiduria. The bland sediment separates it from nephritic syndrome (hematuria, dysmorphic RBCs, RBC casts). Framing the syndrome correctly drives the biopsy differential and treatment." },
+      explanation:"This is nephrotic syndrome: nephrotic-range proteinuria with hypoalbuminemia and edema, with hyperlipidemia common and lipiduria often present. The relatively bland sediment helps separate it from nephritic syndromes, which feature hematuria with dysmorphic RBCs or RBC casts. Framing the syndrome correctly drives the biopsy differential and treatment." },
     { q:"A 22-year-old has recurrent episodes of gross hematuria that appear within 1–2 days of an upper respiratory infection. UA shows 3+ blood, 1+ protein, and dysmorphic RBCs. C3 and C4 are normal. Most likely diagnosis?",
       choices:["IgA nephropathy","Post-infectious glomerulonephritis","Thin basement membrane disease","Alport syndrome"], answer:0,
       explanation:"Synpharyngitic hematuria (concurrent with the URI — not 1–3 weeks later) plus normal complement levels is the signature of IgA nephropathy. Post-infectious GN has a 1–3 week latent period and low C3. Thin basement membrane disease causes persistent microscopic hematuria without gross episodes; Alport typically comes with hearing loss and family history." },
@@ -63,8 +63,8 @@ export const PRE_QUIZ_BY_WEEK = {
       choices:["Dilation of the efferent arteriole","Reduction in intraglomerular pressure","Blockade of aldosterone","Increased renal blood flow"], answer:1,
       explanation:"Both classes reduce intraglomerular pressure, but from opposite ends — ACEi/ARBs dilate the efferent arteriole, SGLT2i restore tubuloglomerular feedback and constrict the afferent arteriole. The shared net effect (and the shared initial ~3–5 mL/min eGFR 'dip') is why they are complementary pillars of CKD therapy." },
     { q:"A 70-year-old has a stable eGFR of 52 mL/min and UACR 320 mg/g across three visits. By KDIGO, her CKD classification is:",
-      choices:["G2 A1","G3a A2","G3a A3","G3b A2"], answer:1,
-      explanation:"KDIGO stages by both axes. eGFR 45–59 → G3a. UACR 30–300 → A2 (moderately increased). Her stage is G3a A2. Albuminuria adds major prognostic information independent of GFR — a G3a A3 patient has much higher risk than G3a A1, even at the same eGFR." },
+      choices:["G2 A1","G3a A2","G3a A3","G3b A2"], answer:2,
+      explanation:"KDIGO stages by both axes. eGFR 45–59 corresponds to G3a, and UACR ≥300 mg/g corresponds to A3 (severely increased albuminuria). Her stage is G3a A3. Albuminuria adds major prognostic information independent of GFR — a G3a A3 patient has much higher risk than G3a A1, even at the same eGFR." },
     { q:"Which of the following patients is MOST likely to benefit from a kidney biopsy?",
       choices:["A 65-year-old with 20 years of T2DM, diabetic retinopathy, and a UACR slowly rising from 150 to 400 mg/g with bland sediment","A 35-year-old with 2 g/day proteinuria, dysmorphic RBCs, and Cr rising from 1.0 to 1.6 over 8 weeks","A 75-year-old with stable CKD stage 4 and Cr 3.0 unchanged for 2 years","A 40-year-old with isolated microscopic hematuria, normal Cr, and no proteinuria"], answer:1,
       explanation:"Biopsy is indicated when the diagnosis is unclear AND the result would change management. The 35-year-old has an unexplained GN-like picture (proteinuria + dysmorphic RBCs + rising Cr) — biopsy will define the specific lesion (IgA? lupus? ANCA? FSGS?) and drive therapy. The diabetic patient has textbook DKD — biopsy is usually unnecessary. Advanced stable CKD rarely benefits from biopsy (low yield, high risk). Isolated hematuria without proteinuria usually only needs urology evaluation and follow-up." },
@@ -131,18 +131,18 @@ export const POST_QUIZ_BY_WEEK = {
       explanation:"Delta-delta (ΔAG/ΔHCO₃⁻) between 1-2 indicates a pure AG metabolic acidosis. >2 suggests a concurrent metabolic alkalosis raising the HCO₃⁻ higher than expected. <1 suggests a concurrent non-AG acidosis. 1.8 falls in the pure AGMA range, though borderline — clinical context matters." },
     { q:"Lactated Ringer's is preferred over normal saline in large-volume resuscitation because:",
       choices:["It has more sodium","It prevents hyperchloremic metabolic acidosis","It costs less","It is better for hyperkalemic patients"], answer:1,
-      explanation:"NS has 154 mEq/L of Cl⁻ (supraphysiologic). Large volumes cause hyperchloremic non-AG metabolic acidosis and may reduce renal blood flow. LR has 109 Cl⁻ (physiologic) and SMART/SALT-ED showed better kidney outcomes with balanced crystalloids. The old 'avoid LR in hyperkalemia' rule is outdated: LR's 4 mEq/L K⁺ is much lower than serum K⁺ in a hyperkalemic patient, and modern trial data in hyperkalemic/AKI subgroups show balanced crystalloids are NOT worse than NS. Balanced fluids should be the default across most clinical contexts." },
+      explanation:"NS has 154 mEq/L of Cl⁻ (supraphysiologic). Large volumes can cause hyperchloremic non-anion-gap metabolic acidosis and may reduce renal blood flow. LR has a more physiologic chloride concentration, and SMART/SALT-ED showed better kidney outcomes with balanced crystalloids in many large-volume resuscitation settings. The older 'avoid LR in hyperkalemia' rule is overstated: LR's 4 mEq/L of K⁺ is far below the serum potassium concentration in a hyperkalemic patient." },
     { q:"Secondary hyperparathyroidism in CKD is driven by:",
       choices:["High calcium, low phosphorus","Low calcitriol, high phosphorus, low calcium","High calcitriol, high calcium","Autonomous parathyroid adenoma"], answer:1,
       explanation:"CKD → ↓1-alpha hydroxylase → ↓calcitriol → ↓Ca²⁺ absorption. Also: ↓phosphorus excretion → hyperphosphatemia. Both stimulate PTH release. Autonomous adenoma = tertiary hyperPTH." },
     { q:"A 52-year-old man with DKA presents obtunded with glucose 720, measured Na⁺ 128, K⁺ 5.4, and HCO₃⁻ 8. Before deciding he is truly hyponatremic, what is his approximate corrected serum Na⁺?",
       choices:["128 — no correction needed","About 132","About 138","About 148"], answer:2,
-      explanation:"Hyperglycemia pulls intracellular water into the vascular space, producing a translocational (dilutional) hyponatremia. The Katz correction adds 1.6 mEq/L for every 100 mg/dL glucose above 100: (720 − 100)/100 × 1.6 ≈ 9.9, so corrected Na⁺ ≈ 138. Always correct before labeling a hyperglycemic patient hyponatremic — 'hyponatremia' in DKA is usually an artifact that resolves with insulin-driven glucose lowering. (The Hillier 2.4 factor is sometimes used for glucose >400 and would give ~143, but 1.6 is the standard teaching.)" },
+      explanation:"Hyperglycemia pulls intracellular water into the vascular space, producing translocational hyponatremia. The Katz correction adds 1.6 mEq/L for every 100 mg/dL glucose above 100: (720 − 100)/100 × 1.6 ≈ 9.9, so corrected Na⁺ is about 138. Correcting the sodium helps interpret tonicity, but patients with DKA still have real total-body sodium and water deficits. (The Hillier 2.4 factor is sometimes used at very high glucose levels and would give a higher corrected sodium.)" },
   ],
   3: [
     { q:"A 25-year-old presents with edema, proteinuria 8g/day, and normal complement levels. Renal biopsy shows podocyte effacement on EM with no immune deposits. Diagnosis?",
       choices:["Membranous nephropathy","Minimal change disease","FSGS","IgA nephropathy"], answer:1,
-      explanation:"Nephrotic syndrome in a young adult + normal complement + podocyte foot process effacement + NO immune deposits on IF/EM = minimal change disease. It's the most common nephrotic syndrome in children and responds well to steroids." },
+      explanation:"Nephrotic syndrome in a young adult plus diffuse podocyte foot-process effacement on EM, no immune deposits, and normal light microscopy points to minimal change disease. FSGS also causes podocyte effacement, but should show segmental sclerosis on light microscopy. Minimal change disease is the most common nephrotic syndrome in children and is typically steroid responsive." },
     { q:"A patient with lupus has proteinuria, hematuria, low C3/C4, and positive anti-dsDNA. Biopsy shows 'wire loop' deposits. Most likely class of lupus nephritis?",
       choices:["Class II (mesangial)","Class III (focal proliferative)","Class IV (diffuse proliferative)","Class V (membranous)"], answer:2,
       explanation:"Class IV (diffuse proliferative) is the most severe and common form requiring aggressive treatment. 'Wire loops' are subendothelial deposits seen on light microscopy, with 'full house' IF pattern. KDIGO 2024 lists several initial regimens — glucocorticoids plus (a) MPAA (MMF/EC-MPS) alone, (b) low-dose IV cyclophosphamide (Euro-Lupus), (c) belimumab + MPAA or CYC (BLISS-LN), or (d) MPAA + a CNI (voclosporin per AURORA-1, or tacrolimus) when kidney function is not severely impaired. Obinutuzumab (Gazyva, anti-CD20) received FDA approval for active lupus nephritis in October 2025 based on the REGENCY trial — it is now a real option to add to MMF + steroids, though post-dates the KDIGO 2024 guideline text. Individualize choice by proteinuria, eGFR, tolerability, fertility, and access." },
@@ -172,9 +172,9 @@ export const POST_QUIZ_BY_WEEK = {
     { q:"A 45-year-old woman with her third calcium-oxalate kidney stone in 4 years has a 24-hour urine showing low urinary citrate and normal urinary calcium. Which intervention has the strongest evidence for preventing recurrence in her?",
       choices:["Dietary calcium restriction","Increased fluid intake to achieve urine volume >2.5 L/day plus potassium citrate","Daily allopurinol","Low-protein, high-sodium diet"], answer:1,
       explanation:"The cornerstone of stone prevention is hydration — target urine volume >2.5 L/day. Hypocitraturia is a major risk factor because citrate chelates urinary calcium and inhibits crystallization; potassium citrate both replaces citrate and alkalinizes urine. Dietary calcium RESTRICTION is a classic trap — it increases oxalate absorption and worsens calcium-oxalate stones; normal dietary calcium (1,000–1,200 mg/day) with meals is protective. Low-sodium (not high) and moderate-protein diets also reduce urinary calcium." },
-    { q:"Contrast-induced nephropathy (CIN) is best prevented by:",
+    { q:"Contrast-associated AKI around iodinated contrast exposure is best prevented by:",
       choices:["N-acetylcysteine before the procedure","IV isotonic saline hydration before and after","Furosemide to increase urine output","Avoiding all contrast in CKD patients"], answer:1,
-      explanation:"IV isotonic fluid (NS or bicarb) before and after contrast is the best-studied prevention. NAC has NOT been shown to be beneficial in recent trials (PRESERVE, 2018). Don't withhold necessary contrast from CKD patients — just hydrate and use low-osmolar contrast." },
+      explanation:"Periprocedural isotonic IV hydration is the best-supported preventive strategy. N-acetylcysteine did not show benefit in PRESERVE. Use the necessary low- or iso-osmolar contrast dose and avoid withholding clinically necessary contrast solely because of CKD when the indication is strong." },
   ],
 };
 
@@ -213,7 +213,7 @@ export const WEEKLY_QUIZZES = {
       explanation:"Muddy brown granular casts are the hallmark of ATN — sloughed necrotic tubular epithelial cells trapped in Tamm-Horsfall protein. Ischemic ATN typically follows hypotension, sepsis, or major surgery. FENa is usually >2% because injured tubules can't reabsorb Na." },
     { q:"A 74-year-old with decompensated CHF on furosemide 80 mg IV BID develops AKI (Cr 1.2 → 2.0). Urine Na is 45 and FENa calculates to 2.8%. You suspect pre-renal physiology from over-diuresis. Which test best confirms this?",
       choices:["Repeat urine osmolality","Fractional excretion of urea (FEUrea)","BUN/Cr ratio alone","24-hour urine creatinine clearance"], answer:1,
-      explanation:"Loop diuretics force Na excretion and make FENa falsely elevated, mimicking ATN. FEUrea bypasses this because urea handling is not affected by loop diuretics. FEUrea <35% supports pre-renal; >50% supports ATN." },
+      explanation:"Loop diuretics force sodium excretion and can make FENa misleading. FEUrea is generally less affected than FENa and can be helpful, but it is not immune to loop diuretics, so interpret it alongside the clinical picture, urine sediment, and response to volume. A low FEUrea still supports pre-renal physiology in the right context." },
     { q:"A 62-year-old Black woman is seen in clinic for CKD follow-up. Her Cr is 1.4. Her chart shows an older eGFR calculated with a race coefficient and a newer eGFR without. The newer value is lower. Which equation is now the standard for reporting eGFR?",
       choices:["MDRD with race coefficient","CKD-EPI 2021 (race removed; uses age, sex, Cr)","Cockcroft-Gault","CKD-EPI 2009 with race coefficient"], answer:1,
       explanation:"The CKD-EPI 2021 equation removed the race coefficient to address health equity concerns; it uses age, sex, and creatinine. For greater accuracy, the combined Cr-cystatin C equation is preferred when available. Cockcroft-Gault estimates CrCl, not GFR, and is still used for some FDA drug dosing." },
@@ -269,11 +269,11 @@ export const WEEKLY_QUIZZES = {
       choices:["Renal salt wasting","Decreased ADH clearance by the liver","Effective arterial volume depletion → ADH release","Excess water intake"], answer:2,
       explanation:"In cirrhosis, splanchnic vasodilation → decreased effective arterial volume → non-osmotic ADH release → water retention → dilutional hyponatremia. Treatment is fluid restriction; avoid rapid correction." },
     { q:"A 55-year-old with protracted vomiting from pyloric obstruction has K⁺ 2.9 and HCO₃⁻ 36. Despite aggressive oral KCl repletion, her K⁺ keeps drifting low. Which mechanism best explains why the metabolic alkalosis perpetuates her hypokalemia?",
-      choices:["Alkalosis increases renal K⁺ excretion at the collecting duct","The kidney preferentially retains H⁺ instead of K⁺","K⁺ shifts into cells in exchange for H⁺","All of the above"], answer:3,
-      explanation:"Alkalosis drives K⁺ intracellularly (H⁺/K⁺ exchange) and increases renal K⁺ secretion (the collecting duct secretes K⁺ while trying to reclaim H⁺). The two disorders sustain each other. You must correct both: give KCl (replaces K⁺ and provides Cl⁻ to restore alkalosis) and treat the underlying volume/chloride deficit." },
-    { q:"A 76-year-old hospitalized for cellulitis develops Na⁺ 138, Cl⁻ 114, HCO₃⁻ 18, anion gap 10 after 3 days of high-volume saline infusion and loose stools. Which is the most likely predominant cause of this non-anion gap metabolic acidosis?",
-      choices:["Distal (type 1) renal tubular acidosis","GI bicarbonate losses from diarrhea","Saline-induced (hyperchloremic) acidosis from resuscitation fluid","Acetazolamide use"], answer:1,
-      explanation:"Both diarrhea and large-volume normal saline cause NAGMA, but diarrhea is the single most common cause overall in hospitalized patients — intestinal fluids are rich in HCO₃⁻. Saline contributes via its supraphysiologic Cl⁻ load (balanced crystalloids like LR reduce this). Urine anion gap can help: negative → GI loss, positive → RTA." },
+      choices:["Alkalosis shifts K⁺ into cells and, with chloride depletion, increases renal K⁺ wasting","The kidney preferentially retains H⁺ instead of K⁺","Vomiting directly causes renal potassium wasting without affecting acid-base balance","Primary hyperaldosteronism from an adrenal adenoma"], answer:0,
+      explanation:"Metabolic alkalosis shifts potassium into cells, and chloride/volume depletion increases distal sodium delivery and secondary aldosterone activity, which promotes renal K⁺ secretion. The two disorders sustain each other. You correct both by giving KCl and treating the underlying volume/chloride deficit." },
+    { q:"A 76-year-old hospitalized for cellulitis develops Na⁺ 138, Cl⁻ 114, HCO₃⁻ 18, anion gap 10 after 3 days of high-volume saline infusion. Lactate is normal and there is no diarrhea. Which is the most likely cause of this non-anion gap metabolic acidosis?",
+      choices:["Distal (type 1) renal tubular acidosis","GI bicarbonate losses from diarrhea","Saline-induced (hyperchloremic) acidosis from resuscitation fluid","Acetazolamide use"], answer:2,
+      explanation:"This stem is most consistent with saline-induced hyperchloremic non-anion-gap metabolic acidosis: the chloride is elevated after several days of high-volume normal saline, lactate is normal, and no other clear acid source is given. Large saline loads dilute bicarbonate and raise chloride. Balanced crystalloids reduce this effect." },
     { q:"An 82-year-old nursing home patient with dementia presents with Na⁺ 162 and dry mucous membranes after several days of poor oral intake. Regardless of whether his total body Na is low, normal, or high, what is the invariant primary problem in hypernatremia?",
       choices:["Excess sodium intake","A free water deficit relative to sodium","Primary renal sodium retention","Aldosterone excess"], answer:1,
       explanation:"Hypernatremia by definition reflects a free water deficit relative to sodium — a functional water problem, not a salt problem. Calculate the free water deficit: TBW × [(Na/140) − 1]. Replace with D5W or enteral free water, correcting no faster than ~10 mEq/L/24h (or ~0.5 mEq/L/h) to avoid cerebral edema." },
@@ -293,7 +293,7 @@ export const WEEKLY_QUIZZES = {
   3: [
     { q:"A 45-year-old man presents with new bilateral lower-extremity edema and foamy urine. Labs: urine protein 8 g/day, serum albumin 2.1 g/dL, LDL 240, Cr 0.9. UA is bland without RBC casts. Which category best describes his presentation?",
       choices:["Nephritic syndrome","Nephrotic syndrome","CKD stage 4","Acute interstitial nephritis"], answer:1,
-      explanation:"Nephrotic syndrome requires heavy proteinuria (>3.5 g/day), hypoalbuminemia, edema, and hyperlipidemia, with a bland sediment. Nephritic syndrome instead features hematuria, dysmorphic RBCs/RBC casts, HTN, and only modest proteinuria. Correctly framing the syndrome drives the biopsy differential (MCD, FSGS, membranous, DKD) vs. a nephritic workup." },
+      explanation:"This is nephrotic syndrome: heavy proteinuria with hypoalbuminemia and edema, with hyperlipidemia common and a relatively bland sediment supportive of a nephrotic rather than nephritic picture. Nephritic syndromes instead feature hematuria with dysmorphic RBCs or RBC casts, hypertension, and only modest proteinuria. Correctly framing the syndrome drives the biopsy differential." },
     { q:"A 62-year-old non-diabetic with proteinuric CKD (UACR 900 mg/g, eGFR 38) is already on a max-dose ACE inhibitor. Which medication class has the strongest evidence for slowing CKD progression even in patients without diabetes?",
       choices:["Sulfonylureas","DPP-4 inhibitors","SGLT2 inhibitors","Thiazolidinediones"], answer:2,
       explanation:"SGLT2 inhibitors restore tubuloglomerular feedback → afferent arteriolar constriction → reduced intraglomerular pressure. DAPA-CKD and EMPA-KIDNEY both showed major kidney-endpoint benefit in non-diabetic CKD. They are now a core pillar of proteinuric CKD therapy alongside RAAS blockade, independent of glucose lowering." },
@@ -302,7 +302,7 @@ export const WEEKLY_QUIZZES = {
       explanation:"Synpharyngitic hematuria (simultaneous with the URI) plus normal complement levels is the signature of IgA nephropathy. Post-infectious GN has a 1–3 week latent period after infection and low C3. Lupus nephritis typically shows low C3 and C4 plus systemic features; membranous presents as nephrotic-range proteinuria, not hematuria." },
     { q:"A 10-year-old boy develops dark 'Coca-Cola' urine, periorbital edema, and BP 150/95 two weeks after a documented strep pharyngitis. Labs show low C3 with normal C4. Most likely diagnosis?",
       choices:["IgA nephropathy","Post-infectious glomerulonephritis","Membranoproliferative GN","Anti-GBM disease"], answer:1,
-      explanation:"A 1–3 week latent period after strep plus low C3 with normal C4 (alternative complement pathway activation) is classic for post-infectious GN. IgA would present synpharyngitically with normal complement. MPGN classically has BOTH C3 and C4 low. C3 typically normalizes in 6–8 weeks; treatment is supportive." },
+      explanation:"A 1–3 week latent period after strep plus low C3 with normal C4 (alternative complement pathway activation) is classic for post-infectious GN. IgA would present synpharyngitically with normal complement. Other complement-mediated glomerulopathies can also lower complement, so use the timing and full clinical picture rather than a single aside alone. C3 typically normalizes in 6–8 weeks, and treatment is usually supportive." },
     { q:"A 55-year-old man presents with new nephrotic-range proteinuria and edema. Kidney biopsy shows diffuse thickening of the glomerular basement membrane with subepithelial 'spikes' on silver stain. Which serologic test is most likely to be positive and can help avoid repeat biopsy for monitoring?",
       choices:["Anti-GBM","Anti-PLA2R","ANCA","Anti-dsDNA"], answer:1,
       explanation:"Primary membranous nephropathy is caused by antibodies against the podocyte M-type phospholipase A2 receptor (PLA2R) in ~70% of cases. A positive anti-PLA2R in a classic biopsy picture can substitute for repeat biopsy when assessing treatment response — titer trends correlate with disease activity. Secondary membranous (lupus, hepatitis B, malignancy) is usually PLA2R-negative." },
@@ -359,7 +359,7 @@ export const WEEKLY_QUIZZES = {
       explanation:"BK is an opportunistic polyomavirus. First-line management is carefully stepwise reduction of immunosuppression (typically MMF first, then CNI) to restore T-cell immunity \u2014 this is the only intervention with consistent evidence. Surveillance is the cornerstone: the 2024 international BK consensus (endorsed by AST-IDCOP) updated screening to monthly plasma BK PCR through month 9, then every 3 months through year 2, with action thresholds around plasma viral loads >10,000 copies/mL (older guidance stopped monthly screening at 6 months). No dedicated antiviral is effective; IVIG has supportive (non-RCT) data for persistent viremia or biopsy-proven BKVAN at some centers. Leflunomide and cidofovir are generally discouraged due to toxicity without clear benefit. BKVAN is still possible beyond 12 months \u2014 don't rule it out by timing alone." },
     { q:"A 42-year-old man with acute flank pain is found on non-contrast CT to have a 6-mm ureteric stone. A plain abdominal X-ray (KUB) performed in the ER did NOT show the stone. Which stone composition is most consistent with this imaging pattern?",
       choices:["Calcium oxalate","Struvite","Uric acid","Calcium phosphate"], answer:2,
-      explanation:"Uric acid stones are radiolucent on plain X-ray but readily visible on non-contrast CT — the gold standard for stone imaging. Uric acid stones form in persistently acidic urine (pH <5.5) and can often be dissolved with urinary alkalinization (potassium citrate), targeting urine pH ~6.5. Calcium, struvite, and cystine stones are all radio-opaque on KUB." },
+      explanation:"Uric acid stones are radiolucent on plain X-ray but readily visible on non-contrast CT — the gold standard for stone imaging. Uric acid stones form in persistently acidic urine (pH <5.5) and can often be dissolved with urinary alkalinization using potassium citrate, targeting urine pH around 6.5. Calcium and struvite stones are radiopaque; cystine stones are only faintly radiopaque and may be missed on KUB." },
     { q:"A patient hospitalized for decompensated heart failure is 'diuretic resistant' on escalating IV furosemide. Her team adds oral metolazone, and UOP markedly increases. What is the mechanism of this synergy?",
       choices:["It blocks the same NKCC2 transporter as loops for additive effect","It blocks compensatory Na⁺ reabsorption at the NCC in the DCT","It directly increases GFR","It acts as an osmotic diuretic"], answer:1,
       explanation:"Chronic loop use drives distal nephron hypertrophy and increased Na⁺ reabsorption at the DCT — braking the diuretic response. Thiazide-type agents like metolazone block NCC in the DCT, producing sequential nephron blockade and powerful synergy. Watch closely for hypokalemia, hyponatremia, and rapid volume depletion when starting this combination." },
@@ -405,9 +405,9 @@ export const TOPIC_REINFORCEMENT_BANK: Record<string, Array<{q: string; choices:
     { q:"A 67-year-old woman with hypertension and obesity has eGFR 38 mL/min/1.73m² and UACR 620 mg/g on repeat testing 4 months apart. She is on lisinopril 20 mg and metoprolol. Which intervention adds the most evidence-based kidney protection?",
       choices:["Add amlodipine for tighter BP control","Start an SGLT2 inhibitor","Start allopurinol for a uric acid of 7.8","Restrict protein to <0.6 g/kg/day"], answer:1,
       explanation:"DAPA-CKD and EMPA-KIDNEY showed SGLT2 inhibitors reduce the composite of eGFR decline, ESKD, and cardiovascular/kidney death in proteinuric CKD — even without diabetes. Expect a small initial eGFR dip (3–5 mL/min) that reflects the drug working via tubuloglomerular feedback. SGLT2i now sit next to RAAS blockade as a pillar of CKD therapy." },
-    { q:"A 70-year-old with CKD has eGFR 24, Hgb 9.2, ferritin 380, transferrin saturation 18%, stool guaiac negative. He feels fatigued. What is the most appropriate initial step?",
-      choices:["Start an erythropoiesis-stimulating agent immediately","Give IV iron to correct functional iron deficiency before considering an ESA","Transfuse 2 units of packed red cells","Check serum B12 and folate before any treatment"], answer:1,
-      explanation:"KDIGO treats TSat ≤30% and ferritin ≤500 as iron-replete territory where iron supplementation is reasonable, and many patients achieve Hgb improvement from iron alone. ESAs should not be started until iron stores are addressed — otherwise response is blunted. IV iron is preferred in non-dialysis CKD with inadequate oral response or GI intolerance." },
+    { q:"A 70-year-old with CKD not on dialysis has eGFR 24, Hgb 9.2, ferritin 180, transferrin saturation 18%, and stool guaiac negative. He feels fatigued. What is the most appropriate initial step?",
+      choices:["Start an erythropoiesis-stimulating agent immediately","Start iron therapy before considering an ESA; oral or IV iron can be chosen based on context and tolerance","Transfuse 2 units of packed red cells","Check serum B12 and folate before any treatment"], answer:1,
+      explanation:"For CKD not on dialysis, current KDIGO guidance supports starting iron when ferritin is below 300 ng/mL with low TSAT, or below 100 ng/mL with higher TSAT thresholds, before moving to an ESA. Oral or IV iron can be reasonable depending on symptoms, prior response, GI tolerance, and patient preference. ESAs should generally not be the first move until iron deficiency has been addressed." },
     { q:"A 60-year-old Black man with hypertension and eGFR 52 has a first-time eGFR. Chart shows an older MDRD value with race coefficient was 62; the newer CKD-EPI 2021 value without race is 52. What is the best interpretation?",
       choices:["He has declining kidney function over the interval","The 2021 equation removed the race coefficient; reported eGFR is lower in many Black patients and is now the standard","The older value is more accurate and should be used for staging","He needs a cystatin C to distinguish 'real' from 'apparent' CKD"], answer:1,
       explanation:"CKD-EPI 2021 removed the race coefficient to address health equity concerns. The reported eGFR in Black patients typically decreases by 4–7 mL/min compared to the 2009 equation, shifting some into earlier CKD categories — appropriate for access to CKD care and transplant referral. Combined creatinine–cystatin C CKD-EPI offers the greatest precision when available." },
@@ -428,8 +428,8 @@ export const TOPIC_REINFORCEMENT_BANK: Record<string, Array<{q: string; choices:
       choices:["Nephrogenic diabetes insipidus","Central diabetes insipidus","Primary polydipsia","Osmotic diuresis"], answer:1,
       explanation:"A dilute urine in the face of hypertonic plasma rules out normal ADH response and primary polydipsia (which has low serum osm). The robust urine concentrating response to exogenous desmopressin confirms central DI — the kidneys work, but ADH is not being made. Nephrogenic DI fails to respond to DDAVP. Management: intranasal or oral desmopressin." },
     { q:"An 82-year-old nursing home resident with dementia is admitted with Na⁺ 168, confusion, and dry mucous membranes after several days of poor intake. Weight 60 kg. Which calculated free water deficit and correction plan is most appropriate?",
-      choices:["~5 L; replace entirely in 12 hours with D5W","~5 L; replace half over 24 hours with correction ≤10–12 mEq/L/day","~2 L; replace with 0.9% NaCl over 6 hours","~1 L; correct rapidly to Na <140 within 8 hours"], answer:1,
-      explanation:"Free water deficit = TBW × [(Na/140) − 1] = (0.5 × 60) × [(168/140) − 1] ≈ 30 × 0.2 = 6 L (use 0.5 for elderly women). Correction should not exceed ~10 mEq/L/24h to avoid cerebral edema; aim to replace roughly half the deficit in the first 24 hours plus ongoing insensible/urinary losses. Use enteral free water or D5W for pure water deficit." },
+      choices:["~6 L; replace entirely in 12 hours with D5W","~6 L; replace about half over 24 hours with correction ≤10–12 mEq/L/day","~2 L; replace with 0.9% NaCl over 6 hours","~1 L; correct rapidly to Na <140 within 8 hours"], answer:1,
+      explanation:"Free water deficit = TBW × [(Na/140) − 1] = (0.5 × 60) × [(168/140) − 1] ≈ 30 × 0.2 = 6 L (using 0.5 for an elderly woman). Correction should not exceed about 10 mEq/L in 24 hours to avoid cerebral edema; replace roughly half the deficit in the first 24 hours, then continue more gradually while accounting for ongoing losses. Use enteral free water or D5W for a pure water deficit." },
     { q:"A 46-year-old on chronic lithium for bipolar disorder presents with polyuria, polydipsia, and Na⁺ 148. Urine osm is 110 and fails to rise above 200 with desmopressin. Which strategy has the best evidence for reducing the polyuria?",
       choices:["Switch to higher-dose lithium","Low-sodium diet plus a thiazide and/or amiloride","IV vasopressin infusion","Long-term DDAVP nasal spray"], answer:1,
       explanation:"Lithium-induced nephrogenic DI is ADH-resistant, so DDAVP doesn't help. Thiazides induce mild volume contraction → enhanced proximal Na and water reabsorption → paradoxical reduction in urine volume. Amiloride blocks lithium entry through ENaC in the collecting duct, reducing toxicity. A low-sodium diet reinforces the effect. Discontinuation of lithium should be considered when feasible in coordination with psychiatry." },
@@ -547,7 +547,7 @@ export const TOPIC_REINFORCEMENT_BANK: Record<string, Array<{q: string; choices:
   "Fluid Management": [
     { q:"A 66-year-old with septic shock from pyelonephritis has received 4 L of 0.9% NaCl. BP is 94/58, lactate 3.4, Cl⁻ 114, HCO₃⁻ 18, anion gap 11. Which fluid strategy is best supported by evidence?",
       choices:["Continue 0.9% NaCl as the default","Switch to a balanced crystalloid (LR or Plasma-Lyte) for ongoing resuscitation","Switch to 5% albumin for all further resuscitation","Start 3% hypertonic saline"], answer:1,
-      explanation:"SMART and SALT-ED trials showed balanced crystalloids reduced the composite of major adverse kidney events (MAKE-30) vs saline. The hyperchloremic acidosis here is iatrogenic from saline. Balanced crystalloids should be the default for most resuscitation; albumin is reserved for selected indications (cirrhosis, large-volume paracentesis, HRS)." },
+      explanation:"SMART and SALT-ED showed fewer major adverse kidney events with balanced crystalloids than with saline in many large-volume resuscitation settings. The hyperchloremic acidosis here is iatrogenic from saline. Balanced crystalloids are often preferred for ongoing resuscitation when substantial volumes are needed, while albumin is reserved for selected indications such as cirrhosis, large-volume paracentesis, or hepatorenal syndrome." },
     { q:"A 78-year-old hospitalized patient has received 6 L of maintenance IVF over 48 hours. BP 132/82, HR 84. Labs: Na⁺ 129, serum osm 268, urine osm 420, weight up 3.5 kg. What is the primary problem and best correction?",
       choices:["Dehydration; increase IV fluid rate","Iatrogenic dilutional hyponatremia from hypotonic maintenance; stop hypotonic fluids, restrict water","Adrenal insufficiency; give hydrocortisone","SIADH from hospital stress; start tolvaptan"], answer:1,
       explanation:"Hospitalized elderly patients have non-osmotic ADH from pain, nausea, and meds. Routine hypotonic maintenance fluids (½NS + D5) in this setting reliably produces hyponatremia. Recent adult literature now favors isotonic maintenance as default. Stop the hypotonic fluid, restrict free water, and Na⁺ should correct gradually." },
@@ -590,8 +590,8 @@ export const TOPIC_REINFORCEMENT_BANK: Record<string, Array<{q: string; choices:
   ],
   "CKD-MBD": [
     { q:"A 66-year-old with eGFR 22 has Ca²⁺ 8.2, phosphorus 5.6, intact PTH 320, and 25-OH vitamin D 34 ng/mL (normal). Which mechanism best explains her secondary hyperparathyroidism?",
-      choices:["Nutritional vitamin D deficiency","Reduced calcitriol from loss of renal 1-α-hydroxylase and FGF-23 suppression of the remaining enzyme","Autonomous parathyroid adenoma","Calcium supplementation excess"], answer:1,
-      explanation:"Her 25-OH vitamin D is adequate, so nutritional deficiency is excluded. As GFR falls, phosphorus retention stimulates FGF-23, which suppresses the remaining 1-α-hydroxylase → low active 1,25-(OH)₂D → low intestinal calcium absorption → low Ca²⁺ → high PTH. Treatment starts with dietary phosphorus restriction and binders; active vitamin D analogs or calcimimetics are added when PTH remains high." },
+      choices:["Nutritional vitamin D deficiency","Reduced calcitriol from loss of renal 1-α-hydroxylase, amplified by increased FGF-23","Autonomous parathyroid adenoma","Calcium supplementation excess"], answer:1,
+      explanation:"Her 25-OH vitamin D is adequate, so nutritional deficiency is excluded. As GFR falls, phosphorus retention stimulates FGF-23, which suppresses the remaining 1-α-hydroxylase, lowering active 1,25-(OH)₂D. That lowers intestinal calcium absorption and contributes to hypocalcemia and elevated PTH. Treatment starts with dietary phosphorus restriction and phosphate binders; active vitamin D analogs or calcimimetics are added when PTH remains high." },
     { q:"A dialysis patient has Ca²⁺ 10.4, phosphorus 7.2, PTH 780, and new painful calcified lesions on the fingers. Which therapy best addresses the combined hyperphosphatemia, hypercalcemia, and elevated PTH?",
       choices:["Calcium acetate as phosphate binder and vitamin D","Non-calcium phosphate binder (sevelamer or lanthanum) plus a calcimimetic (cinacalcet or etelcalcetide)","High-dose cholecalciferol","Parathyroidectomy as first-line"], answer:1,
       explanation:"Calcium-containing binders worsen hypercalcemia and vascular calcification; switch to non-calcium binders. Calcimimetics lower PTH by allosterically activating the calcium-sensing receptor — and uniquely also lower calcium (unlike active vitamin D). EVOLVE showed cinacalcet reduced some cardiovascular endpoints. Consider parathyroidectomy for refractory disease with calciphylaxis or PTH >800 on maximal medical therapy." },
@@ -619,6 +619,50 @@ export const TOPIC_REINFORCEMENT_BANK: Record<string, Array<{q: string; choices:
 
 export function topicToSlug(topic: string): string {
   return topic.toLowerCase().replace(/\s+/g, "-");
+}
+
+const REINFORCEMENT_TOPIC_ALIASES: Record<string, string> = {
+  "Contrast-Associated AKI": "AKI",
+  "Hepatorenal Syndrome": "AKI",
+  "Peritoneal Dialysis": "Dialysis",
+  "Rhabdomyolysis": "AKI",
+  "SGLT2 Inhibitors": "CKD",
+};
+
+const REINFORCEMENT_TOPIC_KEYWORDS: Array<[string, string[]]> = [
+  ["Hyponatremia", ["siadh", "hyponatrem", "osmotic demyel", "beer potomania", "thiazide-induced", "corrected serum na"]],
+  ["Hypernatremia", ["hypernatrem", "free water deficit", "diabetes insipidus", "desmopressin", "ddavp"]],
+  ["Hyperkalemia", ["hyperkal", "peaked t", "qrs widening", "type 4 rta", "hyporeninemic hypoaldosteronism", "salt substitute"]],
+  ["Hypokalemia", ["hypokal", "urine chloride", "urine cl", "romk", "vomiting from pyloric obstruction"]],
+  ["CKD-MBD", ["calcitriol", "1-α-hydroxylase", "1-alpha hydroxylase", "hyperparathyroidism", "calciphylaxis", "phosphorus", "pth"]],
+  ["Kidney Stones", ["stone", "oxalate", "citrate", "radiolucent", "uric acid stones", "kub"]],
+  ["Diuretics", ["furosemide", "metolazone", "thiazide", "nkcc2", "ncc", "loop diuretic", "spironolactone", "chlorothiazide"]],
+  ["Fluid Management", ["balanced crystalloid", "plasma-lyte", "maintenance ivf", "saline infusion", "fluid management", "resuscitation"]],
+  ["Glomerulonephritis", ["rbc casts", "dysmorphic rbcs", "iga nephropathy", "post-infectious", "lupus nephritis", "anca", "wire-loop", "glomerulonephritis"]],
+  ["Nephrotic Syndrome", ["nephrotic syndrome", "minimal change disease", "fsgs", "membranous", "pla2r", "foot-process effacement"]],
+  ["Transplant", ["transplant", "tacrolimus", "sv40", "bk viremia", "rejection", "calcineurin inhibitor"]],
+  ["Dialysis", ["dialysis", "uremic", "peritoneal", "hemodialysis", "pd peritonitis"]],
+  ["Diabetic Kidney Disease", ["diabetic kidney disease", "fidelio", "figaro", "finerenone", "retinopathy"]],
+  ["Cardiorenal Syndrome", ["cardiorenal", "cvp", "venous congestion", "decongestion", "carress-hf", "rose-hf"]],
+  ["Urinalysis", ["dipstick", "immunofixation", "bence-jones", "waxy casts", "urinalysis"]],
+  ["AKI", ["aki", "acute kidney injury", "muddy brown", "atn", "prerenal", "feurea", "fena", "obstruction", "blue toe", "cholesterol crystal", "contrast", "rhabdomyolysis"]],
+  ["CKD", ["ckd", "ckd-epi", "cystatin c", "albuminuria", "egfr", "kidney biopsy"]],
+];
+
+export function resolveReinforcementTopic(question?: { q?: string; explanation?: string; topic?: string } | null): string | null {
+  if (!question) return null;
+
+  if (typeof question.topic === "string") {
+    const explicitTopic = REINFORCEMENT_TOPIC_ALIASES[question.topic] || question.topic;
+    if (TOPIC_REINFORCEMENT_BANK[explicitTopic]) return explicitTopic;
+  }
+
+  const haystack = ` ${`${question.q || ""} ${question.explanation || ""}`.toLowerCase()} `;
+  for (const [topic, patterns] of REINFORCEMENT_TOPIC_KEYWORDS) {
+    if (patterns.some((pattern) => haystack.includes(pattern))) return topic;
+  }
+
+  return null;
 }
 
 export function buildTopicReinforcementKey(topic: string, idx: number): string {
