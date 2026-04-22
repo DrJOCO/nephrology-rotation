@@ -10,6 +10,24 @@ import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
 import type { ClinicGuideRecord } from "../../types";
 
+const GUIDE_THEME_COLOR_MAP: Record<string, string> = {
+  "#2980b9": "#8B2E2E",
+  "#16a085": "#6F7753",
+  "#e67e22": "#B8732C",
+  "#8e44ad": "#8A6A73",
+  "#7d3c98": "#755A63",
+  "#e74c3c": "#7A2828",
+  "#c0392b": "#7A2828",
+  "#d4ac0d": "#8F5A23",
+  "#2c3e50": "#3D372E",
+  "#163b50": "#3D372E",
+  "#1c2833": "#3D372E",
+};
+
+function getGuideThemeColor(color: string) {
+  return GUIDE_THEME_COLOR_MAP[color.toLowerCase()] || color;
+}
+
 function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () => void }) {
   const [openCat, setOpenCat] = useState(0);
   const section = GUIDE_SECTIONS.find(s => s.id === sectionId);
@@ -39,11 +57,12 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
       {/* Categories - accordion */}
       {data.categories.map((cat, ci) => {
         const isOpen = openCat === ci;
+        const accent = getGuideThemeColor(cat.color);
         return (
-          <div key={ci} style={{ marginBottom: 10, background: T.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${isOpen ? cat.color + "60" : T.line}`, transition: "border 0.2s" }}>
+          <div key={ci} style={{ marginBottom: 10, background: T.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${isOpen ? accent + "60" : T.line}`, transition: "border 0.2s" }}>
             <button onClick={() => setOpenCat(isOpen ? -1 : ci)}
               style={{ width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: cat.color + "15", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: accent + "15", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
                 {cat.emoji}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -67,7 +86,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
                       ...(isNever ? { background: T.redBg, borderRadius: 8, padding: "8px 10px", marginLeft: -4, marginRight: -4 } : {}),
                     }}>
                       {!isWarning && !isNever && (
-                        <span style={{ color: cat.color, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>•</span>
+                        <span style={{ color: accent, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>•</span>
                       )}
                       <div style={{ fontSize: 13, color: isWarning ? T.goldText : isNever ? T.redDeep : T.text, lineHeight: 1.5, fontWeight: isWarning || isNever ? 600 : 400, wordBreak: "break-word" }}>
                         {item}
@@ -113,7 +132,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
               style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
                 background: `linear-gradient(135deg, ${T.greenBg} 0%, ${T.blueBg} 100%)`, borderRadius: 14,
                 border: `1.5px solid ${T.green}`, cursor: "pointer", textAlign: "left",
-                boxShadow: "0 2px 8px rgba(26,188,156,0.15)" }}>
+                boxShadow: `0 2px 8px ${T.greenAlpha}` }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, border: `1px solid ${T.greenAlpha}` }}>
                 {template.icon}
               </div>
@@ -193,7 +212,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
           background: `linear-gradient(135deg, ${T.warmBg} 0%, ${T.yellowBg} 100%)`, borderRadius: 14,
           border: `1.5px solid ${T.gold}`, cursor: "pointer", textAlign: "left", marginBottom: 14,
-          boxShadow: "0 2px 8px rgba(241,196,15,0.15)" }}>
+          boxShadow: `0 2px 8px ${T.goldAlpha}` }}>
         <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: `1px solid ${T.goldAlphaMd}` }}>
           <BookOpen size={22} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
         </div>

@@ -90,10 +90,10 @@ export function HeatmapChart({ rows, columns, data, width = 300, height }: { row
   const h = height || pad.top + rows.length * cellH + pad.bottom;
   const colorScale = (v: number | null | undefined) => {
     if (v === null || v === undefined) return T.grayBg;
-    if (v >= 80) return "#27ae60";
-    if (v >= 60) return "#f1c40f";
-    if (v >= 40) return "#e67e22";
-    return "#e74c3c";
+    if (v >= 80) return T.green;
+    if (v >= 60) return T.gold;
+    if (v >= 40) return T.orange;
+    return T.accent;
   };
   return (
     <svg width={width} height={h} style={{ display: "block" }}>

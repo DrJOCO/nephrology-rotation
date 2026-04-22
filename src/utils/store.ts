@@ -478,6 +478,18 @@ const store = {
     }
   },
 
+  // ─── Read all students for any rotation (historical analytics) ──
+  async getStudentsForRotation(code: string): Promise<FirestoreData[]> {
+    try {
+      const { db, fs } = await getFirebase();
+      const snap = await fs.getDocs(fs.collection(db, "rotations", code, "students"));
+      return snap.docs.map((doc) => ({ studentId: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.warn("getStudentsForRotation failed:", e);
+      return [];
+    }
+  },
+
   // ─── List all rotations ─────────────────────────────────────────
   async listRotations(): Promise<RotationInfo[]> {
     try {

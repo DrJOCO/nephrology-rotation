@@ -29,8 +29,8 @@ export interface CompetencyDomainSummary {
     caseTarget: number;
     quizAccuracy: number | null;
     quizSampleSize: number;
-    articlesRead: number;
-    articleTarget: number;
+    referencesReviewed: number;
+    referenceCount: number;
   };
   action: CompetencyAction;
 }
@@ -298,7 +298,6 @@ function masteryObjectives(
   totalWeeks: number,
   weeklyScores: WeeklyScores,
   completedItems: CompletedItems,
-  articlesByWeek: typeof ARTICLES,
 ): {
   masteryPercent: number;
   masteryLabel: string;
@@ -315,11 +314,6 @@ function masteryObjectives(
     return sum + (STUDY_SHEETS[week] || []).filter((sheet) => completedItems.studySheets?.[sheet.id]).length;
   }, 0);
 
-  const articleTotal = weeks.reduce((sum, week) => sum + (articlesByWeek[week] || []).length, 0);
-  const articleDone = weeks.reduce((sum, week) => {
-    return sum + (articlesByWeek[week] || []).filter((article) => completedItems.articles?.[article.url]).length;
-  }, 0);
-
   const caseTotal = weeks.reduce((sum, week) => sum + (WEEKLY_CASES[week] || []).length, 0);
   const caseDone = weeks.reduce((sum, week) => {
     return sum + (WEEKLY_CASES[week] || []).filter((item) => completedItems.cases?.[item.id]).length;
@@ -330,7 +324,6 @@ function masteryObjectives(
 
   const objectives: CompetencyObjective[] = [
     { label: "Study sheets", met: sheetTotal === 0 || sheetDone === sheetTotal, detail: `${sheetDone}/${sheetTotal} complete` },
-    { label: "Articles", met: articleTotal === 0 || articleDone === articleTotal, detail: `${articleDone}/${articleTotal} read` },
     { label: "Cases", met: caseTotal === 0 || caseDone === caseTotal, detail: `${caseDone}/${caseTotal} finished` },
     { label: "Quiz", met: bestQuiz !== null && bestQuiz >= 60, detail: bestQuiz === null ? "Not taken yet" : `Best score ${bestQuiz}%` },
   ];
@@ -404,8 +397,6 @@ export function buildCompetencySummary({
     const availableArticles = articlesByDomain[domain].length;
     const developingCaseTarget = availableCases > 0 ? 1 : 0;
     const proficientCaseTarget = availableCases > 0 ? Math.min(3, availableCases) : 0;
-    const noviceArticleTarget = availableArticles > 0 ? 1 : 0;
-    const articleTarget = availableArticles > 0 ? Math.min(2, availableArticles) : 0;
 
     const developingMet = srIntervalDays >= 7
       && quizAccuracy !== null
@@ -418,9 +409,9 @@ export function buildCompetencySummary({
 
     const tier: CompetencyTier = proficientMet ? "Proficient" : developingMet ? "Developing" : "Novice";
     const target = tier === "Novice"
-      ? { sr: 7, quiz: 60, cases: developingCaseTarget, articles: noviceArticleTarget }
+      ? { sr: 7, quiz: 60, cases: developingCaseTarget }
       : tier === "Developing"
-        ? { sr: 21, quiz: 80, cases: proficientCaseTarget, articles: articleTarget }
+        ? { sr: 21, quiz: 80, cases: proficientCaseTarget }
         : null;
 
     const progress = target
@@ -428,8 +419,7 @@ export function buildCompetencySummary({
         Math.min(srIntervalDays / target.sr, 1),
         Math.min((quizAccuracy || 0) / target.quiz, 1),
         target.cases === 0 ? 1 : Math.min(solvedCases.length / target.cases, 1),
-        target.articles === 0 ? 1 : Math.min(readArticles.length / target.articles, 1),
-      ].reduce((sum, value) => sum + value, 0) / 4) * 100)
+      ].reduce((sum, value) => sum + value, 0) / 3) * 100)
       : 100;
 
     const progressLabel = tier === "Proficient"
@@ -474,8 +464,8 @@ export function buildCompetencySummary({
       };
     } else if (nextUnreadArticle) {
       action = {
-        label: `Read a ${definition.label} article`,
-        detail: `${nextUnreadArticle.title} is still unread in Week ${nextUnreadArticle.week}.`,
+        label: `Browse an optional ${definition.label} reference`,
+        detail: `${nextUnreadArticle.title} is available in Week ${nextUnreadArticle.week} for deeper reading.`,
         tab: "today",
         subView: { type: "articles", week: nextUnreadArticle.week },
       };
@@ -503,8 +493,8 @@ export function buildCompetencySummary({
         caseTarget: proficientCaseTarget,
         quizAccuracy,
         quizSampleSize: recentQuizWindow.length,
-        articlesRead: readArticles.length,
-        articleTarget,
+        referencesReviewed: readArticles.length,
+        referenceCount: availableArticles,
       },
       action,
     };
@@ -513,7 +503,7 @@ export function buildCompetencySummary({
   const topDomain = rankTopDomain(domains);
   const proficientCount = domains.filter((domain) => domain.tier === "Proficient").length;
   const developingCount = domains.filter((domain) => domain.tier === "Developing").length;
-  const mastery = masteryObjectives(currentWeek, totalWeeks, weeklyScores, completedItems, articlesByWeek);
+  const mastery = masteryObjectives(currentWeek, totalWeeks, weeklyScores, completedItems);
 
   return {
     masteryPercent: mastery.masteryPercent,

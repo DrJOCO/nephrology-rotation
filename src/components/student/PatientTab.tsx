@@ -418,10 +418,12 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
   };
 
   const removeFollowUp = (patientId: string | number, followUpId: number) => {
+    const patient = patients.find(p => p.id === patientId);
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
       followUps: (p.followUps || []).filter(f => f.id !== followUpId)
     } : p));
+    onLogActivity?.("follow_up", "Follow-up removed", summarizeTopics(patient?.topics || (patient?.topic ? [patient.topic] : [])));
   };
 
   const active = patients.filter(p => p.status === "active");

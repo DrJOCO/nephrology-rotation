@@ -169,7 +169,7 @@ export interface FeedbackTag {
 }
 
 export interface AdminStudent {
-  id: number;
+  id: string | number;
   studentId: string;
   name: string;
   loginPin?: string;

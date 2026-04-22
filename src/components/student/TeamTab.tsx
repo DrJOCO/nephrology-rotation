@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Trophy, ClipboardList } from "lucide-react";
+import { Users, ClipboardList } from "lucide-react";
 import { T } from "../../data/constants";
 import store from "../../utils/store";
 import { sortTopicCounts } from "../../utils/teamSnapshots";
@@ -23,9 +23,9 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
         <Users size={48} strokeWidth={1.5} color={T.muted} aria-hidden="true" style={{ marginBottom: 12 }} />
-        <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 8px" }}>Team Board</h2>
+        <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 8px" }}>Cohort Snapshot</h2>
         <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.6 }}>
-          Join a rotation to see your team&apos;s shared learning snapshot.
+          Join a rotation to see your cohort&apos;s shared learning snapshot.
         </p>
       </div>
     );
@@ -35,9 +35,12 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
     return <div style={{ padding: 40, textAlign: "center", color: T.muted, fontSize: 14 }}>Loading team data...</div>;
   }
 
-  const sorted = [...teammates].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+  const snapshotStudents = [...teammates].sort((a, b) => {
+    const aIsMe = a.studentId === currentStudentId ? 0 : 1;
+    const bIsMe = b.studentId === currentStudentId ? 0 : 1;
+    return aIsMe - bIsMe || b.updatedAt.localeCompare(a.updatedAt) || a.name.localeCompare(b.name);
+  });
   const totalPatients = teammates.reduce((sum, s) => sum + s.patientCount, 0);
-  const totalPoints = teammates.reduce((sum, s) => sum + s.points, 0);
   const totalActivePatients = teammates.reduce((sum, s) => sum + s.activePatientCount, 0);
   const cohortTopicCounts = teammates.reduce<Record<string, number>>((acc, student) => {
     Object.entries(student.topicCounts || {}).forEach(([topic, count]) => {
@@ -49,48 +52,29 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
 
   return (
     <div style={{ padding: 16 }}>
-      <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Team Board</h2>
+      <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Cohort Snapshot</h2>
       <div style={{ color: T.muted, fontSize: 13, marginBottom: 16 }}>
-        {teammates.length} student{teammates.length !== 1 ? "s" : ""} • {totalPatients} logged patient{totalPatients !== 1 ? "s" : ""} • {totalPoints} total pts
+        {teammates.length} student{teammates.length !== 1 ? "s" : ""} sharing this code • {totalPatients} logged patient{totalPatients !== 1 ? "s" : ""} • built for shared visibility, not ranking
       </div>
 
-      <div style={{ background: `linear-gradient(135deg, ${T.navyBg}, ${T.deepBg})`, borderRadius: 14, padding: 16, marginBottom: 16, color: "white" }}>
-        <h3 style={{ fontFamily: T.serif, color: "white", fontSize: 14, margin: "0 0 14px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><Trophy size={16} strokeWidth={1.75} aria-hidden="true" /> Leaderboard</h3>
-        {sorted.length === 0 ? (
-          <div style={{ textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: 12 }}>No students yet</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {sorted.map((student, idx) => {
-              const isMe = student.studentId === currentStudentId;
-              const medals = ["🥇", "🥈", "🥉"];
-              return (
-                <div key={student.studentId} style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                  background: isMe ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
-                  borderRadius: 8, padding: "8px 10px",
-                  border: isMe ? "1px solid rgba(255,255,255,0.3)" : "1px solid transparent",
-                }}>
-                  <div style={{ fontSize: 18, width: 28, textAlign: "center", flexShrink: 0 }}>
-                    {idx < 3 ? medals[idx] : <span style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", fontWeight: 700 }}>{idx + 1}</span>}
-                  </div>
-                  <div style={{ fontSize: 20, flexShrink: 0 }}>{student.levelIcon}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {student.name || "Unknown"}{isMe ? " (You)" : ""}
-                    </div>
-                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
-                      {student.levelName} • {student.patientCount} patient{student.patientCount !== 1 ? "s" : ""}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, fontFamily: T.mono, color: "#F0C866" }}>{student.points}</div>
-                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>pts</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      <div style={{ background: T.ice, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
+        <h3 style={{ fontFamily: T.serif, color: T.navy, fontSize: 14, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          <Users size={16} strokeWidth={1.75} aria-hidden="true" /> Shared progress view
+        </h3>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginBottom: 12 }}>
+          This view is intentionally non-ranked. It keeps the cohort visible to each other without turning the rotation into a competition.
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+            {totalActivePatients} active patients
+          </span>
+          <span style={{ fontSize: 13, color: T.greenDk, background: T.greenBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+            {Object.keys(cohortTopicCounts).length} topics seen
+          </span>
+          <span style={{ fontSize: 13, color: T.navy, background: T.card, padding: "4px 10px", borderRadius: 999, fontWeight: 600, border: `1px solid ${T.line}` }}>
+            Shared rotation code
+          </span>
+        </div>
       </div>
 
       <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.line}` }}>
@@ -117,8 +101,10 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
         )}
       </div>
 
-      <h3 style={{ fontFamily: T.serif, color: T.navy, fontSize: 15, margin: "0 0 12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}><ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" /> Student Snapshots</h3>
-      {sorted.map((student) => {
+      <h3 style={{ fontFamily: T.serif, color: T.navy, fontSize: 15, margin: "0 0 12px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+        <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" /> Rotation Snapshots
+      </h3>
+      {snapshotStudents.map((student) => {
         const isMe = student.studentId === currentStudentId;
         const isExpanded = expandedStudent === student.studentId;
         const topTopics = sortTopicCounts(student.topicCounts || {}, 4);
@@ -135,7 +121,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
                   {student.name || "Unknown"}{isMe ? " (You)" : ""}
                 </div>
                 <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>
-                  {student.activePatientCount} active • {student.dischargedPatientCount} discharged • {student.patientCount} total
+                  {student.activePatientCount} active • {student.dischargedPatientCount} discharged • {student.patientCount} total patients
                 </div>
               </div>
               <span style={{ fontSize: 16, color: T.muted, transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
@@ -160,7 +146,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
         );
       })}
 
-      {sorted.length === 0 && (
+      {snapshotStudents.length === 0 && (
         <div style={{ background: T.card, borderRadius: 14, padding: 24, textAlign: "center", color: T.muted, border: `1px solid ${T.line}` }}>
           No students have published snapshots yet.
         </div>

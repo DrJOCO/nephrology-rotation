@@ -81,8 +81,8 @@ export default function ProgressTab({
             </h2>
             <p style={{ margin: "8px 0 0", fontSize: 13, color: T.sub, lineHeight: 1.6, maxWidth: 520 }}>
               {currentWeek
-                ? `Week ${currentWeek} is measured against concrete objectives: required reading, study sheets, cases, and a scored quiz signal.`
-                : "The mastery ring rolls up the tracked objectives across your active rotation work."}
+                ? `Week ${currentWeek} is measured against core study sheets, cases, and a scored quiz signal. Optional references stay available for deeper reading.`
+                : "The mastery ring rolls up the core objectives across your active rotation work."}
             </p>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function ProgressTab({
         <div style={{ marginBottom: 12 }}>
           <h3 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Competency map</h3>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-            Six domain rows, each driven by spaced repetition, quiz signal, case completion, and article coverage.
+            Six domain rows driven by spaced repetition, quiz signal, and case completion. Optional reference use is shown separately.
           </div>
         </div>
 
@@ -197,12 +197,14 @@ export default function ProgressTab({
                       </div>
 
                       <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Articles read</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Optional references used</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>
-                          {domain.signals.articlesRead}/{domain.signals.articleTarget || 0}
+                          {domain.signals.referencesReviewed}/{domain.signals.referenceCount || 0}
                         </div>
                         <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-                          Supplementary signal used to round out the domain view
+                          {domain.signals.referenceCount > 0
+                            ? "Reviewed for extra depth and point-of-care reference"
+                            : "No optional references linked for this domain"}
                         </div>
                       </div>
                     </div>

@@ -17,11 +17,17 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.blueBg, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+        Optional depth
+      </div>
       <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
         Week {week}: {wk?.title || "Curriculum"}
       </h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>
-        Recommended readings {"\u2014"} {readCount}/{arts.length} read
+        Optional articles, guidelines, and landmark studies {"\u2014"} {readCount}/{arts.length} reviewed
+      </p>
+      <p style={{ color: T.muted, fontSize: 13, margin: "-8px 0 16px", lineHeight: 1.6 }}>
+        Study sheets hold the required summary material. These longer readings are here for extra depth and quick reference when you want it.
       </p>
 
       {arts.map((a, i) => {
@@ -76,8 +82,8 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
                 {(bookmarks?.articles || []).includes(a.url) ? "\u2605" : "\u2606"}
               </button>
               <button onClick={() => onToggleComplete(a.url)}
-                aria-label={isRead ? `Mark ${a.title} unread` : `Mark ${a.title} as read`}
-                title={isRead ? "Read — click to undo" : "Mark as read"}
+                aria-label={isRead ? `Mark ${a.title} unreviewed` : `Mark ${a.title} as reviewed`}
+                title={isRead ? "Reviewed — click to undo" : "Mark reviewed"}
                 style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.green : T.med}`, background: isRead ? T.green : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, fontWeight: 700, color: isRead ? "white" : T.med }}>
                 {"\u2713"}
               </button>

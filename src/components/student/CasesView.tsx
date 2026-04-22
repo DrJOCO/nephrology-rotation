@@ -240,6 +240,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 export default function CasesView({ week, onBack, completedItems, bookmarks, onToggleBookmark, onCaseComplete }: { week: number; onBack: () => void; completedItems: CompletedItems; bookmarks: Bookmarks; onToggleBookmark: (id: string) => void; onCaseComplete: (caseId: string, result: { score: number; total: number }) => void }) {
   const [activeCase, setActiveCase] = useState<CaseData | null>(null);
   const cases = WEEKLY_CASES[week] || [];
+  const doneCount = cases.filter((item) => completedItems?.cases?.[item.id]).length;
 
   if (activeCase) {
     return <CaseDetail
@@ -261,9 +262,12 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
       <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
         ← Back
       </button>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+        Core for this week
+      </div>
       <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Week {week} Clinical Cases</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.5 }}>
-        Work through real-world clinical scenarios. Read the case, then answer diagnostic and management questions.
+        {doneCount}/{cases.length} completed. Work through real-world clinical scenarios, then answer the diagnostic and management questions to lock in the week&apos;s core material.
       </p>
 
       {cases.map(c => {

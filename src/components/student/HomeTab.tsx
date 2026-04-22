@@ -141,13 +141,14 @@ function buildLearningPlan({
 
   let sheetsTotal = 0;
   let sheetsDone = 0;
-  let articlesTotal = 0;
-  let articlesDone = 0;
   let casesTotal = 0;
   let casesDone = 0;
   let quizzesTotal = 0;
   let quizzesDone = 0;
   let nextAction: NavAction | null = null;
+  let optionalReferencesTotal = 0;
+  let optionalReferencesDone = 0;
+  let optionalReferenceAction: NavAction | null = null;
 
   for (const week of activeWeeks) {
     const weekSheets = STUDY_SHEETS[week] || [];
@@ -162,10 +163,10 @@ function buildLearningPlan({
 
     sheetsTotal += weekSheets.length;
     sheetsDone += weekSheetsDone;
-    articlesTotal += weekArticles.length;
-    articlesDone += weekArticlesDone;
     casesTotal += weekCases.length;
     casesDone += weekCasesDone;
+    optionalReferencesTotal += weekArticles.length;
+    optionalReferencesDone += weekArticlesDone;
     if (quizAvailable) quizzesTotal += 1;
     if (weekQuizTaken) quizzesDone += 1;
 
@@ -175,15 +176,6 @@ function buildLearningPlan({
         meta: `${weekSheets.length - weekSheetsDone} still to review`,
         tab: "today",
         subView: { type: "studySheets", week },
-      };
-      continue;
-    }
-    if (!nextAction && weekArticlesDone < weekArticles.length) {
-      nextAction = {
-        label: `Read Week ${week} articles`,
-        meta: `${weekArticles.length - weekArticlesDone} still unread`,
-        tab: "today",
-        subView: { type: "articles", week },
       };
       continue;
     }
@@ -204,25 +196,38 @@ function buildLearningPlan({
         subView: { type: "weeklyQuiz", week },
       };
     }
+
+    if (!optionalReferenceAction && weekArticlesDone < weekArticles.length) {
+      optionalReferenceAction = {
+        label: `Browse Week ${week} references`,
+        meta: `${weekArticles.length - weekArticlesDone} optional reference${weekArticles.length - weekArticlesDone !== 1 ? "s" : ""} available`,
+        tab: "today",
+        subView: { type: "articles", week },
+      };
+    }
   }
 
-  const total = sheetsTotal + articlesTotal + casesTotal + quizzesTotal;
-  const done = sheetsDone + articlesDone + casesDone + quizzesDone;
+  const total = sheetsTotal + casesTotal + quizzesTotal;
+  const done = sheetsDone + casesDone + quizzesDone;
   const remaining = Math.max(total - done, 0);
+  const optionalRemaining = Math.max(optionalReferencesTotal - optionalReferencesDone, 0);
   const detailParts: string[] = [];
   if (sheetsTotal - sheetsDone > 0) detailParts.push(`${sheetsTotal - sheetsDone} sheet${sheetsTotal - sheetsDone !== 1 ? "s" : ""}`);
-  if (articlesTotal - articlesDone > 0) detailParts.push(`${articlesTotal - articlesDone} article${articlesTotal - articlesDone !== 1 ? "s" : ""}`);
   if (casesTotal - casesDone > 0) detailParts.push(`${casesTotal - casesDone} case${casesTotal - casesDone !== 1 ? "s" : ""}`);
   if (quizzesTotal - quizzesDone > 0) detailParts.push(`${quizzesTotal - quizzesDone} quiz`);
 
   return {
-    label: currentWeek ? `Week ${currentWeek} essentials` : rotationEnded ? "Rotation wrap-up" : "Getting started",
-    detail: remaining > 0 ? detailParts.join(" · ") : "All tracked essentials complete",
+    label: currentWeek ? `Week ${currentWeek} core plan` : rotationEnded ? "Rotation wrap-up" : "Getting started",
+    detail: remaining > 0
+      ? detailParts.join(" · ")
+      : optionalRemaining > 0
+        ? `Core work complete · ${optionalRemaining} optional reference${optionalRemaining !== 1 ? "s" : ""} available`
+        : "All core work complete",
     remaining,
     done,
     total,
     completionRatio: total > 0 ? done / total : 0,
-    nextAction: nextAction || {
+    nextAction: nextAction || optionalReferenceAction || {
       label: rotationEnded ? "Open Me" : "Browse by topic",
       meta: rotationEnded ? "Review your progress and wrap up" : "Explore the full rotation map",
       tab: rotationEnded ? "me" : "today",
@@ -271,7 +276,7 @@ function buildHeroCard({
       eyebrow: "Next up",
       title: postScore ? "Close out the rotation" : "Optional post-rotation check-in",
       body: postScore
-        ? "Use Me to review what you covered, then clean up anything still open in the rotation."
+        ? "Use Me to review what you covered, then finish any remaining core work or browse extra references."
         : "Your wrap-up is ready. The final assessment is optional, but it helps show what stuck and what to keep reinforcing.",
       tone: "wrap",
       badge: postScore ? "Wrap-up" : "Assessment",
@@ -885,7 +890,7 @@ export default function HomeTab({
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{learningPlan.label}</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-                {learningPlan.remaining > 0 ? `${learningPlan.remaining} item${learningPlan.remaining !== 1 ? "s" : ""} still open` : "Everything for this block is covered"}
+                {learningPlan.remaining > 0 ? `${learningPlan.remaining} core item${learningPlan.remaining !== 1 ? "s" : ""} still open` : "Core work for this block is covered"}
               </div>
               <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>
                 {learningPlan.total > 0 ? `${learningPlan.done}/${learningPlan.total} complete · ` : ""}

@@ -90,8 +90,8 @@ export function ensureThemeStyles(): void {
       --c-med:#8B2E2E;--c-sky:#8B2E2E;--c-accent:#8B2E2E;--c-purple:#8B2E2E;
       /* Surface tints (ice/pale were cool blue tints) → warm surface2 */
       --c-ice:#EFE8D6;--c-pale:#EFE8D6;
-      /* Ok (green) and warn (gold/orange) in Clinical Paper are desaturated */
-      --c-green:#5E7D4F;--c-greenDk:#4D6841;--c-gold:#B8732C;--c-orange:#B8732C;
+      /* Ok (green) is intentionally muted toward olive so completion states stay on-brand */
+      --c-green:#6F7753;--c-greenDk:#5A6242;--c-gold:#B8732C;--c-orange:#B8732C;
       /* Lines and surfaces */
       --c-line:#D9D1BF;--c-bg:#F7F2E7;--c-card:#FBF8F0;
       /* Header backgrounds — kept dark (warm ink) so existing white-on-dark header still reads.
@@ -99,10 +99,10 @@ export function ensureThemeStyles(): void {
       --c-navy-bg:#1E1B16;--c-deep-bg:#26231D;
       /* Semantic tint backgrounds — warmed to match paper aesthetic */
       --c-yellow-bg:#F7EED8;--c-red-bg:#F4E4DD;--c-purple-bg:#F4E4DD;
-      --c-green-bg:#E8EEDC;--c-blue-bg:#EFE8D6;--c-gray-bg:#EFE8D6;--c-warm-bg:#FBF8F0;
-      /* Alphas remapped to new warn (#B8732C) and ok (#5E7D4F) / accent (#8B2E2E) */
+      --c-green-bg:#ECE9DD;--c-blue-bg:#EFE8D6;--c-gray-bg:#EFE8D6;--c-warm-bg:#FBF8F0;
+      /* Alphas remapped to new warn (#B8732C) and ok (#6F7753) / accent (#8B2E2E) */
       --c-gold-alpha:rgba(184,115,44,0.10);--c-gold-alpha-md:rgba(184,115,44,0.20);
-      --c-green-alpha:rgba(94,125,79,0.22);--c-red-alpha:rgba(139,46,46,0.08);
+      --c-green-alpha:rgba(111,119,83,0.18);--c-red-alpha:rgba(139,46,46,0.08);
       --c-gold-text:#8F5A23;--c-purple-accent:#8B2E2E;--c-purple-soft:#C09494;
       --c-red-deep:#7A2828;--c-overlay:rgba(30,27,22,0.65);
     }
@@ -114,17 +114,17 @@ export function ensureThemeStyles(): void {
       /* Dark mode: Clinical Paper paired palette (spec §10) */
       [data-theme="dark"] {
         --c-navy:#F0EADB;--c-deep:#C9C2AF;--c-text:#F0EADB;--c-sub:#C9C2AF;--c-dark:#F0EADB;
-        --c-muted:#8A8373;
-        --c-med:#B86E6E;--c-sky:#B86E6E;--c-accent:#B86E6E;--c-purple:#B86E6E;
-        --c-ice:#26231D;--c-pale:#26231D;
-        --c-green:#7A9564;--c-greenDk:#617A4F;--c-gold:#C8895A;--c-orange:#C8895A;
-        --c-line:#34302A;--c-bg:#15130F;--c-card:#1D1A15;
-        --c-navy-bg:#15130F;--c-deep-bg:#1D1A15;
-        --c-yellow-bg:#2A2418;--c-red-bg:#2A1F1C;--c-purple-bg:#2A1F1C;
-        --c-green-bg:#1E2418;--c-blue-bg:#26231D;--c-gray-bg:#1D1A15;--c-warm-bg:#1D1A15;
-        --c-gold-alpha:rgba(200,137,90,0.18);--c-gold-alpha-md:rgba(200,137,90,0.28);
-        --c-green-alpha:rgba(122,149,100,0.25);--c-red-alpha:rgba(184,110,110,0.12);
-        --c-gold-text:#C8895A;--c-purple-accent:#B86E6E;--c-purple-soft:#C49090;
+        --c-muted:#9A907F;
+        --c-med:#C07A7A;--c-sky:#C07A7A;--c-accent:#C07A7A;--c-purple:#C07A7A;
+        --c-ice:#201C17;--c-pale:#201C17;
+        --c-green:#9DA77A;--c-greenDk:#C4CCA7;--c-gold:#D19A6B;--c-orange:#D19A6B;
+        --c-line:#3A342D;--c-bg:#12100D;--c-card:#181510;
+        --c-navy-bg:#12100D;--c-deep-bg:#181510;
+        --c-yellow-bg:#221B14;--c-red-bg:#211615;--c-purple-bg:#221818;
+        --c-green-bg:#1A1C15;--c-blue-bg:#201C17;--c-gray-bg:#181510;--c-warm-bg:#181510;
+        --c-gold-alpha:rgba(209,154,107,0.18);--c-gold-alpha-md:rgba(209,154,107,0.28);
+        --c-green-alpha:rgba(157,167,122,0.22);--c-red-alpha:rgba(192,122,122,0.13);
+        --c-gold-text:#E0B080;--c-purple-accent:#D59A9A;--c-purple-soft:#D7A8A8;
         --c-red-deep:#9E5050;--c-overlay:rgba(0,0,0,0.8);
       }
     }
@@ -185,7 +185,7 @@ export function ensureLayoutStyles(): void {
       body > * { display: none !important; }
       body > #root > * { display: none !important; }
       .printable-report { display: block !important; position: fixed; top: 0; left: 0; width: 100%; z-index: 99999; background: white; }
-      .printable-report * { color: #2C3E50 !important; }
+      .printable-report * { color: #3D372E !important; }
       .print-no-break { break-inside: avoid; }
       @page { margin: 0.6in; size: letter; }
     }

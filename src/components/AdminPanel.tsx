@@ -11,6 +11,7 @@ import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { validatePatientForm, clampLength, LIMITS, PHI_WARNING } from "../utils/validation";
 import { buildCompetencySummary } from "../utils/competency";
 import { buildAssessmentSummary } from "../utils/assessmentInsights";
+import { buildStudentProgressSummary, normalizeAdminStudentRecord } from "../utils/adminStudents";
 import { HistogramChart, FunnelChart, HeatmapChart } from "./student/charts";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../data/clinicGuides";
 import { getCurrentOrNextFriday, getClinicTopicForDate, ensureCurrentClinicGuide, overrideClinicGuide, regenerateClinicGuide } from "../utils/clinicRotation";
@@ -217,6 +218,14 @@ function buildRecoveredStudent(source: AdminStudent, target: AdminStudent): Admi
 
 function getScorePct(score: QuizScore | null | undefined): number | null {
   return score && score.total > 0 ? Math.round((score.correct / score.total) * 100) : null;
+}
+
+function toLocalDateKey(dateInput: string | Date): string {
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function getRotationTiming(settings?: SharedSettings): RotationTiming {
@@ -992,7 +1001,17 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     const a = await store.get<ArticlesData>("admin_articles");
     const c = await store.get<WeeklyData>("admin_curriculum");
     const an = await store.get<Announcement[]>("admin_announcements");
-    if (s) setStudents(s);
+    if (s) {
+      setStudents(s.map((student) => normalizeAdminStudentRecord(
+        { ...student, studentId: student.studentId },
+        undefined,
+        {
+          fallbackId: student.id,
+          fallbackName: student.name || "Unknown",
+          fallbackAddedDate: student.addedDate,
+        },
+      )));
+    }
     if (a) setArticles(a);
     if (c) setCurriculum(c);
     if (an) setAnnouncements(an);
@@ -1075,28 +1094,19 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   useEffect(() => {
     if (!firebaseAdmin || !rotationCode) return;
     const unsub = store.onStudentsChanged((firestoreStudents) => {
-      setStudents(firestoreStudents.map(s => ({
-        id: s.studentId,
-        studentId: s.studentId,
-        name: s.name || "Unknown",
-        loginPin: s.loginPin,
-        year: s.year || "MS3/MS4",
-        email: s.email || "",
-        status: s.status || "active",
-        addedDate: s.joinedAt || new Date().toISOString(),
-        patients: s.patients || [],
-        weeklyScores: s.weeklyScores || {},
-        preScore: s.preScore || null,
-        postScore: s.postScore || null,
-        gamification: s.gamification || null,
-        srQueue: s.srQueue || {},
-        activityLog: s.activityLog || [],
-        reflections: s.reflections || [],
-        feedbackTags: s.feedbackTags || [],
-        completedItems: s.completedItems || undefined,
-        bookmarks: s.bookmarks || undefined,
-        lastSyncedAt: s.updatedAt || null,
-      })));
+      setStudents((prev) => firestoreStudents.map((student) => {
+        const studentId = typeof student.studentId === "string" ? student.studentId : "";
+        const existing = prev.find((item) => item.studentId === studentId);
+        return normalizeAdminStudentRecord(
+          student as Partial<AdminStudent> & { studentId: string; updatedAt?: string; joinedAt?: string },
+          existing,
+          {
+            fallbackId: existing?.id ?? studentId,
+            fallbackName: existing?.name || "Unknown",
+            fallbackAddedDate: existing?.addedDate,
+          },
+        );
+      }));
     });
     return () => unsub();
   }, [rotationCode, firebaseAdmin]);
@@ -1109,6 +1119,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     const updatedAt = new Date().toISOString();
     store.setStudentData(studentId, {
       ...data,
+      ...(typeof merged.year === "string" && merged.year.trim() ? { year: merged.year } : {}),
       updatedAt,
     });
     void store.setTeamSnapshot(studentId, buildTeamSnapshot({
@@ -1167,6 +1178,14 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
     return target.studentId;
   }, [firebaseAdmin, rotationCode, students]);
+
+  const deleteStudentRecord = useCallback(async (student: AdminStudent) => {
+    if (firebaseAdmin && rotationCode && student.studentId) {
+      await store.deleteStudentData(student.studentId);
+    }
+
+    setStudents(prev => prev.filter(existing => existing.studentId !== student.studentId && existing.id !== student.id));
+  }, [firebaseAdmin, rotationCode]);
 
   const navigate = (t: string, sv: AdminSubView = null) => { setTab(t); setSubView(sv); };
   const activePin = (settings?.adminPin || "1234").trim();
@@ -1243,43 +1262,20 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
       snapshots.forEach((snap, idx) => {
         const existing = byStudentId.get(snap.studentId);
+        const normalized = normalizeAdminStudentRecord(snap, existing, {
+          fallbackId: existing?.id ?? snap.studentId,
+          fallbackName: existing?.name || `Student ${idx + 1}`,
+          fallbackAddedDate: existing?.addedDate,
+        });
+
         if (existing) {
-          const merged: AdminStudent = {
-            ...existing,
-            name: snap.name || existing.name,
-            patients: Array.isArray(snap.patients) ? snap.patients as Patient[] : (existing.patients || []),
-            weeklyScores: (snap.weeklyScores || existing.weeklyScores || {}) as WeeklyScores,
-            preScore: (snap.preScore || existing.preScore || null) as QuizScore | null,
-            postScore: (snap.postScore || existing.postScore || null) as QuizScore | null,
-            srQueue: (snap.srQueue || existing.srQueue || {}) as AdminStudent["srQueue"],
-            activityLog: (snap.activityLog || existing.activityLog || []) as AdminStudent["activityLog"],
-            reflections: (snap.reflections || existing.reflections || []) as AdminStudent["reflections"],
-            lastSyncedAt: snap.updatedAt || new Date().toISOString(),
-          };
           const pos = result.findIndex(s => s.id === existing.id);
-          if (pos >= 0) result[pos] = merged;
+          if (pos >= 0) result[pos] = normalized;
           updated += 1;
           return;
         }
 
-        result.unshift({
-          id: Date.now() + idx,
-          studentId: snap.studentId,
-          name: snap.name || `Student ${idx + 1}`,
-          year: "MS3/MS4",
-          email: "",
-          status: "active",
-          addedDate: new Date().toISOString(),
-          patients: Array.isArray(snap.patients) ? snap.patients : [],
-          weeklyScores: snap.weeklyScores || {},
-          preScore: snap.preScore || null,
-          postScore: snap.postScore || null,
-          gamification: undefined,
-          srQueue: snap.srQueue || {},
-          activityLog: snap.activityLog || [],
-          reflections: snap.reflections || [],
-          lastSyncedAt: snap.updatedAt || new Date().toISOString(),
-        } as AdminStudent);
+        result.unshift(normalized);
         created += 1;
       });
       return result;
@@ -1408,11 +1404,11 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
       <div className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>
         {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} articles={articles} onBack={() => navigate("dashboard")} />}
-        {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} />}
-        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} navigate={navigate} settings={settings} articles={articles} />}
+        {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} deleteStudentRecord={deleteStudentRecord} />}
+        {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} deleteStudentRecord={deleteStudentRecord} navigate={navigate} settings={settings} articles={articles} />}
         {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
-        {tab === "analytics" && <AnalyticsTab students={students} settings={settings} articles={articles} />}
+        {tab === "analytics" && <AnalyticsTab students={students} rotationCode={rotationCode} settings={settings} articles={articles} />}
         {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} />}
         {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
@@ -1935,7 +1931,7 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
               <div style={{ fontSize: 13, color: T.green }}>Post-Test Avg</div>
               <div style={{ fontSize: 30, fontWeight: 700, fontFamily: T.mono, color: T.green }}>{avgPost}%</div>
             </div>
-            <div style={{ textAlign: "center", background: "rgba(26,188,156,0.2)", borderRadius: 10, padding: "10px 16px" }}>
+            <div style={{ textAlign: "center", background: T.greenBg, border: `1px solid ${T.greenAlpha}`, borderRadius: 10, padding: "10px 16px" }}>
               <div style={{ fontSize: 13, color: T.green }}>Avg Growth</div>
               <div style={{ fontSize: 26, fontWeight: 700, color: T.green, fontFamily: T.mono }}>+{avgPost - avgPre}%</div>
             </div>
@@ -2171,6 +2167,9 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
             const quizzesDone = Object.values(wkScores).flat().length;
             const competency = buildAdminCompetencySnapshot(s, settings, articles);
             const assessment = buildAdminAssessmentSignal(s);
+            const progress = buildStudentProgressSummary(s, articles);
+            const todayKey = toLocalDateKey(new Date());
+            const reflectedToday = (s.reflections || []).some((entry) => entry.dayKey === todayKey);
             const syncTone = getSyncTone(s.lastSyncedAt || null);
             const syncCopy = formatBriefRelative(s.lastSyncedAt || null) || "No student sync yet";
             return (
@@ -2184,7 +2183,10 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
                       <span style={{ fontSize: 13, background: T.ice, padding: "1px 8px", borderRadius: 8, fontWeight: 700, color: T.navy }}>{competency.masteryPercent}% mastery</span>
                     </div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
-                      {(s.patients || []).length} patients • {quizzesDone} quizzes • {s.year || "MS3/MS4"}
+                      {(s.patients || []).length} patients • {progress.completedCoreItems}/{progress.totalCoreItems} core items • {progress.completedArticles}/{progress.totalArticles} optional refs • {quizzesDone} quizzes • {s.year || "MS3/MS4"}
+                    </div>
+                    <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>
+                      Progress: {progress.quizWeeksStarted}/{progress.totalQuizWeeks} weekly quizzes • {progress.assessmentsDone}/2 assessments • {progress.coreCompletionPercent}% core curriculum complete
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
                       <span style={{ fontSize: 13, background: syncTone.bg, color: syncTone.text, border: `1px solid ${syncTone.border}`, borderRadius: 999, padding: "4px 9px", fontWeight: 700 }}>
@@ -2195,6 +2197,9 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
                       <span style={{ fontSize: 13, background: T.bg, borderRadius: 999, padding: "4px 9px", color: T.sub, fontWeight: 600 }}>
                         Top domain: {competency.topDomain.label}
+                      </span>
+                      <span style={{ fontSize: 13, background: reflectedToday ? T.greenBg : T.bg, borderRadius: 999, padding: "4px 9px", color: reflectedToday ? T.greenDk : T.muted, fontWeight: 700 }}>
+                        {reflectedToday ? "Reflection today" : `${(s.reflections || []).length} reflection${(s.reflections || []).length !== 1 ? "s" : ""}`}
                       </span>
                       <span style={{ fontSize: 13, background: competency.developingCount > 0 ? T.yellowBg : T.greenBg, borderRadius: 999, padding: "4px 9px", color: competency.developingCount > 0 ? T.goldText : T.greenDk, fontWeight: 700 }}>
                         {competency.developingCount} developing domain{competency.developingCount !== 1 ? "s" : ""}
@@ -2300,7 +2305,23 @@ function DashboardTab({ students, setStudents, navigate, rotationCode, settings,
         const recent = allActivity.slice(0, 15);
         if (recent.length === 0) return null;
 
-        const typeIcons = { quiz: "📝", assessment: "📋", case: "🏥", sr_review: "🔄", article: "📄", study_sheet: "🗂️", reflection: "💭", patient: "🩺", follow_up: "📌" };
+        const typeIcons = {
+          quiz: "📝",
+          quiz_start: "✍️",
+          review_missed: "🧠",
+          assessment: "📋",
+          case: "🏥",
+          practice_quiz: "🎯",
+          sr_review: "🔄",
+          article: "📄",
+          study_sheet: "🗂️",
+          bookmark: "⭐",
+          guide_open: "📚",
+          resource_open: "🧭",
+          reflection: "💭",
+          patient: "🩺",
+          follow_up: "📌",
+        };
         const formatTime = (ts: string) => {
           const d = new Date(ts);
           const month = d.getMonth() + 1;
@@ -2378,12 +2399,126 @@ function MiniBarChart({ data, width = 280, height = 130 }: { data: { label: stri
 //  Analytics Tab
 // ═══════════════════════════════════════════════════════════════════════
 
-function AnalyticsTab({ students, settings, articles }: { students: AdminStudent[]; settings: SharedSettings; articles: ArticlesData }) {
+type HistoricalRotationAnalytics = {
+  rotation: RotationInfo;
+  students: AdminStudent[];
+};
+
+function averageMetric(values: Array<number | null | undefined>): number | null {
+  const filtered = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  if (filtered.length === 0) return null;
+  return Math.round(filtered.reduce((sum, value) => sum + value, 0) / filtered.length);
+}
+
+function getBestWeeklyQuizPct(student: Pick<AdminStudent, "weeklyScores">): number | null {
+  const attempts = Object.values(student.weeklyScores || {}).flat();
+  if (attempts.length === 0) return null;
+  return Math.max(...attempts.map((attempt) => (attempt.total > 0 ? Math.round((attempt.correct / attempt.total) * 100) : 0)));
+}
+
+function formatMetric(value: number | null, suffix = "%"): string {
+  return value === null ? "—" : `${value}${suffix}`;
+}
+
+function AnalyticsTab({ students, rotationCode, settings, articles }: { students: AdminStudent[]; rotationCode: string; settings: SharedSettings; articles: ArticlesData }) {
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historicalRotationMeta, setHistoricalRotationMeta] = useState<RotationInfo[]>([]);
+  const [historicalStudentMap, setHistoricalStudentMap] = useState<Record<string, AdminStudent[]>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      setHistoryLoading(true);
+      const rotations = await store.listRotations();
+      const historical = await Promise.all(rotations.filter((rotation) => rotation.code !== rotationCode).map(async (rotation) => {
+        const rawStudents = await store.getStudentsForRotation(rotation.code);
+        const normalizedStudents = rawStudents.map((rawStudent) => normalizeAdminStudentRecord(
+          rawStudent as Partial<AdminStudent> & { studentId: string; updatedAt?: string; joinedAt?: string },
+          undefined,
+          {
+            fallbackId: typeof rawStudent.studentId === "string" ? rawStudent.studentId : rotation.code,
+            fallbackName: typeof rawStudent.name === "string" ? rawStudent.name : "Unknown",
+          },
+        ));
+
+        return [rotation.code, normalizedStudents] as const;
+      }));
+
+      if (!cancelled) {
+        setHistoricalRotationMeta(rotations);
+        setHistoricalStudentMap(Object.fromEntries(historical));
+        setHistoryLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rotationCode]);
+
+  const fallbackCurrentRotation: RotationInfo = {
+    code: rotationCode,
+    name: rotationCode || "Current rotation",
+    createdAt: null,
+    location: "",
+    dates: "",
+    studentCount: students.length,
+  };
+  const allRotationMeta = historicalRotationMeta.some((rotation) => rotation.code === rotationCode)
+    ? historicalRotationMeta
+    : [fallbackCurrentRotation, ...historicalRotationMeta];
+  const historicalRotations: HistoricalRotationAnalytics[] = allRotationMeta.map((rotation) => ({
+    rotation,
+    students: rotation.code === rotationCode ? students : (historicalStudentMap[rotation.code] || []),
+  }));
+
   const active = students.filter(s => s.status === "active" || s.status === "completed");
   const withPre = active.filter(s => s.preScore);
   const withPost = active.filter(s => s.postScore);
   const teachingSignals = buildCohortTeachingSignals(active);
   const domainNeeds = buildCohortCompetencyNeeds(active, settings, articles);
+  const allHistoricalStudents = historicalRotations.flatMap((item) => item.students);
+  const ms3Students = allHistoricalStudents.filter((student) => student.year === "MS3");
+  const ms4Students = allHistoricalStudents.filter((student) => student.year === "MS4");
+  const otherYearStudents = allHistoricalStudents.filter((student) => student.year !== "MS3" && student.year !== "MS4");
+  const historicalProgress = allHistoricalStudents.map((student) => ({
+    student,
+    progress: buildStudentProgressSummary(student),
+  }));
+  const historicalAssessmentsComplete = allHistoricalStudents.filter((student) => student.preScore && student.postScore).length;
+  const overallCoreCompletion = averageMetric(historicalProgress.map((item) => item.progress.coreCompletionPercent));
+  const overallQuizBest = averageMetric(allHistoricalStudents.map(getBestWeeklyQuizPct));
+  const overallQuizAttempts = averageMetric(historicalProgress.map((item) => item.progress.totalQuizAttempts));
+  const overallOptionalRefs = averageMetric(historicalProgress.map((item) => item.progress.completedArticles));
+  const overallReflections = averageMetric(allHistoricalStudents.map((student) => (student.reflections || []).length));
+  const overallPatientsLogged = averageMetric(allHistoricalStudents.map((student) => (student.patients || []).length));
+
+  const buildYearSummary = (label: string, cohort: AdminStudent[]) => {
+    const progress = cohort.map((student) => buildStudentProgressSummary(student));
+    return {
+      label,
+      count: cohort.length,
+      avgPre: averageMetric(cohort.map((student) => getScorePct(student.preScore))),
+      avgPost: averageMetric(cohort.map((student) => getScorePct(student.postScore))),
+      avgGrowth: averageMetric(cohort.map((student) => {
+        const pre = getScorePct(student.preScore);
+        const post = getScorePct(student.postScore);
+        return pre !== null && post !== null ? post - pre : null;
+      })),
+      avgBestWeekly: averageMetric(cohort.map(getBestWeeklyQuizPct)),
+      avgCoreCompletion: averageMetric(progress.map((item) => item.coreCompletionPercent)),
+      avgQuizAttempts: averageMetric(progress.map((item) => item.totalQuizAttempts)),
+      avgOptionalRefs: averageMetric(progress.map((item) => item.completedArticles)),
+      avgReflections: averageMetric(cohort.map((student) => (student.reflections || []).length)),
+      avgPatients: averageMetric(cohort.map((student) => (student.patients || []).length)),
+    };
+  };
+
+  const yearSummaries = [
+    buildYearSummary("MS3", ms3Students),
+    buildYearSummary("MS4", ms4Students),
+  ];
 
   // Score Distribution — group pre and post scores into 5 bins
   const binLabels = ["0-20%", "21-40%", "41-60%", "61-80%", "81-100%"];
@@ -2446,10 +2581,153 @@ function AnalyticsTab({ students, settings, articles }: { students: AdminStudent
     <div style={{ padding: 16 }}>
       <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Analytics</h2>
 
+      <div style={cardStyle}>
+        <div style={titleStyle}>Historical Program View</div>
+        <div style={subStyle}>All saved rotation codes rolled into one program-level view so you can compare blocks over time.</div>
+        {historyLoading ? (
+          <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>Loading historical rotation data...</div>
+        ) : historicalRotations.length === 0 ? (
+          <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>No rotations have been saved yet.</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
+            {[
+              { label: "Rotation blocks", value: historicalRotations.length, tone: T.navy, bg: T.ice },
+              { label: "Learners tracked", value: allHistoricalStudents.length, tone: T.med, bg: T.blueBg },
+              { label: "MS3", value: ms3Students.length, tone: T.goldText, bg: T.yellowBg },
+              { label: "MS4", value: ms4Students.length, tone: T.greenDk, bg: T.greenBg },
+              { label: "Both assessments", value: historicalAssessmentsComplete, tone: T.accent, bg: T.redBg },
+              { label: "Avg core completion", value: formatMetric(overallCoreCompletion), tone: T.navy, bg: T.bg },
+              { label: "Avg best weekly quiz", value: formatMetric(overallQuizBest), tone: T.navy, bg: T.bg },
+              { label: "Avg quiz attempts", value: overallQuizAttempts === null ? "—" : `${overallQuizAttempts}`, tone: T.navy, bg: T.bg },
+              { label: "Avg optional refs", value: overallOptionalRefs === null ? "—" : `${overallOptionalRefs}`, tone: T.navy, bg: T.bg },
+              { label: "Avg reflections", value: overallReflections === null ? "—" : `${overallReflections}`, tone: T.navy, bg: T.bg },
+              { label: "Avg patients logged", value: overallPatientsLogged === null ? "—" : `${overallPatientsLogged}`, tone: T.navy, bg: T.bg },
+              { label: "Year not set", value: otherYearStudents.length, tone: T.muted, bg: T.grayBg },
+            ].map((item) => (
+              <div key={item.label} style={{ background: item.bg, borderRadius: 12, padding: 12, border: `1px solid ${T.line}` }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: item.tone, fontFamily: T.mono }}>{item.value}</div>
+                <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>{item.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={cardStyle}>
+        <div style={titleStyle}>MS3 vs MS4</div>
+        <div style={subStyle}>Comparison across all saved rotations for the fields you’ll probably care about later.</div>
+        {historyLoading ? (
+          <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>Building year-level summaries...</div>
+        ) : yearSummaries.every((summary) => summary.count === 0) ? (
+          <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>No MS3 or MS4 learners have been tagged yet.</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
+            {yearSummaries.map((summary) => (
+              <div key={summary.label} style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: T.navy }}>{summary.label}</div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.med, background: T.ice, padding: "4px 9px", borderRadius: 999 }}>
+                    {summary.count} learner{summary.count !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {[
+                    { label: "Avg pre-test", value: formatMetric(summary.avgPre) },
+                    { label: "Avg post-test", value: formatMetric(summary.avgPost) },
+                    { label: "Avg growth", value: formatMetric(summary.avgGrowth) },
+                    { label: "Best weekly quiz", value: formatMetric(summary.avgBestWeekly) },
+                    { label: "Core completion", value: formatMetric(summary.avgCoreCompletion) },
+                    { label: "Quiz attempts", value: summary.avgQuizAttempts === null ? "—" : `${summary.avgQuizAttempts}` },
+                    { label: "Optional refs", value: summary.avgOptionalRefs === null ? "—" : `${summary.avgOptionalRefs}` },
+                    { label: "Reflections", value: summary.avgReflections === null ? "—" : `${summary.avgReflections}` },
+                    { label: "Patients", value: summary.avgPatients === null ? "—" : `${summary.avgPatients}` },
+                  ].map((metric) => (
+                    <div key={metric.label} style={{ background: T.card, borderRadius: 10, padding: "10px 11px", border: `1px solid ${T.line}` }}>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{metric.value}</div>
+                      <div style={{ fontSize: 12, color: T.sub, marginTop: 3 }}>{metric.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={cardStyle}>
+        <div style={titleStyle}>Rotation Blocks</div>
+        <div style={subStyle}>One row per saved rotation code so you can compare blocks month over month.</div>
+        {historyLoading ? (
+          <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>Loading rotation blocks...</div>
+        ) : historicalRotations.length === 0 ? (
+          <div style={{ color: T.muted, fontSize: 13, textAlign: "center", padding: 20 }}>No saved blocks yet.</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
+              <thead>
+                <tr>
+                  {["Block", "Dates / site", "Learners", "Year mix", "Avg pre", "Avg post", "Growth", "Best weekly", "Core completion"].map((label) => (
+                    <th key={label} style={{ textAlign: "left", fontSize: 12, color: T.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, padding: "0 0 10px" }}>
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {historicalRotations.map((item) => {
+                  const rotationStudents = item.students;
+                  const progress = rotationStudents.map((student) => buildStudentProgressSummary(student));
+                  const ms3Count = rotationStudents.filter((student) => student.year === "MS3").length;
+                  const ms4Count = rotationStudents.filter((student) => student.year === "MS4").length;
+                  const avgPre = averageMetric(rotationStudents.map((student) => getScorePct(student.preScore)));
+                  const avgPost = averageMetric(rotationStudents.map((student) => getScorePct(student.postScore)));
+                  const avgGrowth = averageMetric(rotationStudents.map((student) => {
+                    const pre = getScorePct(student.preScore);
+                    const post = getScorePct(student.postScore);
+                    return pre !== null && post !== null ? post - pre : null;
+                  }));
+                  const avgBestWeekly = averageMetric(rotationStudents.map(getBestWeeklyQuizPct));
+                  const avgCore = averageMetric(progress.map((entry) => entry.coreCompletionPercent));
+
+                  return (
+                    <tr key={item.rotation.code} style={{ borderTop: `1px solid ${T.line}` }}>
+                      <td style={{ padding: "12px 0", fontSize: 13, fontFamily: T.mono, fontWeight: 700, color: rotationCode === item.rotation.code ? T.med : T.navy }}>
+                        {item.rotation.code}
+                      </td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>
+                        {[item.rotation.dates, item.rotation.location].filter(Boolean).join(" • ") || "—"}
+                      </td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.navy, fontWeight: 600 }}>
+                        {rotationStudents.length}
+                      </td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>
+                        MS3 {ms3Count} • MS4 {ms4Count}
+                      </td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>{formatMetric(avgPre)}</td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>{formatMetric(avgPost)}</td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>{formatMetric(avgGrowth)}</td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>{formatMetric(avgBestWeekly)}</td>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>{formatMetric(avgCore)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div style={{ margin: "18px 0 12px" }}>
+        <h3 style={{ color: T.navy, fontSize: 18, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Current Rotation Deep Dive</h3>
+        <div style={{ color: T.sub, fontSize: 13, marginTop: 4 }}>
+          {rotationCode ? `Detailed analytics for the currently connected block (${rotationCode}).` : "Connect to a rotation to see the live block-level analytics below."}
+        </div>
+      </div>
+
       {active.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: "center", padding: 40 }}>
           <div style={{ fontSize: 40, marginBottom: 8 }}>📈</div>
-          <div style={{ color: T.sub, fontSize: 14 }}>No student data yet. Analytics will appear once students join and take quizzes.</div>
+          <div style={{ color: T.sub, fontSize: 14 }}>No student data is loaded for the current rotation yet.</div>
         </div>
       ) : (
         <>
@@ -2551,7 +2829,7 @@ function AnalyticsTab({ students, settings, articles }: { students: AdminStudent
           {/* 5. SR Aggregate */}
           <div style={cardStyle}>
             <div style={titleStyle}>Spaced Repetition</div>
-            <div style={subStyle}>Aggregate across all students</div>
+            <div style={subStyle}>Aggregate across all students in the current rotation</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               <div style={{ textAlign: "center", background: T.ice, borderRadius: 10, padding: 12 }}>
                 <div style={{ fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{srTotal}</div>
@@ -2577,7 +2855,7 @@ function AnalyticsTab({ students, settings, articles }: { students: AdminStudent
 //  Students Tab & Student Roster
 // ═══════════════════════════════════════════════════════════════════════
 
-function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData }) {
+function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, deleteStudentRecord }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; deleteStudentRecord: (student: AdminStudent) => Promise<void> }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", year: "MS3", startDate: "" });
   const isConnected = !!rotationCode;
@@ -2593,9 +2871,10 @@ function StudentsTab({ students, setStudents, navigate, rotationCode, settings, 
     setShowAdd(false);
   };
 
-  const removeStudent = (id: number | string) => {
-    if (!confirm("Remove this student? Their data will be lost.")) return;
-    setStudents(prev => prev.filter(s => s.id !== id));
+  const removeStudent = async (student: AdminStudent) => {
+    const confirmed = confirm(`Remove ${student.name} from this rotation? Their saved data will be lost.`);
+    if (!confirmed) return;
+    await deleteStudentRecord(student);
   };
 
   const toggleStatus = (id: number | string) => {
@@ -2619,7 +2898,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode, settings, 
 
       {isConnected && (
         <div style={{ background: T.blueBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.navy, lineHeight: 1.5 }}>
-          📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code.
+          📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code. Use <strong>Remove</strong> for test users, duplicates, or mistaken joins.
         </div>
       )}
 
@@ -2667,7 +2946,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode, settings, 
       )}
 
       {active.map(s => (
-        <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={isConnected ? null : () => removeStudent(s.id)} settings={settings} articles={articles} />
+        <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={() => { void removeStudent(s); }} settings={settings} articles={articles} />
       ))}
 
       {completed.length > 0 && (
@@ -2676,7 +2955,7 @@ function StudentsTab({ students, setStudents, navigate, rotationCode, settings, 
             Completed Rotations ({completed.length})
           </div>
           {completed.map(s => (
-            <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={isConnected ? null : () => removeStudent(s.id)} dimmed settings={settings} articles={articles} />
+            <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={() => { void removeStudent(s); }} dimmed settings={settings} articles={articles} />
           ))}
         </>
       )}
@@ -2689,6 +2968,8 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
   const postPct = getScorePct(s.postScore);
   const competency = buildAdminCompetencySnapshot(s, settings, articles);
   const assessment = buildAdminAssessmentSignal(s);
+  const reflectionCount = (s.reflections || []).length;
+  const reflectedToday = (s.reflections || []).some((entry) => entry.dayKey === toLocalDateKey(new Date()));
   const teachingLine = assessment?.summary
     ? `Teach next: ${assessment.summary.recommendedArea.shortLabel}`
     : assessment
@@ -2714,6 +2995,9 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
             </span>
             <span style={{ fontSize: 13, background: T.bg, color: T.sub, padding: "4px 9px", borderRadius: 999, fontWeight: 600 }}>
               {competency.profileLine}
+            </span>
+            <span style={{ fontSize: 13, background: reflectedToday ? T.greenBg : T.bg, color: reflectedToday ? T.greenDk : T.muted, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
+              {reflectedToday ? "Reflection today" : `${reflectionCount} reflection${reflectionCount !== 1 ? "s" : ""}`}
             </span>
             <span style={{ fontSize: 13, background: assessment?.summary ? T.redBg : T.bg, color: assessment?.summary ? T.accent : T.muted, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
               {teachingLine}
@@ -2749,7 +3033,7 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
               </button>
             )}
             {onRemove && (
-              <button onClick={onRemove} style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "4px 8px", fontSize: 13, cursor: "pointer", color: T.muted }}>✕</button>
+              <button onClick={onRemove} style={{ background: T.redBg, border: `1px solid ${T.accent}`, borderRadius: 6, padding: "4px 10px", fontSize: 13, cursor: "pointer", color: T.accent, fontWeight: 700 }}>Remove</button>
             )}
           </div>
         )}
@@ -3429,7 +3713,7 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                   <div style={{ fontFamily: T.mono, fontWeight: 700, fontSize: 16, color: T.navy, letterSpacing: 2 }}>{r.code}</div>
                   {rotationCode === r.code && (
-                    <span style={{ fontSize: 13, fontWeight: 700, color: T.green, background: "rgba(26,188,156,0.15)", padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Active</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.greenDk, background: T.greenBg, border: `1px solid ${T.greenAlpha}`, padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Active</span>
                   )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
@@ -3581,7 +3865,9 @@ function SettingsTab({ settings, setSettings, onImportStudentUpdates, rotationCo
 //  Student Detail View (with score entry & patient logging)
 // ═══════════════════════════════════════════════════════════════════════
 
-function StudentDetailView({ student: s, students, onBack, setStudents, writeStudentToFirestore, recoverStudentToRecord, navigate, settings, articles }: { student: AdminStudent | undefined; students: AdminStudent[]; onBack: () => void; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; recoverStudentToRecord: (sourceStudentId: string, targetStudentId: string) => Promise<string>; navigate: NavigateFn; settings: SharedSettings; articles: ArticlesData }) {
+const ADMIN_YEAR_OPTIONS = ["MS3/MS4", "MS3", "MS4", "PA Student", "NP Student", "Resident"] as const;
+
+function StudentDetailView({ student: s, students, onBack, setStudents, writeStudentToFirestore, recoverStudentToRecord, deleteStudentRecord, navigate, settings, articles }: { student: AdminStudent | undefined; students: AdminStudent[]; onBack: () => void; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; recoverStudentToRecord: (sourceStudentId: string, targetStudentId: string) => Promise<string>; deleteStudentRecord: (student: AdminStudent) => Promise<void>; navigate: NavigateFn; settings: SharedSettings; articles: ArticlesData }) {
   const [showScoreEntry, setShowScoreEntry] = useState(false);
   const [scoreType, setScoreType] = useState("pre"); // pre, post, weekly
   const [scoreWeek, setScoreWeek] = useState(1);
@@ -3596,6 +3882,8 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
   const [recoveryTargetId, setRecoveryTargetId] = useState("");
   const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [recoveryError, setRecoveryError] = useState("");
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const [removeError, setRemoveError] = useState("");
   const patientEntryRef = useRef<HTMLDivElement>(null);
   const togglePatTopic = (t: string) => {
     setPatForm(prev => ({ ...prev, topics: prev.topics.includes(t) ? prev.topics.filter((x: string) => x !== t) : [...prev.topics, t] }));
@@ -3645,6 +3933,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
   const patients = s.patients || [];
   const competency = buildAdminCompetencySnapshot(s, settings, articles);
   const assessment = buildAdminAssessmentSignal(s);
+  const progress = buildStudentProgressSummary(s, articles);
   const streakDays = s.gamification?.streaks?.currentDays || 0;
   const totalQuizAttempts = Object.values(wkScores).flat().length + (s.preScore ? 1 : 0) + (s.postScore ? 1 : 0);
   const patientAssignmentCandidates = [...students].sort((a, b) => {
@@ -3784,6 +4073,24 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
     setRecoveryBusy(false);
   };
 
+  const handleRemoveStudent = async () => {
+    const confirmed = confirm(
+      `Remove ${s.name} from this rotation? This deletes their saved progress and cohort snapshot for this rotation.`
+    );
+    if (!confirmed) return;
+
+    setRemoveBusy(true);
+    setRemoveError("");
+    try {
+      await deleteStudentRecord(s);
+      navigate("students");
+    } catch (error) {
+      console.error("Student removal failed:", error);
+      setRemoveError(error instanceof Error ? error.message : "Student removal failed.");
+    }
+    setRemoveBusy(false);
+  };
+
   const detailSectionHeadingStyle: React.CSSProperties = {
     color: T.navy,
     fontSize: 15,
@@ -3801,7 +4108,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
             <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>{s.name}</h2>
-            <div style={{ fontSize: 13, color: T.sub }}>{s.year} • {s.email || "No email"}</div>
+            <div style={{ fontSize: 13, color: T.sub }}>{s.year || "MS3/MS4"} • {s.email || "No email"}</div>
             <div style={{ fontSize: 13, color: T.muted, marginTop: 4, fontFamily: T.mono }}>Record ID: {s.studentId}</div>
             {s.loginPin && (
               <div style={{ marginTop: 6, display: "inline-flex", alignItems: "center", gap: 6, background: T.yellowBg, padding: "4px 10px", borderRadius: 8 }}>
@@ -3810,11 +4117,27 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
               </div>
             )}
           </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: s.status === "active" ? T.green : T.muted, background: s.status === "active" ? "rgba(26,188,156,0.1)" : T.bg, padding: "4px 10px", borderRadius: 8, textTransform: "uppercase" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: s.status === "active" ? T.greenDk : T.muted, background: s.status === "active" ? T.greenBg : T.bg, border: `1px solid ${s.status === "active" ? T.greenAlpha : T.line}`, padding: "4px 10px", borderRadius: 8, textTransform: "uppercase" }}>
             {s.status}
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10, marginTop: 12 }}>
+          <div style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Training Year</div>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 10 }}>
+              Update this if the learner should be grouped as MS3 vs MS4 in future reporting.
+            </div>
+            <select
+              value={s.year || "MS3/MS4"}
+              onChange={(event) => updateStudent({ year: event.target.value })}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, color: T.text, background: T.card, outline: "none" }}
+            >
+              {ADMIN_YEAR_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option === "MS3/MS4" ? "Not set" : option}</option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Competency Snapshot</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
@@ -3896,7 +4219,7 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
           </button>
           <button onClick={() => setShowAddPatient(!showAddPatient)}
             onClickCapture={() => { if (showAddPatient) setShowAllPatTopics(false); }}
-            style={{ fontSize: 13, color: T.green, background: "rgba(26,188,156,0.1)", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: T.greenDk, background: T.greenBg, border: `1px solid ${T.greenAlpha}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             {showAddPatient ? "Close patient form" : "+ Log / Assign Patient"}
           </button>
           <button onClick={() => navigate("students", { type: "printStudent", id: String(s.id) })}
@@ -3907,7 +4230,19 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
             style={{ fontSize: 13, color: T.purpleAccent, background: T.purpleBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             Export PDF
           </button>
+          <button onClick={handleRemoveStudent} disabled={removeBusy}
+            style={{ fontSize: 13, color: "white", background: removeBusy ? T.muted : T.accent, border: "none", padding: "6px 12px", borderRadius: 6, cursor: removeBusy ? "wait" : "pointer", fontWeight: 600 }}>
+            {removeBusy ? "Removing..." : "Remove from Rotation"}
+          </button>
         </div>
+        <div style={{ fontSize: 12, color: T.muted, marginTop: 8 }}>
+          Use remove for test users, duplicates, or mistaken joins. For finished learners, prefer marking the rotation complete instead.
+        </div>
+        {removeError && (
+          <div style={{ marginTop: 8, fontSize: 13, color: T.accent, background: T.redBg, borderRadius: 8, padding: "8px 10px" }}>
+            {removeError}
+          </div>
+        )}
       </div>
 
       {/* Quick Entry */}
@@ -4052,6 +4387,34 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
       )}
 
       <h3 style={detailSectionHeadingStyle}>Assessment &amp; Progress</h3>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Core Curriculum</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.coreCompletionPercent}%</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>{progress.completedCoreItems}/{progress.totalCoreItems} required items done</div>
+        </div>
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Optional References</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.completedArticles}/{progress.totalArticles}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Guidelines and long-form readings reviewed</div>
+        </div>
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Study Sheets</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.completedStudySheets}/{progress.totalStudySheets}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Core summaries marked complete</div>
+        </div>
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Cases</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.completedCases}/{progress.totalCases}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Worked by the student in the app</div>
+        </div>
+        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Quiz Weeks</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.quizWeeksStarted}/{progress.totalQuizWeeks}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Required question sets started</div>
+        </div>
+      </div>
 
       {/* Score cards */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
@@ -4272,6 +4635,35 @@ function StudentDetailView({ student: s, students, onBack, setStudents, writeStu
 //  Rotation-End Summary (Enhanced PDF Export)
 // ═══════════════════════════════════════════════════════════════════════
 
+const PRINT_THEME = {
+  ink: "#1E1B16",
+  sub: "#6E6458",
+  muted: "#9A907F",
+  line: "#D9D1BF",
+  paper: "#FFFFFF",
+  surface: "#FBF8F0",
+  surfaceAlt: "#F3EEE3",
+  alertBg: "#F4E4DD",
+  pre: "#B8732C",
+  post: "#6F7753",
+  danger: "#7A2828",
+};
+
+const printableReportStyle: React.CSSProperties = {
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+  color: PRINT_THEME.ink,
+  lineHeight: 1.5,
+  padding: 20,
+  background: PRINT_THEME.paper,
+};
+
+function getPrintBestScoreColor(value: number | null) {
+  if (value === null) return PRINT_THEME.muted;
+  if (value >= 80) return PRINT_THEME.post;
+  if (value >= 60) return PRINT_THEME.pre;
+  return PRINT_THEME.danger;
+}
+
 function RotationSummaryReport({ student: s, settings, articles, onBack }: { student?: AdminStudent; settings: SharedSettings & { hospitalName?: string }; articles: ArticlesData; onBack: () => void }) {
   useEffect(() => {
     const timer = setTimeout(() => window.print(), 500);
@@ -4303,11 +4695,20 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
 
   // Completed items per week
   const weeklyCompletion = [1, 2, 3, 4].map(w => {
-    const arts = (articles[w] || []).length;
-    const artsDone = (articles[w] || []).filter(a => completed.articles[a.url]).length;
+    const refs = (articles[w] || []).length;
+    const refsDone = (articles[w] || []).filter(a => completed.articles[a.url]).length;
     const sheets = (STUDY_SHEETS[w] || []).length;
     const sheetsDone = (STUDY_SHEETS[w] || []).filter(sh => completed.studySheets[sh.id]).length;
-    return { week: w, articles: { done: artsDone, total: arts }, sheets: { done: sheetsDone, total: sheets } };
+    const cases = (WEEKLY_CASES[w] || []).length;
+    const casesDone = (WEEKLY_CASES[w] || []).filter(item => completed.cases[item.id]).length;
+    const quizTaken = (wkScores[w] || []).length > 0;
+    return {
+      week: w,
+      references: { done: refsDone, total: refs },
+      sheets: { done: sheetsDone, total: sheets },
+      cases: { done: casesDone, total: cases },
+      quizTaken,
+    };
   });
 
   // SR stats
@@ -4315,75 +4716,75 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
   const srTotal = Object.keys(srQueue).length;
   const srMastered = Object.values(srQueue).filter(i => i.interval > 21).length;
 
-  const hdr: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" };
-  const tblTh: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
+  const hdr: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" };
+  const tblTh: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 13, fontWeight: 700, color: PRINT_THEME.sub, textTransform: "uppercase", letterSpacing: 0.3 };
   const tblTd: React.CSSProperties = { padding: "8px 10px" };
 
   return (
     <div>
       <button onClick={onBack} style={{ ...backBtn, marginBottom: 12 }}>← Back to Student</button>
-      <div className="printable-report" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", color: "#2C3E50", lineHeight: 1.5, padding: 20, background: "white" }}>
+      <div className="printable-report" style={printableReportStyle}>
         {/* Header */}
-        <div style={{ borderBottom: "2px solid #0F2B3C", paddingBottom: 12, marginBottom: 20 }}>
+        <div style={{ borderBottom: `2px solid ${PRINT_THEME.ink}`, paddingBottom: 12, marginBottom: 20 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>Rotation Summary Report</div>
-              <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 2 }}>{rotationName}{settings?.dates ? ` — ${settings.dates}` : ""}</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: PRINT_THEME.ink, fontFamily: "'Crimson Pro', Georgia, serif" }}>Rotation Summary Report</div>
+              <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 2 }}>{rotationName}{settings?.dates ? ` — ${settings.dates}` : ""}</div>
             </div>
-            <div style={{ textAlign: "right", fontSize: 13, color: "#5D6D7E" }}>
+            <div style={{ textAlign: "right", fontSize: 13, color: PRINT_THEME.sub }}>
               <div>Generated {reportDate}</div>
-              <div style={{ marginTop: 2, fontSize: 13, color: "#ABB2B9" }}>&copy; Jonathan Cheng, MD MPH</div>
+              <div style={{ marginTop: 2, fontSize: 13, color: PRINT_THEME.muted }}>&copy; Jonathan Cheng, MD MPH</div>
             </div>
           </div>
         </div>
 
         {/* Student Info */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>{s.name}</div>
-          <div style={{ fontSize: 13, color: "#5D6D7E" }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: PRINT_THEME.ink, fontFamily: "'Crimson Pro', Georgia, serif" }}>{s.name}</div>
+          <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>
             {s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {competency.masteryPercent}% mastery • Top domain {competency.topDomain.label}
           </div>
         </div>
 
         {/* Score Summary */}
         <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-          <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#ABB2B9", textTransform: "uppercase" }}>Pre-Test</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#E67E22", fontFamily: "'JetBrains Mono', monospace" }}>{pre !== null ? pre + "%" : "—"}</div>
+          <div style={{ flex: 1, textAlign: "center", padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.muted, textTransform: "uppercase" }}>Pre-Test</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.pre, fontFamily: "'JetBrains Mono', monospace" }}>{pre !== null ? pre + "%" : "—"}</div>
           </div>
-          <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Post-Test</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>{post !== null ? post + "%" : "—"}</div>
+          <div style={{ flex: 1, textAlign: "center", padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.post, textTransform: "uppercase" }}>Post-Test</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.post, fontFamily: "'JetBrains Mono', monospace" }}>{post !== null ? post + "%" : "—"}</div>
           </div>
           {growth !== null && (
-            <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: "#E8F8F5" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Growth</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
+            <div style={{ flex: 1, textAlign: "center", padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, background: PRINT_THEME.surface }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.post, textTransform: "uppercase" }}>Growth</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.post, fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
             </div>
           )}
         </div>
 
         <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Competency Snapshot</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: "#0F2B3C", fontFamily: "'JetBrains Mono', monospace" }}>{competency.masteryPercent}%</div>
-            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>{competency.masteryDetail}</div>
-            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+          <div style={{ flex: 1, padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.sub, textTransform: "uppercase", marginBottom: 6 }}>Competency Snapshot</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: PRINT_THEME.ink, fontFamily: "'JetBrains Mono', monospace" }}>{competency.masteryPercent}%</div>
+            <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>{competency.masteryDetail}</div>
+            <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>
               {competency.developingCount} developing domain{competency.developingCount !== 1 ? "s" : ""} • {competency.profileLine}
             </div>
           </div>
-          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: assessment?.summary ? "#FEF5F5" : "#F8F9FA" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Teaching Signal</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#0F2B3C" }}>
+          <div style={{ flex: 1, padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, background: assessment?.summary ? PRINT_THEME.alertBg : PRINT_THEME.surfaceAlt }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.sub, textTransform: "uppercase", marginBottom: 6 }}>Teaching Signal</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: PRINT_THEME.ink }}>
               {assessment?.summary ? `Teach next: ${assessment.summary.recommendedArea.label}` : assessment ? `Assessment logged: ${assessment.overallPct}%` : "Awaiting assessment"}
             </div>
-            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+            <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>
               {assessment?.summary
                 ? assessment.summary.detailLine
                 : assessment?.note || "Once a pre/post assessment is completed in-app, this section highlights weak and strong topic bands."}
             </div>
             {assessment?.summary?.strongestAreas[0] && (
-              <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+              <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>
                 Strongest area: {assessment.summary.strongestAreas[0].label}
               </div>
             )}
@@ -4394,7 +4795,7 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={hdr}>Weekly Quiz Scores</div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+            <thead><tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
               <th style={tblTh}>Week</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Attempts</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Best Score</th>
@@ -4405,10 +4806,10 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
               const best = ws.length > 0 ? Math.max(...ws.map(x => Math.round((x.correct / x.total) * 100))) : null;
               const last = ws.length > 0 ? Math.round((ws[ws.length - 1].correct / ws[ws.length - 1].total) * 100) : null;
               return (
-                <tr key={w} style={{ borderBottom: "1px solid #D5DBDB" }}>
+                <tr key={w} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
                   <td style={tblTd}>Week {w}</td>
                   <td style={{ ...tblTd, textAlign: "center" }}>{ws.length}</td>
-                  <td style={{ ...tblTd, textAlign: "center", fontWeight: 600, color: best !== null && best >= 80 ? "#1ABC9C" : best !== null ? "#E67E22" : "#ABB2B9" }}>{best !== null ? best + "%" : "—"}</td>
+                  <td style={{ ...tblTd, textAlign: "center", fontWeight: 600, color: getPrintBestScoreColor(best) }}>{best !== null ? best + "%" : "—"}</td>
                   <td style={{ ...tblTd, textAlign: "center" }}>{last !== null ? last + "%" : "—"}</td>
                 </tr>
               );
@@ -4416,22 +4817,24 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
           </table>
         </div>
 
-        {/* Curriculum Completion */}
+        {/* Weekly Completion */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={hdr}>Curriculum Completion</div>
+          <div style={hdr}>Weekly Completion</div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+            <thead><tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
               <th style={tblTh}>Week</th>
-              <th style={{ ...tblTh, textAlign: "center" }}>Articles</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Study Sheets</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Cases</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Quiz Taken</th>
+              <th style={{ ...tblTh, textAlign: "center" }}>Optional Refs</th>
             </tr></thead>
             <tbody>{weeklyCompletion.map(wc => (
-              <tr key={wc.week} style={{ borderBottom: "1px solid #D5DBDB" }}>
+              <tr key={wc.week} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
                 <td style={tblTd}>Week {wc.week}</td>
-                <td style={{ ...tblTd, textAlign: "center" }}>{wc.articles.done}/{wc.articles.total}</td>
                 <td style={{ ...tblTd, textAlign: "center" }}>{wc.sheets.done}/{wc.sheets.total}</td>
-                <td style={{ ...tblTd, textAlign: "center" }}>{(wkScores[wc.week] || []).length > 0 ? "Yes" : "—"}</td>
+                <td style={{ ...tblTd, textAlign: "center" }}>{wc.cases.done}/{wc.cases.total}</td>
+                <td style={{ ...tblTd, textAlign: "center" }}>{wc.quizTaken ? "Yes" : "—"}</td>
+                <td style={{ ...tblTd, textAlign: "center" }}>{wc.references.done}/{wc.references.total}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -4442,13 +4845,13 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
           <div style={hdr}>Patient Log ({patients.length} patient{patients.length !== 1 ? "s" : ""})</div>
           {patients.length > 0 ? (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead><tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+              <thead><tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
                 <th style={tblTh}>Patient</th><th style={tblTh}>Diagnosis</th><th style={tblTh}>Topics</th><th style={tblTh}>Date</th><th style={tblTh}>Status</th>
               </tr></thead>
               <tbody>{patients.map((p, i) => {
                 const ts = p.topics || (p.topic ? [p.topic] : []);
                 return (
-                  <tr key={i} style={{ borderBottom: "1px solid #D5DBDB" }}>
+                  <tr key={i} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
                     <td style={tblTd}>{p.initials}</td>
                     <td style={tblTd}>{p.dx || "—"}</td>
                     <td style={tblTd}>{ts.join(", ")}</td>
@@ -4458,7 +4861,7 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
                 );
               })}</tbody>
             </table>
-          ) : <div style={{ fontSize: 13, color: "#ABB2B9", fontStyle: "italic" }}>No patients logged</div>}
+          ) : <div style={{ fontSize: 13, color: PRINT_THEME.muted, fontStyle: "italic" }}>No patients logged</div>}
         </div>
 
         {/* Topic Distribution */}
@@ -4467,7 +4870,7 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
             <div style={hdr}>Topic Distribution</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).map(([topic, count]) => (
-                <span key={topic} style={{ fontSize: 13, padding: "3px 10px", borderRadius: 12, border: "1px solid #D5DBDB", color: "#2C3E50" }}>{topic} ({count})</span>
+                <span key={topic} style={{ fontSize: 13, padding: "3px 10px", borderRadius: 12, border: `1px solid ${PRINT_THEME.line}`, color: PRINT_THEME.ink }}>{topic} ({count})</span>
               ))}
             </div>
           </div>
@@ -4478,13 +4881,13 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
           <div className="print-no-break" style={{ marginBottom: 20 }}>
             <div style={hdr}>Spaced Repetition Progress</div>
             <div style={{ display: "flex", gap: 16 }}>
-              <div style={{ textAlign: "center", padding: 10, border: "1px solid #D5DBDB", borderRadius: 8, flex: 1 }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "#2980B9" }}>{srTotal}</div>
-                <div style={{ fontSize: 13, color: "#5D6D7E" }}>Total in Queue</div>
+              <div style={{ textAlign: "center", padding: 10, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, flex: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: PRINT_THEME.ink }}>{srTotal}</div>
+                <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>Total in Queue</div>
               </div>
-              <div style={{ textAlign: "center", padding: 10, border: "1px solid #D5DBDB", borderRadius: 8, flex: 1 }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "#1ABC9C" }}>{srMastered}</div>
-                <div style={{ fontSize: 13, color: "#5D6D7E" }}>Mastered (&gt;21d)</div>
+              <div style={{ textAlign: "center", padding: 10, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, flex: 1 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: PRINT_THEME.post }}>{srMastered}</div>
+                <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>Mastered (&gt;21d)</div>
               </div>
             </div>
           </div>
@@ -4496,7 +4899,7 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
             <div style={hdr}>Achievements ({earnedBadges.length}/{ACHIEVEMENTS.length})</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {earnedBadges.map(a => (
-                <span key={a.id} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>{a.icon} {a.title}</span>
+                <span key={a.id} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: `1px solid ${PRINT_THEME.line}`, background: PRINT_THEME.surfaceAlt }}>{a.icon} {a.title}</span>
               ))}
             </div>
           </div>
@@ -4508,8 +4911,8 @@ function RotationSummaryReport({ student: s, settings, articles, onBack }: { stu
             <div style={hdr}>Attending Feedback</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {s.feedbackTags!.map((ft, i) => (
-                <span key={i} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
-                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 13 }}>({new Date(ft.date).toLocaleDateString()})</span>
+                <span key={i} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: `1px solid ${PRINT_THEME.line}`, background: PRINT_THEME.surfaceAlt }}>
+                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: PRINT_THEME.muted, fontSize: 13 }}>({new Date(ft.date).toLocaleDateString()})</span>
                 </span>
               ))}
             </div>
@@ -4548,19 +4951,19 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
   }, []);
 
   const reportHeader = (
-    <div style={{ borderBottom: "2px solid #0F2B3C", paddingBottom: 12, marginBottom: 20 }}>
+    <div style={{ borderBottom: `2px solid ${PRINT_THEME.ink}`, paddingBottom: 12, marginBottom: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: PRINT_THEME.ink, fontFamily: "'Crimson Pro', Georgia, serif" }}>
             {mode === "cohort" ? "Cohort Progress Report" : "Student Progress Report"}
           </div>
-          <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 2 }}>
+          <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 2 }}>
             {rotationName}{hospitalName ? ` — ${hospitalName}` : ""}
           </div>
         </div>
-        <div style={{ textAlign: "right", fontSize: 13, color: "#5D6D7E" }}>
+        <div style={{ textAlign: "right", fontSize: 13, color: PRINT_THEME.sub }}>
           <div>Generated {reportDate}</div>
-          <div style={{ marginTop: 2, fontSize: 13, color: "#ABB2B9" }}>&copy; Jonathan Cheng, MD MPH</div>
+          <div style={{ marginTop: 2, fontSize: 13, color: PRINT_THEME.muted }}>&copy; Jonathan Cheng, MD MPH</div>
         </div>
       </div>
     </div>
@@ -4580,31 +4983,31 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
     return (
       <div>
         <button onClick={onBack} style={{ ...backBtn, marginBottom: 12 }}>← Back to Dashboard</button>
-        <div className="printable-report" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", color: "#2C3E50", lineHeight: 1.5, padding: 20, background: "white" }}>
+        <div className="printable-report" style={printableReportStyle}>
           {reportHeader}
 
           {/* Summary Stats */}
           <div style={{ display: "flex", gap: 20, marginBottom: 24 }}>
-            <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#2980B9" }}>{activeStudents.length}</div>
-              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Active Students</div>
+            <div style={{ flex: 1, textAlign: "center", padding: 12, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.ink }}>{activeStudents.length}</div>
+              <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>Active Students</div>
             </div>
-            <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C" }}>{students.reduce((sum, s) => sum + (s.patients || []).length, 0)}</div>
-              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Total Patients</div>
+            <div style={{ flex: 1, textAlign: "center", padding: 12, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.post }}>{students.reduce((sum, s) => sum + (s.patients || []).length, 0)}</div>
+              <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>Total Patients</div>
             </div>
-            <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#E67E22" }}>{avgPre !== null ? avgPre + "%" : "—"}</div>
-              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Avg Pre-Test</div>
+            <div style={{ flex: 1, textAlign: "center", padding: 12, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.pre }}>{avgPre !== null ? avgPre + "%" : "—"}</div>
+              <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>Avg Pre-Test</div>
             </div>
-            <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#16A085" }}>{avgPost !== null ? avgPost + "%" : "—"}</div>
-              <div style={{ fontSize: 13, color: "#5D6D7E" }}>Avg Post-Test</div>
+            <div style={{ flex: 1, textAlign: "center", padding: 12, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.post }}>{avgPost !== null ? avgPost + "%" : "—"}</div>
+              <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>Avg Post-Test</div>
             </div>
             {avgPre !== null && avgPost !== null && (
-              <div style={{ flex: 1, textAlign: "center", padding: 12, border: "1px solid #D5DBDB", borderRadius: 8, background: "#E8F8F5" }}>
-                <div style={{ fontSize: 28, fontWeight: 700, color: "#1ABC9C" }}>+{avgPost - avgPre}%</div>
-                <div style={{ fontSize: 13, color: "#5D6D7E" }}>Avg Growth</div>
+              <div style={{ flex: 1, textAlign: "center", padding: 12, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, background: PRINT_THEME.surface }}>
+                <div style={{ fontSize: 28, fontWeight: 700, color: PRINT_THEME.post }}>+{avgPost - avgPre}%</div>
+                <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>Avg Growth</div>
               </div>
             )}
           </div>
@@ -4612,7 +5015,7 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
           {/* Student Table */}
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+              <tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
                 <th style={thStyle}>Student</th>
                 <th style={thStyle}>Year</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Patients</th>
@@ -4634,14 +5037,14 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
                 const competency = buildAdminCompetencySnapshot(s, settings, articles);
                 const assessment = buildAdminAssessmentSignal(s);
                 return (
-                  <tr key={s.id || i} style={{ borderBottom: "1px solid #D5DBDB", background: i % 2 === 0 ? "white" : "#F8F9FA" }}>
+                  <tr key={s.id || i} style={{ borderBottom: `1px solid ${PRINT_THEME.line}`, background: i % 2 === 0 ? PRINT_THEME.paper : PRINT_THEME.surfaceAlt }}>
                     <td style={tdStyle}><strong>{s.name}</strong></td>
                     <td style={tdStyle}>{s.year || "—"}</td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>{(s.patients || []).length}</td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>{quizCount}</td>
-                    <td style={{ ...tdStyle, textAlign: "center", color: "#E67E22" }}>{pre !== null ? pre + "%" : "—"}</td>
-                    <td style={{ ...tdStyle, textAlign: "center", color: "#16A085" }}>{post !== null ? post + "%" : "—"}</td>
-                    <td style={{ ...tdStyle, textAlign: "center", color: growth !== null && growth > 0 ? "#1ABC9C" : "#5D6D7E", fontWeight: 600 }}>
+                    <td style={{ ...tdStyle, textAlign: "center", color: PRINT_THEME.pre }}>{pre !== null ? pre + "%" : "—"}</td>
+                    <td style={{ ...tdStyle, textAlign: "center", color: PRINT_THEME.post }}>{post !== null ? post + "%" : "—"}</td>
+                    <td style={{ ...tdStyle, textAlign: "center", color: growth !== null && growth > 0 ? PRINT_THEME.post : PRINT_THEME.sub, fontWeight: 600 }}>
                       {growth !== null ? (growth > 0 ? "+" : "") + growth + "%" : "—"}
                     </td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>{competency.masteryPercent}% · {competency.topDomain.label}</td>
@@ -4680,56 +5083,56 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
   return (
     <div>
       <button onClick={onBack} style={{ ...backBtn, marginBottom: 12 }}>← Back to Student</button>
-      <div className="printable-report" style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif", color: "#2C3E50", lineHeight: 1.5, padding: 20, background: "white" }}>
+      <div className="printable-report" style={printableReportStyle}>
         {reportHeader}
 
         {/* Student Header */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#0F2B3C", fontFamily: "'Crimson Pro', Georgia, serif" }}>{s.name}</div>
-          <div style={{ fontSize: 13, color: "#5D6D7E" }}>{s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {competency.masteryPercent}% mastery • Top domain {competency.topDomain.label}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: PRINT_THEME.ink, fontFamily: "'Crimson Pro', Georgia, serif" }}>{s.name}</div>
+          <div style={{ fontSize: 13, color: PRINT_THEME.sub }}>{s.year || "MS3/MS4"} {s.email ? `• ${s.email}` : ""} • {competency.masteryPercent}% mastery • Top domain {competency.topDomain.label}</div>
         </div>
 
         {/* Scores Summary */}
         <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-          <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#ABB2B9", textTransform: "uppercase" }}>Pre-Test</div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: "#E67E22", fontFamily: "'JetBrains Mono', monospace" }}>{pre !== null ? pre + "%" : "—"}</div>
-            {s.preScore && <div style={{ fontSize: 13, color: "#ABB2B9" }}>{s.preScore.correct}/{s.preScore.total}</div>}
+          <div style={{ flex: 1, textAlign: "center", padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.muted, textTransform: "uppercase" }}>Pre-Test</div>
+            <div style={{ fontSize: 30, fontWeight: 700, color: PRINT_THEME.pre, fontFamily: "'JetBrains Mono', monospace" }}>{pre !== null ? pre + "%" : "—"}</div>
+            {s.preScore && <div style={{ fontSize: 13, color: PRINT_THEME.muted }}>{s.preScore.correct}/{s.preScore.total}</div>}
           </div>
-          <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Post-Test</div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>{post !== null ? post + "%" : "—"}</div>
-            {s.postScore && <div style={{ fontSize: 13, color: "#ABB2B9" }}>{s.postScore.correct}/{s.postScore.total}</div>}
+          <div style={{ flex: 1, textAlign: "center", padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.post, textTransform: "uppercase" }}>Post-Test</div>
+            <div style={{ fontSize: 30, fontWeight: 700, color: PRINT_THEME.post, fontFamily: "'JetBrains Mono', monospace" }}>{post !== null ? post + "%" : "—"}</div>
+            {s.postScore && <div style={{ fontSize: 13, color: PRINT_THEME.muted }}>{s.postScore.correct}/{s.postScore.total}</div>}
           </div>
           {growth !== null && (
-            <div style={{ flex: 1, textAlign: "center", padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: "#E8F8F5" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#1ABC9C", textTransform: "uppercase" }}>Growth</div>
-              <div style={{ fontSize: 30, fontWeight: 700, color: "#1ABC9C", fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
+            <div style={{ flex: 1, textAlign: "center", padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, background: PRINT_THEME.surface }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.post, textTransform: "uppercase" }}>Growth</div>
+              <div style={{ fontSize: 30, fontWeight: 700, color: PRINT_THEME.post, fontFamily: "'JetBrains Mono', monospace" }}>+{growth}%</div>
             </div>
           )}
         </div>
 
         <div className="print-no-break" style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Competency Snapshot</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: "#0F2B3C", fontFamily: "'JetBrains Mono', monospace" }}>{competency.masteryPercent}%</div>
-            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>{competency.masteryDetail}</div>
-            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+          <div style={{ flex: 1, padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.sub, textTransform: "uppercase", marginBottom: 6 }}>Competency Snapshot</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: PRINT_THEME.ink, fontFamily: "'JetBrains Mono', monospace" }}>{competency.masteryPercent}%</div>
+            <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>{competency.masteryDetail}</div>
+            <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>
               {competency.profileLine} • {competency.developingCount} developing domain{competency.developingCount !== 1 ? "s" : ""}
             </div>
           </div>
-          <div style={{ flex: 1, padding: 14, border: "1px solid #D5DBDB", borderRadius: 8, background: assessment?.summary ? "#FEF5F5" : "#F8F9FA" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", marginBottom: 6 }}>Teaching Signal</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#0F2B3C" }}>
+          <div style={{ flex: 1, padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, background: assessment?.summary ? PRINT_THEME.alertBg : PRINT_THEME.surfaceAlt }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.sub, textTransform: "uppercase", marginBottom: 6 }}>Teaching Signal</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: PRINT_THEME.ink }}>
               {assessment?.summary ? `Teach next: ${assessment.summary.recommendedArea.label}` : assessment ? `Assessment logged: ${assessment.overallPct}%` : "Awaiting assessment"}
             </div>
-            <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+            <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>
               {assessment?.summary
                 ? assessment.summary.detailLine
                 : assessment?.note || "Detailed topic-band insight appears after an in-app assessment run."}
             </div>
             {assessment?.summary?.strongestAreas[0] && (
-              <div style={{ fontSize: 13, color: "#5D6D7E", marginTop: 6 }}>
+              <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>
                 Strongest area: {assessment.summary.strongestAreas[0].label}
               </div>
             )}
@@ -4738,10 +5141,10 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
 
         {/* Weekly Quiz Breakdown */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Weekly Quiz Scores</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Weekly Quiz Scores</div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+              <tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
                 <th style={thStyle}>Week</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Attempts</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Best Score</th>
@@ -4754,10 +5157,10 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
                 const best = ws.length > 0 ? Math.max(...ws.map(x => Math.round((x.correct / x.total) * 100))) : null;
                 const last = ws.length > 0 ? Math.round((ws[ws.length - 1].correct / ws[ws.length - 1].total) * 100) : null;
                 return (
-                  <tr key={w} style={{ borderBottom: "1px solid #D5DBDB" }}>
+                  <tr key={w} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
                     <td style={tdStyle}>Week {w}</td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>{ws.length}</td>
-                    <td style={{ ...tdStyle, textAlign: "center", fontWeight: 600, color: best !== null && best >= 80 ? "#1ABC9C" : best !== null && best >= 60 ? "#F1C40F" : best !== null ? "#E74C3C" : "#ABB2B9" }}>
+                    <td style={{ ...tdStyle, textAlign: "center", fontWeight: 600, color: getPrintBestScoreColor(best) }}>
                       {best !== null ? best + "%" : "—"}
                     </td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>{last !== null ? last + "%" : "—"}</td>
@@ -4770,13 +5173,13 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
 
         {/* Patient Log */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>
             Patient Log ({patients.length} patient{patients.length !== 1 ? "s" : ""})
           </div>
           {patients.length > 0 ? (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: "2px solid #0F2B3C" }}>
+                <tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
                   <th style={thStyle}>Patient</th>
                   <th style={thStyle}>Diagnosis</th>
                   <th style={thStyle}>Topics</th>
@@ -4787,7 +5190,7 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
                 {patients.map((p, i) => {
                   const ts = p.topics || (p.topic ? [p.topic] : []);
                   return (
-                    <tr key={i} style={{ borderBottom: "1px solid #D5DBDB" }}>
+                    <tr key={i} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
                       <td style={tdStyle}>{p.initials}</td>
                       <td style={tdStyle}>{p.dx || "—"}</td>
                       <td style={tdStyle}>{ts.join(", ")}</td>
@@ -4798,17 +5201,17 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
               </tbody>
             </table>
           ) : (
-            <div style={{ fontSize: 13, color: "#ABB2B9", fontStyle: "italic" }}>No patients logged</div>
+            <div style={{ fontSize: 13, color: PRINT_THEME.muted, fontStyle: "italic" }}>No patients logged</div>
           )}
         </div>
 
         {/* Topic Distribution */}
         {Object.keys(topicCounts).length > 0 && (
           <div className="print-no-break" style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Topic Distribution</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Topic Distribution</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {Object.entries(topicCounts).sort((a, b) => b[1] - a[1]).map(([topic, count]) => (
-                <span key={topic} style={{ fontSize: 13, padding: "3px 10px", borderRadius: 12, border: "1px solid #D5DBDB", color: "#2C3E50" }}>
+                <span key={topic} style={{ fontSize: 13, padding: "3px 10px", borderRadius: 12, border: `1px solid ${PRINT_THEME.line}`, color: PRINT_THEME.ink }}>
                   {topic} ({count})
                 </span>
               ))}
@@ -4819,10 +5222,10 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
         {/* Badges */}
         {earnedBadges.length > 0 && (
           <div className="print-no-break" style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Achievements Earned ({earnedBadges.length}/{ACHIEVEMENTS.length})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Achievements Earned ({earnedBadges.length}/{ACHIEVEMENTS.length})</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {earnedBadges.map(a => (
-                <span key={a.id} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
+                <span key={a.id} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: `1px solid ${PRINT_THEME.line}`, background: PRINT_THEME.surfaceAlt }}>
                   {a.icon} {a.title}
                 </span>
               ))}
@@ -4833,11 +5236,11 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
         {/* Attending Feedback */}
         {(s.feedbackTags || []).length > 0 && (
           <div className="print-no-break" style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#0F2B3C", marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Attending Feedback ({s.feedbackTags!.length})</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Attending Feedback ({s.feedbackTags!.length})</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {s.feedbackTags!.map((ft, i) => (
-                <span key={i} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: "1px solid #D5DBDB", background: "#F8F9FA" }}>
-                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: "#ABB2B9", fontSize: 13 }}>({new Date(ft.date).toLocaleDateString()})</span>
+                <span key={i} style={{ fontSize: 13, padding: "4px 10px", borderRadius: 8, border: `1px solid ${PRINT_THEME.line}`, background: PRINT_THEME.surfaceAlt }}>
+                  {ft.tag}{ft.note ? ` — ${ft.note}` : ""} <span style={{ color: PRINT_THEME.muted, fontSize: 13 }}>({new Date(ft.date).toLocaleDateString()})</span>
                 </span>
               ))}
             </div>
@@ -4848,7 +5251,7 @@ function PrintableReport({ mode, students, student, settings, articles, onBack }
   );
 }
 
-const thStyle: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 13, fontWeight: 700, color: "#5D6D7E", textTransform: "uppercase", letterSpacing: 0.3 };
+const thStyle: React.CSSProperties = { padding: "8px 10px", textAlign: "left", fontSize: 13, fontWeight: 700, color: PRINT_THEME.sub, textTransform: "uppercase", letterSpacing: 0.3 };
 const tdStyle = { padding: "8px 10px" };
 
 export default AdminPanel;

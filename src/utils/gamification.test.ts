@@ -97,11 +97,11 @@ describe("calculatePoints", () => {
     expect(calculatePoints(state)).toBe(15);
   });
 
-  it("awards 2 pts per completed article", () => {
+  it("awards 1 pt per completed optional reference article", () => {
     const state = makeState({
       completedItems: { articles: { a1: true, a2: true }, studySheets: {}, cases: {} },
     });
-    expect(calculatePoints(state)).toBe(4);
+    expect(calculatePoints(state)).toBe(2);
   });
 
   it("awards 3 pts per completed study sheet", () => {
@@ -148,12 +148,12 @@ describe("calculatePoints", () => {
     // Quiz: 10 + 5(>=80%) + 10(perfect) = 25
     // Assessments: 15 + 15 + 20(improvement) = 50
     // Streak: 2*3 = 6
-    // Articles: 1*2 = 2
+    // Articles: 1*1 = 1
     // Study sheets: 1*3 = 3
     // Cases: 15 + 5(>=80%) = 20
     // SR: 1*2 = 2
-    // Total = 119
-    expect(calculatePoints(state)).toBe(119);
+    // Total = 118
+    expect(calculatePoints(state)).toBe(118);
   });
 });
 

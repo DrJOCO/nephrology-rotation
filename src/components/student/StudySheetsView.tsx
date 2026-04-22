@@ -16,11 +16,17 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+        Core for this week
+      </div>
       <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
         Week {week}: Study Sheets
       </h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>
-        {wk?.title} {"\u2014"} {doneCount}/{sheets.length} completed
+        {wk?.title} {"\u2014"} {doneCount}/{sheets.length} core summaries completed
+      </p>
+      <p style={{ color: T.muted, fontSize: 13, margin: "-8px 0 16px", lineHeight: 1.6 }}>
+        These are the required summary guides for the week. Longer guidelines and studies stay available in Articles as optional reference.
       </p>
 
       {sheets.map((sheet, si) => {
