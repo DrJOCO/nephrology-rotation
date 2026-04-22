@@ -1,8 +1,24 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { BookOpen, Stethoscope, Activity, Users, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home } from "lucide-react";
 import { T, WEEKLY, ARTICLES, STUDY_SHEETS } from "../data/constants";
-import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey } from "../data/quizzes";
-import { processQuizResults, processReviewResults, getDueItems } from "../utils/spacedRepetition";
+import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES, getQuestionByKey, TOPIC_REINFORCEMENT_BANK, topicToSlug } from "../data/quizzes";
+import { processQuizResults, processReviewResults, getDueItems, seedTopicReinforcementSr } from "../utils/spacedRepetition";
+
+function extractMissedTopics(
+  answers: Array<{ qIdx: number; correct: boolean }>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  questions: any[],
+): string[] {
+  const topics = new Set<string>();
+  for (const a of answers) {
+    if (a.correct) continue;
+    const q = questions[a.qIdx];
+    if (q && typeof q.topic === "string" && TOPIC_REINFORCEMENT_BANK[q.topic]) {
+      topics.add(q.topic);
+    }
+  }
+  return Array.from(topics);
+}
 import store from "../utils/store";
 import {
   clearSavedStudentSignInEmail,
@@ -19,6 +35,7 @@ import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamif
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { buildCompetencySummary } from "../utils/competency";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
+import { buildBookmarkActivityDetail, describeStudentNavigation } from "../utils/activityLog";
 import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
 import { LIMITS } from "../utils/validation";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../types";
@@ -65,6 +82,8 @@ const INSTALL_PROMPT_DISMISSED_KEY = "neph_installPromptDismissed";
 const JOINED_AT_KEY = "neph_joinedAt";
 const INSTALL_PROMPT_DELAY_MS = 18 * 60 * 60 * 1000;
 const STUDENT_EMAIL_KEY = "neph_studentEmail";
+const STUDENT_YEAR_KEY = "neph_studentYear";
+const STUDENT_YEAR_OPTIONS = ["MS3", "MS4"] as const;
 
 interface DeferredInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -122,6 +141,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [preScore, setPreScore] = useState<QuizScore | null>(null);
   const [postScore, setPostScore] = useState<QuizScore | null>(null);
   const [studentName, setStudentName] = useState("");
+  const [studentYear, setStudentYear] = useState("");
   const [studentPin, setStudentPin] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
   const [authMode, setAuthMode] = useState<"guest" | "email_link">("guest");
@@ -304,6 +324,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       }
 
       const name = await store.get<string>("neph_name");
+      const year = await store.get<string>(STUDENT_YEAR_KEY);
       const pin = await store.get<string>("neph_pin");
       const sidFromStore = await store.get<string>("neph_studentId");
       const storedJoinedAt = await store.get<string>(JOINED_AT_KEY);
@@ -319,6 +340,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       if (!sessionStudentId && sidFromStore) setStudentId(sidFromStore);
       if (name) { setStudentName(name); setNameSet(true); }
+      if (year) setStudentYear(year);
       if (pin) setStudentPin(pin);
       if (storedJoinedAt) setJoinedAt(storedJoinedAt);
       if (pts) setPatients(pts);
@@ -359,6 +381,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     store.set("neph_preScore", preScore);
     store.set("neph_postScore", postScore);
     if (nameSet) store.set("neph_name", studentName);
+    if (studentYear) store.set(STUDENT_YEAR_KEY, studentYear);
     if (studentEmail) store.set(STUDENT_EMAIL_KEY, normalizeEmail(studentEmail));
     store.set("neph_completedItems", completedItems);
     store.set("neph_bookmarks", bookmarks);
@@ -457,6 +480,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         setStudentName(data.name);
         store.set("neph_name", data.name);
       }
+      if (typeof data.year === "string" && data.year.trim()) {
+        setStudentYear(data.year);
+        store.set(STUDENT_YEAR_KEY, data.year);
+      }
     });
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
@@ -464,14 +491,28 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   // Phase 3 (spec §01/§03): 5-tab IA — today · library · patients · team · me.
   // Old tab ids were aliased during 3a; Phase 3b removed the alias shim after all
   // call sites were canonicalized (commit 4da55c6).
-  const navigate = (t: string, sv: SubView = null) => { setTab(t); setSubView(sv); window.scrollTo(0, 0); };
+  const navigate = (t: string, sv: SubView = null) => {
+    const activity = describeStudentNavigation(sv, { articlesByWeek: articles, clinicGuides });
+    if (activity) {
+      logActivity(activity.type, activity.label, activity.detail);
+    }
+    setTab(t);
+    setSubView(sv);
+    window.scrollTo(0, 0);
+  };
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
-    setBookmarks(prev => {
-      const arr = prev[type] || [];
-      const exists = arr.includes(itemId);
-      return { ...prev, [type]: exists ? arr.filter(id => id !== itemId) : [...arr, itemId] };
-    });
+    const arr = bookmarks[type] || [];
+    const exists = arr.includes(itemId);
+    setBookmarks(prev => ({
+      ...prev,
+      [type]: exists ? prev[type].filter(id => id !== itemId) : [...prev[type], itemId],
+    }));
+    logActivity(
+      "bookmark",
+      exists ? "Bookmark removed" : "Bookmark saved",
+      buildBookmarkActivityDetail(type, itemId, articles),
+    );
   };
 
   const flushStudentSync = async () => {
@@ -596,6 +637,27 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     ]);
   };
 
+  const handleUpdateStudentYear = async (nextYear: string) => {
+    const trimmedYear = nextYear.trim();
+    if (!trimmedYear) {
+      throw new Error("Choose your year before saving.");
+    }
+
+    setStudentYear(trimmedYear);
+    await store.set(STUDENT_YEAR_KEY, trimmedYear);
+
+    if (!store.getRotationCode() || !studentId) return;
+
+    const updatedAt = new Date().toISOString();
+    noteStudentUpdatedAt(updatedAt);
+
+    await store.setStudentData(studentId, {
+      year: trimmedYear,
+      ...studentSyncIdentity,
+      updatedAt,
+    });
+  };
+
   const handleJoinRotation = async (skipEmailProfileConfirm = false) => {
     const normalizedName = studentName.trim();
     const normalizedJoinCode = joinCode.trim().toUpperCase();
@@ -689,6 +751,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         if (typeof existingData.name === "string" && existingData.name.trim()) {
           setStudentName(existingData.name);
         }
+        if (typeof existingData.year === "string" && existingData.year.trim()) {
+          setStudentYear(existingData.year);
+          await store.set(STUDENT_YEAR_KEY, existingData.year);
+        }
         if (typeof existingData.loginPin === "string" && existingData.loginPin.trim()) {
           setStudentPin(existingData.loginPin);
         }
@@ -709,6 +775,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         const newJoinedAt = new Date().toISOString();
         await store.setStudentData(sid, {
           name: normalizedName,
+          ...(studentYear ? { year: studentYear } : {}),
           ...studentIdentity,
           patients,
           weeklyScores,
@@ -793,10 +860,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     }
 
     clearSavedStudentSignInEmail();
-    ["neph_name", "neph_pin", "neph_studentId", STUDENT_EMAIL_KEY, "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
+    ["neph_name", STUDENT_YEAR_KEY, "neph_pin", "neph_studentId", STUDENT_EMAIL_KEY, "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
     store.setRotationCode(null);
     // Reset all state
     setStudentName("");
+    setStudentYear("");
     setStudentPin("");
     setStudentEmail("");
     setStudentId("");
@@ -909,7 +977,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     { id: "today", Icon: Home, label: "Today" },
     { id: "library", Icon: BookOpen, label: "Library" },
     { id: "patients", Icon: Stethoscope, label: "Patients" },
-    { id: "team", Icon: Users, label: "Team" },
+    { id: "team", Icon: Users, label: "Cohort" },
     { id: "me", Icon: UserIcon, label: "Me" },
   ];
 
@@ -1044,11 +1112,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       {profileOpen && (
         <ProfileSheet
           studentName={studentName}
+          studentYear={studentYear}
           studentEmail={studentEmail}
           rotationCode={rotationCode}
           competencyLine={competencySummary.profileLine}
           streakDays={gamification.streaks?.currentDays ?? 0}
           onUpdateStudentName={handleUpdateStudentName}
+          onUpdateStudentYear={handleUpdateStudentYear}
           onEndSession={requestLogout}
           onClose={() => setProfileOpen(false)}
         />
@@ -1061,7 +1131,18 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
             onBack={() => navigate("today")}
-            onFinish={(score) => { setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]})); setSrQueue(prev => processQuizResults(score.answers || [], "weekly", subView.week, prev)); logActivity("quiz", `Week ${subView.week} Quiz`, `${score.correct}/${score.total}`); navigate("today"); }} />
+            onFinish={(score) => {
+              setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]}));
+              setSrQueue(prev => {
+                const afterQuiz = processQuizResults(score.answers || [], "weekly", subView.week, prev);
+                const weakTopics = extractMissedTopics(score.answers || [], WEEKLY_QUIZZES[subView.week] || []);
+                return weakTopics.length
+                  ? seedTopicReinforcementSr(weakTopics, TOPIC_REINFORCEMENT_BANK, topicToSlug, afterQuiz)
+                  : afterQuiz;
+              });
+              logActivity("quiz", `Week ${subView.week} Quiz`, `${score.correct}/${score.total}`);
+              navigate("today");
+            }} />
         )}
         {tab === "today" && subView?.type === "reviewMissed" && (() => {
           const ws = weeklyScores[subView.week] || [];
@@ -1071,13 +1152,27 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           return missedQuestions.length > 0 ? (
             <QuizEngine questions={missedQuestions} title={`Week ${subView.week} — Review Missed`}
               onBack={() => navigate("today")}
-              onFinish={() => navigate("today")} />
+              onFinish={(score) => {
+                logActivity("review_missed", `Week ${subView.week} Review`, `${score.correct}/${score.total}`);
+                navigate("today");
+              }} />
           ) : null;
         })()}
         {tab === "today" && subView?.type === "preQuiz" && (
           <QuizEngine questions={PRE_QUIZ} title="Pre-Rotation Assessment"
             onBack={() => navigate("today")}
-            onFinish={(score) => { setPreScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "pre", 0, prev)); logActivity("assessment", "Pre-Rotation Assessment", `${score.correct}/${score.total}`); navigate("today", { type: "preResults" }); }} />
+            onFinish={(score) => {
+              setPreScore(score);
+              setSrQueue(prev => {
+                const afterQuiz = processQuizResults(score.answers || [], "pre", 0, prev);
+                const weakTopics = extractMissedTopics(score.answers || [], PRE_QUIZ);
+                return weakTopics.length
+                  ? seedTopicReinforcementSr(weakTopics, TOPIC_REINFORCEMENT_BANK, topicToSlug, afterQuiz)
+                  : afterQuiz;
+              });
+              logActivity("assessment", "Pre-Rotation Assessment", `${score.correct}/${score.total}`);
+              navigate("today", { type: "preResults" });
+            }} />
         )}
         {tab === "today" && subView?.type === "preResults" && (
           <AssessmentResultsView mode="pre" score={preScore} navigate={navigate} comparisonScore={null} srDueCount={getDueItems(srQueue).length} />
@@ -1085,7 +1180,18 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "today" && subView?.type === "postQuiz" && (
           <QuizEngine questions={POST_QUIZ} title="Post-Rotation Assessment"
             onBack={() => navigate("today")}
-            onFinish={(score) => { setPostScore(score); setSrQueue(prev => processQuizResults(score.answers || [], "post", 0, prev)); logActivity("assessment", "Post-Rotation Assessment", `${score.correct}/${score.total}`); navigate("today", { type: "postResults" }); }} />
+            onFinish={(score) => {
+              setPostScore(score);
+              setSrQueue(prev => {
+                const afterQuiz = processQuizResults(score.answers || [], "post", 0, prev);
+                const weakTopics = extractMissedTopics(score.answers || [], POST_QUIZ);
+                return weakTopics.length
+                  ? seedTopicReinforcementSr(weakTopics, TOPIC_REINFORCEMENT_BANK, topicToSlug, afterQuiz)
+                  : afterQuiz;
+              });
+              logActivity("assessment", "Post-Rotation Assessment", `${score.correct}/${score.total}`);
+              navigate("today", { type: "postResults" });
+            }} />
         )}
         {tab === "today" && subView?.type === "postResults" && (
           <AssessmentResultsView mode="post" score={postScore} comparisonScore={preScore} navigate={navigate} srDueCount={getDueItems(srQueue).length} />
@@ -1237,7 +1343,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           return (
             <QuizEngine questions={allWeeklyQs} title="Practice Questions" questionCount={15}
               onBack={() => navigate("today", { type: "extraPractice" })}
-              onFinish={() => navigate("today", { type: "extraPractice" })} />
+              onFinish={(score) => {
+                logActivity("practice_quiz", "Practice Questions", `${score.correct}/${score.total}`);
+                navigate("today", { type: "extraPractice" });
+              }} />
           );
         })()}
         {/* Library hub (Phase 3a shell): lands on a simple stacked view of Guide + Refs sections.
@@ -1336,17 +1445,22 @@ function LibraryHub({
 // signal, theme toggle, sign out. ESC to close. Click backdrop to close.
 // ─────────────────────────────────────────────────────────────────────────
 function ProfileSheet({
-  studentName, studentEmail, rotationCode, competencyLine, streakDays, onUpdateStudentName, onEndSession, onClose,
+  studentName, studentYear, studentEmail, rotationCode, competencyLine, streakDays, onUpdateStudentName, onUpdateStudentYear, onEndSession, onClose,
 }: {
-  studentName: string; studentEmail: string; rotationCode: string | null; competencyLine: string;
+  studentName: string; studentYear: string; studentEmail: string; rotationCode: string | null; competencyLine: string;
   streakDays: number;
   onUpdateStudentName: (nextName: string) => Promise<void>;
+  onUpdateStudentYear: (nextYear: string) => Promise<void>;
   onEndSession: () => void; onClose: () => void;
 }) {
   const [draftName, setDraftName] = useState(studentName);
+  const [draftYear, setDraftYear] = useState(studentYear || STUDENT_YEAR_OPTIONS[0]);
   const [savingName, setSavingName] = useState(false);
+  const [savingYear, setSavingYear] = useState(false);
   const [nameMessage, setNameMessage] = useState("");
   const [nameError, setNameError] = useState("");
+  const [yearMessage, setYearMessage] = useState("");
+  const [yearError, setYearError] = useState("");
 
   // Phase 2.5: ESC to close + focus trap + focus return to opener on unmount.
   useEffect(() => {
@@ -1359,11 +1473,16 @@ function ProfileSheet({
     setDraftName(studentName);
   }, [studentName]);
 
+  useEffect(() => {
+    setDraftYear(studentYear || STUDENT_YEAR_OPTIONS[0]);
+  }, [studentYear]);
+
   const panelRef = useRef<HTMLDivElement>(null);
   useFocusTrap(panelRef);
 
   const trimmedDraftName = draftName.trim();
   const canSaveName = Boolean(trimmedDraftName && trimmedDraftName !== studentName.trim() && !savingName);
+  const canSaveYear = Boolean(draftYear && draftYear !== studentYear && !savingYear);
 
   const handleSaveName = async () => {
     if (!canSaveName) return;
@@ -1377,6 +1496,20 @@ function ProfileSheet({
       setNameError(error instanceof Error ? error.message : "Unable to save your name right now.");
     }
     setSavingName(false);
+  };
+
+  const handleSaveYear = async () => {
+    if (!canSaveYear) return;
+    setSavingYear(true);
+    setYearError("");
+    setYearMessage("");
+    try {
+      await onUpdateStudentYear(draftYear);
+      setYearMessage("Training year updated.");
+    } catch (error) {
+      setYearError(error instanceof Error ? error.message : "Unable to save your year right now.");
+    }
+    setSavingYear(false);
   };
 
   return (
@@ -1477,6 +1610,65 @@ function ProfileSheet({
               }}
             >
               {savingName ? "Saving..." : "Save display name"}
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>
+              Training Year
+            </label>
+            <select
+              value={draftYear}
+              onChange={(event) => {
+                setDraftYear(event.target.value);
+                if (yearError) setYearError("");
+                if (yearMessage) setYearMessage("");
+              }}
+              style={{
+                width: "100%",
+                minHeight: 44,
+                padding: "12px 14px",
+                borderRadius: 12,
+                border: `1px solid ${yearError ? T.accent : T.line}`,
+                background: T.surface2,
+                color: T.ink,
+                fontSize: 14,
+                boxSizing: "border-box",
+              }}
+            >
+              {STUDENT_YEAR_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            {(yearMessage || yearError) && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: yearError ? T.accent : T.greenDk,
+                  background: yearError ? T.redBg : T.greenBg,
+                  border: `1px solid ${yearError ? T.redAlpha : T.greenAlpha}`,
+                  borderRadius: 10,
+                  padding: "8px 10px",
+                  lineHeight: 1.45,
+                }}
+              >
+                {yearError || yearMessage}
+              </div>
+            )}
+            <button
+              onClick={() => void handleSaveYear()}
+              disabled={!canSaveYear}
+              style={{
+                minHeight: 44,
+                borderRadius: 12,
+                border: "none",
+                background: canSaveYear ? T.med : T.surface2,
+                color: canSaveYear ? "white" : T.muted,
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: canSaveYear ? "pointer" : "default",
+              }}
+            >
+              {savingYear ? "Saving..." : "Save training year"}
             </button>
           </div>
           {rotationCode && (

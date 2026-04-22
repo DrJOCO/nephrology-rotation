@@ -123,3 +123,43 @@ export function processReviewResults(reviewAnswers: ReviewAnswer[], existingSrQu
 export function totalSrReviews(srQueue: Record<string, SrItem> | undefined): number {
   return Object.values(srQueue || {}).reduce((sum, item) => sum + item.repetitions, 0);
 }
+
+// Seed additional SR items from the topic-reinforcement bank for topics the student
+// is weak at. Caller passes the bank (keyed by canonical topic name) along with the
+// canonical-topic-to-slug helper so this file stays independent of the quizzes module.
+export function seedTopicReinforcementSr(
+  weakTopics: string[],
+  topicBank: Record<string, Array<unknown>>,
+  topicToSlug: (t: string) => string,
+  existingSrQueue: Record<string, SrItem>,
+  maxPerTopic: number = 2,
+): Record<string, SrItem> {
+  const queue = { ...existingSrQueue };
+  const now = today();
+  const nextDate = new Date();
+  nextDate.setDate(nextDate.getDate() + 1);
+  const nextReviewDate = nextDate.toISOString().slice(0, 10);
+
+  for (const topic of weakTopics) {
+    const bank = topicBank[topic];
+    if (!Array.isArray(bank) || bank.length === 0) continue;
+    const slug = topicToSlug(topic);
+    let seeded = 0;
+    for (let idx = 0; idx < bank.length && seeded < maxPerTopic; idx++) {
+      const key = `topicrf_${slug}_${idx}`;
+      if (queue[key]) continue; // already in queue — skip
+      queue[key] = {
+        questionKey: key,
+        easeFactor: 2.5,
+        interval: 1,
+        nextReviewDate,
+        repetitions: 0,
+        lastReviewed: now,
+        addedDate: now,
+      };
+      seeded++;
+    }
+  }
+
+  return queue;
+}
