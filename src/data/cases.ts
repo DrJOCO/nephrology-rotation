@@ -10,7 +10,7 @@ export const WEEKLY_CASES = {
       id: "w1c1",
       title: "Fever, Flank Pain, and Hypotension",
       category: "Acute Kidney Injury",
-      difficulty: "Beginner",
+      difficulty: "MS4 Core",
       topics: ["AKI", "Fluid Management"],
       scenario: `A 68-year-old man with a history of diabetes and hypertension presents to the emergency department with fever (39.2°C), chills, and right flank pain for two days. He has been taking less fluids orally due to nausea.
 
@@ -68,7 +68,7 @@ Labs: Cr 3.8 mg/dL (baseline 1.1), BUN 62 mg/dL, K+ 5.1 mEq/L, bicarb 18 mEq/L, 
       id: "w1c2",
       title: "CKD Patient Before Cardiac Catheterization",
       category: "Acute Kidney Injury",
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       topics: ["AKI", "CKD"],
       scenario: `A 72-year-old woman with CKD stage 3b (baseline Cr 2.1, eGFR 28) and diabetes is admitted for an acute NSTEMI. Cardiology plans urgent cardiac catheterization with possible PCI.
 
@@ -116,7 +116,7 @@ The cardiology fellow asks for your recommendations on preventing contrast-induc
       title: "Post-Surgical Oliguria",
       category: "Acute Kidney Injury",
       topics: ["AKI", "Post-Renal AKI", "Urinalysis"],
-      difficulty: "Beginner",
+      difficulty: "MS4 Core",
       scenario: `A 55-year-old man underwent elective open abdominal aortic aneurysm repair 18 hours ago. He has been in the surgical ICU and the nurse calls you because his urine output has been 15 mL/hr for the past 4 hours (total 60 mL).
 
 Pre-op: Cr 0.9, current Cr 1.4. He received 4 units PRBCs intra-operatively and his estimated blood loss was 1200 mL. Current vitals: BP 105/68, HR 98, CVP 4 mmHg.
@@ -173,7 +173,7 @@ His Foley catheter was just flushed and is patent. Current IVF: D5 0.45% NaCl at
       id: "w1c4",
       title: "Cirrhosis with Rising Creatinine",
       category: "Hepatorenal Syndrome",
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       topics: ["Hepatorenal Syndrome", "AKI"],
       scenario: `A 62-year-old man with alcohol-related cirrhosis (Child-Pugh C, MELD 28) and refractory ascites is admitted with confusion and worsening abdominal distension. He underwent large-volume paracentesis (6L) two days ago without albumin replacement. His home medications include furosemide 40mg daily and spironolactone 100mg daily.
 
@@ -233,7 +233,7 @@ A diagnostic paracentesis shows 380 PMNs/\u03bcL in the ascitic fluid.`,
       id: "w1c5",
       title: "Found Down with Dark Urine",
       category: "Rhabdomyolysis",
-      difficulty: "Beginner",
+      difficulty: "MS4 Core",
       topics: ["Rhabdomyolysis", "AKI"],
       scenario: `A 34-year-old man is brought to the ED by EMS after being found unresponsive in his apartment. His roommate reports he went out drinking two nights ago and was not seen until now. There is no known trauma. He has no significant medical history and takes no medications. A toxicology screen is positive for alcohol and benzodiazepines.
 
@@ -285,7 +285,7 @@ Labs: CK 82,000 U/L, Cr 4.2 mg/dL (baseline unknown, assumed normal), BUN 52, K+
       title: "Seizure After a New Prescription",
       category: "Electrolytes",
       topics: ["Hyponatremia", "Fluid Management"],
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       scenario: `A 45-year-old woman with a history of depression presents with confusion, nausea, and a witnessed seizure. She was recently started on an SSRI (sertraline) three weeks ago. She reports increased water intake because she "heard staying hydrated is healthy."
 
 Labs: Na+ 116 mEq/L, serum osmolality 242 mOsm/kg, urine osmolality 520 mOsm/kg, urine Na+ 48 mEq/L, K+ 3.6, Cr 0.7, glucose 95.
@@ -343,7 +343,7 @@ Physical exam: Appears euvolemic, no edema, JVP normal, mucous membranes moist.`
       title: "Weakness and Palpitations on CKD Meds",
       category: "Electrolytes",
       topics: ["Hyperkalemia"],
-      difficulty: "Beginner",
+      difficulty: "MS4 Core",
       scenario: `A 72-year-old man with CKD stage 4 (eGFR 22), heart failure, and type 2 diabetes presents to the ED with generalized weakness and "heart fluttering." He ran out of his furosemide one week ago but continued taking lisinopril, spironolactone, and his potassium-containing salt substitute.
 
 Labs: K+ 7.2 mEq/L, Cr 4.1 (baseline 3.5), Na+ 138, bicarb 16, glucose 145.
@@ -389,7 +389,7 @@ ECG shows wide QRS complexes, peaked T waves, and loss of P waves.`,
       title: "Unresponsive with Abnormal Labs",
       category: "Acid-Base",
       topics: ["Acid-Base"],
-      difficulty: "Advanced",
+      difficulty: "MS4 Challenge",
       scenario: `A 58-year-old man with a history of alcoholism is brought in by EMS after being found unresponsive. He smells strongly of alcohol and has evidence of vomiting.
 
 ABG: pH 7.22, pCO2 23, pO2 92, HCO3 9 mEq/L
@@ -448,7 +448,7 @@ Urine ketones: positive`,
       id: "w2c4",
       title: "Rising Creatinine During HF Diuresis",
       category: "Cardiorenal Syndrome",
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       topics: ["Cardiorenal Syndrome", "Fluid Management", "Diuretics"],
       scenario: `A 71-year-old woman with HFrEF (EF 20%), type 2 diabetes, and CKD stage 3b (baseline eGFR 38, Cr 1.5) is admitted with 3 weeks of progressive dyspnea, orthopnea, and leg swelling. She has gained 8 kg above her dry weight. Her home medications include lisinopril 20mg, carvedilol 25mg BID, and furosemide 40mg PO daily.
 
@@ -502,7 +502,7 @@ The primary team pages nephrology because they are concerned about "acute kidney
       title: "Edema and Foamy Urine",
       category: "Glomerular Disease",
       topics: ["Nephrotic Syndrome", "Proteinuria", "Kidney Biopsy", "APOL1-Associated Kidney Disease"],
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       scenario: `A 52-year-old man with type 2 diabetes (A1c 9.2%) presents with progressive bilateral lower extremity edema over 6 weeks and "foamy urine." He has no history of kidney disease.
 
 Labs: Cr 1.3, albumin 2.1, total cholesterol 340, urine protein/creatinine ratio 8.5 g/g.
@@ -561,7 +561,7 @@ Renal ultrasound shows bilateral 12 cm kidneys with increased cortical echogenic
       title: "Rapidly Rising Cr with Hemoptysis",
       category: "Glomerular Disease",
       topics: ["Glomerulonephritis", "Kidney Biopsy"],
-      difficulty: "Advanced",
+      difficulty: "MS4 Challenge",
       scenario: `A 65-year-old woman presents with 3 weeks of fatigue, myalgias, and dark ("cola-colored") urine. She also reports a 2-week history of worsening cough with occasional hemoptysis.
 
 Labs: Cr 4.8 (was 0.9 three months ago), BUN 68, albumin 3.5, Hgb 9.2. Urinalysis: 3+ blood, 2+ protein, numerous dysmorphic RBCs and RBC casts. C3/C4 normal.
@@ -619,7 +619,7 @@ CXR shows bilateral pulmonary infiltrates. Anti-MPO (p-ANCA) is strongly positiv
       title: "Stable CKD Clinic Follow-Up",
       category: "CKD",
       topics: ["CKD", "Hypertension", "Proteinuria"],
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       scenario: `A 60-year-old man with type 2 diabetes, hypertension, and CKD stage 3b (eGFR 38 mL/min, UACR 650 mg/g) is seen in nephrology clinic. He is on metformin 500 mg BID, losartan 100 mg daily, and amlodipine 5 mg daily. BP today: 138/82. A1c: 7.4%.
 
 His renal function has been stable over the past year. He asks about "new kidney-protecting medications" he read about online.`,
@@ -663,7 +663,7 @@ His renal function has been stable over the past year. He asks about "new kidney
       id: "w3c4",
       title: "Progressive Proteinuria in Diabetes",
       category: "Diabetic Kidney Disease",
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       topics: ["Diabetic Kidney Disease", "SGLT2 Inhibitors", "CKD"],
       scenario: `A 55-year-old woman with type 2 diabetes for 18 years, hypertension, and obesity (BMI 34) is referred to nephrology clinic for progressive CKD. She has known diabetic retinopathy (laser-treated 3 years ago).
 
@@ -731,7 +731,7 @@ She has not been started on an SGLT2 inhibitor, finerenone, or GLP-1 RA.`,
       title: "Advanced CKD with New Symptoms",
       category: "Dialysis",
       topics: ["Dialysis", "Dialysis Access", "CKD", "Anemia of CKD", "CKD-MBD"],
-      difficulty: "Intermediate",
+      difficulty: "MS4 Applied",
       scenario: `A 58-year-old man with CKD stage 5 from diabetic nephropathy (eGFR 8 mL/min) is seen in pre-dialysis clinic. He reports progressive fatigue, poor appetite, morning nausea, difficulty concentrating, and a "metallic taste" in his mouth for the past month. He has lost 5 kg.
 
 Labs: Cr 8.2, BUN 98, K+ 5.6, bicarb 14, Hgb 8.5, albumin 3.0, phosphorus 7.2.
@@ -788,7 +788,7 @@ Exam: BP 158/92, bilateral 2+ pitting edema. AV fistula was placed 3 months ago 
       title: "Transplant Patient with Rising Cr",
       category: "Transplant",
       topics: ["Transplant", "Kidney Biopsy"],
-      difficulty: "Advanced",
+      difficulty: "MS4 Challenge",
       scenario: `A 45-year-old woman who received a deceased-donor kidney transplant 8 months ago presents with rising creatinine. Her baseline post-transplant Cr was 1.2, and today it is 2.1. She is on tacrolimus, mycophenolate, and prednisone.
 
 She admits to missing several doses of her immunosuppression medications over the past 2 weeks due to financial difficulties. She has no fever, no urinary symptoms, and no recent infections.
@@ -835,7 +835,7 @@ Tacrolimus trough level: 3.2 ng/mL (goal: 6-10). Urinalysis: trace protein, no b
       title: "Recurrent Kidney Stones",
       category: "Kidney Stones",
       topics: ["Kidney Stones"],
-      difficulty: "Beginner",
+      difficulty: "MS4 Core",
       scenario: `A 38-year-old man presents to the ED with acute-onset left flank pain radiating to the groin, with nausea and hematuria. He has had two prior episodes of kidney stones in the past 5 years, but never had a metabolic workup.
 
 CT abdomen (non-contrast) shows a 6 mm stone at the left ureterovesical junction (UVJ) with mild left hydronephrosis. No evidence of infection.
@@ -881,7 +881,7 @@ Vitals: BP 142/88 (likely pain), HR 92, temp 37.0°C. Labs: Cr 1.0, Ca2+ 10.8 (s
       id: "w4c4",
       title: "PD Patient with Cloudy Effluent",
       category: "Peritoneal Dialysis",
-      difficulty: "Beginner",
+      difficulty: "MS4 Core",
       topics: ["Peritoneal Dialysis", "Dialysis"],
       scenario: `A 48-year-old woman with ESKD from lupus nephritis has been on automated peritoneal dialysis (APD) for 2 years via a Tenckhoff catheter. She calls the PD clinic reporting that her effluent bags have been cloudy for the past 12 hours. She has mild diffuse abdominal pain and feels "achy." She denies fever, nausea, vomiting, or diarrhea. She reports no recent contamination events or breaks in sterile technique.
 

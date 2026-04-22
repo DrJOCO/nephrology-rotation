@@ -252,9 +252,9 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
   }
 
   const diffColors = {
-    Beginner: { bg: T.greenBg, text: T.greenDk, border: T.green },
-    Intermediate: { bg: T.yellowBg, text: T.goldText, border: T.gold },
-    Advanced: { bg: T.redBg, text: T.redDeep, border: T.accent },
+    "MS4 Core": { bg: T.greenBg, text: T.greenDk, border: T.green },
+    "MS4 Applied": { bg: T.yellowBg, text: T.goldText, border: T.gold },
+    "MS4 Challenge": { bg: T.redBg, text: T.redDeep, border: T.accent },
   };
 
   return (
@@ -267,12 +267,12 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
       </div>
       <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Week {week} Clinical Cases</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.5 }}>
-        {doneCount}/{cases.length} completed. Work through real-world clinical scenarios, then answer the diagnostic and management questions to lock in the week&apos;s core material.
+        {doneCount}/{cases.length} completed. Work through MS4-level clinical scenarios, then answer the diagnostic and management questions to lock in the week&apos;s core material.
       </p>
 
       {cases.map(c => {
         const done = (completedItems?.cases || {})[c.id];
-        const diff = diffColors[c.difficulty] || diffColors.Beginner;
+        const diff = diffColors[c.difficulty] || diffColors["MS4 Core"];
         return (
           <div key={c.id} style={{ position: "relative", marginBottom: 10 }}>
             <button onClick={() => setActiveCase(c)}
