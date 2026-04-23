@@ -28,7 +28,7 @@ const SCOPES: Array<{ id: SearchScope; label: string; placeholder: string }> = [
   { id: "articles", label: "Articles", placeholder: "Search articles by title, journal, or topic..." },
   { id: "trials", label: "Trials", placeholder: "Search landmark trials..." },
   { id: "pearls", label: "Pearls", placeholder: "Search teaching pearls and guide callouts..." },
-  { id: "patients", label: "My patients", placeholder: "Search your patient list..." },
+  { id: "patients", label: "My inpatients", placeholder: "Search your inpatient list..." },
   { id: "team", label: "Ask-the-team", placeholder: "Search shared team snapshots..." },
 ];
 
@@ -160,7 +160,7 @@ export default function GlobalSearchOverlay({
   const groups = useMemo<SearchGroup[]>(() => {
     if (!results) return [];
     const allGroups: SearchGroup[] = [
-      { key: "patients", title: "My patients", scope: "patients", items: results.patients },
+      { key: "patients", title: "My inpatients", scope: "patients", items: results.patients },
       { key: "articles", title: "Articles", scope: "articles", items: results.articles },
       { key: "pearls", title: "Pearls", scope: "pearls", items: results.pearls },
       { key: "cases", title: "Clinical cases", scope: "all", items: results.cases },
@@ -195,7 +195,7 @@ export default function GlobalSearchOverlay({
   };
 
   const emptyState = (() => {
-    if (scope === "patients" && patients.length === 0) return "Add patients in Patients to search your own list.";
+    if (scope === "patients" && patients.length === 0) return "Add inpatients in Inpatients to search your own list.";
     if (scope === "team" && !store.getRotationCode()) return "Join a rotation to search the team snapshot.";
     if (scope === "team" && teamSnapshots.length === 0) return "No teammate snapshots match yet.";
     return `No results for “${query}”.`;
@@ -297,7 +297,7 @@ export default function GlobalSearchOverlay({
             <div style={{ background: T.surface, borderRadius: 16, border: `1px solid ${T.line}`, padding: "16px 16px", color: T.sub }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 6 }}>Scoped search is ready</div>
               <div style={{ fontSize: 13, lineHeight: 1.6 }}>
-                Search across the whole app or narrow to articles, trials, pearls, your patients, or the shared team snapshot.
+                Search across the whole app or narrow to articles, trials, pearls, your inpatients, or the shared team snapshot.
               </div>
             </div>
           )}

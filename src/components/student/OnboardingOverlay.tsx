@@ -16,9 +16,9 @@ const ONBOARDING_STEPS = [
   },
   {
     icon: "\uD83C\uDFE5",
-    title: "Log Patients on Rounds",
-    body: "Track the patients you see, tag diagnoses, and add follow-up notes to build your clinical experience log.",
-    hint: "Use the Rounds tab during ward time",
+    title: "Log Inpatients on Rounds",
+    body: "Track the hospital patients you see, tag diagnoses, and add follow-up notes to build your inpatient experience log.",
+    hint: "Use the Inpatients tab during ward time",
   },
 ];
 

@@ -267,7 +267,7 @@ function buildHeroCard({
     subView: { type: "clinicGuide", date: fridayDate },
   };
   const patientsAction: NavAction = {
-    label: activePatientCount > 0 ? "Open patient list" : "Add your first patient",
+    label: activePatientCount > 0 ? "Open inpatient list" : "Add your first inpatient",
     meta: activePatientCount > 0
       ? `${activePatientCount} active consult${activePatientCount !== 1 ? "s" : ""}`
       : "Start your rounding list",
@@ -319,7 +319,7 @@ function buildHeroCard({
     title: activePatientCount > 0 ? "Morning rounds" : "Build your rounding list",
     body: activePatientCount > 0
       ? "Start with your active consults, then knock out one high-yield prep task before the day gets noisy."
-      : "No patients logged yet. Add your consults first so Today can start tailoring the right prep.",
+      : "No inpatients logged yet. Add your hospital consults first so Today can start tailoring the right prep.",
     tone: "rounds",
     badge: "Rounds",
     actions: [patientsAction, learningPlan.nextAction],
@@ -909,10 +909,10 @@ export default function HomeTab({
       <section style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <div>
-            <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Rounding list</h2>
+            <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Inpatient rounding list</h2>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>
               {activePatients.length > 0
-                ? `${activePatients.length} active patient${activePatients.length !== 1 ? "s" : ""} surfaced here`
+                ? `${activePatients.length} active inpatient${activePatients.length !== 1 ? "s" : ""} surfaced here`
                 : "Log your consults to make Today feel personal."}
             </div>
           </div>
@@ -920,7 +920,7 @@ export default function HomeTab({
             onClick={() => navigate("patients")}
             style={{ background: "none", border: "none", color: T.med, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
           >
-            Open patients
+            Open inpatients
             <ChevronRight size={15} strokeWidth={2} aria-hidden="true" />
           </button>
         </div>
@@ -938,7 +938,7 @@ export default function HomeTab({
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: T.navy }}>
-                        {patient.initials || "New patient"}
+                        {patient.initials || "New inpatient"}
                       </div>
                       <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>
                         {patient.room ? `Rm ${patient.room}` : "Room pending"} · Added {new Date(patient.date).toLocaleDateString()}
@@ -974,9 +974,9 @@ export default function HomeTab({
             onClick={() => navigate("patients")}
             style={{ width: "100%", background: T.card, borderRadius: 16, border: `1px dashed ${T.line}`, padding: "18px 16px", cursor: "pointer", textAlign: "left" }}
           >
-            <div style={{ fontSize: 14, fontWeight: 700, color: T.navy, marginBottom: 4 }}>Start your list in Patients</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.navy, marginBottom: 4 }}>Start your list in Inpatients</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
-              Add consults, tag the learning issues, and Today will start surfacing the right prep automatically.
+              Add hospital consults, tag the learning issues, and Today will start surfacing the right prep automatically.
             </div>
           </button>
         )}

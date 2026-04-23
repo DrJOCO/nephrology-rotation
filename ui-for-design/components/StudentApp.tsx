@@ -487,7 +487,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
 
-  // Phase 3 (spec §01/§03): 5-tab IA — today · library · patients · team · me.
+  // Phase 3 (spec §01/§03): 5-tab IA — today · library · inpatients · team · me.
   // Old tab ids were aliased during 3a; Phase 3b removed the alias shim after all
   // call sites were canonicalized (commit 4da55c6).
   const navigate = (t: string, sv: SubView = null) => {
@@ -970,12 +970,12 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     );
   }
 
-  // Tab data — Phase 3a (spec §01/§03): 5-tab IA (Today · Library · Patients · Team · Me).
+  // Tab data — Phase 3a (spec §01/§03): 5-tab IA (Today · Library · Inpatients · Team · Me).
   // Lucide monoline icons per §02.
   const tabs: Array<{ id: string; Icon: typeof BookOpen; label: string }> = [
     { id: "today", Icon: Home, label: "Today" },
     { id: "library", Icon: BookOpen, label: "Library" },
-    { id: "patients", Icon: Stethoscope, label: "Patients" },
+    { id: "patients", Icon: Stethoscope, label: "Inpatients" },
     { id: "team", Icon: Users, label: "Cohort" },
     { id: "me", Icon: UserIcon, label: "Me" },
   ];

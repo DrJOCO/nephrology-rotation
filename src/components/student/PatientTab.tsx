@@ -94,7 +94,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
   if (isEditing) {
     return (
       <div style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 10, border: `2px solid ${T.med}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Editing Patient</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Editing Inpatient</div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
           <div>
             <label style={inputLabel}>Initials</label>
@@ -190,7 +190,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             {!dimmed && (
               <button
                 onClick={onStartEdit}
-                aria-label={`Edit patient ${p.initials || ""}`.trim()}
+                aria-label={`Edit inpatient ${p.initials || ""}`.trim()}
                 style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: T.med, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
               >
                 <Pencil size={12} strokeWidth={1.75} aria-hidden="true" /> Edit
@@ -198,14 +198,14 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             )}
             <button
               onClick={onToggle}
-              aria-label={dimmed ? `Reactivate patient ${p.initials || ""}`.trim() : `Discharge patient ${p.initials || ""}`.trim()}
+              aria-label={dimmed ? `Reactivate inpatient ${p.initials || ""}`.trim() : `Discharge inpatient ${p.initials || ""}`.trim()}
               style={{ background: "none", border: `1px solid ${dimmed ? T.green : T.muted}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: dimmed ? T.green : T.sub, display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               {dimmed ? <><RotateCcw size={12} strokeWidth={1.75} aria-hidden="true" /> Reactivate</> : <><Check size={12} strokeWidth={2} aria-hidden="true" /> D/C</>}
             </button>
             <button
               onClick={onRemove}
-              aria-label={`Remove patient ${p.initials || ""}`.trim()}
+              aria-label={`Remove inpatient ${p.initials || ""}`.trim()}
               title="Remove"
               style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, minHeight: isMobile ? 36 : 30, minWidth: isMobile ? 36 : 30, padding: isMobile ? "8px" : "6px", cursor: "pointer", color: T.muted, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
             >
@@ -320,7 +320,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       notes: form.notes.trim(),
     };
     setPatients(prev => [{ ...sanitized, id: Date.now(), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
-    onLogActivity?.("patient", "Patient added", summarizeTopics(sanitized.topics));
+    onLogActivity?.("patient", "Inpatient added", summarizeTopics(sanitized.topics));
 
     // Compute topic suggestions
     if (navigate) {
@@ -365,13 +365,13 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
     if (!patient) return;
     const nextStatus = patient.status === "active" ? "discharged" : "active";
     setPatients(prev => prev.map(p => p.id === id ? { ...p, status: nextStatus } : p));
-    onLogActivity?.("patient", nextStatus === "discharged" ? "Patient discharged" : "Patient reactivated", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
+    onLogActivity?.("patient", nextStatus === "discharged" ? "Inpatient discharged" : "Inpatient reactivated", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
   };
   const remove = (id: string | number) => {
     const patient = patients.find(p => p.id === id);
     setPatients(prev => prev.filter(p => p.id !== id));
     if (patient) {
-      onLogActivity?.("patient", "Patient removed", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
+      onLogActivity?.("patient", "Inpatient removed", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
     }
   };
 
@@ -391,7 +391,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
   const saveEdit = () => {
     const { valid, errors } = validatePatientForm(editForm);
     if (!valid) {
-      alert(Object.values(errors)[0] || "Please fix the patient entry.");
+      alert(Object.values(errors)[0] || "Please fix the inpatient entry.");
       return;
     }
     const sanitized = {
@@ -403,7 +403,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
     };
     const existing = patients.find(p => p.id === editingId);
     setPatients(prev => prev.map(p => p.id === editingId ? { ...p, ...sanitized } : p));
-    onLogActivity?.("patient", "Patient updated", buildPatientUpdateDetail(existing, sanitized));
+    onLogActivity?.("patient", "Inpatient updated", buildPatientUpdateDetail(existing, sanitized));
     cancelEdit();
   };
 
@@ -442,13 +442,13 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Rounding List</h2>
+        <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Inpatient Rounding List</h2>
         <button onClick={() => {
           if (showAdd) setShowAllTopics(false);
           setShowAdd(!showAdd);
         }}
           style={{ padding: "8px 16px", background: showAdd ? T.sub : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {showAdd ? "Cancel" : "+ Add Patient"}
+          {showAdd ? "Cancel" : "+ Add Inpatient"}
         </button>
       </div>
 
@@ -461,7 +461,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
         <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `2px solid ${T.med}` }}>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
-              <label style={inputLabel}>Patient Initials</label>
+              <label style={inputLabel}>Inpatient Initials</label>
               <input value={form.initials} maxLength={LIMITS.INITIALS_MAX}
                 onChange={e => { setForm({...form, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setFormErrors(prev => ({...prev, initials: undefined})); }}
                 placeholder="e.g. J.S." style={{...inputStyle, ...(formErrors.initials ? inputErrorBorder : {})}} />
@@ -535,7 +535,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
             </div>
           </div>
           <button onClick={addPatient} style={{ width: "100%", padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            Add to List
+            Add to Inpatient List
           </button>
         </div>
       )}
@@ -544,7 +544,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       {showSuggestions && suggestions.length > 0 && navigate && (
         <div style={{ background: T.purpleBg, borderRadius: 12, padding: 14, marginBottom: 14, border: `1.5px solid ${T.purpleSoft}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.purpleAccent }}>Based on this patient, check out:</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.purpleAccent }}>Based on this inpatient, check out:</div>
             <button onClick={() => setShowSuggestions(false)} style={{ background: "none", border: "none", color: T.muted, fontSize: 14, cursor: "pointer", padding: 0, lineHeight: 1 }}>x</button>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -564,8 +564,8 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       {active.length === 0 && !showAdd && (
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏥</div>
-          <div style={{ fontSize: 14 }}>No active patients</div>
-          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Tap "+ Add Patient" to track consults</div>
+          <div style={{ fontSize: 14 }}>No active inpatients</div>
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Tap "+ Add Inpatient" to track hospital consults</div>
         </div>
       )}
 
