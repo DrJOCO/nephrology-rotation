@@ -306,10 +306,10 @@ function buildHeroCard({
   if (weekday === 3) {
     return {
       eyebrow: "Next up",
-      title: "Midweek teaching",
-      body: "Use today to sharpen the highest-yield ideas before conference, rounds, and afternoon check-ins.",
-      tone: "didactic",
-      badge: "Didactic",
+      title: "Rounds",
+      body: "Use today to sharpen one high-yield idea before rounds.",
+      tone: "rounds",
+      badge: "Rounds",
       actions: [learningPlan.nextAction, patientsAction],
     };
   }
