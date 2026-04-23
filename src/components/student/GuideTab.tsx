@@ -152,7 +152,10 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
 
       {/* Inpatient Consult Guides */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8, fontFamily: T.serif }}>Inpatient Consult Guides</div>
+        <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Inpatient Consult Guides</div>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
+          Use these at the hospital for topic-specific consult prep: what to gather, how to present, red flags, and the assessment framework.
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
           {INPATIENT_GUIDE_TOPICS.map(t => {
             const g = INPATIENT_GUIDES[t];
@@ -163,7 +166,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
                   cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 20, flexShrink: 0 }}>{g.icon}</span>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.2 }}>{t}</div>
+                  <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.2 }}>{g.title}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.subtitle}</div>
                 </div>
               </button>
@@ -172,9 +175,12 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         </div>
       </div>
 
-      {/* Rotation Guides */}
+      {/* Rotation workflow */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 8, fontFamily: T.serif }}>Rotation Guides</div>
+        <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Rotation Workflow</div>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
+          Use these for service logistics: pre-rounding, presenting, writing notes, and daily follow-up.
+        </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
           {ROTATION_GUIDE_IDS.map(id => {
             const g = ROTATION_GUIDES[id];
