@@ -68,7 +68,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
         </h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 13, color: T.goldText, background: T.yellowBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
-            {totalPoints} cohort pts
+            {totalPoints} cohort points
           </span>
           <span style={{ fontSize: 13, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalActivePatients} active patients
@@ -124,7 +124,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontSize: 22, fontWeight: 700, color: T.goldText, fontFamily: T.mono }}>{student.points}</div>
-                  <div style={{ fontSize: 12, color: T.muted }}>pts</div>
+                  <div style={{ fontSize: 12, color: T.muted }}>points</div>
                 </div>
                 <span style={{ fontSize: 16, color: T.muted, transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
               </div>

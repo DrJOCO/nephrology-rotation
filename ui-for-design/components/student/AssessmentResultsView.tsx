@@ -54,7 +54,7 @@ function GrowthPill({ growthPct }: { growthPct: number | null }) {
       }}
     >
       {positive ? "+" : ""}
-      {growthPct} pts vs baseline
+      {growthPct} percentage points vs baseline
     </span>
   );
 }

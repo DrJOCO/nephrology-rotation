@@ -265,7 +265,7 @@ export default function ProgressTab({
             <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Next target</div>
             <div style={{ fontSize: 16, fontWeight: 700, color: T.navy }}>{level.next ? level.next : "Maxed"}</div>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-              {level.nextAt ? `${Math.max(0, level.nextAt - gamification.points)} pts to go` : "Top tier reached"}
+              {level.nextAt ? `${Math.max(0, level.nextAt - gamification.points)} points to go` : "Top tier reached"}
             </div>
           </div>
           <div style={{ background: T.bg, borderRadius: 12, padding: "12px 12px", border: `1px solid ${T.line}` }}>
@@ -278,7 +278,7 @@ export default function ProgressTab({
           <div style={{ marginBottom: recentAchievements.length > 0 ? 14 : 0 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6, fontSize: 13, color: T.sub, flexWrap: "wrap" }}>
               <span>Progress to {level.next}</span>
-              <span>{gamification.points}/{level.nextAt} pts</span>
+              <span>{gamification.points}/{level.nextAt} points</span>
             </div>
             <div style={{ background: T.grayBg, borderRadius: 999, height: 9, overflow: "hidden" }}>
               <div style={{ width: `${nextLevelProgress}%`, background: T.gold, height: "100%", borderRadius: 999 }} />

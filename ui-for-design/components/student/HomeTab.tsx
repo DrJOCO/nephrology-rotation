@@ -519,7 +519,7 @@ function AssessmentSection({
           {summary.growthPct !== null && (
             <span style={{ background: summary.growthPct >= 0 ? T.greenBg : T.redBg, color: summary.growthPct >= 0 ? T.greenDk : T.accent, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               {summary.growthPct >= 0 ? "+" : ""}
-              {summary.growthPct} pts vs baseline
+              {summary.growthPct} percentage points vs baseline
             </span>
           )}
         </div>
@@ -1013,7 +1013,7 @@ export default function HomeTab({
                 {level.icon} {level.name}
               </span>
               <span style={{ background: T.card, color: T.navy, borderRadius: 999, padding: "5px 9px", fontSize: 13, fontWeight: 700, border: `1px solid ${T.line}` }}>
-                {gamification.points} pts
+                {gamification.points} points
               </span>
               <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "5px 9px", fontSize: 13, fontWeight: 700 }}>
                 Mastery {competencySummary.masteryPercent}%
