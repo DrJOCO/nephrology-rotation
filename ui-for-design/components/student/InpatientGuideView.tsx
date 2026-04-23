@@ -114,16 +114,6 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
         ))}
       </div>
 
-      {/* Discussion questions */}
-      <div style={{ marginBottom: 14 }}>
-        <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Discussion Questions</h3>
-        {guide.discussionQuestions.map((q, i) => (
-          <div key={i} style={{ background: T.purpleBg, borderRadius: 12, padding: "12px 14px", marginBottom: 8, borderLeft: `4px solid ${T.purple}` }}>
-            <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, fontStyle: "italic" }}>{q}</div>
-          </div>
-        ))}
-      </div>
-
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "12px 0 8px", fontSize: 13, color: T.muted, fontStyle: "italic", lineHeight: 1.4 }}>
         {INPATIENT_GUIDE_FOOTER}
