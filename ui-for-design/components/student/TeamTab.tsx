@@ -70,12 +70,6 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
           <span style={{ fontSize: 13, color: T.goldText, background: T.yellowBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalPoints} cohort points
           </span>
-          <span style={{ fontSize: 13, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
-            {totalActivePatients} active patients
-          </span>
-          <span style={{ fontSize: 13, color: T.greenDk, background: T.greenBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
-            {Object.keys(cohortTopicCounts).length} topics seen
-          </span>
           {myRank > 0 && (
             <span style={{ fontSize: 13, color: T.navy, background: T.card, padding: "4px 10px", borderRadius: 999, fontWeight: 600, border: `1px solid ${T.line}` }}>
               Your rank #{myRank}
