@@ -365,7 +365,7 @@ export const QUICK_REFS: QuickRef[] = [
     },
   },
   {
-    id: "sediment", icon: "🔬", title: "Urine Sediment Atlas", desc: "Visual guide to urine microscopy",
+    id: "sediment", icon: "🔬", title: "Urine Sediment Atlas", desc: "Optional UA microscopy reference",
     type: "atlas",
     imageLinks: [
       { name: "Renal Fellow — Urine Sediment of the Month", url: "https://www.renalfellow.org/category/urine-sediment-of-the-month/" },

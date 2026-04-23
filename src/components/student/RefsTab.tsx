@@ -26,7 +26,7 @@ export default function RefsTab({ navigate }) {
               <div style={{ fontSize: 13, color: T.orange, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Reference →</div>
             )}
             {ref.type === "atlas" && (
-              <div style={{ fontSize: 13, color: T.purple, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Atlas →</div>
+              <div style={{ fontSize: 13, color: T.purple, fontWeight: 600, marginTop: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Optional reference →</div>
             )}
           </button>
         ))}

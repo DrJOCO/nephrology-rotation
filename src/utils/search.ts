@@ -392,7 +392,7 @@ export function searchAll(
       results.quickRefs.push({
         label: ref.title,
         kind: "Quick ref",
-        tag: ref.type === "atlas" ? "Atlas" : ref.type === "calculator" ? "Calculator" : "Reference",
+        tag: ref.type === "atlas" ? "Optional reference" : ref.type === "calculator" ? "Calculator" : "Reference",
         score,
         nav: ["library", { type: "refDetail", id: ref.id }],
       });

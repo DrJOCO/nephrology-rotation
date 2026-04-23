@@ -118,10 +118,17 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
 
   return (
     <div>
+      <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.pale}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>Optional reference</div>
+        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+          Use this UA microscopy atlas when it helps with a patient or a teaching question. It does not count toward required weekly progress; core progress comes from study sheets, cases, and quizzes.
+        </div>
+      </div>
+
       {/* External Image Links banner */}
       <div style={{ background: T.purpleBg, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${T.purple}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.purple, marginBottom: 6 }}>📷 IMAGE RESOURCES</div>
-        <div style={{ fontSize: 13, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images. Pair with descriptions here for best learning.</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.purple, marginBottom: 6 }}>📷 OPTIONAL UA IMAGE RESOURCES</div>
+        <div style={{ fontSize: 13, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images when you want extra visual practice. Pair them with the descriptions here.</div>
         {refData.imageLinks.map((link, i) => (
           <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
             style={{ display: "block", fontSize: 13, color: T.med, fontWeight: 600, textDecoration: "none", padding: "4px 0" }}>
@@ -181,6 +188,11 @@ export default function RefDetailView({ refId, onBack }: { refId: string; onBack
         <div>
           <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: 0, fontWeight: 700 }}>{ref.title}</h2>
           <div style={{ color: T.sub, fontSize: 13 }}>{ref.desc}</div>
+          {ref.type === "atlas" && (
+            <div style={{ display: "inline-block", marginTop: 6, background: T.purpleBg, color: T.purple, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+              Optional reference
+            </div>
+          )}
         </div>
       </div>
 
