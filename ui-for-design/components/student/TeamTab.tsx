@@ -66,9 +66,6 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
         <h3 style={{ fontFamily: T.serif, color: T.navy, fontSize: 14, margin: "0 0 8px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
           <Trophy size={16} strokeWidth={1.75} aria-hidden="true" /> Friendly competition
         </h3>
-        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginBottom: 12 }}>
-          The motivating layer is back. Students can see rank and points, while the broader clinical exposure snapshot stays visible below.
-        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 13, color: T.goldText, background: T.yellowBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalPoints} cohort pts
@@ -84,13 +81,6 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               Your rank #{myRank}
             </span>
           )}
-        </div>
-      </div>
-
-      <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>How this stays safe</div>
-        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
-          Students only see names, point totals, levels, patient counts, and broad topic exposure here. Patient identifiers, diagnoses tied to names, rooms, and notes stay out of the leaderboard.
         </div>
       </div>
 
