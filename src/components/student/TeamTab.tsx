@@ -162,9 +162,6 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
 
       <div style={{ background: T.card, borderRadius: 12, padding: 14, marginTop: 16, border: `1px solid ${T.line}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>Shared clinical exposure</div>
-        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
-          The cohort view still shows the broad topic mix across the rotation code so students can see what the service is exposing everyone to.
-        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
           <span style={{ fontSize: 13, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalActivePatients} active patients
