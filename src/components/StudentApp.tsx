@@ -1563,7 +1563,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                     <div style={{ fontWeight: 700, color: "white", fontSize: 15 }}>Spaced Repetition Review</div>
                     <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>{dueKeys.length} question{dueKeys.length !== 1 ? "s" : ""} due — missed questions resurface at increasing intervals</div>
                   </div>
-                  <span style={{ background: "white", color: T.accent, fontSize: 13, fontWeight: 700, padding: "4px 10px", borderRadius: 12, flexShrink: 0 }}>{dueKeys.length}</span>
+                  <span style={{ background: "white", color: T.brand, fontSize: 13, fontWeight: 700, padding: "4px 10px", borderRadius: 12, flexShrink: 0 }}>{dueKeys.length}</span>
                 </button>
               )}
               <button onClick={() => navigate("today", { type: "practiceQuiz" })}
@@ -1849,7 +1849,7 @@ function ProfileSheet({
                 minHeight: 44,
                 padding: "12px 14px",
                 borderRadius: 12,
-                border: `1px solid ${nameError ? T.accent : T.line}`,
+                border: `1px solid ${nameError ? T.danger : T.line}`,
                 background: T.surface2,
                 color: T.ink,
                 fontSize: 14,
@@ -1865,9 +1865,9 @@ function ProfileSheet({
               <div
                 style={{
                   fontSize: 12,
-                  color: nameError ? T.accent : T.greenDk,
-                  background: nameError ? T.redBg : T.greenBg,
-                  border: `1px solid ${nameError ? T.redAlpha : T.greenAlpha}`,
+                  color: nameError ? T.danger : T.success,
+                  background: nameError ? T.dangerBg : T.successBg,
+                  border: `1px solid ${nameError ? T.danger : T.success}`,
                   borderRadius: 10,
                   padding: "8px 10px",
                   lineHeight: 1.45,
@@ -1910,7 +1910,7 @@ function ProfileSheet({
                 minHeight: 44,
                 padding: "12px 14px",
                 borderRadius: 12,
-                border: `1px solid ${yearError ? T.accent : T.line}`,
+                border: `1px solid ${yearError ? T.danger : T.line}`,
                 background: T.surface2,
                 color: T.ink,
                 fontSize: 14,
@@ -1925,9 +1925,9 @@ function ProfileSheet({
               <div
                 style={{
                   fontSize: 12,
-                  color: yearError ? T.accent : T.greenDk,
-                  background: yearError ? T.redBg : T.greenBg,
-                  border: `1px solid ${yearError ? T.redAlpha : T.greenAlpha}`,
+                  color: yearError ? T.danger : T.success,
+                  background: yearError ? T.dangerBg : T.successBg,
+                  border: `1px solid ${yearError ? T.danger : T.success}`,
                   borderRadius: 10,
                   padding: "8px 10px",
                   lineHeight: 1.45,
@@ -2067,7 +2067,7 @@ function ConfirmSheet({
             {cancelLabel}
           </button>
           <button ref={confirmRef} onClick={onConfirm}
-            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: "white", background: T.accent, border: "none", borderRadius: 12, cursor: "pointer" }}>
+            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: "white", background: T.brand, border: "none", borderRadius: 12, cursor: "pointer" }}>
             {confirmLabel}
           </button>
         </div>

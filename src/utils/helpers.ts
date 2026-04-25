@@ -111,6 +111,11 @@ export function ensureThemeStyles(): void {
       --c-success:#1f7a5a;--c-success-bg:#e8f3ee;
       --c-warning:#a86b1f;--c-warning-bg:#faf0dd;
       --c-danger:#c0392b;--c-danger-bg:#fbeae5;
+      /* Phase 3 (PR 3.1) info channel + focus ring.
+         info = non-alarming slate blue for FYI/lab values/secondary links.
+         focus-ring is its own var so we can keep it distinct from brand/danger. */
+      --c-info:#3a6ea8;--c-info-dk:#1f4570;--c-info-bg:#eaf1f9;--c-info-alpha:rgba(58,110,168,0.18);
+      --c-focus-ring:#2563aa;
     }
     html, body {
       background: var(--c-bg);
@@ -137,6 +142,9 @@ export function ensureThemeStyles(): void {
         --c-success:#6dd1a5;--c-success-bg:rgba(109,209,165,0.12);
         --c-warning:#e3b261;--c-warning-bg:rgba(227,178,97,0.14);
         --c-danger:#ef6c5e;--c-danger-bg:rgba(239,108,94,0.14);
+        /* Phase 3 (PR 3.1) info channel + focus ring (dark). */
+        --c-info:#7fa8d4;--c-info-dk:#a9c4e4;--c-info-bg:rgba(127,168,212,0.14);--c-info-alpha:rgba(127,168,212,0.32);
+        --c-focus-ring:#7fa8d4;
       }
     }
   `;
@@ -166,7 +174,7 @@ export function ensureLayoutStyles(): void {
 
     /* A11y (spec §12): visible keyboard focus ring on all interactive elements.
        Uses the brand accent so it reads as intentional, not a browser default. */
-    :focus-visible { outline: 2px solid var(--c-accent); outline-offset: 2px; border-radius: 4px; }
+    :focus-visible { outline: 3px solid var(--c-focus-ring); outline-offset: 2px; border-radius: 4px; }
     button:focus:not(:focus-visible), [role="button"]:focus:not(:focus-visible) { outline: none; }
 
     /* Skip-to-content link (Phase 2.5): visually hidden until keyboard-focused,

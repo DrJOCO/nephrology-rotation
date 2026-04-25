@@ -44,6 +44,15 @@ export const T = {
   warningBg: "var(--c-warning-bg)",
   danger: "var(--c-danger)",      // error / destructive / critical
   dangerBg: "var(--c-danger-bg)",
+
+  // Phase 3 (PR 3.1) — info channel + dedicated focus ring.
+  // info = non-alarming slate blue (FYI / lab values / secondary links / patient-count chips).
+  // focusRing = a single value, no variants — kept distinct from brand and danger.
+  info: "var(--c-info)",
+  infoDk: "var(--c-info-dk)",
+  infoBg: "var(--c-info-bg)",
+  infoAlpha: "var(--c-info-alpha)",
+  focusRing: "var(--c-focus-ring)",
 };
 
 export const TOPICS = [
