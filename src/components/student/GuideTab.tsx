@@ -82,13 +82,13 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
                   return (
                     <div key={ii} style={{
                       display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8,
-                      ...(isWarning ? { background: T.yellowBg, borderRadius: 8, padding: "8px 10px", marginLeft: -4, marginRight: -4 } : {}),
-                      ...(isNever ? { background: T.redBg, borderRadius: 8, padding: "8px 10px", marginLeft: -4, marginRight: -4 } : {}),
+                      ...(isWarning ? { background: T.warningBg, borderRadius: 8, padding: "8px 10px", marginLeft: -4, marginRight: -4 } : {}),
+                      ...(isNever ? { background: T.dangerBg, borderRadius: 8, padding: "8px 10px", marginLeft: -4, marginRight: -4 } : {}),
                     }}>
                       {!isWarning && !isNever && (
                         <span style={{ color: accent, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>•</span>
                       )}
-                      <div style={{ fontSize: 13, color: isWarning ? T.goldText : isNever ? T.redDeep : T.text, lineHeight: 1.5, fontWeight: isWarning || isNever ? 600 : 400, wordBreak: "break-word" }}>
+                      <div style={{ fontSize: 13, color: isWarning ? T.warning : isNever ? T.danger : T.text, lineHeight: 1.5, fontWeight: isWarning || isNever ? 600 : 400, wordBreak: "break-word" }}>
                         {item}
                       </div>
                     </div>
@@ -120,9 +120,9 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
 
       {/* Inpatient Consult Guides — HERO */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ background: `linear-gradient(135deg, ${T.greenBg} 0%, ${T.blueBg} 100%)`, borderRadius: 14, border: `1.5px solid ${T.green}`, padding: 14, boxShadow: `0 2px 8px ${T.greenAlpha}` }}>
+        <div style={{ background: T.successBg, borderRadius: 14, border: `1.5px solid ${T.success}`, padding: 14 }}>
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Inpatient Consult Guides</div>
-          <div style={{ fontSize: 13, color: T.greenDk, marginTop: 2, marginBottom: 12, lineHeight: 1.45 }}>
+          <div style={{ fontSize: 13, color: T.success, marginTop: 2, marginBottom: 12, lineHeight: 1.45 }}>
             What to gather, how to present, red flags, and the assessment framework — by topic.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
@@ -131,16 +131,16 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
               return (
                 <button key={t} onClick={() => navigate("library", { type: "inpatientGuide", topic: t })}
                   style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: 12,
-                    background: T.card, borderRadius: 12, border: `1px solid ${T.greenAlpha}`,
+                    background: T.card, borderRadius: 12, border: `1px solid ${T.success}`,
                     cursor: "pointer", textAlign: "left" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, flexShrink: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: T.successBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, flexShrink: 0 }}>
                     {g.icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, lineHeight: 1.3 }}>{g.title}</div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>{g.subtitle}</div>
                   </div>
-                  <span style={{ color: T.greenDk, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
+                  <span style={{ color: T.success, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
                 </button>
               );
             })}
@@ -167,7 +167,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
                     key={topic}
                     onClick={() => navigate("library", { type: "clinicGuide", date: dateStr, topic })}
                     style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: "12px 12px",
-                      background: T.card, borderRadius: 12, border: `1px solid ${record?.isOverride ? T.orange : T.line}`,
+                      background: T.card, borderRadius: 12, border: `1px solid ${record?.isOverride ? T.warning : T.line}`,
                       cursor: "pointer", textAlign: "left" }}
                   >
                     <span style={{ fontSize: 20, flexShrink: 0 }}>{template.icon}</span>

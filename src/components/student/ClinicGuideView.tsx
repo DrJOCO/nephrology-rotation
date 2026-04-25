@@ -55,7 +55,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
         <span style={{ fontSize: 13, color: T.med, fontWeight: 600 }}>{formatFriday(date)}</span>
         {isOverride && (
-          <span style={{ fontSize: 13, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: T.warning, background: T.warningBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
         )}
       </div>
 
@@ -66,15 +66,15 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
       </div>
 
       {/* Teaching pearl */}
-      <div style={{ background: T.yellowBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.gold}` }}>
-        <div style={{ fontWeight: 700, color: T.goldText, fontSize: 13, marginBottom: 4 }}>Teaching Pearl</div>
+      <div style={{ background: T.warningBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.warning}` }}>
+        <div style={{ fontWeight: 700, color: T.warning, fontSize: 13, marginBottom: 4 }}>Teaching Pearl</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.teachingPearl}</div>
       </div>
 
       {/* Before presenting */}
-      <div style={{ background: T.greenBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.green}` }}>
-        <div style={{ fontWeight: 700, color: T.greenDk, fontSize: 13, marginBottom: 8 }}>Before Presenting, Gather This</div>
-        {bulletList(guide.beforePresenting, T.green)}
+      <div style={{ background: T.successBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.success}` }}>
+        <div style={{ fontWeight: 700, color: T.success, fontSize: 13, marginBottom: 8 }}>Before Presenting, Gather This</div>
+        {bulletList(guide.beforePresenting, T.success)}
       </div>
 
       {/* How to present */}
@@ -113,9 +113,9 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
       })}
 
       {/* Common mistakes */}
-      <div style={{ background: T.redBg, borderRadius: 12, padding: 16, marginTop: 6, marginBottom: 14, borderLeft: `4px solid ${T.redDeep}` }}>
-        <div style={{ fontWeight: 700, color: T.redDeep, fontSize: 13, marginBottom: 8 }}>Common Mistakes</div>
-        {bulletList(guide.commonMistakes, T.redDeep)}
+      <div style={{ background: T.dangerBg, borderRadius: 12, padding: 16, marginTop: 6, marginBottom: 14, borderLeft: `4px solid ${T.danger}` }}>
+        <div style={{ fontWeight: 700, color: T.danger, fontSize: 13, marginBottom: 8 }}>Common Mistakes</div>
+        {bulletList(guide.commonMistakes, T.danger)}
       </div>
 
       {/* Teaching points */}

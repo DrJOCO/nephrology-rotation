@@ -52,7 +52,7 @@ export default function ClinicGuideHistoryView({ guides, onSelect, onBack }: Pro
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                   {g.isOverride && (
-                    <span style={{ fontSize: 13, fontWeight: 700, color: T.orange, background: T.yellowBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.warning, background: T.warningBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
                   )}
                   <span style={{ color: T.muted, fontSize: 16 }}>{"\u203A"}</span>
                 </div>

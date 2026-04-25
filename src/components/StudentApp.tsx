@@ -1348,8 +1348,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         <div
           role="status" aria-live="polite"
           style={{
-            background: online ? T.ice : T.goldAlpha,
-            color: online ? T.med : T.warn,
+            background: online ? T.ice : T.warning,
+            color: online ? T.med : T.warning,
             borderBottom: `1px solid ${T.line}`,
             padding: "8px 16px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 8,
@@ -1557,7 +1557,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px", lineHeight: 1.5 }}>Review missed questions or practice from the full question bank.</p>
               {dueKeys.length > 0 && (
                 <button onClick={() => navigate("today", { type: "srReview" })}
-                  style={{ width: "100%", background: `linear-gradient(135deg, ${T.orange}, ${T.gold})`, borderRadius: 12, padding: 16, border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
+                  style={{ width: "100%", background: `linear-gradient(135deg, ${T.warning}, ${T.warning})`, borderRadius: 12, padding: 16, border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
                   <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDD04"}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: "white", fontSize: 15 }}>Spaced Repetition Review</div>

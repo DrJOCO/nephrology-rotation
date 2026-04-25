@@ -38,40 +38,40 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
   ];
 
   const tagColors = {
-    "Must Listen": { bg: T.redBg, text: T.redDeep },
-    "Essential": { bg: T.redBg, text: T.redDeep },
-    "AKI": { bg: T.redBg, text: T.redDeep },
-    "Electrolytes": { bg: T.greenBg, text: T.greenDk },
-    "GN": { bg: T.purpleBg, text: T.purpleAccent },
-    "CKD": { bg: T.blueBg, text: T.med },
-    "Dialysis": { bg: T.yellowBg, text: T.goldText },
-    "Acid-Base": { bg: T.greenBg, text: T.greenDk },
-    "Medications": { bg: T.blueBg, text: T.med },
-    "Stones": { bg: T.yellowBg, text: T.goldText },
-    "Physiology": { bg: T.greenBg, text: T.greenDk },
-    "Guidelines": { bg: T.blueBg, text: T.med },
-    "Cases": { bg: T.yellowBg, text: T.goldText },
-    "Quick Hits": { bg: T.purpleBg, text: T.purpleAccent },
-    "Teaching": { bg: T.greenBg, text: T.greenDk },
-    "Practice Cases": { bg: T.yellowBg, text: T.goldText },
-    "Video Lectures": { bg: T.purpleBg, text: T.purpleAccent },
-    "Visuals": { bg: T.yellowBg, text: T.goldText },
-    "Review": { bg: T.blueBg, text: T.med },
-    "Pathology": { bg: T.redBg, text: T.redDeep },
-    "Pediatrics": { bg: T.purpleBg, text: T.purpleAccent },
-    "Career": { bg: T.blueBg, text: T.med },
-    "Community": { bg: T.greenBg, text: T.greenDk },
-    "Boards": { bg: T.yellowBg, text: T.goldText },
-    "Fun Learning": { bg: T.greenBg, text: T.greenDk },
-    "App": { bg: T.purpleBg, text: T.purpleAccent },
-    "Calculators": { bg: T.blueBg, text: T.med },
-    "ICU": { bg: T.redBg, text: T.redDeep },
-    "HTN": { bg: T.redBg, text: T.redDeep },
-    "Transplant": { bg: T.greenBg, text: T.greenDk },
-    "HRS": { bg: T.yellowBg, text: T.goldText },
-    "Cardiorenal": { bg: T.blueBg, text: T.med },
-    "DKD": { bg: T.greenBg, text: T.greenDk },
-    "PD": { bg: T.yellowBg, text: T.goldText },
+    "Must Listen": { bg: T.dangerBg, text: T.danger },
+    "Essential": { bg: T.dangerBg, text: T.danger },
+    "AKI": { bg: T.dangerBg, text: T.danger },
+    "Electrolytes": { bg: T.successBg, text: T.success },
+    "GN": { bg: T.infoBg, text: T.info },
+    "CKD": { bg: T.infoBg, text: T.med },
+    "Dialysis": { bg: T.warningBg, text: T.warning },
+    "Acid-Base": { bg: T.successBg, text: T.success },
+    "Medications": { bg: T.infoBg, text: T.med },
+    "Stones": { bg: T.warningBg, text: T.warning },
+    "Physiology": { bg: T.successBg, text: T.success },
+    "Guidelines": { bg: T.infoBg, text: T.med },
+    "Cases": { bg: T.warningBg, text: T.warning },
+    "Quick Hits": { bg: T.infoBg, text: T.info },
+    "Teaching": { bg: T.successBg, text: T.success },
+    "Practice Cases": { bg: T.warningBg, text: T.warning },
+    "Video Lectures": { bg: T.infoBg, text: T.info },
+    "Visuals": { bg: T.warningBg, text: T.warning },
+    "Review": { bg: T.infoBg, text: T.med },
+    "Pathology": { bg: T.dangerBg, text: T.danger },
+    "Pediatrics": { bg: T.infoBg, text: T.info },
+    "Career": { bg: T.infoBg, text: T.med },
+    "Community": { bg: T.successBg, text: T.success },
+    "Boards": { bg: T.warningBg, text: T.warning },
+    "Fun Learning": { bg: T.successBg, text: T.success },
+    "App": { bg: T.infoBg, text: T.info },
+    "Calculators": { bg: T.infoBg, text: T.med },
+    "ICU": { bg: T.dangerBg, text: T.danger },
+    "HTN": { bg: T.dangerBg, text: T.danger },
+    "Transplant": { bg: T.successBg, text: T.success },
+    "HRS": { bg: T.warningBg, text: T.warning },
+    "Cardiorenal": { bg: T.infoBg, text: T.med },
+    "DKD": { bg: T.successBg, text: T.success },
+    "PD": { bg: T.warningBg, text: T.warning },
   };
 
   const rawActiveData = tabList.find(t => t.id === activeTab)?.data || [];
@@ -79,9 +79,9 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
     ? rawActiveData.filter(resource => "week" in resource && resource.week === focusWeek)
     : rawActiveData;
   const activeTabStyle = {
-    border: `1px solid ${T.med}`,
-    background: T.redAlpha,
-    color: T.med,
+    border: `1px solid ${T.brand}`,
+    background: T.brandBg,
+    color: T.brand,
     boxShadow: "none",
   };
   const inactiveTabStyle = {
@@ -129,15 +129,15 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
       </div>
 
       {activeTab === "decks" && (
-        <div style={{ background: T.greenBg, border: `1px solid ${T.greenAlpha}`, borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: T.greenDk, marginBottom: 4 }}>
+        <div style={{ background: T.successBg, border: `1px solid ${T.success}`, borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: T.success, marginBottom: 4 }}>
             Core curriculum
           </div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
             Review the weekly teaching decks, then tap Mark reviewed to count them toward progress and points.
           </div>
           {focusWeek && (
-            <div style={{ display: "inline-flex", marginTop: 10, background: T.card, color: T.greenDk, border: `1px solid ${T.greenAlpha}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ display: "inline-flex", marginTop: 10, background: T.card, color: T.success, border: `1px solid ${T.success}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Showing Module {focusWeek} decks
             </div>
           )}
@@ -170,7 +170,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
                     </span>
                   )}
                   {deckReviewed && (
-                    <span style={{ fontSize: 13, fontWeight: 700, color: T.greenDk, background: T.greenBg, padding: "2px 8px", borderRadius: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, padding: "2px 8px", borderRadius: 6 }}>
                       Reviewed
                     </span>
                   )}
@@ -204,11 +204,11 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
                       style={{
                         fontSize: 13,
                         fontWeight: 700,
-                        color: deckReviewed ? T.greenDk : T.med,
-                        background: deckReviewed ? T.greenBg : T.ice,
+                        color: deckReviewed ? T.success : T.med,
+                        background: deckReviewed ? T.successBg : T.ice,
                         padding: "8px 12px",
                         borderRadius: 8,
-                        border: `1px solid ${deckReviewed ? T.greenAlpha : T.line}`,
+                        border: `1px solid ${deckReviewed ? T.success : T.line}`,
                         cursor: "pointer",
                       }}
                     >

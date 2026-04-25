@@ -16,7 +16,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Core for this module
       </div>
       <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
@@ -33,12 +33,12 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
         const isOpen = expanded === si;
         const isDone = (completedItems?.studySheets || {})[sheet.id];
         return (
-          <div key={sheet.id} style={{ background: T.card, borderRadius: 12, marginBottom: 12, border: `1px solid ${isOpen ? T.purpleSoft : isDone ? T.greenAlpha : T.line}`, overflow: "hidden", transition: "border 0.2s", position: "relative" }}>
+          <div key={sheet.id} style={{ background: T.card, borderRadius: 12, marginBottom: 12, border: `1px solid ${isOpen ? T.muted : isDone ? T.success : T.line}`, overflow: "hidden", transition: "border 0.2s", position: "relative" }}>
             {/* Sheet Header */}
             <button onClick={() => setExpanded(isOpen ? null : si)}
-              style={{ width: "100%", padding: 16, background: isOpen ? T.purpleBg : isDone ? T.greenBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
+              style={{ width: "100%", padding: 16, background: isOpen ? T.infoBg : isDone ? T.successBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 11, background: isDone ? T.greenBg : T.purpleBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{isDone ? "\u2705" : sheet.icon}</div>
+                <div style={{ width: 44, height: 44, borderRadius: 11, background: isDone ? T.successBg : T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{isDone ? "\u2705" : sheet.icon}</div>
                 <div style={{ flex: 1, minWidth: 0, paddingRight: 40 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{sheet.title}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{sheet.subtitle}</div>
@@ -49,7 +49,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(sheet.id); }}
               aria-label={(bookmarks?.studySheets || []).includes(sheet.id) ? `Unbookmark ${sheet.title}` : `Bookmark ${sheet.title}`}
-              style={{ position: "absolute", top: 12, right: 40, background: "none", border: "none", fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.gold : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+              style={{ position: "absolute", top: 12, right: 40, background: "none", border: "none", fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
               {(bookmarks?.studySheets || []).includes(sheet.id) ? "\u2605" : "\u2606"}
             </button>
 
@@ -61,8 +61,8 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
 
                 {sheet.sections.map((section, secIdx) => (
                   <div key={secIdx} style={{ marginBottom: 20 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: T.purpleAccent, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                      <div style={{ width: 3, height: 12, background: T.purpleSoft, borderRadius: 2 }} />
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.info, marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 3, height: 12, background: T.muted, borderRadius: 2 }} />
                       {section.heading}
                     </div>
                     {/* Section image */}
@@ -71,7 +71,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                     <div style={{ background: T.grayBg, borderRadius: 10, padding: "12px 14px" }}>
                       {section.items.map((item, itemIdx) => (
                         <div key={itemIdx} style={{ fontSize: 13, color: T.text, lineHeight: 1.6, marginBottom: itemIdx < section.items.length - 1 ? 12 : 0, paddingLeft: 14, position: "relative" }}>
-                          <span style={{ position: "absolute", left: 0, color: T.purpleSoft, fontWeight: 700 }}>{"\u2022"}</span>
+                          <span style={{ position: "absolute", left: 0, color: T.muted, fontWeight: 700 }}>{"\u2022"}</span>
                           {item}
                         </div>
                       ))}
@@ -82,7 +82,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                 {/* Trial Callouts */}
                 {sheet.trialCallouts && sheet.trialCallouts.length > 0 && (
                   <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: T.goldText, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 13 }}>{"\u2B50"}</span> Trial Connections
                     </div>
                     {sheet.trialCallouts.map((callout, ci) => {
@@ -91,10 +91,10 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                         <div key={ci}
                           onClick={trialExists && navigate ? () => navigate("library", { type: "trialLibrary", searchTrial: callout.trial }) : undefined}
                           role={trialExists ? "button" : undefined} tabIndex={trialExists ? 0 : undefined}
-                          style={{ background: T.yellowBg, borderRadius: 10, padding: "10px 14px", marginBottom: 10, borderLeft: `3px solid ${T.gold}`, cursor: trialExists ? "pointer" : "default", transition: "box-shadow 0.2s" }}>
+                          style={{ background: T.warningBg, borderRadius: 10, padding: "10px 14px", marginBottom: 10, borderLeft: `3px solid ${T.warning}`, cursor: trialExists ? "pointer" : "default", transition: "box-shadow 0.2s" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>{callout.trial}</div>
-                            {trialExists && <span style={{ fontSize: 13, color: T.goldText, fontWeight: 600 }}>View trial ›</span>}
+                            <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 4 }}>{callout.trial}</div>
+                            {trialExists && <span style={{ fontSize: 13, color: T.warning, fontWeight: 600 }}>View trial ›</span>}
                           </div>
                           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>{callout.pearl}</div>
                         </div>
@@ -116,7 +116,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                           <button
                             key={topic}
                             onClick={() => navigate("today", { type: "topicDetail", topic, source: "studySheets", week })}
-                            style={{ background: T.blueBg, border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", cursor: "pointer", fontSize: 13, fontWeight: 600, color: T.med }}
+                            style={{ background: T.infoBg, border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", cursor: "pointer", fontSize: 13, fontWeight: 600, color: T.med }}
                           >
                             {topic} ({resourceCount})
                           </button>
@@ -132,7 +132,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                     <span style={{ fontSize: 13, color: T.sub, flex: 1 }}>Finished reading?</span>
                   )}
                   <button onClick={() => onToggleComplete(sheet.id)}
-                    style={{ padding: "8px 14px", background: isDone ? T.green : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, marginLeft: isDone ? "auto" : 0 }}>
+                    style={{ padding: "8px 14px", background: isDone ? T.success : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, marginLeft: isDone ? "auto" : 0 }}>
                     <span>{"\u2713"}</span>
                     {isDone ? "Completed" : "Mark complete"}
                   </button>

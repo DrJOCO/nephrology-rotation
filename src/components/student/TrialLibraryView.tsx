@@ -19,7 +19,7 @@ export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, 
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{"\uD83D\uDCDA"}</div>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{"\uD83D\uDCDA"}</div>
         <div>
           <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Landmark Trial Library</h2>
           <p style={{ color: T.sub, fontSize: 13, margin: "2px 0 0" }}>{ALL_LANDMARK_TRIALS.length} trials across all weeks</p>

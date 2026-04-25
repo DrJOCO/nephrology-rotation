@@ -23,10 +23,10 @@ export default function RefsTab({ navigate }) {
               <div style={{ fontSize: 13, color: T.med, fontWeight: 600, marginTop: 8 }}>Calculator →</div>
             )}
             {ref.type === "reference" && (
-              <div style={{ fontSize: 13, color: T.orange, fontWeight: 600, marginTop: 8 }}>Reference →</div>
+              <div style={{ fontSize: 13, color: T.warning, fontWeight: 600, marginTop: 8 }}>Reference →</div>
             )}
             {ref.type === "atlas" && (
-              <div style={{ fontSize: 13, color: T.purple, fontWeight: 600, marginTop: 8 }}>Optional reference →</div>
+              <div style={{ fontSize: 13, color: T.info, fontWeight: 600, marginTop: 8 }}>Optional reference →</div>
             )}
           </button>
         ))}

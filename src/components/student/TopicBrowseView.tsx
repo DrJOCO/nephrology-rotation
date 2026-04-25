@@ -58,7 +58,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
         {hasCoreContent && (
           <div style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px 10px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-              <span style={{ background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+              <span style={{ background: T.successBg, color: T.success, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                 Core for this topic
               </span>
               <span style={{ fontSize: 13, color: T.muted }}>
@@ -75,7 +75,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
                   const done = !!completed.studySheets?.[s.id];
                   return (
                     <button key={s.id} onClick={() => navigate("today", { type: "studySheets", week: s.week })}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.greenBg : T.card, border: `1px solid ${done ? T.greenAlpha : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 18, flexShrink: 0 }}>{sheet.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{sheet.title}</div>
@@ -97,7 +97,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
                   const done = !!completed.decks?.[d.id];
                   return (
                     <button key={d.id} onClick={() => navigate("today", { type: "resources", tab: "decks", week: d.week })}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.greenBg : T.card, border: `1px solid ${done ? T.greenAlpha : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCCA"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{deck.name}</div>
@@ -119,7 +119,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
                   const done = !!completed.cases?.[c.id];
                   return (
                     <button key={c.id} onClick={() => navigate("today", { type: "cases", week: c.week })}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.greenBg : T.card, border: `1px solid ${done ? T.greenAlpha : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83C\uDFE5"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{cs.title}</div>
@@ -153,7 +153,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
         {hasOptionalDepth && (
           <div style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px 10px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-              <span style={{ background: T.blueBg, color: T.med, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+              <span style={{ background: T.infoBg, color: T.med, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                 Optional depth
               </span>
               <span style={{ fontSize: 13, color: T.muted }}>
@@ -170,7 +170,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
                   const done = !!completed.articles?.[a.url];
                   return (
                     <button key={a.url} onClick={() => navigate("today", { type: "articles", week: a.week })}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.greenBg : T.card, border: `1px solid ${done ? T.greenAlpha : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCC4"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{article.title}</div>
@@ -191,7 +191,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
                   if (!trial) return null;
                   return (
                     <button key={trial.name} onClick={() => navigate("library", { type: "trialLibrary", searchTrial: trial.name })}
-                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.yellowBg, border: `1px solid ${T.goldAlpha}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.warningBg, border: `1px solid ${T.warning}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{trial.name}</div>

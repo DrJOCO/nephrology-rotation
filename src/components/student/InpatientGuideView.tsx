@@ -75,15 +75,15 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
       </div>
 
       {/* Teaching pearl */}
-      <div style={{ background: T.yellowBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.gold}` }}>
-        <div style={{ fontWeight: 700, color: T.goldText, fontSize: 13, marginBottom: 4 }}>Teaching Pearl</div>
+      <div style={{ background: T.warningBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.warning}` }}>
+        <div style={{ fontWeight: 700, color: T.warning, fontSize: 13, marginBottom: 4 }}>Teaching Pearl</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.teachingPearl}</div>
       </div>
 
       {/* Before rounds */}
-      <div style={{ background: T.greenBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.green}` }}>
-        <div style={{ fontWeight: 700, color: T.greenDk, fontSize: 13, marginBottom: 8 }}>Before Rounds: Gather This</div>
-        {bulletList(guide.beforeRounds, T.green)}
+      <div style={{ background: T.successBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.success}` }}>
+        <div style={{ fontWeight: 700, color: T.success, fontSize: 13, marginBottom: 8 }}>Before Rounds: Gather This</div>
+        {bulletList(guide.beforeRounds, T.success)}
       </div>
 
       {/* 30-second summary */}
@@ -100,8 +100,8 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
 
       {/* Accordion sections */}
       {accordion("differential", "Top Differential Buckets", guide.topDifferentialBuckets, T.med)}
-      {accordion("redFlags", "Red Flags / Call Urgently", guide.redFlags, T.redDeep)}
-      {accordion("mistakes", "Common Mistakes", guide.commonMistakes, T.orange)}
+      {accordion("redFlags", "Red Flags / Call Urgently", guide.redFlags, T.danger)}
+      {accordion("mistakes", "Common Mistakes", guide.commonMistakes, T.warning)}
 
       {/* Assessment framework */}
       <div style={{ marginTop: 6, marginBottom: 14 }}>

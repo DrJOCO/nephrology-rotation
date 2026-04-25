@@ -4,11 +4,11 @@ import type { Trial, Bookmarks } from "../../types";
 
 export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookmark }: { trial: Trial; isOpen: boolean; onToggle: () => void; isBookmarked: boolean; onToggleBookmark?: (name: string) => void }) {
   return (
-    <div style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.gold : T.line}`, overflow: "hidden", transition: "border 0.2s", position: "relative" }}>
+    <div style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.warning : T.line}`, overflow: "hidden", transition: "border 0.2s", position: "relative" }}>
       <button onClick={onToggle}
-        style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.yellowBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
+        style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.warningBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 9, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</div>
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 2, flex: 1, paddingRight: onToggleBookmark ? 32 : 0 }}>{trial.name}</div>
@@ -23,7 +23,7 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
         <button
           onClick={(e) => { e.stopPropagation(); onToggleBookmark(trial.name); }}
           aria-label={isBookmarked ? `Unbookmark ${trial.name}` : `Bookmark ${trial.name}`}
-          style={{ position: "absolute", top: 10, right: 40, background: "none", border: "none", fontSize: 16, color: isBookmarked ? T.gold : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+          style={{ position: "absolute", top: 10, right: 40, background: "none", border: "none", fontSize: 16, color: isBookmarked ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
           {isBookmarked ? "\u2605" : "\u2606"}
         </button>
       )}
@@ -33,7 +33,7 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 12 }}>{trial.full_title}</div>
           {trial.details && (<>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 4 }}>Study Details</div>
-            <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6, marginBottom: 12, background: T.yellowBg, borderRadius: 8, padding: 12, borderLeft: `3px solid ${T.gold}` }}>{trial.details}</div>
+            <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6, marginBottom: 12, background: T.warningBg, borderRadius: 8, padding: 12, borderLeft: `3px solid ${T.warning}` }}>{trial.details}</div>
           </>)}
           <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 4 }}>How It Changed Practice</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 12, background: T.ice, borderRadius: 8, padding: 12 }}>{trial.significance}</div>
@@ -70,12 +70,12 @@ export function CategoryGroupedTrials({ trials, categoryOrder = TRIAL_CATEGORY_O
       <div key={cat} style={{ marginBottom: 16 }}>
         <button onClick={() => toggleCat(cat)}
           style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-            background: T.warmBg, borderRadius: 10, border: "none", borderLeft: `3px solid ${T.gold}`,
+            background: T.warmBg, borderRadius: 10, border: "none", borderLeft: `3px solid ${T.warning}`,
             cursor: "pointer", textAlign: "left", marginBottom: isCollapsed ? 0 : 8 }}>
-          <span style={{ fontSize: 14, color: T.goldText, fontWeight: 700, transition: "transform 0.2s",
+          <span style={{ fontSize: 14, color: T.warning, fontWeight: 700, transition: "transform 0.2s",
             transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", display: "inline-block" }}>{"\u25B8"}</span>
           <span style={{ fontWeight: 700, color: T.navy, fontSize: 14, flex: 1 }}>{cat}</span>
-          <span style={{ fontSize: 13, color: T.sub, fontWeight: 600, background: T.yellowBg, borderRadius: 8, padding: "2px 8px" }}>
+          <span style={{ fontSize: 13, color: T.sub, fontWeight: 600, background: T.warningBg, borderRadius: 8, padding: "2px 8px" }}>
             {catTrials.length}
           </span>
         </button>

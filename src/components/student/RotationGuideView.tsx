@@ -51,8 +51,8 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
       </div>
 
       {/* Teaching pearl */}
-      <div style={{ background: T.yellowBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.gold}` }}>
-        <div style={{ fontWeight: 700, color: T.goldText, fontSize: 13, marginBottom: 4 }}>Teaching Pearl</div>
+      <div style={{ background: T.warningBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.warning}` }}>
+        <div style={{ fontWeight: 700, color: T.warning, fontSize: 13, marginBottom: 4 }}>Teaching Pearl</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.teachingPearl}</div>
       </div>
 
@@ -99,9 +99,9 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
       })}
 
       {/* Common mistakes */}
-      <div style={{ background: T.redBg, borderRadius: 12, padding: 16, marginTop: 6, marginBottom: 14, borderLeft: `4px solid ${T.redDeep}` }}>
-        <div style={{ fontWeight: 700, color: T.redDeep, fontSize: 13, marginBottom: 8 }}>Common Mistakes</div>
-        {bulletList(guide.commonMistakes, T.redDeep)}
+      <div style={{ background: T.dangerBg, borderRadius: 12, padding: 16, marginTop: 6, marginBottom: 14, borderLeft: `4px solid ${T.danger}` }}>
+        <div style={{ fontWeight: 700, color: T.danger, fontSize: 13, marginBottom: 8 }}>Common Mistakes</div>
+        {bulletList(guide.commonMistakes, T.danger)}
       </div>
 
       {/* Teaching points */}

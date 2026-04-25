@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
-import { T } from "../../data/constants";
+import { T, labelChip } from "../../data/constants";
 import store from "../../utils/store";
 import { sortTopicCounts } from "../../utils/teamSnapshots";
 import type { TeamSnapshot } from "../../types";
@@ -75,7 +75,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               borderRadius: 12,
               padding: 12,
               marginBottom: 10,
-              border: isMe ? `2px solid ${T.med}` : rank <= 3 ? `1px solid ${T.gold}` : `1px solid ${T.line}`,
+              border: isMe ? `2px solid ${T.med}` : rank <= 3 ? `1px solid ${T.warning}` : `1px solid ${T.line}`,
             }}
           >
             <button
@@ -97,7 +97,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: T.goldText, fontFamily: T.mono }}>{student.points}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: T.warning, fontFamily: T.mono }}>{student.points}</div>
                   <div style={{ fontSize: 12, color: T.muted }}>points</div>
                 </div>
                 <span style={{ fontSize: 16, color: T.muted, transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
@@ -107,10 +107,10 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
             {isExpanded && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: topTopics.length > 0 ? 10 : 0 }}>
-                  <span style={{ fontSize: 13, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+                  <span style={{ fontSize: 13, color: T.med, background: T.infoBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
                     {student.activePatientCount} active patients
                   </span>
-                  <span style={{ fontSize: 13, color: T.greenDk, background: T.greenBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+                  <span style={{ fontSize: 13, color: T.success, background: T.successBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
                     {student.dischargedPatientCount} discharged
                   </span>
                   <span style={{ fontSize: 13, color: T.navy, background: T.ice, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
@@ -122,8 +122,9 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
                 ) : (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {topTopics.map(({ topic, count }) => (
-                      <span key={topic} style={{ fontSize: 13, color: T.navy, background: T.ice, padding: "5px 10px", borderRadius: 999, fontWeight: 600 }}>
-                        {topic} x{count}
+                      <span key={topic} style={labelChip}>
+                        {topic}
+                        <span style={{ color: T.muted, fontWeight: 700 }}>{` ×${count}`}</span>
                       </span>
                     ))}
                   </div>
@@ -137,18 +138,19 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
       <div style={{ background: T.card, borderRadius: 12, padding: 14, marginTop: 16, border: `1px solid ${T.line}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>Shared clinical exposure</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
-          <span style={{ fontSize: 13, color: T.med, background: T.blueBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+          <span style={{ fontSize: 13, color: T.med, background: T.infoBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalActivePatients} active patients
           </span>
-          <span style={{ fontSize: 13, color: T.greenDk, background: T.greenBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+          <span style={{ fontSize: 13, color: T.success, background: T.successBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {Object.keys(cohortTopicCounts).length} topics seen
           </span>
         </div>
         {topCohortTopics.length > 0 && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {topCohortTopics.map(({ topic, count }) => (
-              <span key={topic} style={{ fontSize: 13, color: T.navy, background: T.ice, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
-                {topic} x{count}
+              <span key={topic} style={labelChip}>
+                {topic}
+                <span style={{ color: T.muted, fontWeight: 700 }}>{` ×${count}`}</span>
               </span>
             ))}
           </div>

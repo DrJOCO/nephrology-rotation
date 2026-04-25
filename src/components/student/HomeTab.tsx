@@ -9,7 +9,7 @@ import {
   Sparkles,
   Stethoscope,
 } from "lucide-react";
-import { T, WEEKLY, ARTICLES, STUDY_SHEETS, CURRICULUM_DECKS } from "../../data/constants";
+import { T, WEEKLY, ARTICLES, STUDY_SHEETS, CURRICULUM_DECKS, labelChip } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
@@ -791,7 +791,7 @@ export default function HomeTab({
             onClick={() => navigate(srAction.tab, srAction.subView)}
             style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
           >
-            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <RefreshCw size={18} strokeWidth={1.75} color={T.warning} aria-hidden="true" />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
@@ -804,7 +804,7 @@ export default function HomeTab({
             onClick={() => navigate(learningPlan.nextAction.tab, learningPlan.nextAction.subView)}
             style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
           >
-            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.blueBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <ClipboardList size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
@@ -858,8 +858,8 @@ export default function HomeTab({
                         {patient.room ? `Rm ${patient.room}` : "Room pending"} · Added {new Date(patient.date).toLocaleDateString()}
                       </div>
                     </div>
-                    <div style={{ width: 34, height: 34, borderRadius: 12, background: T.greenBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Stethoscope size={16} strokeWidth={1.75} color={T.greenDk} aria-hidden="true" />
+                    <div style={{ width: 34, height: 34, borderRadius: 12, background: T.successBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Stethoscope size={16} strokeWidth={1.75} color={T.success} aria-hidden="true" />
                     </div>
                   </div>
                   <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 8 }}>
@@ -868,7 +868,7 @@ export default function HomeTab({
                   {topics.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: patient.notes ? 8 : 0 }}>
                       {topics.slice(0, 3).map((topic) => (
-                        <span key={topic} style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
+                        <span key={topic} style={labelChip}>
                           {topic}
                         </span>
                       ))}

@@ -81,7 +81,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         </div>
 
         {done && (
-          <div style={{ background: T.greenBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.greenDk, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.green}` }}>
+          <div style={{ background: T.successBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.success, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.success}` }}>
             <span style={{ fontSize: 16 }}>✓</span>
             <span>Previously completed: {done.score}/{done.total} correct ({Math.round((done.score / done.total) * 100)}%)</span>
           </div>
@@ -105,11 +105,11 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
           <div style={{ fontSize: 48, marginBottom: 8 }}>{pct >= 80 ? "🎉" : pct >= 60 ? "👍" : "📚"}</div>
           <h2 style={{ color: T.navy, fontSize: 22, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Case Complete</h2>
           <div style={{ fontSize: 14, color: T.sub, marginBottom: 16 }}>{caseData.title}</div>
-          <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? T.green : pct >= 60 ? T.gold : T.accent, fontFamily: T.mono }}>
+          <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? T.success : pct >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>
             {pct}%
           </div>
           <div style={{ fontSize: 14, color: T.sub, marginTop: 4 }}>{score}/{questions.length} correct</div>
-          {pct >= 80 && <div style={{ marginTop: 10, fontSize: 13, color: T.green, fontWeight: 600 }}>Strong signal for this domain.</div>}
+          {pct >= 80 && <div style={{ marginTop: 10, fontSize: 13, color: T.success, fontWeight: 600 }}>Strong signal for this domain.</div>}
         </div>
 
         {/* Review answers */}
@@ -118,15 +118,15 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
           const ans = answers[i];
           const isCorrect = ans?.correct;
           return (
-            <div key={i} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${isCorrect ? T.green : T.accent}` }}>
+            <div key={i} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${isCorrect ? T.success : T.danger}` }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6, lineHeight: 1.4 }}>
                 {i + 1}. {q.q}
               </div>
-              <div style={{ fontSize: 13, color: isCorrect ? T.green : T.accent, fontWeight: 600, marginBottom: 6 }}>
+              <div style={{ fontSize: 13, color: isCorrect ? T.success : T.danger, fontWeight: 600, marginBottom: 6 }}>
                 {isCorrect ? "✓ Correct" : `✗ Your answer: ${q.choices[ans.selected]}`}
               </div>
               {!isCorrect && (
-                <div style={{ fontSize: 13, color: T.green, fontWeight: 600, marginBottom: 6 }}>
+                <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6 }}>
                   Correct answer: {q.choices[q.answer]}
                 </div>
               )}
@@ -195,10 +195,10 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             let border = `1.5px solid ${T.line}`;
             let textColor = T.text;
             if (showExplanation) {
-              if (isCorrect) { bg = T.greenBg; border = `1.5px solid ${T.green}`; textColor = T.greenDk; }
-              else if (isSelected && !isCorrect) { bg = T.redBg; border = `1.5px solid ${T.accent}`; textColor = T.redDeep; }
+              if (isCorrect) { bg = T.successBg; border = `1.5px solid ${T.success}`; textColor = T.success; }
+              else if (isSelected && !isCorrect) { bg = T.dangerBg; border = `1.5px solid ${T.danger}`; textColor = T.danger; }
             } else if (isSelected) {
-              bg = T.blueBg; border = `1.5px solid ${T.med}`;
+              bg = T.infoBg; border = `1.5px solid ${T.med}`;
             }
             return (
               <button key={i} onClick={() => handleSelect(i)}
@@ -217,8 +217,8 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
       {/* Explanation */}
       {showExplanation && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${selected === q.answer ? T.green : T.accent}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: selected === q.answer ? T.green : T.accent, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
+        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${selected === q.answer ? T.success : T.danger}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: selected === q.answer ? T.success : T.danger, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
             {selected === q.answer ? "Correct!" : "Incorrect"}
           </div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>
@@ -253,9 +253,9 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
   }
 
   const diffColors = {
-    "MS4 Core": { bg: T.greenBg, text: T.greenDk, border: T.green },
-    "MS4 Applied": { bg: T.yellowBg, text: T.goldText, border: T.gold },
-    "MS4 Challenge": { bg: T.redBg, text: T.redDeep, border: T.accent },
+    "MS4 Core": { bg: T.successBg, text: T.success, border: T.success },
+    "MS4 Applied": { bg: T.warningBg, text: T.warning, border: T.warning },
+    "MS4 Challenge": { bg: T.dangerBg, text: T.danger, border: T.danger },
   };
 
   return (
@@ -263,7 +263,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
       <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
         ← Back
       </button>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.greenBg, color: T.greenDk, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Core for this module
       </div>
       <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Module {week} Clinical Cases</h2>
@@ -277,10 +277,10 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
         return (
           <div key={c.id} style={{ position: "relative", marginBottom: 10 }}>
             <button onClick={() => setActiveCase(c)}
-              style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, border: done ? `2px solid ${T.green}` : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
+              style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, border: done ? `2px solid ${T.success}` : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
               <div style={{ position: "absolute", top: 10, right: 12, display: "flex", alignItems: "center", gap: 6, paddingLeft: 40 }}>
                 {done && (
-                  <span style={{ fontSize: 13, fontWeight: 700, color: T.green, background: T.greenBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
                     ✓ {done.score}/{done.total}
                   </span>
                 )}
@@ -301,7 +301,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(c.id); }}
               aria-label={(bookmarks?.cases || []).includes(c.id) ? `Unbookmark ${c.title}` : `Bookmark ${c.title}`}
-              style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.gold : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+              style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
               {(bookmarks?.cases || []).includes(c.id) ? "★" : "☆"}
             </button>
           </div>

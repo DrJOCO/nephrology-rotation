@@ -64,7 +64,7 @@ function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
           <div style={{ fontSize: 28, fontWeight: 700, color: T.navy, fontFamily: T.mono, marginBottom: 10 }}>{result.value}</div>
           <div style={{ fontSize: 14, color: T.text, lineHeight: 1.6, whiteSpace: "pre-line", wordBreak: "break-word", marginBottom: result.caveat ? 10 : 0 }}>{result.interpretation}</div>
           {result.caveat && (
-            <div style={{ fontSize: 13, color: T.orange, background: T.yellowBg, borderRadius: 8, padding: 10, lineHeight: 1.5 }}>{result.caveat}</div>
+            <div style={{ fontSize: 13, color: T.warning, background: T.warningBg, borderRadius: 8, padding: 10, lineHeight: 1.5 }}>{result.caveat}</div>
           )}
         </div>
       )}
@@ -126,8 +126,8 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
       </div>
 
       {/* External Image Links banner */}
-      <div style={{ background: T.purpleBg, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${T.purple}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.purple, marginBottom: 6 }}>📷 OPTIONAL UA IMAGE RESOURCES</div>
+      <div style={{ background: T.infoBg, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${T.info}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.info, marginBottom: 6 }}>📷 OPTIONAL UA IMAGE RESOURCES</div>
         <div style={{ fontSize: 13, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images when you want extra visual practice. Pair them with the descriptions here.</div>
         {refData.imageLinks.map((link, i) => (
           <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
@@ -145,9 +145,9 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
             const key = `${si}-${ii}`;
             const isOpen = expandedItem === key;
             return (
-              <div key={ii} style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.purple : T.line}`, overflow: "hidden", transition: "border 0.2s" }}>
+              <div key={ii} style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.info : T.line}`, overflow: "hidden", transition: "border 0.2s" }}>
                 <button onClick={() => setExpandedItem(isOpen ? null : key)}
-                  style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.purpleBg : "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.infoBg : "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{item.finding}</div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{item.significance}</div>
@@ -189,7 +189,7 @@ export default function RefDetailView({ refId, onBack }: { refId: string; onBack
           <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: 0, fontWeight: 700 }}>{ref.title}</h2>
           <div style={{ color: T.sub, fontSize: 13 }}>{ref.desc}</div>
           {ref.type === "atlas" && (
-            <div style={{ display: "inline-block", marginTop: 6, background: T.purpleBg, color: T.purple, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ display: "inline-block", marginTop: 6, background: T.infoBg, color: T.info, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
               Optional reference
             </div>
           )}

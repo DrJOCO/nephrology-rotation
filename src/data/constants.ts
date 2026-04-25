@@ -1,21 +1,17 @@
+import type { CSSProperties } from "react";
+
 export const T = {
   // Core palette — CSS custom properties for dark mode support
-  navy: "var(--c-navy)", deep: "var(--c-deep)", med: "var(--c-med)", sky: "var(--c-sky)",
-  ice: "var(--c-ice)", pale: "var(--c-pale)", accent: "var(--c-accent)", green: "var(--c-green)",
-  greenDk: "var(--c-greenDk)", gold: "var(--c-gold)", orange: "var(--c-orange)", dark: "var(--c-dark)", purple: "var(--c-purple)",
+  navy: "var(--c-navy)", deep: "var(--c-deep)", med: "var(--c-med)",
+  ice: "var(--c-ice)", pale: "var(--c-pale)",
+  dark: "var(--c-dark)",
   text: "var(--c-text)", sub: "var(--c-sub)", muted: "var(--c-muted)", line: "var(--c-line)",
   bg: "var(--c-bg)", card: "var(--c-card)",
   // Dark header backgrounds — always dark regardless of theme
   navyBg: "var(--c-navy-bg)", deepBg: "var(--c-deep-bg)",
   // Semantic tint backgrounds
-  yellowBg: "var(--c-yellow-bg)", redBg: "var(--c-red-bg)", purpleBg: "var(--c-purple-bg)",
-  greenBg: "var(--c-green-bg)", blueBg: "var(--c-blue-bg)", grayBg: "var(--c-gray-bg)",
+  grayBg: "var(--c-gray-bg)",
   warmBg: "var(--c-warm-bg)",
-  // Alpha / tint variants
-  goldAlpha: "var(--c-gold-alpha)", goldAlphaMd: "var(--c-gold-alpha-md)", greenAlpha: "var(--c-green-alpha)", redAlpha: "var(--c-red-alpha)",
-  // Semantic text accents
-  goldText: "var(--c-gold-text)", purpleAccent: "var(--c-purple-accent)",
-  purpleSoft: "var(--c-purple-soft)", redDeep: "var(--c-red-deep)",
   // Overlay
   overlay: "var(--c-overlay)",
   // Fonts and layout — Phase 1 (Clinical Paper spec v1)
@@ -30,8 +26,6 @@ export const T = {
   ink2: "var(--c-sub)",         // secondary text
   surface: "var(--c-card)",     // card / elevated surface
   surface2: "var(--c-ice)",     // sunken / tint surface
-  warn: "var(--c-orange)",      // warn — Clinical Paper rust
-  ok: "var(--c-green)",         // ok — Clinical Paper sage
 
   // Phase 2 semantic palette — 4 roles + bgs.
   // Path A: brand keeps the deep-red identity (#8B2E2E light, #d97a7a dark).
@@ -1408,3 +1402,24 @@ export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWee
   "Peritoneal Dialysis":  { studySheets: ["pd-cheatsheet"],                 quizWeeks: [4] },
   "Other":                { studySheets: [],                                quizWeeks: [] },
 };
+
+// If you find yourself wanting a colored variant for a topic, stop. Topics are
+// labels, not states. Use a state color (T.brand/danger/warning/success/info)
+// only when the meaning is genuinely semantic.
+export const labelChip: CSSProperties = {
+  display: "inline-block",
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: 0.4,
+  textTransform: "uppercase",
+  color: T.sub,
+  background: T.bg,
+  border: `1px solid ${T.line}`,
+  padding: "3px 8px",
+  borderRadius: 6,
+  whiteSpace: "nowrap",
+};
+
+// Threshold for follow-up "stale" state on patient cards. Tunable from one
+// place — change here, every patient surface picks it up via getFollowUpState.
+export const STALE_FOLLOWUP_DAYS = 7;

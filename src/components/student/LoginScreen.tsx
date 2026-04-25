@@ -259,7 +259,7 @@ export default function LoginScreen({
   return (
     <div style={{
       minHeight: "100vh",
-      background: `radial-gradient(circle at top left, ${T.goldAlphaMd} 0%, transparent 26%), radial-gradient(circle at bottom right, ${T.redAlpha} 0%, transparent 22%), linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 48%, #0d1e33 100%)`,
+      background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 48%, #0d1e33 100%)`,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
