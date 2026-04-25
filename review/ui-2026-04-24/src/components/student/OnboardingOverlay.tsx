@@ -38,7 +38,7 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
         {/* Step dots */}
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
           {ONBOARDING_STEPS.map((_, i) => (
-            <div key={i} style={{ width: 8, height: 8, borderRadius: 4, background: i === step ? T.brand : T.pale, transition: "background 0.3s" }} />
+            <div key={i} style={{ width: 8, height: 8, borderRadius: 4, background: i === step ? T.med : T.pale, transition: "background 0.3s" }} />
           ))}
         </div>
 
@@ -52,7 +52,7 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
         <p style={{ fontSize: 14, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>{s.body}</p>
 
         {/* Hint */}
-        <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-block", marginBottom: 24 }}>
+        <div style={{ fontSize: 13, color: T.med, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-block", marginBottom: 24 }}>
           💡 {s.hint}
         </div>
 
@@ -63,7 +63,7 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
             Skip
           </button>
           <button onClick={() => isLast ? handleDismiss() : setStep(step + 1)}
-            style={{ padding: "10px 24px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", minWidth: 120 }}>
+            style={{ padding: "10px 24px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", minWidth: 120 }}>
             {isLast ? "Get Started" : "Next →"}
           </button>
         </div>
@@ -71,7 +71,7 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
         {/* First Day Guide link on last step */}
         {isLast && onViewFirstDay && (
           <button onClick={() => { localStorage.setItem("neph_hasSeenOnboarding", "true"); onViewFirstDay(); }}
-            style={{ marginTop: 16, background: "none", border: "none", color: T.brand, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
+            style={{ marginTop: 16, background: "none", border: "none", color: T.med, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
             🌅 View First Day Orientation Guide →
           </button>
         )}

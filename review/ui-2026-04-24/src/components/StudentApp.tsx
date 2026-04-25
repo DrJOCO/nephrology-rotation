@@ -1303,9 +1303,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 title={`${gamification.streaks?.currentDays}-day streak`}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 4,
-                  fontSize: 13, fontWeight: 600, color: T.sub,
-                  background: "transparent",
-                  border: `1px solid ${T.line}`,
+                  fontSize: 13, fontWeight: 600, color: T.warn,
+                  background: T.goldAlpha,
                   padding: "4px 10px", borderRadius: 999, minHeight: 28,
                   fontFamily: T.mono,
                 }}
@@ -1974,7 +1973,7 @@ function ProfileSheet({
               {streakDays > 0 && (
                 <div>
                   <div style={{ fontSize: 13, color: T.ink2, marginBottom: 2 }}>Streak</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 16, fontWeight: 700, color: T.ink, fontFamily: T.mono }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 16, fontWeight: 700, color: T.warn, fontFamily: T.mono }}>
                     <Flame size={16} strokeWidth={2} aria-hidden="true" /> {streakDays}d
                   </div>
                 </div>

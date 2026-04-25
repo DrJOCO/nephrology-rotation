@@ -129,7 +129,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
         <div style={{ background: T.card, borderRadius: 16, padding: 28, textAlign: "center", border: `1px solid ${T.line}` }}>
           <div style={{ fontSize: 48, marginBottom: 8 }}>{pct >= 80 ? "\uD83C\uDF89" : pct >= 60 ? "\uD83D\uDC4D" : "\uD83D\uDCD6"}</div>
           <h2 style={{ color: T.navy, fontFamily: T.serif, margin: "0 0 8px", fontSize: 22, fontWeight: 700 }}>{title} Complete</h2>
-          <div style={{ fontSize: 40, fontWeight: 700, color: pct >= 80 ? T.success : pct >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>
+          <div style={{ fontSize: 40, fontWeight: 700, color: pct >= 80 ? T.green : pct >= 60 ? T.gold : T.accent, fontFamily: T.mono }}>
             {correctCount}/{quizLen}
           </div>
           <div style={{ color: T.sub, fontSize: 14, marginBottom: 20 }}>{pct}% correct</div>
@@ -141,12 +141,12 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
                 Review Missed Questions ({missed.length}):
               </div>
               {missed.map((a, i) => (
-                <div key={i} style={{ background: T.dangerBg, borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: `3px solid ${T.danger}` }}>
+                <div key={i} style={{ background: T.redBg, borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: `3px solid ${T.accent}` }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 8, lineHeight: 1.4 }}>{questions[a.qIdx].q}</div>
-                  <div style={{ fontSize: 13, color: T.danger, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, color: T.accent, marginBottom: 4 }}>
                     {"\u2717"} Your answer: {questions[a.qIdx].choices[a.chosen]}
                   </div>
-                  <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6 }}>
+                  <div style={{ fontSize: 13, color: T.green, fontWeight: 600, marginBottom: 6 }}>
                     {"\u2713"} Correct: {questions[a.qIdx].choices[questions[a.qIdx].answer]}
                   </div>
                   <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, background: T.card, borderRadius: 6, padding: 10 }}>
@@ -157,7 +157,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
             </div>
           )}
 
-          <button onClick={onBack} style={{ marginTop: 20, padding: "14px 40px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={onBack} style={{ marginTop: 20, padding: "14px 40px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
             Done
           </button>
         </div>
@@ -181,10 +181,10 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
     <div style={{ padding: mob ? 10 : 16 }}>
       {/* Header bar */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: mob ? 8 : 16 }}>
-        <button onClick={handleExitQuiz} aria-label="Exit quiz" title="Exit (your progress is saved)" style={{ background: "none", border: "none", color: T.brand, fontSize: 20, cursor: "pointer", padding: "6px 4px", minHeight: 36 }}>{"\u2190"}</button>
+        <button onClick={handleExitQuiz} aria-label="Exit quiz" title="Exit (your progress is saved)" style={{ background: "none", border: "none", color: T.med, fontSize: 20, cursor: "pointer", padding: "6px 4px", minHeight: 36 }}>{"\u2190"}</button>
         <div style={{ flex: 1 }}>
           <div style={{ height: 5, background: T.line, borderRadius: 3, overflow: "hidden" }}>
-            <div style={{ width: `${progress}%`, height: "100%", background: T.brand, borderRadius: 3, transition: "width 0.4s ease" }} />
+            <div style={{ width: `${progress}%`, height: "100%", background: T.med, borderRadius: 3, transition: "width 0.4s ease" }} />
           </div>
         </div>
         <span style={{ fontSize: 13, color: T.sub, fontWeight: 600, fontFamily: T.mono, minWidth: 36, textAlign: "right" }}>{current + 1}/{quizLen}</span>
@@ -198,7 +198,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
       </div>
 
       {/* Quiz title */}
-      <div style={{ fontSize: 13, color: T.brand, fontWeight: 700, marginBottom: mob ? 4 : 8 }}>{title}</div>
+      <div style={{ fontSize: 13, color: T.med, fontWeight: 700, marginBottom: mob ? 4 : 8 }}>{title}</div>
 
       {/* Question */}
       <div style={{ background: T.card, borderRadius: 12, padding: mob ? 12 : 20, marginBottom: mob ? 8 : 16, border: `1px solid ${T.line}` }}>
@@ -212,9 +212,9 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
           const isCorrectChoice = origChoiceIdx === q.answer;
           let bg = T.card, border = T.line, textColor = T.text, fontW = 400;
           if (showResult) {
-            if (isCorrectChoice) { bg = T.successBg; border = T.success; textColor = T.success; fontW = 600; }
-            else if (displayIdx === selected && !isCorrectChoice) { bg = T.dangerBg; border = T.danger; textColor = T.danger; }
-          } else if (displayIdx === selected) { bg = T.brandBg; border = T.brand; }
+            if (isCorrectChoice) { bg = T.greenBg; border = T.green; textColor = T.greenDk; fontW = 600; }
+            else if (displayIdx === selected && !isCorrectChoice) { bg = T.redBg; border = T.accent; textColor = T.accent; }
+          } else if (displayIdx === selected) { bg = T.ice; border = T.med; }
 
           return (
             <button key={displayIdx} onClick={() => handleSelect(displayIdx)}
@@ -223,7 +223,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
                 fontWeight: fontW, display: "flex", alignItems: "flex-start", gap: 10, transition: "all 0.2s", fontFamily: T.sans }}>
               <span style={{
                 width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center",
-                background: showResult && isCorrectChoice ? T.success : showResult && displayIdx === selected ? T.danger : T.grayBg,
+                background: showResult && isCorrectChoice ? T.green : showResult && displayIdx === selected ? T.accent : T.grayBg,
                 color: showResult && (isCorrectChoice || displayIdx === selected) ? "white" : T.sub,
                 fontSize: 13, fontWeight: 700, flexShrink: 0
               }}>
@@ -240,13 +240,13 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
         const selectedOrigIdx = choiceMap[selected!];
         const wasCorrect = selectedOrigIdx === q.answer;
         return (
-          <div style={{ background: T.brandBg, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.brand}` }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.success : T.danger, marginBottom: 4 }}>
+          <div style={{ background: T.ice, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.med}` }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.greenDk : T.accent, marginBottom: 4 }}>
               {wasCorrect ? "\u2713 Correct!" : "\u2717 Not quite"}
             </div>
             <div style={{ fontSize: mob ? 12 : 13, color: T.text, lineHeight: 1.45, wordBreak: "break-word" }}>{q.explanation}</div>
             <button onClick={handleNext} style={{
-              width: "100%", marginTop: mob ? 8 : 12, padding: mob ? "11px 0" : "14px 0", background: T.brand, color: "white",
+              width: "100%", marginTop: mob ? 8 : 12, padding: mob ? "11px 0" : "14px 0", background: T.med, color: "white",
               border: "none", borderRadius: 10, fontSize: mob ? 14 : 15, fontWeight: 600, cursor: "pointer"
             }}>
               {current + 1 >= quizLen ? "See Results" : "Next Question \u2192"}

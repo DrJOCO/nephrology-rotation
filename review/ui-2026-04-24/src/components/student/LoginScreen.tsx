@@ -168,9 +168,9 @@ export default function LoginScreen({
   const showInlineVerifyNotice = isFirstTime && !trustedSessionReady && !pinSetupPending && Boolean(authNotice);
 
   const statusMessages = [
-    authError ? { text: authError, bg: T.dangerBg, border: T.danger, color: T.danger } : null,
-    !showInlineVerifyNotice && authNotice ? { text: authNotice, bg: T.successBg, border: T.success, color: T.success } : null,
-    joinError ? { text: joinError, bg: T.dangerBg, border: T.danger, color: T.danger } : null,
+    authError ? { text: authError, bg: T.redBg, border: T.redAlpha, color: T.accent } : null,
+    !showInlineVerifyNotice && authNotice ? { text: authNotice, bg: T.greenBg, border: T.greenAlpha, color: T.greenDk } : null,
+    joinError ? { text: joinError, bg: T.redBg, border: T.redAlpha, color: T.accent } : null,
   ].filter(Boolean) as Array<{ text: string; bg: string; border: string; color: string }>;
 
   const fieldLabelStyle = {
@@ -197,7 +197,7 @@ export default function LoginScreen({
     width: "100%",
     padding: "13px 14px",
     fontSize: mono ? 15 : 14,
-    border: `1.5px solid ${hasError ? T.danger : T.line}`,
+    border: `1.5px solid ${hasError ? T.accent : T.line}`,
     borderRadius: 14,
     outline: "none",
     boxSizing: "border-box" as const,
@@ -228,7 +228,7 @@ export default function LoginScreen({
     borderRadius: 14,
     padding: "14px 16px",
     background: canJoin && !joining
-      ? T.brand
+      ? `linear-gradient(135deg, ${T.med}, ${T.navy})`
       : T.muted,
     color: "white",
     fontSize: 14,
@@ -245,9 +245,9 @@ export default function LoginScreen({
   const secondaryButtonStyle = (enabled: boolean) => ({
     width: "100%",
     borderRadius: 12,
-    border: `1px solid ${enabled ? T.brand : T.line}`,
+    border: `1px solid ${enabled ? T.med : T.line}`,
     padding: "11px 14px",
-    background: enabled ? T.brand : T.grayBg,
+    background: enabled ? `linear-gradient(135deg, ${T.med}, ${T.navy})` : T.grayBg,
     color: enabled ? "white" : T.muted,
     fontSize: 13,
     fontWeight: 800,
@@ -383,15 +383,15 @@ export default function LoginScreen({
 
           {trustedSessionReady && (
             <div style={{
-              background: T.successBg,
-              border: `1px solid ${T.success}`,
+              background: T.greenBg,
+              border: `1px solid ${T.greenAlpha}`,
               borderRadius: 18,
               padding: 16,
               marginBottom: 16,
             }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.6, color: T.success, marginBottom: 4 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.6, color: T.greenDk, marginBottom: 4 }}>
                     Trusted device
                   </div>
                   <div style={{ fontSize: 15, fontWeight: 800, color: T.navy, marginBottom: 4 }}>
@@ -405,7 +405,7 @@ export default function LoginScreen({
                   type="button"
                   onClick={onUseDifferentStudentAccount}
                   style={{
-                    border: `1px solid ${T.success}`,
+                    border: `1px solid ${T.greenAlpha}`,
                     background: "rgba(255,255,255,0.55)",
                     color: T.navy,
                     borderRadius: 12,
@@ -472,13 +472,13 @@ export default function LoginScreen({
           {isFirstTime && !trustedSessionReady && !pinSetupPending && (
             <div style={{
               background: T.surface2,
-              border: `1px solid ${needsEmailCompletion ? T.warning : T.line}`,
+              border: `1px solid ${needsEmailCompletion ? T.goldAlpha : T.line}`,
               borderRadius: 18,
               padding: 16,
               marginBottom: 16,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
-                <Mail size={16} strokeWidth={2.1} color={T.brand} aria-hidden="true" />
+                <Mail size={16} strokeWidth={2.1} color={T.med} aria-hidden="true" />
                 <div style={{ fontSize: 13, fontWeight: 800, color: T.navy }}>
                   Verify your email
                 </div>
@@ -499,7 +499,7 @@ export default function LoginScreen({
                   marginTop: 10,
                   fontSize: 12,
                   lineHeight: 1.5,
-                  color: T.success,
+                  color: T.greenDk,
                   fontWeight: 700,
                 }}>
                   {authNotice}
@@ -566,7 +566,7 @@ export default function LoginScreen({
                     style={inputStyle({ mono: true, centered: true, hasError: Boolean(studentPinConfirm) && studentPinConfirm !== studentPin })}
                   />
                   {studentPinConfirm && studentPinConfirm !== studentPin && (
-                    <div style={{ fontSize: 12, color: T.danger, marginTop: 6, lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 12, color: T.accent, marginTop: 6, lineHeight: 1.5 }}>
                       PINs need to match.
                     </div>
                   )}
@@ -671,7 +671,7 @@ export default function LoginScreen({
                 style={{
                   background: "none",
                   border: "none",
-                  color: needsEmailCompletion ? T.warning : T.brand,
+                  color: needsEmailCompletion ? T.goldText : T.med,
                   fontSize: 12,
                   fontWeight: 800,
                   cursor: (needsEmailCompletion ? studentEmail.trim() && !authSubmitting : canSendResetLink) ? "pointer" : "default",

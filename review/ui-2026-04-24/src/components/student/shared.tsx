@@ -5,7 +5,7 @@ import { T } from "../../data/constants";
 //  Shared styles used across multiple student components
 // ═══════════════════════════════════════════════════════════════════════
 
-export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1.5px solid ${T.line}`, color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", fontWeight: 600, minHeight: 44, borderRadius: 22, boxShadow: "0 2px 12px rgba(0,0,0,0.12)", zIndex: 99 };
+export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1.5px solid ${T.line}`, color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", fontWeight: 600, minHeight: 44, borderRadius: 22, boxShadow: "0 2px 12px rgba(0,0,0,0.12)", zIndex: 99 };
 
 export const inputLabel: CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 

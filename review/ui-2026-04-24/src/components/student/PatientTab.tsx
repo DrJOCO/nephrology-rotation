@@ -6,9 +6,9 @@ import { useIsMobile } from "../../utils/helpers";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
 import type { Patient, SubView } from "../../types";
 
-const errorStyle: CSSProperties = { fontSize: 13, color: T.danger, marginTop: 3, fontWeight: 500 };
-const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 13, color: current > max * 0.9 ? T.danger : T.muted, textAlign: "right", marginTop: 2 });
-const inputErrorBorder = { borderColor: T.danger };
+const errorStyle: CSSProperties = { fontSize: 13, color: T.accent, marginTop: 3, fontWeight: 500 };
+const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 13, color: current > max * 0.9 ? T.accent : T.muted, textAlign: "right", marginTop: 2 });
+const inputErrorBorder = { borderColor: T.accent };
 
 interface PatientForm {
   initials: string;
@@ -93,8 +93,8 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
 
   if (isEditing) {
     return (
-      <div style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 10, border: `2px solid ${T.brand}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 8 }}>Editing Inpatient</div>
+      <div style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 10, border: `2px solid ${T.med}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 8 }}>Editing Inpatient</div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
           <div>
             <label style={inputLabel}>Initials</label>
@@ -116,7 +116,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
                 <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
                 {suggested.map(t => (
                   <button key={t} type="button" onClick={() => onEditToggleTopic(t)}
-                    style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.brandBg, color: T.brand, border: `1px dashed ${T.brand}` }}>
+                    style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.blueBg, color: T.med, border: `1px dashed ${T.med}` }}>
                     + {t}
                   </button>
                 ))}
@@ -133,8 +133,8 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
               return (
                 <button key={t} type="button" onClick={() => onEditToggleTopic(t)} disabled={atCap} aria-disabled={atCap}
                   style={{ padding: isMobile ? "8px 14px" : "5px 10px", borderRadius: 20, fontSize: isMobile ? 12 : 11, fontWeight: sel ? 600 : 400, cursor: atCap ? "not-allowed" : "pointer",
-                    background: sel ? T.brand : T.card, color: sel ? "white" : T.sub,
-                    border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`,
+                    background: sel ? T.med : T.card, color: sel ? "white" : T.sub,
+                    border: sel ? `1.5px solid ${T.med}` : `1.5px solid ${T.line}`,
                     opacity: atCap ? 0.4 : 1 }}>
                   {sel ? "✓ " : ""}{t}
                 </button>
@@ -150,7 +150,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             <button
               type="button"
               onClick={() => setShowAllEditTopics(prev => !prev)}
-              style={{ background: "none", border: "none", padding: "6px 0 0", color: T.brand, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
             >
               {showAllEditTopics ? "Show fewer topics" : `More topics (${hiddenEditTopicCount})`}
             </button>
@@ -162,7 +162,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
           <div style={charCountStyle(editForm.notes.length, LIMITS.NOTES_MAX)}>{editForm.notes.length}/{LIMITS.NOTES_MAX}</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={onSaveEdit} style={{ flex: 1, padding: "10px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
+          <button onClick={onSaveEdit} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
           <button onClick={onCancelEdit} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Cancel</button>
         </div>
       </div>
@@ -198,7 +198,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
               <button
                 onClick={onStartEdit}
                 aria-label={`Edit inpatient ${p.initials || ""}`.trim()}
-                style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: T.brand, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
+                style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: T.med, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
               >
                 <Pencil size={12} strokeWidth={1.75} aria-hidden="true" /> Edit
               </button>
@@ -229,7 +229,7 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
             onClick={() => setShowFollowUps(!showFollowUps)}
             aria-expanded={showFollowUps}
             aria-label={`${showFollowUps ? "Collapse" : "Expand"} follow-ups`}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.brand, fontWeight: 600, padding: "6px 0", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, minHeight: 32 }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.med, fontWeight: 600, padding: "6px 0", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, minHeight: 32 }}
           >
             <ChevronRight size={14} strokeWidth={2} aria-hidden="true" style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }} />
             Follow-ups ({followUps.length})
@@ -258,13 +258,13 @@ function PatientCard({ p, topicColor, onToggle, onRemove, dimmed, isEditing, edi
                 onChange={e => { setFollowUpText(clampLength(e.target.value, LIMITS.FOLLOWUP_MAX)); setFollowUpError(null); }}
                 onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
                 placeholder="Add follow-up note..."
-                style={{ flex: 1, padding: isMobile ? "8px 12px" : "6px 10px", fontSize: 13, border: `1px solid ${followUpError ? T.danger : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
+                style={{ flex: 1, padding: isMobile ? "8px 12px" : "6px 10px", fontSize: 13, border: `1px solid ${followUpError ? T.accent : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
               <button
                 onClick={handleAddFollowUp}
                 aria-label="Add follow-up note"
                 title="Add follow-up"
                 disabled={!followUpText.trim()}
-                style={{ padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 40 : 32, minWidth: isMobile ? 40 : 32, background: followUpText.trim() ? T.brand : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, cursor: followUpText.trim() ? "pointer" : "not-allowed", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                style={{ padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 40 : 32, minWidth: isMobile ? 40 : 32, background: followUpText.trim() ? T.med : T.pale, color: followUpText.trim() ? "white" : T.muted, border: "none", borderRadius: 6, cursor: followUpText.trim() ? "pointer" : "not-allowed", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
               >
                 <Plus size={16} strokeWidth={2.25} aria-hidden="true" />
               </button>
@@ -487,18 +487,18 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
           if (showAdd) setShowAllTopics(false);
           setShowAdd(!showAdd);
         }}
-          style={{ padding: "8px 16px", background: showAdd ? T.sub : T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          style={{ padding: "8px 16px", background: showAdd ? T.sub : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ Add Inpatient"}
         </button>
       </div>
 
-      <div style={{ background: T.warningBg, borderRadius: 12, padding: 12, marginBottom: 16, border: `1px solid ${T.warning}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 4 }}>No PHI</div>
+      <div style={{ background: T.yellowBg, borderRadius: 12, padding: 12, marginBottom: 16, border: `1px solid ${T.goldAlphaMd}` }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.goldText, marginBottom: 4 }}>No PHI</div>
         <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>{PHI_WARNING}</div>
       </div>
 
       {showAdd && (
-        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `2px solid ${T.brand}` }}>
+        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `2px solid ${T.med}` }}>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
               <label style={inputLabel}>Inpatient Initials</label>
@@ -529,7 +529,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
                   <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
                   {suggested.map(t => (
                     <button key={t} type="button" onClick={() => toggleTopic(t)}
-                      style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.brandBg, color: T.brand, border: `1px dashed ${T.brand}` }}>
+                      style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.blueBg, color: T.med, border: `1px dashed ${T.med}` }}>
                       + {t}
                     </button>
                   ))}
@@ -546,8 +546,8 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
                 return (
                 <button key={t} type="button" onClick={() => toggleTopic(t)} disabled={atCap} aria-disabled={atCap}
                     style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: atCap ? "not-allowed" : "pointer", transition: "all 0.15s",
-                      background: sel ? T.brand : T.card, color: sel ? "white" : T.sub,
-                      border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`,
+                      background: sel ? T.med : T.card, color: sel ? "white" : T.sub,
+                      border: sel ? `1.5px solid ${T.med}` : `1.5px solid ${T.line}`,
                       opacity: atCap ? 0.4 : 1 }}>
                     {sel ? "✓ " : ""}{t}
                   </button>
@@ -563,7 +563,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
               <button
                 type="button"
                 onClick={() => setShowAllTopics(prev => !prev)}
-                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.brand, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                style={{ background: "none", border: "none", padding: "6px 0 0", color: T.med, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
               >
                 {showAllTopics ? "Show fewer topics" : `More topics (${hiddenAddTopicCount})`}
               </button>
@@ -581,7 +581,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
               <div style={charCountStyle(form.notes.length, LIMITS.NOTES_MAX)}>{form.notes.length}/{LIMITS.NOTES_MAX}</div>
             </div>
           </div>
-          <button onClick={addPatient} style={{ width: "100%", padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={addPatient} style={{ width: "100%", padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             Add to Inpatient List
           </button>
         </div>

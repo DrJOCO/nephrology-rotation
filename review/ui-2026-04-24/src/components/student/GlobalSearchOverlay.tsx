@@ -75,7 +75,7 @@ function highlightText(text: string, query: string) {
     words.includes(part.toLowerCase()) ? (
       <mark
         key={`${part}-${index}`}
-        style={{ background: T.warningBg, color: T.warning, padding: "0 2px", borderRadius: 4 }}
+        style={{ background: T.redBg, color: T.accent, padding: "0 2px", borderRadius: 4 }}
       >
         {part}
       </mark>
@@ -231,7 +231,7 @@ export default function GlobalSearchOverlay({
             <button
               onClick={onClose}
               aria-label="Close search"
-              style={{ background: "none", border: "none", color: T.brand, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "10px 8px", minHeight: 44, flexShrink: 0 }}
+              style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", padding: "10px 8px", minHeight: 44, flexShrink: 0 }}
             >
               Cancel
             </button>
@@ -249,9 +249,9 @@ export default function GlobalSearchOverlay({
                     minHeight: 36,
                     padding: "7px 12px",
                     borderRadius: 999,
-                    border: `1px solid ${active ? T.brand : T.line}`,
-                    background: active ? T.brandBg : T.surface,
-                    color: active ? T.brand : T.ink2,
+                    border: `1px solid ${active ? T.accent : T.line}`,
+                    background: active ? T.redBg : T.surface,
+                    color: active ? T.accent : T.ink2,
                     fontSize: 13,
                     fontWeight: 700,
                     cursor: "pointer",
@@ -328,7 +328,7 @@ export default function GlobalSearchOverlay({
                       {highlightText(item.label, query)}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 7 }}>
-                      <span style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
+                      <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
                         {item.kind}
                       </span>
                       <span style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>
@@ -340,7 +340,7 @@ export default function GlobalSearchOverlay({
                 </button>
               ))}
               {group.items.length > (scope === "all" ? 5 : 8) && (
-                <div style={{ fontSize: 13, color: T.brand, textAlign: "center", paddingTop: 2 }}>
+                <div style={{ fontSize: 13, color: T.med, textAlign: "center", paddingTop: 2 }}>
                   +{group.items.length - (scope === "all" ? 5 : 8)} more
                 </div>
               )}

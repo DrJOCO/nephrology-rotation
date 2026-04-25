@@ -21,7 +21,7 @@ function MasteryRing({ value }: { value: number }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={T.brand}
+          stroke={T.med}
           strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"
@@ -40,8 +40,8 @@ function MasteryRing({ value }: { value: number }) {
 
 const tierStyles: Record<CompetencyDomainSummary["tier"], { bg: string; border: string; text: string }> = {
   Novice: { bg: T.grayBg, border: T.line, text: T.muted },
-  Developing: { bg: T.warningBg, border: T.warning, text: T.warning },
-  Proficient: { bg: T.successBg, border: T.success, text: T.success },
+  Developing: { bg: T.yellowBg, border: T.gold, text: T.goldText },
+  Proficient: { bg: T.greenBg, border: T.green, text: T.greenDk },
 };
 
 export default function ProgressTab({
@@ -97,14 +97,14 @@ export default function ProgressTab({
             <div
               key={objective.label}
               style={{
-                background: objective.met ? T.successBg : T.bg,
+                background: objective.met ? T.greenBg : T.bg,
                 borderRadius: 14,
-                border: `1px solid ${objective.met ? T.success : T.line}`,
+                border: `1px solid ${objective.met ? T.greenAlpha : T.line}`,
                 padding: "12px 12px",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <BadgeCheck size={15} strokeWidth={2} color={objective.met ? T.success : T.muted} aria-hidden="true" />
+                <BadgeCheck size={15} strokeWidth={2} color={objective.met ? T.greenDk : T.muted} aria-hidden="true" />
                 <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{objective.label}</div>
               </div>
               <div style={{ fontSize: 13, color: T.sub }}>{objective.detail}</div>
@@ -126,7 +126,7 @@ export default function ProgressTab({
             const tierStyle = tierStyles[domain.tier];
             const expanded = expandedDomain === domain.domain;
             return (
-              <div key={domain.domain} style={{ background: T.card, borderRadius: 16, border: `1px solid ${expanded ? T.brand : T.line}`, overflow: "hidden" }}>
+              <div key={domain.domain} style={{ background: T.card, borderRadius: 16, border: `1px solid ${expanded ? T.med : T.line}`, overflow: "hidden" }}>
                 <button
                   onClick={() => setExpandedDomain(expanded ? null : domain.domain)}
                   style={{ width: "100%", background: "none", border: "none", padding: "14px 14px", cursor: "pointer", textAlign: "left" }}
@@ -141,7 +141,7 @@ export default function ProgressTab({
                       </div>
                       <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 10 }}>{domain.description}</div>
                       <div style={{ background: T.grayBg, borderRadius: 999, height: 8, overflow: "hidden" }}>
-                        <div style={{ width: `${domain.progress}%`, background: domain.tier === "Proficient" ? T.success : domain.tier === "Developing" ? T.warning : T.brand, height: "100%", borderRadius: 999 }} />
+                        <div style={{ width: `${domain.progress}%`, background: domain.tier === "Proficient" ? T.green : domain.tier === "Developing" ? T.gold : T.med, height: "100%", borderRadius: 999 }} />
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginTop: 6, fontSize: 13, color: T.muted, flexWrap: "wrap" }}>
                         <span>{domain.progress}% to next milestone</span>
@@ -202,13 +202,13 @@ export default function ProgressTab({
 
                     <div style={{ background: T.ice, borderRadius: 14, padding: "12px 13px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                       <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4 }}>Recommended next action</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 4 }}>Recommended next action</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{domain.action.label}</div>
                         <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 4 }}>{domain.action.detail}</div>
                       </div>
                       <button
                         onClick={() => navigate(domain.action.tab, domain.action.subView)}
-                        style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "11px 13px", cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+                        style={{ background: T.navy, color: "white", border: "none", borderRadius: 12, padding: "11px 13px", cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
                       >
                         Open
                         <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
@@ -261,7 +261,7 @@ export default function ProgressTab({
               <span>{gamification.points}/{level.nextAt} points</span>
             </div>
             <div style={{ background: T.grayBg, borderRadius: 999, height: 9, overflow: "hidden" }}>
-              <div style={{ width: `${nextLevelProgress}%`, background: T.warning, height: "100%", borderRadius: 999 }} />
+              <div style={{ width: `${nextLevelProgress}%`, background: T.gold, height: "100%", borderRadius: 999 }} />
             </div>
           </div>
         )}
@@ -273,7 +273,7 @@ export default function ProgressTab({
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {recentAchievements.map((achievement) => (
-                <span key={achievement.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.warningBg, color: T.warning, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+                <span key={achievement.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.yellowBg, color: T.goldText, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
                   <Trophy size={14} strokeWidth={2} aria-hidden="true" />
                   {achievement.icon} {achievement.title}
                 </span>
@@ -295,8 +295,8 @@ export default function ProgressTab({
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <div style={{ fontSize: 14, color: T.sub }}>Pre {Math.round((preScore.correct / preScore.total) * 100)}%</div>
               <ArrowRight size={15} strokeWidth={2} color={T.muted} aria-hidden="true" />
-              <div style={{ fontSize: 14, color: T.success, fontWeight: 700 }}>Post {Math.round((postScore.correct / postScore.total) * 100)}%</div>
-              <div style={{ fontSize: 13, color: T.success }}>
+              <div style={{ fontSize: 14, color: T.greenDk, fontWeight: 700 }}>Post {Math.round((postScore.correct / postScore.total) * 100)}%</div>
+              <div style={{ fontSize: 13, color: T.greenDk }}>
                 +{Math.round((postScore.correct / postScore.total) * 100) - Math.round((preScore.correct / preScore.total) * 100)}%
               </div>
             </div>
@@ -311,7 +311,7 @@ export default function ProgressTab({
             {!preScore && (
               <button
                 onClick={() => navigate("today", { type: "preQuiz" })}
-                style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{ background: T.med, color: "white", border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 Take baseline quiz
                 <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
@@ -320,7 +320,7 @@ export default function ProgressTab({
             {preScore && !postScore && (
               <button
                 onClick={() => navigate("today", { type: "postQuiz" })}
-                style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{ background: T.med, color: "white", border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 Take post-rotation quiz
                 <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />

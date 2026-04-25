@@ -17,25 +17,25 @@ interface AssessmentResultsViewProps {
 function getTone(pct: number) {
   if (pct >= 80) {
     return {
-      border: T.success,
-      accent: T.success,
-      background: T.successBg,
-      pill: T.success,
+      border: T.green,
+      accent: T.greenDk,
+      background: T.greenBg,
+      pill: T.greenAlpha,
     };
   }
   if (pct >= 60) {
     return {
-      border: T.warning,
-      accent: T.warning,
-      background: T.warningBg,
-      pill: T.warning,
+      border: T.gold,
+      accent: T.warn,
+      background: T.yellowBg,
+      pill: T.goldAlpha,
     };
   }
   return {
-    border: T.danger,
-    accent: T.danger,
-    background: T.dangerBg,
-    pill: T.danger,
+    border: T.accent,
+    accent: T.accent,
+    background: T.redBg,
+    pill: T.redAlpha,
   };
 }
 
@@ -45,8 +45,8 @@ function GrowthPill({ growthPct }: { growthPct: number | null }) {
   return (
     <span
       style={{
-        background: positive ? T.successBg : T.dangerBg,
-        color: positive ? T.success : T.danger,
+        background: positive ? T.greenBg : T.redBg,
+        color: positive ? T.greenDk : T.accent,
         borderRadius: 999,
         padding: "6px 10px",
         fontSize: 13,
@@ -158,7 +158,7 @@ export default function AssessmentResultsView({
             Focus: {summary.recommendedArea.shortLabel}
           </span>
           {summary.strongestAreas[0] && (
-            <span style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+            <span style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Strongest: {summary.strongestAreas[0].shortLabel}
             </span>
           )}
@@ -176,7 +176,7 @@ export default function AssessmentResultsView({
               key={action.label}
               onClick={() => navigate(action.tab, action.subView)}
               style={{
-                background: action.label === recommendedAction.label ? T.brand : T.card,
+                background: action.label === recommendedAction.label ? T.accent : T.card,
                 color: action.label === recommendedAction.label ? "white" : T.navy,
                 border: action.label === recommendedAction.label ? "none" : `1px solid ${T.line}`,
                 borderRadius: 14,
@@ -209,7 +209,7 @@ export default function AssessmentResultsView({
               Use the low bands to drive teaching, review, and the next quiz set.
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.brand, fontSize: 13, fontWeight: 700 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.med, fontSize: 13, fontWeight: 700 }}>
             <Brain size={14} strokeWidth={2} aria-hidden="true" />
             Results now shape Today
           </div>
@@ -218,10 +218,10 @@ export default function AssessmentResultsView({
         <div style={{ display: "grid", gap: 10 }}>
           {summary.areas.map((area) => {
             const areaTone = area.status === "strong"
-              ? { tint: T.successBg, text: T.success }
+              ? { tint: T.greenBg, text: T.greenDk }
               : area.status === "steady"
-                ? { tint: T.warningBg, text: T.warning }
-                : { tint: T.dangerBg, text: T.danger };
+                ? { tint: T.yellowBg, text: T.warn }
+                : { tint: T.redBg, text: T.accent };
             return (
               <div key={area.week} style={{ background: areaTone.tint, borderRadius: 14, padding: "12px 14px", border: `1px solid ${T.line}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", marginBottom: 8, flexWrap: "wrap" }}>
@@ -297,14 +297,14 @@ export default function AssessmentResultsView({
           {showMissed && (
             <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
               {missed.map((item, index) => (
-                <div key={`${item.qIdx}-${index}`} style={{ background: T.dangerBg, borderRadius: 14, padding: 14, borderLeft: `3px solid ${T.danger}` }}>
+                <div key={`${item.qIdx}-${index}`} style={{ background: T.redBg, borderRadius: 14, padding: 14, borderLeft: `3px solid ${T.accent}` }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.text, lineHeight: 1.5, marginBottom: 8 }}>
                     {item.question.q}
                   </div>
-                  <div style={{ fontSize: 13, color: T.danger, marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, color: T.accent, marginBottom: 4 }}>
                     Your answer: {item.question.choices[item.chosen]}
                   </div>
-                  <div style={{ fontSize: 13, color: T.success, fontWeight: 700, marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, color: T.greenDk, fontWeight: 700, marginBottom: 8 }}>
                     Correct answer: {item.question.choices[item.question.answer]}
                   </div>
                   <div style={{ background: T.card, borderRadius: 10, padding: "10px 12px", fontSize: 13, color: T.sub, lineHeight: 1.55 }}>
@@ -326,7 +326,7 @@ export default function AssessmentResultsView({
         </button>
         <button
           onClick={() => navigate("today", mode === "pre" ? { type: "preQuiz" } : { type: "postQuiz" })}
-          style={{ background: T.brand, color: "white", border: "none", borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+          style={{ background: T.med, color: "white", border: "none", borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
         >
           Retake assessment
         </button>

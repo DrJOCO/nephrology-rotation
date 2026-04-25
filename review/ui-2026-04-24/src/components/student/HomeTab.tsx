@@ -487,13 +487,11 @@ export default function HomeTab({
       subView: { type: "extraPractice" },
     };
 
-  // Hero tones reduced from 4 to 2 (PR 2, option B): rounds-day vs clinic-day.
-  // didactic/wrap fold into the rounds-day style; clinic gets the only distinct tone.
   const heroToneStyles: Record<HeroCard["tone"], { background: string; border: string; badge: string }> = {
-    rounds:   { background: T.card, border: T.brand,   badge: T.brand },
-    didactic: { background: T.card, border: T.brand,   badge: T.brand },
-    clinic:   { background: T.card, border: T.success, badge: T.success },
-    wrap:     { background: T.card, border: T.brand,   badge: T.brand },
+    rounds: { background: `linear-gradient(135deg, ${T.ice} 0%, ${T.card} 100%)`, border: T.med, badge: T.med },
+    didactic: { background: `linear-gradient(135deg, ${T.purpleBg} 0%, ${T.card} 100%)`, border: T.purple, badge: T.purpleAccent },
+    clinic: { background: `linear-gradient(135deg, ${T.greenBg} 0%, ${T.blueBg} 100%)`, border: T.green, badge: T.greenDk },
+    wrap: { background: `linear-gradient(135deg, ${T.yellowBg} 0%, ${T.card} 100%)`, border: T.gold, badge: T.goldText },
   };
   const heroStyle = heroToneStyles[heroCard.tone];
   const startChecklistDone = startChecklist.filter((item) => item.done).length;
@@ -532,7 +530,7 @@ export default function HomeTab({
             </p>
           </div>
           {!online && (
-            <div style={{ background: T.warningBg, color: T.warning, border: `1px solid ${T.warning}`, borderRadius: 999, padding: "7px 12px", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ background: T.goldAlpha, color: T.warn, border: `1px solid ${T.gold}`, borderRadius: 999, padding: "7px 12px", fontSize: 13, fontWeight: 700 }}>
               Offline
             </div>
           )}
@@ -561,7 +559,7 @@ export default function HomeTab({
               onClick={() => navigate(action.tab, action.subView)}
               style={{
                 width: "100%",
-                background: index === 0 ? T.brand : T.card,
+                background: index === 0 ? T.accent : T.card,
                 color: index === 0 ? "white" : T.navy,
                 border: index === 0 ? "none" : `1px solid ${T.line}`,
                 borderRadius: 14,
@@ -597,7 +595,7 @@ export default function HomeTab({
                 Based on the inpatients you've logged.
               </p>
             </div>
-            <div style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               {patientSuggestedActions.length} suggestion{patientSuggestedActions.length !== 1 ? "s" : ""}
             </div>
           </div>
@@ -624,7 +622,7 @@ export default function HomeTab({
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden="true">{action.icon}</span>
-                    <span style={{ background: T.card, color: T.brand, border: `1px solid ${T.line}`, borderRadius: 999, padding: "4px 8px", fontSize: 12, fontWeight: 800 }}>
+                    <span style={{ background: T.card, color: T.med, border: `1px solid ${T.line}`, borderRadius: 999, padding: "4px 8px", fontSize: 12, fontWeight: 800 }}>
                       {PATIENT_ACTION_TYPE_LABELS[action.contentType] || "Review"}
                     </span>
                   </div>
@@ -635,7 +633,7 @@ export default function HomeTab({
                     {action.detail}
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.brand, fontSize: 13, fontWeight: 800 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.med, fontSize: 13, fontWeight: 800 }}>
                   Open
                   <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
                 </div>
@@ -657,7 +655,7 @@ export default function HomeTab({
               </p>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-              <div style={{ background: startChecklistDone === startChecklist.length ? T.successBg : T.brandBg, color: startChecklistDone === startChecklist.length ? T.success : T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+              <div style={{ background: startChecklistDone === startChecklist.length ? T.greenBg : T.ice, color: startChecklistDone === startChecklist.length ? T.greenDk : T.med, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
                 {startChecklistDone}/{startChecklist.length} done
               </div>
               <button
@@ -684,8 +682,8 @@ export default function HomeTab({
                 key={item.label}
                 onClick={() => handleStartChecklistClick(item)}
                 style={{
-                  background: item.done ? T.successBg : T.warmBg,
-                  border: `1px solid ${item.done ? T.success : T.line}`,
+                  background: item.done ? T.greenBg : T.warmBg,
+                  border: `1px solid ${item.done ? T.greenAlpha : T.line}`,
                   borderRadius: 14,
                   padding: "12px 12px",
                   cursor: "pointer",
@@ -694,10 +692,10 @@ export default function HomeTab({
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? "white" : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.greenDk : T.card, color: item.done ? "white" : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.greenDk : T.line}` }}>
                     {item.done ? "✓" : index + 1}
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: item.done ? T.success : T.brand, textTransform: "uppercase", letterSpacing: 0.6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: item.done ? T.greenDk : T.med, textTransform: "uppercase", letterSpacing: 0.6 }}>
                     {item.done ? "Done" : "Start"}
                   </span>
                 </div>
@@ -715,8 +713,8 @@ export default function HomeTab({
 
       {latestAnnouncement && (
         <div style={{ background: T.card, borderRadius: 16, padding: "12px 14px", border: `1px solid ${T.line}`, display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 14 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 12, background: T.brandBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Megaphone size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
+          <div style={{ width: 36, height: 36, borderRadius: 12, background: T.redBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Megaphone size={18} strokeWidth={1.75} color={T.accent} aria-hidden="true" />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
@@ -743,7 +741,7 @@ export default function HomeTab({
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
               <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                 <div style={{ width: 38, height: 38, borderRadius: 12, background: T.card, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Download size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
+                  <Download size={18} strokeWidth={1.75} color={T.med} aria-hidden="true" />
                 </div>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>
@@ -767,7 +765,7 @@ export default function HomeTab({
               {installPromptVariant === "native" ? (
                 <button
                   onClick={() => { void onInstallApp(); }}
-                  style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "10px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700 }}
+                  style={{ background: T.accent, color: "white", border: "none", borderRadius: 12, padding: "10px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700 }}
                 >
                   Install app
                 </button>
@@ -792,7 +790,7 @@ export default function HomeTab({
             style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 12, background: T.yellowBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <RefreshCw size={18} strokeWidth={1.75} color={T.warning} aria-hidden="true" />
+              <RefreshCw size={18} strokeWidth={1.75} color={T.warn} aria-hidden="true" />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{srAction.label}</div>
@@ -805,7 +803,7 @@ export default function HomeTab({
             style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
           >
             <div style={{ width: 38, height: 38, borderRadius: 12, background: T.blueBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <ClipboardList size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
+              <ClipboardList size={18} strokeWidth={1.75} color={T.med} aria-hidden="true" />
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
@@ -831,7 +829,7 @@ export default function HomeTab({
             </div>
             <button
               onClick={() => navigate("patients")}
-              style={{ background: "none", border: "none", color: T.brand, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
+              style={{ background: "none", border: "none", color: T.med, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
             >
               Open inpatients
               <ChevronRight size={15} strokeWidth={2} aria-hidden="true" />
@@ -868,7 +866,7 @@ export default function HomeTab({
                   {topics.length > 0 && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: patient.notes ? 8 : 0 }}>
                       {topics.slice(0, 3).map((topic) => (
-                        <span key={topic} style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
+                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
                           {topic}
                         </span>
                       ))}
@@ -900,8 +898,8 @@ export default function HomeTab({
         <section style={{ background: T.ice, borderRadius: 18, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Sparkles size={16} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, textTransform: "uppercase", letterSpacing: 0.9 }}>Pearl of the day</div>
+              <Sparkles size={16} strokeWidth={1.75} color={T.med} aria-hidden="true" />
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.med, textTransform: "uppercase", letterSpacing: 0.9 }}>Pearl of the day</div>
             </div>
             <button
               onClick={() => {
