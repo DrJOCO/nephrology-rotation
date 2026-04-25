@@ -118,11 +118,11 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         Practical tips for consults, rounding, notes, and presentations
       </p>
 
-      {/* Inpatient Consult Guides — HERO */}
+      {/* Inpatient Consult Guides — HERO (flat card + brand accent stripe) */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ background: T.successBg, borderRadius: 14, border: `1.5px solid ${T.success}`, padding: 14 }}>
+        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.brand}`, padding: 14 }}>
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Inpatient Consult Guides</div>
-          <div style={{ fontSize: 13, color: T.success, marginTop: 2, marginBottom: 12, lineHeight: 1.45 }}>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 2, marginBottom: 12, lineHeight: 1.45 }}>
             What to gather, how to present, red flags, and the assessment framework — by topic.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
@@ -131,16 +131,16 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
               return (
                 <button key={t} onClick={() => navigate("library", { type: "inpatientGuide", topic: t })}
                   style={{ display: "flex", width: "100%", alignItems: "center", gap: 10, padding: 12,
-                    background: T.card, borderRadius: 12, border: `1px solid ${T.success}`,
+                    background: T.card, borderRadius: 12, border: `1px solid ${T.line}`,
                     cursor: "pointer", textAlign: "left" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: T.successBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, flexShrink: 0 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: T.brandBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, flexShrink: 0 }}>
                     {g.icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, lineHeight: 1.3 }}>{g.title}</div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>{g.subtitle}</div>
                   </div>
-                  <span style={{ color: T.success, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
+                  <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
                 </button>
               );
             })}
@@ -257,9 +257,9 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
       {/* Trial Library */}
       <button onClick={() => navigate("library", { type: "trialLibrary" })}
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
-          background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", marginBottom: 14 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <BookOpen size={18} strokeWidth={1.75} color={T.med} aria-hidden="true" />
+          background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.warning}`, cursor: "pointer", textAlign: "left", marginBottom: 14 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <BookOpen size={18} strokeWidth={1.75} color={T.warning} aria-hidden="true" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, color: T.navy, fontSize: 14 }}>Landmark Trial Library</div>

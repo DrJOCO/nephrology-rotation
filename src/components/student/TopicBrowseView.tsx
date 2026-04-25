@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { T, TOPICS, ARTICLES, STUDY_SHEETS, ALL_LANDMARK_TRIALS, CURRICULUM_DECKS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
+import { getTopicIcon } from "../../data/topicIcons";
 import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
 
@@ -250,12 +251,16 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
     const content = getTopicContent(topic);
     const coreItems = content.studySheets.length + content.decks.length + content.cases.length + content.quizWeeks.length;
     const optionalItems = content.articles.length + content.trials.length + content.resources.length;
+    const Icon = getTopicIcon(topic);
     return (
       <button key={topic} onClick={() => setSelectedTopic(topic)}
-        style={{ background: T.card, borderRadius: 10, padding: "12px 10px", border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.navy, lineHeight: 1.3 }}>{topic}</div>
-        <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>
-          {coreItems} core{optionalItems > 0 ? ` • ${optionalItems} optional` : ""}
+        style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: 14, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 12 }}>
+        <Icon size={20} strokeWidth={1.5} color={T.sub} aria-hidden="true" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 700, color: T.navy, lineHeight: 1.3 }}>{topic}</div>
+          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
+            {coreItems} core{optionalItems > 0 ? ` • ${optionalItems} optional` : ""}
+          </div>
         </div>
       </button>
     );

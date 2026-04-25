@@ -97,7 +97,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: T.warning, fontFamily: T.mono }}>{student.points}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: T.text, fontFamily: T.mono }}>{student.points}</div>
                   <div style={{ fontSize: 12, color: T.muted }}>points</div>
                 </div>
                 <span style={{ fontSize: 16, color: T.muted, transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
@@ -107,7 +107,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
             {isExpanded && (
               <div style={{ marginTop: 12 }}>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: topTopics.length > 0 ? 10 : 0 }}>
-                  <span style={{ fontSize: 13, color: T.med, background: T.infoBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+                  <span style={{ fontSize: 13, color: T.infoDk, background: T.infoBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
                     {student.activePatientCount} active patients
                   </span>
                   <span style={{ fontSize: 13, color: T.success, background: T.successBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
@@ -138,7 +138,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
       <div style={{ background: T.card, borderRadius: 12, padding: 14, marginTop: 16, border: `1px solid ${T.line}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>Shared clinical exposure</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
-          <span style={{ fontSize: 13, color: T.med, background: T.infoBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+          <span style={{ fontSize: 13, color: T.infoDk, background: T.infoBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalActivePatients} active patients
           </span>
           <span style={{ fontSize: 13, color: T.success, background: T.successBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>

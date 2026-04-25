@@ -2,17 +2,16 @@ import { T, WEEKLY, labelChip } from "../../data/constants";
 import { backBtnStyle } from "./shared";
 import { getTopicContent } from "../../utils/topicMapping";
 
+const typePrefix = (type: string) => {
+  if (type === "Guideline") return "\u25C6 ";
+  if (type === "Landmark" || type === "Landmark Study") return "\u2605 ";
+  return "";
+};
+
 export default function ArticlesView({ week, onBack, navigate, curriculum, articles, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const arts = articles[week] || [];
   const wk = curriculum[week] || WEEKLY[week];
   const readCount = arts.filter(a => (completedItems?.articles || {})[a.url]).length;
-
-  const typeColors = {
-    "Guideline": { bg: T.successBg, text: T.success },
-    "Landmark Study": { bg: T.warningBg, text: T.warning },
-    "Landmark": { bg: T.warningBg, text: T.warning },
-    "Review": { bg: T.ice, text: T.med },
-  };
 
   return (
     <div style={{ padding: 16 }}>
@@ -31,7 +30,6 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
       </p>
 
       {arts.map((a, i) => {
-        const tc = typeColors[a.type] || typeColors.Review;
         const isRead = (completedItems?.articles || {})[a.url];
         const topicContent = getTopicContent(a.topic);
         const linkedCount = topicContent.studySheets.length + topicContent.articles.length + topicContent.quizWeeks.length + topicContent.trials.length + topicContent.resources.length;
@@ -44,14 +42,14 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
               onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
               onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: tc.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: T.grayBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   <span style={{ fontSize: 18 }}>{a.type === "Guideline" ? "\uD83D\uDCCB" : (a.type === "Landmark Study" || a.type === "Landmark") ? "\u2B50" : "\uD83D\uDCC4"}</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, lineHeight: 1.35, marginBottom: 4 }}>{a.title}</div>
                   <div style={{ fontSize: 13, color: T.sub }}>{a.journal} ({a.year})</div>
-                  <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6, alignItems: "center" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.4 }}>{typePrefix(a.type)}{a.type}</span>
                     <span style={labelChip}>{a.topic}</span>
                   </div>
                   <button
@@ -59,16 +57,16 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
                       e.stopPropagation();
                       navigate("today", { type: "topicDetail", topic: a.topic, source: "articles", week });
                     }}
-                    style={{ marginTop: 8, background: T.infoBg, color: T.med, border: `1px solid ${T.line}`, borderRadius: 8, padding: "8px 10px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                    style={{ marginTop: 8, background: T.infoBg, color: T.infoDk, border: `1px solid ${T.line}`, borderRadius: 8, padding: "8px 10px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
                   >
                     More on {a.topic} in the app • {linkedCount} links
                   </button>
                   <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
                     <span style={{ fontSize: 13, color: T.muted }}>Can&#39;t access?</span>
                     <a href={`https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(a.title)}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                      style={{ fontSize: 13, fontWeight: 600, color: T.med, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.infoBg }}>PubMed</a>
+                      style={{ fontSize: 13, fontWeight: 600, color: T.infoDk, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.infoBg }}>PubMed</a>
                     <a href={`https://scholar.google.com/scholar?q=${encodeURIComponent(a.title)}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                      style={{ fontSize: 13, fontWeight: 600, color: T.med, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.infoBg }}>Scholar</a>
+                      style={{ fontSize: 13, fontWeight: 600, color: T.infoDk, textDecoration: "none", padding: "4px 8px", borderRadius: 4, background: T.infoBg }}>Scholar</a>
                   </div>
                 </div>
                 <div style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u2197"}</div>
