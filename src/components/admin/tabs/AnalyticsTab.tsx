@@ -148,7 +148,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
   const improved = active.filter(s => s.preScore && s.postScore && s.preScore.total > 0 && s.postScore.total > 0 &&
     (s.postScore.correct / s.postScore.total) > (s.preScore.correct / s.preScore.total));
   const funnelStages = [
-    { label: "Enrolled", value: active.length, total: active.length, color: T.med },
+    { label: "Enrolled", value: active.length, total: active.length, color: T.brand },
     { label: "Pre-Test", value: withPre.length, total: active.length, color: T.info },
     { label: "1+ Weekly Quiz", value: withAnyWeekly.length, total: active.length, color: T.warning },
     { label: "All 4 Weekly", value: withAllWeekly.length, total: active.length, color: T.warning },
@@ -196,7 +196,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             {[
               { label: "Rotation blocks", value: historicalRotations.length, tone: T.navy, bg: T.ice },
-              { label: "Learners tracked", value: allHistoricalStudents.length, tone: T.med, bg: T.infoBg },
+              { label: "Learners tracked", value: allHistoricalStudents.length, tone: T.info, bg: T.infoBg },
               { label: "MS3", value: ms3Students.length, tone: T.warning, bg: T.warningBg },
               { label: "MS4", value: ms4Students.length, tone: T.success, bg: T.successBg },
               { label: "Both assessments", value: historicalAssessmentsComplete, tone: T.danger, bg: T.dangerBg },
@@ -205,7 +205,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
               { label: "Avg quiz attempts", value: overallQuizAttempts === null ? "—" : `${overallQuizAttempts}`, tone: T.navy, bg: T.bg },
               { label: "Avg optional refs", value: overallOptionalRefs === null ? "—" : `${overallOptionalRefs}`, tone: T.navy, bg: T.bg },
               { label: "Avg reflections", value: overallReflections === null ? "—" : `${overallReflections}`, tone: T.navy, bg: T.bg },
-              { label: "Avg patients logged", value: overallPatientsLogged === null ? "—" : `${overallPatientsLogged}`, tone: T.navy, bg: T.bg },
+              { label: "Avg consults logged", value: overallPatientsLogged === null ? "—" : `${overallPatientsLogged}`, tone: T.navy, bg: T.bg },
               { label: "Year not set", value: otherYearStudents.length, tone: T.muted, bg: T.grayBg },
             ].map((item) => (
               <div key={item.label} style={{ background: item.bg, borderRadius: 12, padding: 12, border: `1px solid ${T.line}` }}>
@@ -230,7 +230,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
               <div key={summary.label} style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: T.navy }}>{summary.label}</div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: T.med, background: T.ice, padding: "4px 9px", borderRadius: 999 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, background: T.ice, padding: "4px 9px", borderRadius: 999 }}>
                     {summary.count} learner{summary.count !== 1 ? "s" : ""}
                   </span>
                 </div>
@@ -244,7 +244,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
                     { label: "Quiz attempts", value: summary.avgQuizAttempts === null ? "—" : `${summary.avgQuizAttempts}` },
                     { label: "Optional refs", value: summary.avgOptionalRefs === null ? "—" : `${summary.avgOptionalRefs}` },
                     { label: "Reflections", value: summary.avgReflections === null ? "—" : `${summary.avgReflections}` },
-                    { label: "Patients", value: summary.avgPatients === null ? "—" : `${summary.avgPatients}` },
+                    { label: "Consults", value: summary.avgPatients === null ? "—" : `${summary.avgPatients}` },
                   ].map((metric) => (
                     <div key={metric.label} style={{ background: T.card, borderRadius: 10, padding: "10px 11px", border: `1px solid ${T.line}` }}>
                       <div style={{ fontSize: 17, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{metric.value}</div>
@@ -295,7 +295,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
 
                   return (
                     <tr key={item.rotation.code} style={{ borderTop: `1px solid ${T.line}` }}>
-                      <td style={{ padding: "12px 0", fontSize: 13, fontFamily: T.mono, fontWeight: 700, color: rotationCode === item.rotation.code ? T.med : T.navy }}>
+                      <td style={{ padding: "12px 0", fontSize: 13, fontFamily: T.mono, fontWeight: 700, color: rotationCode === item.rotation.code ? T.brand : T.navy }}>
                         {item.rotation.code}
                       </td>
                       <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>

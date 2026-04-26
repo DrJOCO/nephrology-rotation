@@ -37,7 +37,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               {this.state.error?.message || "Unknown error"}
             </p>
             <button onClick={() => this.setState({ hasError: false, error: null })}
-              style={{ padding: "12px 32px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              style={{ padding: "12px 32px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
               Try Again
             </button>
           </div>

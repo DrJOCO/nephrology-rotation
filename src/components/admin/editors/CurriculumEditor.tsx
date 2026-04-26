@@ -49,7 +49,7 @@ export function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curric
                 <textarea value={form.topicsStr} onChange={e => setForm({...form, topicsStr: e.target.value})} rows={2} style={{...adminInput, resize: "vertical"}} />
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={saveEdit} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
+                <button onClick={saveEdit} style={{ flex: 1, padding: "10px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
                 <button onClick={() => setEditWeek(null)} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
               </div>
             </div>

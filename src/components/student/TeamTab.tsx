@@ -75,7 +75,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               borderRadius: 12,
               padding: 12,
               marginBottom: 10,
-              border: isMe ? `2px solid ${T.med}` : rank <= 3 ? `1px solid ${T.warning}` : `1px solid ${T.line}`,
+              border: isMe ? `2px solid ${T.brand}` : rank <= 3 ? `1px solid ${T.warning}` : `1px solid ${T.line}`,
             }}
           >
             <button

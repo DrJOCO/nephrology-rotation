@@ -199,9 +199,8 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
           </table>
         </div>
 
-        {/* Patient Log */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={hdr}>Patient Log ({patients.length} patient{patients.length !== 1 ? "s" : ""})</div>
+          <div style={hdr}>Consult Log ({patients.length} consult{patients.length !== 1 ? "s" : ""})</div>
           {patients.length > 0 ? (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead><tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
@@ -220,7 +219,7 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
                 );
               })}</tbody>
             </table>
-          ) : <div style={{ fontSize: 13, color: PRINT_THEME.muted, fontStyle: "italic" }}>No patients logged</div>}
+          ) : <div style={{ fontSize: 13, color: PRINT_THEME.muted, fontStyle: "italic" }}>No consults logged</div>}
         </div>
 
         {/* Topic Distribution */}

@@ -43,33 +43,33 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
     "AKI": { bg: T.dangerBg, text: T.danger },
     "Electrolytes": { bg: T.successBg, text: T.success },
     "GN": { bg: T.infoBg, text: T.info },
-    "CKD": { bg: T.infoBg, text: T.med },
+    "CKD": { bg: T.infoBg, text: T.info },
     "Dialysis": { bg: T.warningBg, text: T.warning },
     "Acid-Base": { bg: T.successBg, text: T.success },
-    "Medications": { bg: T.infoBg, text: T.med },
+    "Medications": { bg: T.infoBg, text: T.info },
     "Stones": { bg: T.warningBg, text: T.warning },
     "Physiology": { bg: T.successBg, text: T.success },
-    "Guidelines": { bg: T.infoBg, text: T.med },
+    "Guidelines": { bg: T.infoBg, text: T.info },
     "Cases": { bg: T.warningBg, text: T.warning },
     "Quick Hits": { bg: T.infoBg, text: T.info },
     "Teaching": { bg: T.successBg, text: T.success },
     "Practice Cases": { bg: T.warningBg, text: T.warning },
     "Video Lectures": { bg: T.infoBg, text: T.info },
     "Visuals": { bg: T.warningBg, text: T.warning },
-    "Review": { bg: T.infoBg, text: T.med },
+    "Review": { bg: T.infoBg, text: T.info },
     "Pathology": { bg: T.dangerBg, text: T.danger },
     "Pediatrics": { bg: T.infoBg, text: T.info },
-    "Career": { bg: T.infoBg, text: T.med },
+    "Career": { bg: T.infoBg, text: T.info },
     "Community": { bg: T.successBg, text: T.success },
     "Boards": { bg: T.warningBg, text: T.warning },
     "Fun Learning": { bg: T.successBg, text: T.success },
     "App": { bg: T.infoBg, text: T.info },
-    "Calculators": { bg: T.infoBg, text: T.med },
+    "Calculators": { bg: T.infoBg, text: T.info },
     "ICU": { bg: T.dangerBg, text: T.danger },
     "HTN": { bg: T.dangerBg, text: T.danger },
     "Transplant": { bg: T.successBg, text: T.success },
     "HRS": { bg: T.warningBg, text: T.warning },
-    "Cardiorenal": { bg: T.infoBg, text: T.med },
+    "Cardiorenal": { bg: T.infoBg, text: T.info },
     "DKD": { bg: T.successBg, text: T.success },
     "PD": { bg: T.warningBg, text: T.warning },
   };
@@ -146,7 +146,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
 
       {/* Resource cards */}
       {activeData.map((r, i) => {
-        const tc = tagColors[r.tag] || { bg: T.ice, text: T.med };
+        const tc = tagColors[r.tag] || { bg: T.ice, text: T.brand };
         const hasCurbsidersFallback = isCurbsidersResource(r.url);
         const appleSearchUrl = hasCurbsidersFallback ? getCurbsidersAppleSearchUrl(r.name) : null;
         const primaryUrl = appleSearchUrl || r.url;
@@ -165,7 +165,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
                   <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{r.name}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{r.tag}</span>
                   {isDeck && (
-                    <span style={{ fontSize: 13, fontWeight: 700, color: T.med, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>
                       Week {r.week}
                     </span>
                   )}
@@ -204,7 +204,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
                       style={{
                         fontSize: 13,
                         fontWeight: 700,
-                        color: deckReviewed ? T.success : T.med,
+                        color: deckReviewed ? T.success : T.brand,
                         background: deckReviewed ? T.successBg : T.ice,
                         padding: "8px 12px",
                         borderRadius: 8,
@@ -225,8 +225,8 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
 
       {/* Bottom tip (podcasts tab only) */}
       {activeTab === "podcasts" && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 6, borderLeft: `4px solid ${T.med}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 4 }}>LISTENING TIP</div>
+        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 6, borderLeft: `4px solid ${T.brand}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4 }}>LISTENING TIP</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
             Start with Curbsiders #226 (AKI) and REBOOT #48 (Hyponatremia) {"\u2014"} these cover the two most common consults you'll see. All Curbsiders nephrology episodes feature Joel Topf (@kidney_boy) and are outstanding. Listen during your commute {"\u2014"} 15 min/day adds up fast over 4 weeks.
           </div>

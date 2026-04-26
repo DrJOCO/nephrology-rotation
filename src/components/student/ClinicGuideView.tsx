@@ -53,14 +53,14 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
 
       {/* Date + override badge */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-        <span style={{ fontSize: 13, color: T.med, fontWeight: 600 }}>{formatFriday(date)}</span>
+        <span style={{ fontSize: 13, color: T.brand, fontWeight: 600 }}>{formatFriday(date)}</span>
         {isOverride && (
           <span style={{ fontSize: 13, fontWeight: 700, color: T.warning, background: T.warningBg, borderRadius: 6, padding: "2px 6px", textTransform: "uppercase" }}>Override</span>
         )}
       </div>
 
       {/* Why it matters */}
-      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.med}` }}>
+      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.brand}` }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 4 }}>Why This Matters</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.whyItMatters}</div>
       </div>
@@ -78,7 +78,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
       </div>
 
       {/* How to present */}
-      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 14, border: `1px solid ${T.med}40` }}>
+      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 14, border: `1px solid ${T.brand}40` }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 6 }}>How to Present This Patient</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.7, fontStyle: "italic" }}>{guide.howToPresent}</div>
       </div>
@@ -87,7 +87,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
       {guide.sections.map((section, si) => {
         const isOpen = openSection === si;
         return (
-          <div key={si} style={{ marginBottom: 10, background: T.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${isOpen ? T.med + "60" : T.line}`, transition: "border 0.2s" }}>
+          <div key={si} style={{ marginBottom: 10, background: T.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${isOpen ? T.brand + "60" : T.line}`, transition: "border 0.2s" }}>
             <button onClick={() => setOpenSection(isOpen ? -1 : si)}
               style={{ width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -102,7 +102,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
                 <div style={{ height: 1, background: T.line, marginBottom: 12 }} />
                 {section.items.map((item, ii) => (
                   <div key={ii} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-                    <span style={{ color: T.med, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
+                    <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
                     <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word" }}>{item}</div>
                   </div>
                 ))}
@@ -123,7 +123,7 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
         <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Teaching Points</h3>
         {guide.teachingPoints.map((pt, i) => (
           <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, background: T.card, borderRadius: 12, padding: "12px 14px", border: `1px solid ${T.line}` }}>
-            <span style={{ color: T.med, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{i + 1}.</span>
+            <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{i + 1}.</span>
             <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{pt}</div>
           </div>
         ))}

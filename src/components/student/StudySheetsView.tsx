@@ -116,7 +116,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                           <button
                             key={topic}
                             onClick={() => navigate("today", { type: "topicDetail", topic, source: "studySheets", week })}
-                            style={{ background: T.infoBg, border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", cursor: "pointer", fontSize: 13, fontWeight: 600, color: T.med }}
+                            style={{ background: T.infoBg, border: `1px solid ${T.line}`, borderRadius: 999, padding: "6px 12px", cursor: "pointer", fontSize: 13, fontWeight: 600, color: T.info }}
                           >
                             {topic} ({resourceCount})
                           </button>
@@ -132,7 +132,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
                     <span style={{ fontSize: 13, color: T.sub, flex: 1 }}>Finished reading?</span>
                   )}
                   <button onClick={() => onToggleComplete(sheet.id)}
-                    style={{ padding: "8px 14px", background: isDone ? T.success : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, marginLeft: isDone ? "auto" : 0 }}>
+                    style={{ padding: "8px 14px", background: isDone ? T.success : T.brand, color: isDone ? T.successInk : "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, marginLeft: isDone ? "auto" : 0 }}>
                     <span>{"\u2713"}</span>
                     {isDone ? "Completed" : "Mark complete"}
                   </button>

@@ -16,7 +16,7 @@ export function MiniBarChart({ data, width = 280, height = 130 }: { data: { labe
         const x = pad.left + gap + i * (barW + gap);
         const barH = Math.max((d.value / maxVal) * h, 2);
         return <g key={i}>
-          <rect x={x} y={pad.top + h - barH} width={barW} height={barH} rx={4} fill={d.color || T.med} />
+          <rect x={x} y={pad.top + h - barH} width={barW} height={barH} rx={4} fill={d.color || T.brand} />
           <text x={x + barW / 2} y={pad.top + h - barH - 4} fontSize={10} fill={T.text} textAnchor="middle" fontWeight={600}>{d.value}%</text>
           <text x={x + barW / 2} y={height - 4} fontSize={9} fill={T.muted} textAnchor="middle">{d.label}</text>
         </g>;

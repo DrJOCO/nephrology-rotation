@@ -69,7 +69,7 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
       </div>
 
       {/* Why we get consulted */}
-      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.med}` }}>
+      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.brand}` }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 4 }}>Why We Get Consulted</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.whyWeGetConsulted}</div>
       </div>
@@ -87,19 +87,19 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
       </div>
 
       {/* 30-second summary */}
-      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${T.med}40` }}>
+      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${T.brand}40` }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 6 }}>The 30-Second Consult Summary</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.7, fontStyle: "italic" }}>{guide.thirtySecondSummary}</div>
       </div>
 
       {/* How to present */}
-      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 14, border: `1px solid ${T.med}40` }}>
+      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 14, border: `1px solid ${T.brand}40` }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 6 }}>How to Present This Consult</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.7, fontStyle: "italic" }}>{guide.howToPresent}</div>
       </div>
 
       {/* Accordion sections */}
-      {accordion("differential", "Top Differential Buckets", guide.topDifferentialBuckets, T.med)}
+      {accordion("differential", "Top Differential Buckets", guide.topDifferentialBuckets, T.brand)}
       {accordion("redFlags", "Red Flags / Call Urgently", guide.redFlags, T.danger)}
       {accordion("mistakes", "Common Mistakes", guide.commonMistakes, T.warning)}
 
@@ -108,7 +108,7 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
         <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Assessment / Recommendations Framework</h3>
         {guide.assessmentFramework.map((item, i) => (
           <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8, background: T.card, borderRadius: 12, padding: "10px 14px", border: `1px solid ${T.line}` }}>
-            <span style={{ color: T.med, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{i + 1}.</span>
+            <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{i + 1}.</span>
             <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{item}</div>
           </div>
         ))}

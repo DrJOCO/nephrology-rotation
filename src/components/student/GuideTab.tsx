@@ -50,7 +50,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
       </div>
 
       {/* Intro */}
-      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 16, borderLeft: `4px solid ${T.med}` }}>
+      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 16, borderLeft: `4px solid ${T.brand}` }}>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6, wordBreak: "break-word" }}>{data.intro}</div>
       </div>
 
@@ -245,7 +245,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
           background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", marginBottom: 10 }}>
         <div style={{ width: 36, height: 36, borderRadius: 10, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <HelpCircle size={18} strokeWidth={1.75} color={T.med} aria-hidden="true" />
+          <HelpCircle size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, color: T.navy, fontSize: 14 }}>Rotation FAQ</div>

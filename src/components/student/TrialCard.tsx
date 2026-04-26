@@ -38,7 +38,7 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
           <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 4 }}>How It Changed Practice</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 12, background: T.ice, borderRadius: 8, padding: 12 }}>{trial.significance}</div>
           <a href={trial.url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: T.med, textDecoration: "none" }}>
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: T.brand, textDecoration: "none" }}>
             Read Full Paper {"\u2197"}
           </a>
         </div>

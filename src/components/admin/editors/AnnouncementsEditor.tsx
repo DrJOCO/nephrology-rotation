@@ -23,7 +23,7 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Announcements</h2>
         <button onClick={() => setShowAdd(!showAdd)}
-          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.warning, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.warning, color: showAdd ? "white" : T.warningInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ New"}
         </button>
       </div>
@@ -46,7 +46,7 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
               <option value="urgent">Urgent</option>
             </select>
           </div>
-          <button onClick={add} style={{ width: "100%", padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={add} style={{ width: "100%", padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             Post Announcement
           </button>
         </div>
@@ -57,7 +57,7 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
       )}
 
       {announcements.map(a => {
-        const prioColor = a.priority === "urgent" ? T.danger : a.priority === "important" ? T.warning : T.med;
+        const prioColor = a.priority === "urgent" ? T.danger : a.priority === "important" ? T.warning : T.brand;
         return (
           <div key={a.id} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${prioColor}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>

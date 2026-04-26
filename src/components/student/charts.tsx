@@ -2,7 +2,7 @@ import { T } from "../../data/constants";
 import type { LineChartPoint, HistogramBin, FunnelStage, BarChartItem } from "../../types";
 
 export function MiniLineChart({ data, width = 280, height = 120, color }: { data: LineChartPoint[]; width?: number; height?: number; color?: string }) {
-  const lineColor = color || T.med;
+  const lineColor = color || T.brand;
   if (!data || data.length < 2) return null;
   const pad = { top: 12, right: 10, bottom: 22, left: 32 };
   const w = width - pad.left - pad.right;
@@ -72,7 +72,7 @@ export function FunnelChart({ stages, width = 300, height }: { stages: FunnelSta
         const barW = Math.max((s.value / maxVal) * barMaxW, 4);
         const pct = s.total > 0 ? Math.round((s.value / s.total) * 100) : 0;
         return <g key={i}>
-          <rect x={pad.left} y={y + 4} width={barW} height={rowH - 10} rx={4} fill={s.color || T.med} opacity={0.8} />
+          <rect x={pad.left} y={y + 4} width={barW} height={rowH - 10} rx={4} fill={s.color || T.brand} opacity={0.8} />
           <text x={pad.left + barW + 6} y={y + rowH / 2 + 1} fontSize={10} fill={T.text} dominantBaseline="middle" fontWeight={600}>{s.value}</text>
           <text x={width - pad.right} y={y + rowH / 2 + 1} fontSize={9} fill={T.muted} textAnchor="end" dominantBaseline="middle">{s.label} ({pct}%)</text>
         </g>;
@@ -130,7 +130,7 @@ export function MiniBarChart({ data, width = 280, height = 130 }: { data: BarCha
         const x = pad.left + gap + i * (barW + gap);
         const barH = Math.max((d.value / maxVal) * h, 2);
         return <g key={i}>
-          <rect x={x} y={pad.top + h - barH} width={barW} height={barH} rx={4} fill={d.color || T.med} />
+          <rect x={x} y={pad.top + h - barH} width={barW} height={barH} rx={4} fill={d.color || T.brand} />
           <text x={x + barW / 2} y={pad.top + h - barH - 4} fontSize={10} fill={T.text} textAnchor="middle" fontWeight={600}>{d.value}%</text>
           <text x={x + barW / 2} y={height - 4} fontSize={9} fill={T.muted} textAnchor="middle">{d.label}</text>
         </g>;

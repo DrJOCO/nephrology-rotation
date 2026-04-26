@@ -20,7 +20,7 @@ export default function RefsTab({ navigate }) {
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>{ref.title}</div>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{ref.desc}</div>
             {ref.type === "calculator" && (
-              <div style={{ fontSize: 13, color: T.med, fontWeight: 600, marginTop: 8 }}>Calculator →</div>
+              <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, marginTop: 8 }}>Calculator →</div>
             )}
             {ref.type === "reference" && (
               <div style={{ fontSize: 13, color: T.warning, fontWeight: 600, marginTop: 8 }}>Reference →</div>
@@ -34,10 +34,10 @@ export default function RefsTab({ navigate }) {
           style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "box-shadow 0.2s" }}
           onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
           onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-          <Type size={28} strokeWidth={1.5} color={T.med} aria-hidden="true" style={{ marginBottom: 8 }} />
+          <Type size={28} strokeWidth={1.5} color={T.brand} aria-hidden="true" style={{ marginBottom: 8 }} />
           <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>Nephrology Abbreviations</div>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{ABBREVIATIONS.length} terms you will see in notes and on rounds</div>
-          <div style={{ fontSize: 13, color: T.med, fontWeight: 600, marginTop: 8 }}>Reference →</div>
+          <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, marginTop: 8 }}>Reference →</div>
         </button>
       </div>
     </div>

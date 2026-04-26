@@ -84,7 +84,7 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
               {attentionItems.map((item) => {
                 const tone = item.tone === "success"
                   ? { bg: T.successBg, text: T.success, border: T.success }
-                  : { bg: T.infoBg, text: T.navy, border: T.med };
+                  : { bg: T.infoBg, text: T.info, border: T.info };
                 return (
                   <div key={item.key} style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 12, padding: 12, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                     <div>

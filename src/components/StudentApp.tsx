@@ -1349,7 +1349,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           role="status" aria-live="polite"
           style={{
             background: online ? T.ice : T.warning,
-            color: online ? T.med : T.warning,
+            color: online ? T.brand : T.warningInk,
             borderBottom: `1px solid ${T.line}`,
             padding: "8px 16px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 8,
@@ -1552,7 +1552,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const allWeeklyQs = [1,2,3,4].flatMap(w => (WEEKLY_QUIZZES[w] || []).map((q, i) => ({ ...q, _key: `weekly_${w}_${i}` })));
           return (
             <div style={{ padding: 16 }}>
-              <button onClick={() => navigate("today")} style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
+              <button onClick={() => navigate("today")} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
               <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 6px" }}>Extra Practice</h2>
               <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px", lineHeight: 1.5 }}>Review missed questions or practice from the full question bank.</p>
               {dueKeys.length > 0 && (
@@ -1567,7 +1567,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 </button>
               )}
               <button onClick={() => navigate("today", { type: "practiceQuiz" })}
-                style={{ width: "100%", background: T.card, borderRadius: 12, padding: 16, border: `1.5px solid ${T.med}`, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
+                style={{ width: "100%", background: T.card, borderRadius: 12, padding: 16, border: `1.5px solid ${T.brand}`, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
                 <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Practice Questions</div>
@@ -1575,7 +1575,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 </div>
               </button>
               {Object.keys(srQueue).length > 0 && (
-                <div style={{ background: T.ice, borderRadius: 10, padding: 14, marginTop: 8, borderLeft: `3px solid ${T.med}` }}>
+                <div style={{ background: T.ice, borderRadius: 10, padding: 14, marginTop: 8, borderLeft: `3px solid ${T.brand}` }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 6 }}>SR Queue Stats</div>
                   <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6 }}>
                     <div>Total in queue: {Object.keys(srQueue).length}</div>
@@ -1610,7 +1610,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               <div style={{ fontSize: 48, marginBottom: 12 }}>{"\u2705"}</div>
               <div style={{ color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>All caught up!</div>
               <div style={{ color: T.sub, fontSize: 13, marginBottom: 20 }}>No questions due for review right now.</div>
-              <button onClick={() => navigate("today", { type: "extraPractice" })} style={{ padding: "10px 24px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
+              <button onClick={() => navigate("today", { type: "extraPractice" })} style={{ padding: "10px 24px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
             </div>
           );
         })()}
@@ -1672,7 +1672,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             <button key={t.id} onClick={() => navigate(t.id)}
               style={{ flex: 1, padding: "8px 0 6px", background: active ? T.ice : "none", border: "none", borderRadius: active ? 12 : 0, margin: "4px 2px", cursor: "pointer",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-                color: active ? T.med : T.sub,
+                color: active ? T.brand : T.sub,
                 transition: "background 0.15s ease, color 0.15s ease",
               }}>
               <t.Icon size={20} strokeWidth={active ? 2 : 1.75} aria-hidden="true" />
@@ -1883,7 +1883,7 @@ function ProfileSheet({
                 minHeight: 44,
                 borderRadius: 12,
                 border: "none",
-                background: canSaveName ? `linear-gradient(135deg, ${T.med}, ${T.navy})` : T.surface2,
+                background: canSaveName ? `linear-gradient(135deg, ${T.brand}, ${T.navy})` : T.surface2,
                 color: canSaveName ? "white" : T.muted,
                 fontSize: 14,
                 fontWeight: 700,
@@ -1943,7 +1943,7 @@ function ProfileSheet({
                 minHeight: 44,
                 borderRadius: 12,
                 border: "none",
-                background: canSaveYear ? T.med : T.surface2,
+                background: canSaveYear ? T.brand : T.surface2,
                 color: canSaveYear ? "white" : T.muted,
                 fontSize: 14,
                 fontWeight: 700,
@@ -2067,7 +2067,7 @@ function ConfirmSheet({
             {cancelLabel}
           </button>
           <button ref={confirmRef} onClick={onConfirm}
-            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: "white", background: T.brand, border: "none", borderRadius: 12, cursor: "pointer" }}>
+            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: T.brandInk, background: T.brand, border: "none", borderRadius: 12, cursor: "pointer" }}>
             {confirmLabel}
           </button>
         </div>

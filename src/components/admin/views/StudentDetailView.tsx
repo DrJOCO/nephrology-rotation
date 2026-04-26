@@ -347,7 +347,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
 
         <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
           <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
-            {patients.length} patient{patients.length !== 1 ? "s" : ""}
+            {patients.length} consult{patients.length !== 1 ? "s" : ""}
           </span>
           <span style={{ background: T.bg, color: T.sub, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 600 }}>
             {totalQuizAttempts} quiz signal{totalQuizAttempts !== 1 ? "s" : ""}
@@ -367,10 +367,10 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
           <button onClick={() => setShowAddPatient(!showAddPatient)}
             onClickCapture={() => { if (showAddPatient) setShowAllPatTopics(false); }}
             style={{ fontSize: 13, color: T.success, background: T.successBg, border: `1px solid ${T.success}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
-            {showAddPatient ? "Close patient form" : "+ Log / Assign Patient"}
+            {showAddPatient ? "Close consult form" : "+ Add Consult"}
           </button>
           <button onClick={() => navigate("students", { type: "printStudent", id: String(s.id) })}
-            style={{ fontSize: 13, color: T.med, background: T.infoBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: T.info, background: T.infoBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
             Print Report
           </button>
           <button onClick={() => navigate("students", { type: "exportPdf", id: String(s.id) })}
@@ -378,7 +378,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             Export PDF
           </button>
           <button onClick={handleRemoveStudent} disabled={removeBusy}
-            style={{ fontSize: 13, color: "white", background: removeBusy ? T.muted : T.danger, border: "none", padding: "6px 12px", borderRadius: 6, cursor: removeBusy ? "wait" : "pointer", fontWeight: 600 }}>
+            style={{ fontSize: 13, color: removeBusy ? "white" : T.dangerInk, background: removeBusy ? T.muted : T.danger, border: "none", padding: "6px 12px", borderRadius: 6, cursor: removeBusy ? "wait" : "pointer", fontWeight: 600 }}>
             {removeBusy ? "Removing..." : "Remove from Rotation"}
           </button>
         </div>
@@ -406,7 +406,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             <div style={{ display: "flex", gap: 6 }}>
               {["pre", "post", "weekly"].map(t => (
                 <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); }}
-                  style={{ flex: 1, padding: "8px 0", background: scoreType === t ? `linear-gradient(135deg, ${T.med}, ${T.deepBg})` : T.bg, color: scoreType === t ? "white" : T.sub,
+                  style={{ flex: 1, padding: "8px 0", background: scoreType === t ? `linear-gradient(135deg, ${T.brand}, ${T.deepBg})` : T.bg, color: scoreType === t ? "white" : T.sub,
                     border: scoreType === t ? `1px solid ${T.danger}` : `1px solid ${T.line}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
                   {t === "weekly" ? "Weekly" : t + "-Test"}
                 </button>
@@ -419,7 +419,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
               <div style={{ display: "flex", gap: 6 }}>
                 {[1,2,3,4].map(w => (
                   <button key={w} onClick={() => setScoreWeek(w)}
-                    style={{ flex: 1, padding: "8px 0", background: scoreWeek === w ? T.med : T.bg, color: scoreWeek === w ? "white" : T.sub,
+                    style={{ flex: 1, padding: "8px 0", background: scoreWeek === w ? T.brand : T.bg, color: scoreWeek === w ? "white" : T.sub,
                       border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                     Wk {w}
                   </button>
@@ -438,7 +438,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={saveScore} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save Score</button>
+            <button onClick={saveScore} style={{ flex: 1, padding: "10px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save Score</button>
             <button onClick={() => setShowScoreEntry(false)} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
           </div>
         </div>
@@ -447,9 +447,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       {/* Patient Entry */}
       {showAddPatient && (
         <div ref={patientEntryRef} style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.success}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.success, marginBottom: 10 }}>LOG PATIENT</div>
-          <div style={{ background: T.warningBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.warning}`, fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
-            <strong style={{ color: T.warning }}>No PHI:</strong> {PHI_WARNING}
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.success, marginBottom: 10 }}>LOG CONSULT</div>
+          <div style={{ background: T.infoBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.info}`, fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
+            <strong style={{ color: T.info }}>No PHI:</strong> {PHI_WARNING}
           </div>
           <div style={{ marginBottom: 12 }}>
             <label style={adminLabel}>Assign To</label>
@@ -471,9 +471,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                       fontWeight: selected ? 700 : 500,
                       cursor: "pointer",
                       transition: "all 0.15s ease",
-                      background: selected ? T.med : T.bg,
+                      background: selected ? T.brand : T.bg,
                       color: selected ? "white" : T.sub,
-                      border: selected ? `1.5px solid ${T.med}` : `1.5px solid ${T.line}`,
+                      border: selected ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`,
                     }}
                   >
                     {selected ? "✓ " : ""}{student.name}
@@ -501,7 +501,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                 return (
                   <button key={t} type="button" onClick={() => togglePatTopic(t)}
                     style={{ padding: "5px 10px", borderRadius: 16, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
-                      background: sel ? T.warning : T.card, color: sel ? "white" : T.sub,
+                      background: sel ? T.warning : T.card, color: sel ? T.warningInk : T.sub,
                       border: sel ? `1.5px solid ${T.warning}` : `1.5px solid ${T.line}` }}>
                     {sel ? "✓ " : ""}{t}
                   </button>
@@ -525,8 +525,8 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             {patErrors.dx && <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.dx}</div>}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={addPatient} style={{ flex: 1, padding: "10px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              {patientStudentIds.length > 1 ? `Add to ${patientStudentIds.length} Students` : "Add Patient"}
+            <button onClick={addPatient} style={{ flex: 1, padding: "10px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              {patientStudentIds.length > 1 ? `Add to ${patientStudentIds.length} Students` : "Add Consult"}
             </button>
             <button onClick={() => { setShowAllPatTopics(false); setShowAddPatient(false); }} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
           </div>
@@ -606,9 +606,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       })}
 
       {/* Patients */}
-      <h3 style={detailSectionHeadingStyle}>Patient Log ({patients.length})</h3>
+      <h3 style={detailSectionHeadingStyle}>Consult Log ({patients.length})</h3>
       {patients.length === 0 ? (
-        <div style={{ background: T.card, borderRadius: 10, padding: 20, textAlign: "center", color: T.muted, border: `1px solid ${T.line}` }}>No patients logged</div>
+        <div style={{ background: T.card, borderRadius: 10, padding: 20, textAlign: "center", color: T.muted, border: `1px solid ${T.line}` }}>No consults logged</div>
       ) : (
         <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
           {patients.map((p, i) => {
@@ -617,7 +617,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             <div key={i} style={{ padding: "8px 0", borderBottom: i < patients.length - 1 ? `1px solid ${T.line}` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                 <span style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{p.initials}</span>
-                {ts.map(t => <span key={t} style={{ fontSize: 13, color: "white", background: T.med, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
+                {ts.map(t => <span key={t} style={{ fontSize: 13, color: "white", background: T.brand, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
                 <span style={{ fontSize: 13, color: T.muted, marginLeft: "auto" }}>{new Date(p.date).toLocaleDateString()}</span>
               </div>
               {p.dx && <div style={{ fontSize: 13, color: T.sub, marginTop: 2, wordBreak: "break-word" }}>{p.dx}</div>}
@@ -662,7 +662,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                   {(entry.topics.length > 0 || entry.seededQuestionKeys.length > 0) && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
                       {entry.topics.map((topic) => (
-                        <span key={topic} style={{ background: T.ice, color: T.med, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+                        <span key={topic} style={{ background: T.ice, color: T.brand, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                           {topic}
                         </span>
                       ))}
@@ -766,13 +766,13 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                 const lastSeen = candidate.lastSyncedAt ? new Date(candidate.lastSyncedAt).toLocaleString() : "not synced yet";
                 return (
                   <option key={candidate.studentId} value={candidate.studentId}>
-                    {candidate.name} • {candidate.studentId.slice(0, 8)}... • {candidate.patients.length} patients • {candidateQuizCount} quizzes • {lastSeen}
+                    {candidate.name} • {candidate.studentId.slice(0, 8)}... • {candidate.patients.length} consults • {candidateQuizCount} quizzes • {lastSeen}
                   </option>
                 );
               })}
             </select>
             <button onClick={handleRecovery} disabled={recoveryBusy}
-              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
+              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
               {recoveryBusy ? "Moving Progress..." : "Move Progress To New Device Record"}
             </button>
             {recoveryError && <div style={{ fontSize: 13, color: T.danger, marginTop: 8 }}>{recoveryError}</div>}

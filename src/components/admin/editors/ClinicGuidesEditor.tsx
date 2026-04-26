@@ -37,7 +37,7 @@ export function ClinicGuidesEditor({ clinicGuides, setClinicGuides, onBack }: { 
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
 
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Friday Clinic Guides</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.4 }}>
@@ -68,12 +68,12 @@ export function ClinicGuidesEditor({ clinicGuides, setClinicGuides, onBack }: { 
       {/* Actions */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {!currentComplete && (
-          <button onClick={handleEnsure} style={{ padding: "8px 16px", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={handleEnsure} style={{ padding: "8px 16px", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             Generate Missing Guides
           </button>
         )}
         {currentComplete && (
-          <button onClick={handleRegenerate} style={{ padding: "8px 16px", background: T.card, color: T.med, border: `1.5px solid ${T.med}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={handleRegenerate} style={{ padding: "8px 16px", background: T.card, color: T.brand, border: `1.5px solid ${T.brand}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             Regenerate Three Guides
           </button>
         )}

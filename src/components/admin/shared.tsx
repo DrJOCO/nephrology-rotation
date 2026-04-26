@@ -53,7 +53,7 @@ export function AdminToast({ toast, onClose }: { toast: AdminToastState | null; 
     ? { bg: T.successBg, border: T.success, text: T.success, icon: "✓" }
     : toast.tone === "error"
       ? { bg: T.dangerBg, border: T.danger, text: T.danger, icon: "!" }
-      : { bg: T.infoBg, border: T.med, text: T.navy, icon: "i" };
+      : { bg: T.infoBg, border: T.info, text: T.info, icon: "i" };
 
   return (
     <div style={{ position: "fixed", top: 18, right: 18, zIndex: 12000, maxWidth: 360, width: "calc(100vw - 32px)" }}>
@@ -96,10 +96,10 @@ export function AdminConfirmDialog({
             onClick={onConfirm}
             style={{
               padding: "10px 14px",
-              background: isDanger ? T.danger : T.med,
+              background: isDanger ? T.danger : T.brand,
               border: "none",
               borderRadius: 10,
-              color: "white",
+              color: isDanger ? T.dangerInk : "white",
               fontSize: 13,
               fontWeight: 700,
               cursor: "pointer",

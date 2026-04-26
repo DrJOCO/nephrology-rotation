@@ -47,7 +47,7 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Week {week} Articles</h2>
         <button onClick={() => { setShowAdd(!showAdd); setEditIdx(null); setForm({ title: "", journal: "", year: "", url: "", topic: "", type: "Review" }); }}
-          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.warning, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          style={{ padding: "8px 14px", background: showAdd ? T.sub : T.warning, color: showAdd ? "white" : T.warningInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ Add Article"}
         </button>
       </div>
@@ -87,7 +87,7 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
               </select>
             </div>
           </div>
-          <button onClick={save} style={{ width: "100%", padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={save} style={{ width: "100%", padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             {editIdx !== null ? "Update Article" : "Add Article"}
           </button>
         </div>
@@ -104,7 +104,7 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, lineHeight: 1.3, wordBreak: "break-word" }}>{a.title}</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{a.journal} ({a.year})</div>
               <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: T.med, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.brand, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: T.muted, background: T.bg, padding: "2px 8px", borderRadius: 6 }}>{a.topic}</span>
               </div>
             </div>

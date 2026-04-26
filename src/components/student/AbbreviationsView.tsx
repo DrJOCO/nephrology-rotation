@@ -20,7 +20,7 @@ export default function AbbreviationsView({ onBack }) {
         type="text" placeholder="Search abbreviations..."
         value={search} onChange={e => setSearch(e.target.value)}
         style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", marginBottom: 14, fontFamily: T.sans, outline: "none" }}
-        onFocus={e => e.target.style.borderColor = T.med}
+        onFocus={e => e.target.style.borderColor = T.brand}
         onBlur={e => e.target.style.borderColor = T.line}
       />
 
@@ -30,15 +30,15 @@ export default function AbbreviationsView({ onBack }) {
         )}
         {filtered.map((a, i) => (
           <div key={i} style={{ padding: "10px 16px", borderBottom: i < filtered.length - 1 ? `1px solid ${T.bg}` : "none", display: "flex", alignItems: "flex-start", gap: 12 }}>
-            <div style={{ fontWeight: 700, color: T.med, fontSize: 13, fontFamily: T.mono, minWidth: 90, flexShrink: 0, paddingTop: 1 }}>{a.abbr}</div>
+            <div style={{ fontWeight: 700, color: T.brand, fontSize: 13, fontFamily: T.mono, minWidth: 90, flexShrink: 0, paddingTop: 1 }}>{a.abbr}</div>
             <div style={{ fontSize: 13, color: T.text, lineHeight: 1.4, wordBreak: "break-word" }}>{a.full}</div>
           </div>
         ))}
       </div>
 
       {!search && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 14, borderLeft: `4px solid ${T.med}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 4 }}>PRO TIP</div>
+        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 14, borderLeft: `4px solid ${T.brand}` }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4 }}>PRO TIP</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
             If you see an abbreviation in a note you don't recognize, search here first. The most common ones you'll encounter daily: Cr, GFR, FENa, UA, UOP, I&Os, HD, PD, AVF, BMP, AG.
           </div>

@@ -329,7 +329,7 @@ export function SettingsTab({
                   <input value={newCustomCode} onChange={(event) => setNewCustomCode(event.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, ""))} placeholder="e.g. TEST or GS-APR26" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: T.mono, letterSpacing: 2 }} />
                   <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>If blank, the code is auto-generated from location and dates.</div>
                 </div>
-                <button onClick={handleCreateRotation} disabled={creating} style={{ width: "100%", padding: "14px 0", background: T.warning, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: creating ? "wait" : "pointer", opacity: creating ? 0.7 : 1, marginBottom: 16 }}>
+                <button onClick={handleCreateRotation} disabled={creating} style={{ width: "100%", padding: "14px 0", background: T.warning, color: T.warningInk, border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: creating ? "wait" : "pointer", opacity: creating ? 0.7 : 1, marginBottom: 16 }}>
                   {creating ? "Creating..." : "Create New Rotation"}
                 </button>
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 14 }}>
@@ -384,7 +384,7 @@ export function SettingsTab({
                 </select>
 
                 {selectedRotation && (
-                  <div style={{ background: rotationCode === selectedRotation.code ? T.ice : T.bg, borderRadius: 14, padding: 14, border: rotationCode === selectedRotation.code ? `2px solid ${T.med}` : `1px solid ${T.line}` }}>
+                  <div style={{ background: rotationCode === selectedRotation.code ? T.ice : T.bg, borderRadius: 14, padding: 14, border: rotationCode === selectedRotation.code ? `2px solid ${T.brand}` : `1px solid ${T.line}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
                       <div style={{ fontFamily: T.mono, fontWeight: 700, fontSize: 16, color: T.navy, letterSpacing: 2 }}>{selectedRotation.code}</div>
                       {rotationCode === selectedRotation.code && (
@@ -411,7 +411,7 @@ export function SettingsTab({
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       {rotationCode !== selectedRotation.code && (
-                        <button onClick={() => { void handleConnectRotation(selectedRotation.code); }} style={{ flex: 1, padding: "8px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                        <button onClick={() => { void handleConnectRotation(selectedRotation.code); }} style={{ flex: 1, padding: "8px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                           Connect
                         </button>
                       )}
@@ -474,7 +474,7 @@ export function SettingsTab({
           <button
             type="button"
             onClick={() => onOpenContent()}
-            style={{ padding: "14px 16px", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
+            style={{ padding: "14px 16px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
           >
             📝 Open content editor
             <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.82, marginTop: 3 }}>Curriculum, articles, announcements, guides</div>
@@ -522,7 +522,7 @@ export function SettingsTab({
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, marginBottom: 8 }}>
           <input type="email" value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && inviteEmail.trim()) void onInviteAdmin(); }} placeholder="colleague@hospital.edu" style={adminInput} />
-          <button onClick={() => { void onInviteAdmin(); }} disabled={!inviteEmail.trim() || inviteSubmitting} style={{ padding: "0 16px", background: !inviteEmail.trim() || inviteSubmitting ? T.muted : T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: !inviteEmail.trim() || inviteSubmitting ? "default" : "pointer", opacity: !inviteEmail.trim() || inviteSubmitting ? 0.7 : 1 }}>
+          <button onClick={() => { void onInviteAdmin(); }} disabled={!inviteEmail.trim() || inviteSubmitting} style={{ padding: "0 16px", background: !inviteEmail.trim() || inviteSubmitting ? T.muted : T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: !inviteEmail.trim() || inviteSubmitting ? "default" : "pointer", opacity: !inviteEmail.trim() || inviteSubmitting ? 0.7 : 1 }}>
             {inviteSubmitting ? "Adding..." : "Add Admin"}
           </button>
         </div>
@@ -555,7 +555,7 @@ export function SettingsTab({
                   <button
                     type="button"
                     onClick={() => openInviteMailto(invite.email)}
-                    style={{ marginTop: 10, padding: "8px 14px", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                    style={{ marginTop: 10, padding: "8px 14px", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                   >
                     ✉ Send invite email
                   </button>

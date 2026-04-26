@@ -60,7 +60,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
   if (phase === "read") {
     return (
       <div style={{ padding: 16 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
           ← Back to Cases
         </button>
 
@@ -72,7 +72,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{caseData.difficulty}</div>
             </div>
           </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.med, marginBottom: 8 }}>Clinical Scenario</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 8 }}>Clinical Scenario</div>
           <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, whiteSpace: "pre-line" }}>
             {caseData.scenario}
           </div>
@@ -88,7 +88,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         )}
 
         <button onClick={() => setPhase("quiz")}
-          style={{ width: "100%", padding: "14px 0", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+          style={{ width: "100%", padding: "14px 0", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
           {done ? "Retake Questions" : "Begin Questions"} ({questions.length})
         </button>
       </div>
@@ -139,11 +139,11 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
           <button onClick={handleRestart}
-            style={{ flex: 1, padding: "12px 0", background: T.card, color: T.med, border: `1.5px solid ${T.med}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "12px 0", background: T.card, color: T.brand, border: `1.5px solid ${T.brand}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             Retry Case
           </button>
           <button onClick={onBack}
-            style={{ flex: 1, padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             Back to Cases
           </button>
         </div>
@@ -158,7 +158,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
       {/* Progress */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <button onClick={() => { if (currentQ === 0 && answers.length === 0) { setPhase("read"); } }}
-          style={{ background: "none", border: "none", color: currentQ === 0 && answers.length === 0 ? T.med : "transparent", fontSize: 14, cursor: currentQ === 0 ? "pointer" : "default", padding: 0, fontWeight: 600, pointerEvents: currentQ === 0 && answers.length === 0 ? "auto" : "none" }}>
+          style={{ background: "none", border: "none", color: currentQ === 0 && answers.length === 0 ? T.brand : "transparent", fontSize: 14, cursor: currentQ === 0 ? "pointer" : "default", padding: 0, fontWeight: 600, pointerEvents: currentQ === 0 && answers.length === 0 ? "auto" : "none" }}>
           ← Back
         </button>
         <div style={{ fontSize: 13, fontWeight: 600, color: T.sub }}>
@@ -166,12 +166,12 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         </div>
       </div>
       <div style={{ height: 4, background: T.bg, borderRadius: 2, marginBottom: 16 }}>
-        <div style={{ height: "100%", width: `${((currentQ + (showExplanation ? 1 : 0)) / questions.length) * 100}%`, background: T.med, borderRadius: 2, transition: "width 0.3s ease" }} />
+        <div style={{ height: "100%", width: `${((currentQ + (showExplanation ? 1 : 0)) / questions.length) * 100}%`, background: T.brand, borderRadius: 2, transition: "width 0.3s ease" }} />
       </div>
 
       {/* Scenario reference toggle */}
       <button onClick={() => setShowScenario(!showScenario)}
-        style={{ width: "100%", padding: "8px 12px", background: T.ice, color: T.med, border: `1px solid ${T.pale}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        style={{ width: "100%", padding: "8px 12px", background: T.ice, color: T.brand, border: `1px solid ${T.pale}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
         {showScenario ? "▾ Hide Scenario" : "▸ Show Clinical Scenario"}
       </button>
       {showScenario && (
@@ -198,7 +198,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
               if (isCorrect) { bg = T.successBg; border = `1.5px solid ${T.success}`; textColor = T.success; }
               else if (isSelected && !isCorrect) { bg = T.dangerBg; border = `1.5px solid ${T.danger}`; textColor = T.danger; }
             } else if (isSelected) {
-              bg = T.infoBg; border = `1.5px solid ${T.med}`;
+              bg = T.infoBg; border = `1.5px solid ${T.info}`;
             }
             return (
               <button key={i} onClick={() => handleSelect(i)}
@@ -230,7 +230,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
       {/* Next button */}
       {showExplanation && (
         <button onClick={handleNext}
-          style={{ width: "100%", padding: "14px 0", background: T.med, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+          style={{ width: "100%", padding: "14px 0", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
           {currentQ < questions.length - 1 ? "Next Question" : "See Results"}
         </button>
       )}
@@ -260,7 +260,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
         ← Back
       </button>
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
@@ -307,7 +307,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
           </div>
         );
       })}
-      {cases.length > 2 && <button onClick={onBack} style={{ background: "none", border: "none", color: T.med, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 16, padding: 0, fontWeight: 600 }}>
+      {cases.length > 2 && <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 16, padding: 0, fontWeight: 600 }}>
         {"\u2190"} Back
       </button>}
       <EduDisclaimer />

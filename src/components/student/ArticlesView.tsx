@@ -16,7 +16,7 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.infoBg, color: T.med, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.infoBg, color: T.info, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Optional depth
       </div>
       <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
@@ -82,7 +82,7 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
               <button onClick={() => onToggleComplete(a.url)}
                 aria-label={isRead ? `Mark ${a.title} unreviewed` : `Mark ${a.title} as reviewed`}
                 title={isRead ? "Reviewed — click to undo" : "Mark reviewed"}
-                style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.success : T.med}`, background: isRead ? T.success : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, fontWeight: 700, color: isRead ? "white" : T.med }}>
+                style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.success : T.brand}`, background: isRead ? T.success : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, fontWeight: 700, color: isRead ? T.successInk : T.brand }}>
                 {"\u2713"}
               </button>
             </div>

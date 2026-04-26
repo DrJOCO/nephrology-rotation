@@ -15,10 +15,10 @@ export default function FaqView({ onBack }) {
       {faqs.map((faq, i) => {
         const isOpen = openFaq === i;
         return (
-          <div key={i} style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.med : T.line}`, overflow: "hidden", transition: "border 0.2s" }}>
+          <div key={i} style={{ background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${isOpen ? T.brand : T.line}`, overflow: "hidden", transition: "border 0.2s" }}>
             <button onClick={() => setOpenFaq(isOpen ? null : i)}
               style={{ width: "100%", padding: "14px 16px", background: isOpen ? T.ice : T.card, border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <span style={{ color: T.med, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>Q</span>
+              <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>Q</span>
               <div style={{ flex: 1, minWidth: 0, fontWeight: 600, color: T.navy, fontSize: 14, lineHeight: 1.4 }}>{faq.q}</div>
               <span style={{ color: T.muted, fontSize: 16, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u25BE"}</span>
             </button>

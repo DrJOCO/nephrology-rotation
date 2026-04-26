@@ -88,7 +88,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
         <h2 style={{ color: T.text, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Students</h2>
         {!isConnected && (
           <button onClick={() => setShowAdd(!showAdd)}
-            style={{ padding: "8px 16px", background: showAdd ? T.sub : T.warning, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            style={{ padding: "8px 16px", background: showAdd ? T.sub : T.warning, color: showAdd ? "white" : T.warningInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             {showAdd ? "Cancel" : "+ Add Student"}
           </button>
         )}
@@ -185,7 +185,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
               <input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} style={adminInput} />
             </div>
           </div>
-          <button onClick={addStudent} style={{ width: "100%", padding: "12px 0", background: T.med, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={addStudent} style={{ width: "100%", padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             Add Student
           </button>
         </div>
@@ -238,10 +238,10 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
           style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
             <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
-            <span style={{ fontSize: 13, color: "white", background: T.med, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{s.year}</span>
+            <span style={{ fontSize: 13, color: "white", background: T.brand, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{s.year}</span>
           </div>
           <div style={{ fontSize: 13, color: T.sub }}>
-            {(s.patients || []).length} patients • Started {(s as AdminStudent & { startDate?: string }).startDate || new Date(s.addedDate).toLocaleDateString()}
+            {(s.patients || []).length} consults • Started {(s as AdminStudent & { startDate?: string }).startDate || new Date(s.addedDate).toLocaleDateString()}
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
             <span style={{ fontSize: 13, background: T.ice, color: T.navy, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>

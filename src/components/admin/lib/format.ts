@@ -77,7 +77,7 @@ export function getSyncTone(timestamp: string | null | undefined): {
     return { label: "Live", bg: T.successBg, text: T.success, border: T.success };
   }
   if (minutes <= 30) {
-    return { label: "Recent", bg: T.infoBg, text: T.med, border: T.line };
+    return { label: "Recent", bg: T.infoBg, text: T.info, border: T.line };
   }
   return { label: "Stale", bg: T.dangerBg, text: T.danger, border: T.danger };
 }

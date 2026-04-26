@@ -245,10 +245,9 @@ export function PrintableReport({ mode, students, student, settings, articles, o
           </table>
         </div>
 
-        {/* Patient Log */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>
-            Patient Log ({patients.length} patient{patients.length !== 1 ? "s" : ""})
+            Consult Log ({patients.length} consult{patients.length !== 1 ? "s" : ""})
           </div>
           {patients.length > 0 ? (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -275,7 +274,7 @@ export function PrintableReport({ mode, students, student, settings, articles, o
               </tbody>
             </table>
           ) : (
-            <div style={{ fontSize: 13, color: PRINT_THEME.muted, fontStyle: "italic" }}>No patients logged</div>
+            <div style={{ fontSize: 13, color: PRINT_THEME.muted, fontStyle: "italic" }}>No consults logged</div>
           )}
         </div>
 
