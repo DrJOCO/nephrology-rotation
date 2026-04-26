@@ -1,4 +1,4 @@
-import { useState, CSSProperties } from "react";
+import { useRef, useState, CSSProperties } from "react";
 import { T, WEEKLY, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { backBtnStyle, EduDisclaimer } from "./shared";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
@@ -12,6 +12,16 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
   const wk = WEEKLY[week];
   const [expanded, setExpanded] = useState<number | null>(null);
   const doneCount = sheets.filter(s => (completedItems?.studySheets || {})[s.id]).length;
+  const sheetRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  function handleToggle(si: number, isOpen: boolean) {
+    setExpanded(isOpen ? null : si);
+    if (!isOpen) {
+      requestAnimationFrame(() => {
+        sheetRefs.current[si]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
 
   return (
     <div style={{ padding: 16 }}>
@@ -33,9 +43,9 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
         const isOpen = expanded === si;
         const isDone = (completedItems?.studySheets || {})[sheet.id];
         return (
-          <div key={sheet.id} style={{ background: T.card, borderRadius: 12, marginBottom: 12, border: `1px solid ${isOpen ? T.muted : isDone ? T.success : T.line}`, overflow: "hidden", transition: "border 0.2s", position: "relative" }}>
+          <div key={sheet.id} ref={(el) => { sheetRefs.current[si] = el; }} style={{ background: T.card, borderRadius: 12, marginBottom: 12, border: `1px solid ${isOpen ? T.muted : isDone ? T.success : T.line}`, overflow: "hidden", transition: "border 0.2s", position: "relative", scrollMarginTop: 12 }}>
             {/* Sheet Header */}
-            <button onClick={() => setExpanded(isOpen ? null : si)}
+            <button onClick={() => handleToggle(si, isOpen)}
               style={{ width: "100%", padding: 16, background: isOpen ? T.infoBg : isDone ? T.successBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 11, background: isDone ? T.successBg : T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{isDone ? "\u2705" : sheet.icon}</div>
