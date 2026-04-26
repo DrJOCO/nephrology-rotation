@@ -10,6 +10,8 @@ const TARGET_FILES = [
 
 const URL_PATTERN = /https?:\/\/[^\s"'`<]+/g;
 const REQUEST_TIMEOUT_MS = 15000;
+const MAX_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 750;
 
 function normalizeUrl(rawUrl) {
   return rawUrl.replace(/[.;]+$/, "");
@@ -31,9 +33,22 @@ async function fetchWithTimeout(url, init) {
   }
 }
 
-async function checkUrl(url) {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function shouldRetry(result) {
+  return result.status === "ERR" || (typeof result.status === "number" && result.status >= 500);
+}
+
+async function checkUrlOnce(url) {
   try {
-    let response = await fetchWithTimeout(url, { method: "HEAD" });
+    let response;
+    try {
+      response = await fetchWithTimeout(url, { method: "HEAD" });
+    } catch {
+      response = await fetchWithTimeout(url, { method: "GET" });
+    }
     if (response.status === 405 || response.status === 403) {
       response = await fetchWithTimeout(url, { method: "GET" });
     }
@@ -54,6 +69,19 @@ async function checkUrl(url) {
   }
 }
 
+async function checkUrl(url) {
+  let lastResult = null;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const result = await checkUrlOnce(url);
+    lastResult = { ...result, attempts: attempt };
+    if (result.ok || !shouldRetry(result) || attempt === MAX_ATTEMPTS) {
+      return lastResult;
+    }
+    await sleep(RETRY_BASE_DELAY_MS * attempt);
+  }
+  return lastResult;
+}
+
 async function main() {
   const urlSet = new Set();
   for (const file of TARGET_FILES) {
@@ -70,7 +98,8 @@ async function main() {
     results.push(result);
     const suffix = result.finalUrl && result.finalUrl !== url ? ` -> ${result.finalUrl}` : "";
     const detail = result.error ? ` (${result.error})` : "";
-    console.log(`[${result.ok ? "OK" : "FAIL"}] ${result.status} ${url}${suffix}${detail}`);
+    const attempts = result.attempts && result.attempts > 1 ? ` after ${result.attempts} attempts` : "";
+    console.log(`[${result.ok ? "OK" : "FAIL"}] ${result.status} ${url}${suffix}${detail}${attempts}`);
   }
 
   const failures = results.filter(result => !result.ok);
@@ -80,7 +109,8 @@ async function main() {
     console.log("Failures:");
     for (const failure of failures) {
       const detail = failure.error ? ` (${failure.error})` : "";
-      console.log(`- ${failure.status} ${failure.url}${detail}`);
+      const attempts = failure.attempts && failure.attempts > 1 ? ` after ${failure.attempts} attempts` : "";
+      console.log(`- ${failure.status} ${failure.url}${detail}${attempts}`);
     }
     process.exitCode = 1;
   }
