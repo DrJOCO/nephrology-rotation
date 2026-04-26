@@ -55,7 +55,7 @@ export default function StudySheetsView({ week, onBack, navigate, completedItems
 
             {/* Sheet Content */}
             {isOpen && (
-              <div style={{ padding: "4px 16px 20px" }}>
+              <div style={{ padding: "20px 16px" }}>
                 {/* Hero image */}
                 {(() => { const hero = getStudySheetHero(sheet.id); return hero ? <img src={hero} alt={`${sheet.title} overview`} style={{ ...imgStyle, marginTop: 12 }} /> : null; })()}
 
