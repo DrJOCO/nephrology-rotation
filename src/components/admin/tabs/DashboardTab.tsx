@@ -5,7 +5,6 @@ import type { AdminStudent, SharedSettings } from "../../../types";
 import type { AdminConfirmOptions, AdminToastTone } from "../shared";
 import { buildCohortTeachingSignals, buildCohortCompetencyNeeds } from "../lib/cohort";
 import { buildAdminAssessmentSignal } from "../lib/student-analytics";
-import { toLocalDateKey } from "../lib/format";
 import { buildExposureCurriculumGap } from "../lib/exposure";
 
 export function DashboardTab({ students, navigate, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
@@ -13,10 +12,8 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
   const teachingSignals = buildCohortTeachingSignals(activeStudents);
   const domainNeeds = buildCohortCompetencyNeeds(activeStudents, settings, articles);
   const exposureGap = activeStudents.length > 0 ? buildExposureCurriculumGap(activeStudents, articles) : null;
-  const todayKey = toLocalDateKey(new Date());
   const missingPre = activeStudents.filter((student) => !student.preScore);
   const missingPost = activeStudents.filter((student) => !student.postScore);
-  const reflectionStale = activeStudents.filter((student) => !(student.reflections || []).some((entry) => entry.dayKey === todayKey));
   const teachingFollowUps = activeStudents
     .map((student) => ({ student, assessment: buildAdminAssessmentSignal(student) }))
     .filter((entry) => entry.assessment?.summary);
@@ -40,15 +37,6 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
       action: () => navigate("students", { type: "studentDetail", id: String(student.id) }),
       actionLabel: "Enter score",
     })),
-    ...reflectionStale.slice(0, 2).map((student) => ({
-      key: `reflection-${student.studentId}`,
-      title: student.name,
-      detail: "No reflection logged today",
-      badge: "Reflection",
-      tone: "info" as const,
-      action: () => navigate("students", { type: "studentDetail", id: String(student.id) }),
-      actionLabel: "Review progress",
-    })),
     ...teachingFollowUps.slice(0, 2).map(({ student, assessment }) => ({
       key: `teach-${student.studentId}`,
       title: student.name,
@@ -70,7 +58,7 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Needs Attention</div>
               <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 700, color: T.navy }}>What needs you first</div>
-              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginTop: 4 }}>Missing assessments, reflection gaps, and teaching follow-up signals for the cohort.</div>
+              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginTop: 4 }}>Missing assessments and teaching follow-up signals for the cohort.</div>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span style={{ background: missingPre.length > 0 ? T.dangerBg : T.bg, color: missingPre.length > 0 ? T.danger : T.sub, borderRadius: 999, padding: "5px 10px", fontSize: 13, fontWeight: 700 }}>{missingPre.length} missing pre</span>
@@ -235,7 +223,6 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
           bookmark: "⭐",
           guide_open: "📚",
           resource_open: "🧭",
-          reflection: "💭",
           patient: "🩺",
           follow_up: "📌",
         };

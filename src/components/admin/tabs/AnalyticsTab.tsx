@@ -95,7 +95,6 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
   const overallQuizBest = averageMetric(allHistoricalStudents.map(getBestWeeklyQuizPct));
   const overallQuizAttempts = averageMetric(historicalProgress.map((item) => item.progress.totalQuizAttempts));
   const overallOptionalRefs = averageMetric(historicalProgress.map((item) => item.progress.completedArticles));
-  const overallReflections = averageMetric(allHistoricalStudents.map((student) => (student.reflections || []).length));
   const overallPatientsLogged = averageMetric(allHistoricalStudents.map((student) => (student.patients || []).length));
 
   const buildYearSummary = (label: string, cohort: AdminStudent[]) => {
@@ -114,7 +113,6 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
       avgCoreCompletion: averageMetric(progress.map((item) => item.coreCompletionPercent)),
       avgQuizAttempts: averageMetric(progress.map((item) => item.totalQuizAttempts)),
       avgOptionalRefs: averageMetric(progress.map((item) => item.completedArticles)),
-      avgReflections: averageMetric(cohort.map((student) => (student.reflections || []).length)),
       avgPatients: averageMetric(cohort.map((student) => (student.patients || []).length)),
     };
   };
@@ -204,7 +202,6 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
               { label: "Avg best weekly quiz", value: formatMetric(overallQuizBest), tone: T.navy, bg: T.bg },
               { label: "Avg quiz attempts", value: overallQuizAttempts === null ? "—" : `${overallQuizAttempts}`, tone: T.navy, bg: T.bg },
               { label: "Avg optional refs", value: overallOptionalRefs === null ? "—" : `${overallOptionalRefs}`, tone: T.navy, bg: T.bg },
-              { label: "Avg reflections", value: overallReflections === null ? "—" : `${overallReflections}`, tone: T.navy, bg: T.bg },
               { label: "Avg consults logged", value: overallPatientsLogged === null ? "—" : `${overallPatientsLogged}`, tone: T.navy, bg: T.bg },
               { label: "Year not set", value: otherYearStudents.length, tone: T.muted, bg: T.grayBg },
             ].map((item) => (
@@ -243,7 +240,6 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
                     { label: "Core completion", value: formatMetric(summary.avgCoreCompletion) },
                     { label: "Quiz attempts", value: summary.avgQuizAttempts === null ? "—" : `${summary.avgQuizAttempts}` },
                     { label: "Optional refs", value: summary.avgOptionalRefs === null ? "—" : `${summary.avgOptionalRefs}` },
-                    { label: "Reflections", value: summary.avgReflections === null ? "—" : `${summary.avgReflections}` },
                     { label: "Consults", value: summary.avgPatients === null ? "—" : `${summary.avgPatients}` },
                   ].map((metric) => (
                     <div key={metric.label} style={{ background: T.card, borderRadius: 10, padding: "10px 11px", border: `1px solid ${T.line}` }}>

@@ -627,62 +627,6 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
         </div>
       )}
 
-      <div style={{ background: T.card, borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 10 }}>
-          Student Reflections
-        </div>
-        {(s.reflections || []).length > 0 ? (
-          <div style={{ display: "grid", gap: 10 }}>
-            {(s.reflections || [])
-              .slice()
-              .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
-              .slice(0, 4)
-              .map((entry) => (
-                <div key={entry.id} style={{ background: T.bg, borderRadius: 12, padding: "12px 14px", border: `1px solid ${T.line}` }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", flexWrap: "wrap", marginBottom: 8 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
-                      {new Date(entry.submittedAt).toLocaleDateString()}
-                    </div>
-                    <div style={{ fontSize: 13, color: T.muted }}>
-                      {new Date(entry.submittedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-                    What they saw
-                  </div>
-                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55, marginBottom: 8 }}>
-                    {entry.saw || "Not entered."}
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
-                    What still feels unclear
-                  </div>
-                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>
-                    {entry.unclear || "Nothing specific flagged."}
-                  </div>
-                  {(entry.topics.length > 0 || entry.seededQuestionKeys.length > 0) && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-                      {entry.topics.map((topic) => (
-                        <span key={topic} style={{ background: T.ice, color: T.brand, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
-                          {topic}
-                        </span>
-                      ))}
-                      {entry.seededQuestionKeys.length > 0 && (
-                        <span style={{ background: T.successBg, color: T.success, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
-                          {entry.seededQuestionKeys.length} SR card{entry.seededQuestionKeys.length !== 1 ? "s" : ""} queued
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 13, color: T.muted, fontStyle: "italic" }}>
-            No student reflections yet.
-          </div>
-        )}
-      </div>
-
       {/* Feedback Tags */}
       <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>

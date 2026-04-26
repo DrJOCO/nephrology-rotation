@@ -4,7 +4,7 @@ import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone }
 import type { NavigateFn, ArticlesData } from "../types";
 import type { AdminStudent, AdminSubView, SharedSettings } from "../../../types";
 import { buildAdminCompetencySnapshot, buildAdminAssessmentSignal } from "../lib/student-analytics";
-import { getScorePct, toLocalDateKey, getMinutesSince } from "../lib/format";
+import { getScorePct, getMinutesSince } from "../lib/format";
 
 export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, deleteStudentRecord, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; deleteStudentRecord: (student: AdminStudent) => Promise<void>; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -223,8 +223,6 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
   const postPct = getScorePct(s.postScore);
   const competency = buildAdminCompetencySnapshot(s, settings, articles);
   const assessment = buildAdminAssessmentSignal(s);
-  const reflectionCount = (s.reflections || []).length;
-  const reflectedToday = (s.reflections || []).some((entry) => entry.dayKey === toLocalDateKey(new Date()));
   const teachingLine = assessment?.summary
     ? `Teach next: ${assessment.summary.recommendedArea.shortLabel}`
     : assessment
@@ -249,9 +247,6 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
             </span>
             <span style={{ fontSize: 13, background: T.bg, color: T.sub, padding: "4px 9px", borderRadius: 999, fontWeight: 600 }}>
               {competency.profileLine}
-            </span>
-            <span style={{ fontSize: 13, background: reflectedToday ? T.successBg : T.bg, color: reflectedToday ? T.success : T.muted, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
-              {reflectedToday ? "Reflection today" : `${reflectionCount} reflection${reflectionCount !== 1 ? "s" : ""}`}
             </span>
             <span style={{ fontSize: 13, background: assessment?.summary ? T.dangerBg : T.bg, color: assessment?.summary ? T.danger : T.muted, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
               {teachingLine}
