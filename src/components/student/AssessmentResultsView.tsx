@@ -227,7 +227,7 @@ export default function AssessmentResultsView({
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", marginBottom: 8, flexWrap: "wrap" }}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-                      Week {area.week}: {area.label}
+                      Module {area.week}: {area.label}
                     </div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
                       {area.correct}/{area.total} correct

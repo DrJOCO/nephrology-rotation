@@ -134,7 +134,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
             Core curriculum
           </div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
-            Review the weekly teaching decks, then tap Mark reviewed to count them toward progress and points.
+            Review the module teaching decks, then tap Mark reviewed to count them toward progress and points.
           </div>
           {focusWeek && (
             <div style={{ display: "inline-flex", marginTop: 10, background: T.card, color: T.success, border: `1px solid ${T.success}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
@@ -166,7 +166,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
                   <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{r.tag}</span>
                   {isDeck && (
                     <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>
-                      Week {r.week}
+                      Module {r.week}
                     </span>
                   )}
                   {deckReviewed && (

@@ -215,11 +215,11 @@ export function PrintableReport({ mode, students, student, settings, articles, o
 
         {/* Weekly Quiz Breakdown */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Weekly Quiz Scores</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: PRINT_THEME.ink, marginBottom: 8, fontFamily: "'Crimson Pro', Georgia, serif" }}>Module Quiz Scores</div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
-                <th style={thStyle}>Week</th>
+                <th style={thStyle}>Module</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Attempts</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Best Score</th>
                 <th style={{ ...thStyle, textAlign: "center" }}>Last Score</th>
@@ -232,7 +232,7 @@ export function PrintableReport({ mode, students, student, settings, articles, o
                 const last = ws.length > 0 ? Math.round((ws[ws.length - 1].correct / ws[ws.length - 1].total) * 100) : null;
                 return (
                   <tr key={w} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
-                    <td style={tdStyle}>Week {w}</td>
+                    <td style={tdStyle}>Module {w}</td>
                     <td style={{ ...tdStyle, textAlign: "center" }}>{ws.length}</td>
                     <td style={{ ...tdStyle, textAlign: "center", fontWeight: 600, color: getPrintBestScoreColor(best) }}>
                       {best !== null ? best + "%" : "—"}

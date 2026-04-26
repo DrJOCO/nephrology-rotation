@@ -28,7 +28,7 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides }: { n
           style={{ display: "block", width: "100%", background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>Week {w}: {(curriculum[w] || WEEKLY[w]).title}</div>
+              <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>Module {w}: {(curriculum[w] || WEEKLY[w]).title}</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{(articles[w] || []).length} articles</div>
             </div>
             <span style={{ color: T.muted, fontSize: 14 }}>›</span>

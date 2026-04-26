@@ -10,9 +10,9 @@ const ONBOARDING_STEPS = [
   },
   {
     icon: "\uD83D\uDCDA",
-    title: "Explore Your Weekly Curriculum",
-    body: "Each week is built around core study sheets, quizzes, and cases, with journal articles, landmark trials, and guidelines available as optional reference.",
-    hint: "Tap any week to see its content",
+    title: "Explore Your Module Curriculum",
+    body: "Each module is built around core study sheets, quizzes, and cases, with journal articles, landmark trials, and guidelines available as optional reference.",
+    hint: "Tap any module to see its content",
   },
   {
     icon: "\uD83C\uDFE5",

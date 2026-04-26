@@ -60,7 +60,7 @@ export function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curric
           <div key={w} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Week {w}: {wk.title}</div>
+                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Module {w}: {wk.title}</div>
                 <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{wk.sub}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
                   {wk.topics.map(t => (

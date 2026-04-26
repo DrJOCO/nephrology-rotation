@@ -150,10 +150,10 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
 
         {/* Weekly Quiz Breakdown */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={hdr}>Weekly Quiz Scores</div>
+          <div style={hdr}>Module Quiz Scores</div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
-              <th style={tblTh}>Week</th>
+              <th style={tblTh}>Module</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Attempts</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Best Score</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Last Score</th>
@@ -164,7 +164,7 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
               const last = ws.length > 0 ? Math.round((ws[ws.length - 1].correct / ws[ws.length - 1].total) * 100) : null;
               return (
                 <tr key={w} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
-                  <td style={tblTd}>Week {w}</td>
+                  <td style={tblTd}>Module {w}</td>
                   <td style={{ ...tblTd, textAlign: "center" }}>{ws.length}</td>
                   <td style={{ ...tblTd, textAlign: "center", fontWeight: 600, color: getPrintBestScoreColor(best) }}>{best !== null ? best + "%" : "—"}</td>
                   <td style={{ ...tblTd, textAlign: "center" }}>{last !== null ? last + "%" : "—"}</td>
@@ -176,10 +176,10 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
 
         {/* Weekly Completion */}
         <div className="print-no-break" style={{ marginBottom: 20 }}>
-          <div style={hdr}>Weekly Completion</div>
+          <div style={hdr}>Module Completion</div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead><tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
-              <th style={tblTh}>Week</th>
+              <th style={tblTh}>Module</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Study Sheets</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Decks</th>
               <th style={{ ...tblTh, textAlign: "center" }}>Cases</th>
@@ -188,7 +188,7 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
             </tr></thead>
             <tbody>{weeklyCompletion.map(wc => (
               <tr key={wc.week} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
-                <td style={tblTd}>Week {wc.week}</td>
+                <td style={tblTd}>Module {wc.week}</td>
                 <td style={{ ...tblTd, textAlign: "center" }}>{wc.sheets.done}/{wc.sheets.total}</td>
                 <td style={{ ...tblTd, textAlign: "center" }}>{wc.decks.done}/{wc.decks.total}</td>
                 <td style={{ ...tblTd, textAlign: "center" }}>{wc.cases.done}/{wc.cases.total}</td>

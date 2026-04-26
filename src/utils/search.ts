@@ -223,7 +223,7 @@ export function searchAll(
       results.decks.push({
         label: deck.name,
         kind: "Teaching deck",
-        tag: `Week ${deck.week} · ${deck.tag}`,
+        tag: `Module ${deck.week} · ${deck.tag}`,
         score,
         nav: ["today", { type: "resources", tab: "decks", week: deck.week }],
       });
@@ -242,7 +242,7 @@ export function searchAll(
         results.cases.push({
           label: item.title,
           kind: "Case",
-          tag: `${item.category} · Week ${week}`,
+          tag: `${item.category} · Module ${week}`,
           score,
           nav: ["today", { type: "cases", week }],
         });
@@ -264,7 +264,7 @@ export function searchAll(
         results.studySheets.push({
           label: sheet.title,
           kind: "Study sheet",
-          tag: `Week ${week}`,
+          tag: `Module ${week}`,
           score,
           nav: ["today", { type: "studySheets", week }],
         });

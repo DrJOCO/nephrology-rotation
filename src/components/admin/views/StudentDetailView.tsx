@@ -595,7 +595,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
         return (
           <div key={w} style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${T.line}` }}>
             <div>
-              <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>Week {w}</div>
+              <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>Module {w}</div>
               <div style={{ fontSize: 13, color: T.muted }}>{ws.length} attempt{ws.length !== 1 ? "s" : ""}</div>
             </div>
             {best !== null ? (

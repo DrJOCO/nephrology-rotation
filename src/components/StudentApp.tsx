@@ -1387,7 +1387,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={handleSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={handleInstallApp} onDismissInstallPrompt={dismissInstallPrompt} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
-          <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Week ${subView.week} Quiz`}
+          <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Module ${subView.week} Quiz`}
             onBack={() => navigate("today")}
             onFinish={(score) => {
               setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]}));
@@ -1398,7 +1398,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                   ? seedTopicReinforcementSr(weakTopics, TOPIC_REINFORCEMENT_BANK, topicToSlug, afterQuiz)
                   : afterQuiz;
               });
-              logActivity("quiz", `Week ${subView.week} Quiz`, `${score.correct}/${score.total}`);
+              logActivity("quiz", `Module ${subView.week} Quiz`, `${score.correct}/${score.total}`);
               navigate("today");
             }} />
         )}
@@ -1408,10 +1408,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const missed = (latest?.answers || []).filter(a => !a.correct);
           const missedQuestions = missed.map(a => WEEKLY_QUIZZES[subView.week][a.qIdx]);
           return missedQuestions.length > 0 ? (
-            <QuizEngine questions={missedQuestions} title={`Week ${subView.week} — Review Missed`}
+            <QuizEngine questions={missedQuestions} title={`Module ${subView.week} — Review Missed`}
               onBack={() => navigate("today")}
               onFinish={(score) => {
-                logActivity("review_missed", `Week ${subView.week} Review`, `${score.correct}/${score.total}`);
+                logActivity("review_missed", `Module ${subView.week} Review`, `${score.correct}/${score.total}`);
                 navigate("today");
               }} />
           ) : null;
@@ -1465,7 +1465,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               return next;
             });
             if (!wasCompleted) {
-              logActivity("article", `Week ${subView.week} Article`, article?.topic || article?.title || "Article completed");
+              logActivity("article", `Module ${subView.week} Article`, article?.topic || article?.title || "Article completed");
             }
           }} />
         )}
@@ -1483,7 +1483,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               return next;
             });
             if (!wasCompleted) {
-              logActivity("study_sheet", `Week ${subView.week} Study Sheet`, sheet?.title || "Study sheet completed");
+              logActivity("study_sheet", `Module ${subView.week} Study Sheet`, sheet?.title || "Study sheet completed");
             }
           }} />
         )}
@@ -1512,7 +1512,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
                 return next;
               });
               if (!wasCompleted) {
-                logActivity("deck", deck ? `Week ${deck.week} Teaching Deck` : "Teaching Deck", deck?.name || "Teaching deck reviewed");
+                logActivity("deck", deck ? `Module ${deck.week} Teaching Deck` : "Teaching Deck", deck?.name || "Teaching deck reviewed");
               }
             }}
           />

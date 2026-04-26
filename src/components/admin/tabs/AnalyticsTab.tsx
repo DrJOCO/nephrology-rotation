@@ -150,15 +150,15 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
   const funnelStages = [
     { label: "Enrolled", value: active.length, total: active.length, color: T.brand },
     { label: "Pre-Test", value: withPre.length, total: active.length, color: T.info },
-    { label: "1+ Weekly Quiz", value: withAnyWeekly.length, total: active.length, color: T.warning },
-    { label: "All 4 Weekly", value: withAllWeekly.length, total: active.length, color: T.warning },
+    { label: "1+ Module Quiz", value: withAnyWeekly.length, total: active.length, color: T.warning },
+    { label: "All 4 Modules", value: withAllWeekly.length, total: active.length, color: T.warning },
     { label: "Post-Test", value: withPost.length, total: active.length, color: T.success },
     { label: "Improved", value: improved.length, total: active.length, color: T.success },
   ];
 
   // Topic Mastery Heatmap — students × weeks
   const heatRows = active.slice(0, 12).map(s => s.name?.split(" ")[0] || "Student");
-  const heatCols = ["W1", "W2", "W3", "W4"];
+  const heatCols = ["M1", "M2", "M3", "M4"];
   const heatData = active.slice(0, 12).map(s => {
     return [1,2,3,4].map(w => {
       const attempts = (s.weeklyScores || {})[w] || [];
@@ -239,7 +239,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
                     { label: "Avg pre-test", value: formatMetric(summary.avgPre) },
                     { label: "Avg post-test", value: formatMetric(summary.avgPost) },
                     { label: "Avg growth", value: formatMetric(summary.avgGrowth) },
-                    { label: "Best weekly quiz", value: formatMetric(summary.avgBestWeekly) },
+                    { label: "Best module quiz", value: formatMetric(summary.avgBestWeekly) },
                     { label: "Core completion", value: formatMetric(summary.avgCoreCompletion) },
                     { label: "Quiz attempts", value: summary.avgQuizAttempts === null ? "—" : `${summary.avgQuizAttempts}` },
                     { label: "Optional refs", value: summary.avgOptionalRefs === null ? "—" : `${summary.avgOptionalRefs}` },

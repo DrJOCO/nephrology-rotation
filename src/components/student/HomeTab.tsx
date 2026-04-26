@@ -303,7 +303,7 @@ function buildStartChecklist({
       label: `Take the Module ${displayWeek} quiz`,
       meta: weekQuizAvailable ? (weekQuizDone ? "Quiz attempt saved" : `${(WEEKLY_QUIZZES[displayWeek] || []).length} questions`) : "No quiz assigned for this module",
       done: !weekQuizAvailable || weekQuizDone,
-      action: { label: "Open quiz", meta: "Weekly knowledge check", tab: "today", subView: { type: "weeklyQuiz", week: displayWeek } },
+      action: { label: "Open quiz", meta: "Module knowledge check", tab: "today", subView: { type: "weeklyQuiz", week: displayWeek } },
     },
   ];
 }

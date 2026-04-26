@@ -485,7 +485,7 @@ export function SettingsTab({
             style={{ padding: "14px 16px", background: T.bg, color: T.text, border: `1px solid ${T.line}`, borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
           >
             📚 Edit curriculum
-            <div style={{ fontSize: 12, fontWeight: 500, color: T.muted, marginTop: 3 }}>Weekly topics and lesson plans</div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: T.muted, marginTop: 3 }}>Module topics and lesson plans</div>
           </button>
           <button
             type="button"

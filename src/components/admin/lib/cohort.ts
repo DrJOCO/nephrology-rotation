@@ -241,33 +241,33 @@ export function pickTeachingPlanResources(topic: string, targetStudents: DailyBr
     resources.push({
       kind: "Article",
       title: articleCandidates[0].title,
-      detail: `Week ${articleCandidates[0].week} · ${articleCandidates[0].topic} · ${articleCandidates[0].completed}/${articleCandidates[0].total} target learners already read it`,
+      detail: `Module ${articleCandidates[0].week} · ${articleCandidates[0].topic} · ${articleCandidates[0].completed}/${articleCandidates[0].total} target learners already read it`,
     });
   }
   if (sheetCandidates[0]) {
     resources.push({
       kind: "Study sheet",
       title: sheetCandidates[0].title,
-      detail: `Week ${sheetCandidates[0].week} · ${sheetCandidates[0].completed}/${sheetCandidates[0].total} target learners already completed it`,
+      detail: `Module ${sheetCandidates[0].week} · ${sheetCandidates[0].completed}/${sheetCandidates[0].total} target learners already completed it`,
     });
   }
   if (deckCandidates[0]) {
     resources.push({
       kind: "Deck",
       title: deckCandidates[0].title,
-      detail: `Week ${deckCandidates[0].week} · ${deckCandidates[0].completed}/${deckCandidates[0].total} target learners already reviewed it`,
+      detail: `Module ${deckCandidates[0].week} · ${deckCandidates[0].completed}/${deckCandidates[0].total} target learners already reviewed it`,
     });
   }
   if (caseCandidates[0]) {
     resources.push({
       kind: "Case",
       title: caseCandidates[0].title,
-      detail: `Week ${caseCandidates[0].week} · ${caseCandidates[0].completed}/${caseCandidates[0].total} target learners already finished it`,
+      detail: `Module ${caseCandidates[0].week} · ${caseCandidates[0].completed}/${caseCandidates[0].total} target learners already finished it`,
     });
   }
   resources.push({
     kind: "Quiz",
-    title: `Week ${quizWeek} quiz`,
+    title: `Module ${quizWeek} quiz`,
     detail: `${quizDone}/${targetStudents.length} target learners have attempted this quiz`,
   });
 

@@ -43,7 +43,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
           <button onClick={() => onToggleBookmark("articles", a.url)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("today", { type: "articles", week: a._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.title}</div>
-            <div style={{ fontSize: 13, color: T.muted }}>Week {a._week} {"\u2022"} {a.type || "Article"}</div>
+            <div style={{ fontSize: 13, color: T.muted }}>Module {a._week} {"\u2022"} {a.type || "Article"}</div>
           </button>
         </div>
       ))}
@@ -52,7 +52,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
           <button onClick={() => onToggleBookmark("cases", c.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("today", { type: "cases", week: c._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{c.title}</div>
-            <div style={{ fontSize: 13, color: T.muted }}>Week {c._week} {"\u2022"} {c.difficulty}</div>
+            <div style={{ fontSize: 13, color: T.muted }}>Module {c._week} {"\u2022"} {c.difficulty}</div>
           </button>
         </div>
       ))}
@@ -61,7 +61,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
           <button onClick={() => onToggleBookmark("studySheets", s.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("today", { type: "studySheets", week: s._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{s.icon} {s.title}</div>
-            <div style={{ fontSize: 13, color: T.muted }}>Week {s._week}</div>
+            <div style={{ fontSize: 13, color: T.muted }}>Module {s._week}</div>
           </button>
         </div>
       ))}
