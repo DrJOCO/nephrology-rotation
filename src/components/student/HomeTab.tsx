@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  ChevronRight,
   ClipboardList,
   Download,
   Megaphone,
   RefreshCw,
   Sparkles,
-  Stethoscope,
 } from "lucide-react";
-import { T, WEEKLY, ARTICLES, STUDY_SHEETS, CURRICULUM_DECKS, labelChip } from "../../data/constants";
+import { T, WEEKLY, ARTICLES, STUDY_SHEETS, CURRICULUM_DECKS } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
@@ -333,7 +331,7 @@ function buildHeroCard({
     tab: "library",
   };
   const patientsAction: NavAction = {
-    label: activePatientCount > 0 ? "Open inpatient list" : "Add your first inpatient",
+    label: activePatientCount > 0 ? "Open consult list" : "Add your first consult",
     meta: activePatientCount > 0
       ? `${activePatientCount} active consult${activePatientCount !== 1 ? "s" : ""}`
       : "Start your rounding list",
@@ -385,7 +383,7 @@ function buildHeroCard({
     title: activePatientCount > 0 ? "Morning rounds" : "Build your rounding list",
     body: activePatientCount > 0
       ? "Start with your active consults, then knock out one high-yield prep task before the day gets noisy."
-      : "No inpatients logged yet. Add your hospital consults first so Today can start tailoring the right prep.",
+      : "No consults logged yet. Add some first so Today can start tailoring the right prep.",
     tone: "rounds",
     badge: "Rounds",
     actions: [patientsAction, learningPlan.nextAction],
@@ -562,7 +560,7 @@ export default function HomeTab({
               style={{
                 width: "100%",
                 background: index === 0 ? T.brand : T.card,
-                color: index === 0 ? "white" : T.navy,
+                color: index === 0 ? T.brandInk : T.navy,
                 border: index === 0 ? "none" : `1px solid ${T.line}`,
                 borderRadius: 14,
                 padding: "14px 14px",
@@ -591,10 +589,10 @@ export default function HomeTab({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
             <div>
               <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
-                Suggested from your inpatients
+                Suggested from your consults
               </h2>
               <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.55, maxWidth: 620 }}>
-                Based on the inpatients you've logged.
+                Based on the consults you've logged.
               </p>
             </div>
             <div style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
@@ -653,7 +651,7 @@ export default function HomeTab({
                 Core path for this module
               </h2>
               <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.55, maxWidth: 600 }}>
-                Study sheets, decks, cases, and quiz. Follow your inpatients first if they point you elsewhere today.
+                Study sheets, decks, cases, and quiz. Follow your consults first if they point you elsewhere today.
               </p>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -694,7 +692,7 @@ export default function HomeTab({
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? "white" : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? T.successInk : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
                     {item.done ? "✓" : index + 1}
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 800, color: item.done ? T.success : T.brand, textTransform: "uppercase", letterSpacing: 0.6 }}>
@@ -767,7 +765,7 @@ export default function HomeTab({
               {installPromptVariant === "native" ? (
                 <button
                   onClick={() => { void onInstallApp(); }}
-                  style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "10px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700 }}
+                  style={{ background: T.brand, color: T.brandInk, border: "none", borderRadius: 12, padding: "10px 14px", cursor: "pointer", fontSize: 14, fontWeight: 700 }}
                 >
                   Install app
                 </button>
@@ -818,82 +816,6 @@ export default function HomeTab({
             </div>
           </button>
         </div>
-      </section>
-
-      <section style={{ marginBottom: 16 }}>
-        {activePatients.length > 0 && (
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <div>
-              <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Inpatient rounding list</h2>
-              <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>
-                {activePatients.length} active inpatient{activePatients.length !== 1 ? "s" : ""} surfaced here
-              </div>
-            </div>
-            <button
-              onClick={() => navigate("patients")}
-              style={{ background: "none", border: "none", color: T.brand, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0 }}
-            >
-              Open inpatients
-              <ChevronRight size={15} strokeWidth={2} aria-hidden="true" />
-            </button>
-          </div>
-        )}
-
-        {activePatients.length > 0 ? (
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
-            {activePatients.map((patient) => {
-              const topics = patient.topics?.length ? patient.topics : patient.topic ? [patient.topic] : [];
-              return (
-                <button
-                  key={patient.id}
-                  onClick={() => navigate("patients")}
-                  style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left" }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", marginBottom: 8 }}>
-                    <div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: T.navy }}>
-                        {patient.initials || "New inpatient"}
-                      </div>
-                      <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>
-                        {patient.room ? `Rm ${patient.room}` : "Room pending"} · Added {new Date(patient.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div style={{ width: 34, height: 34, borderRadius: 12, background: T.successBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Stethoscope size={16} strokeWidth={1.75} color={T.success} aria-hidden="true" />
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, marginBottom: 8 }}>
-                    {patient.dx || "Diagnosis not entered yet"}
-                  </div>
-                  {topics.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: patient.notes ? 8 : 0 }}>
-                      {topics.slice(0, 3).map((topic) => (
-                        <span key={topic} style={labelChip}>
-                          {topic}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {patient.notes && (
-                    <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
-                      {patient.notes}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <button
-            onClick={() => navigate("patients")}
-            style={{ width: "100%", background: T.card, borderRadius: 16, border: `1px dashed ${T.line}`, padding: "18px 16px", cursor: "pointer", textAlign: "left" }}
-          >
-            <div style={{ fontSize: 14, fontWeight: 700, color: T.navy, marginBottom: 4 }}>Add your first inpatient</div>
-            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
-              Tag the learning issues and Today will surface the right prep.
-            </div>
-          </button>
-        )}
       </section>
 
       {!pearlDismissed && (

@@ -208,7 +208,7 @@ export default function ProgressTab({
                       </div>
                       <button
                         onClick={() => navigate(domain.action.tab, domain.action.subView)}
-                        style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "11px 13px", cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+                        style={{ background: T.brand, color: T.brandInk, border: "none", borderRadius: 12, padding: "11px 13px", cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
                       >
                         Open
                         <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
@@ -311,7 +311,7 @@ export default function ProgressTab({
             {!preScore && (
               <button
                 onClick={() => navigate("today", { type: "preQuiz" })}
-                style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{ background: T.brand, color: T.brandInk, border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 Take baseline quiz
                 <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
@@ -320,7 +320,7 @@ export default function ProgressTab({
             {preScore && !postScore && (
               <button
                 onClick={() => navigate("today", { type: "postQuiz" })}
-                style={{ background: T.brand, color: "white", border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{ background: T.brand, color: T.brandInk, border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 Take post-rotation quiz
                 <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />

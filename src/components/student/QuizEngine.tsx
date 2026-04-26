@@ -157,7 +157,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
             </div>
           )}
 
-          <button onClick={onBack} style={{ marginTop: 20, padding: "14px 40px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={onBack} style={{ marginTop: 20, padding: "14px 40px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
             Done
           </button>
         </div>
@@ -224,7 +224,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
               <span style={{
                 width: 22, height: 22, borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center",
                 background: showResult && isCorrectChoice ? T.success : showResult && displayIdx === selected ? T.danger : T.grayBg,
-                color: showResult && (isCorrectChoice || displayIdx === selected) ? "white" : T.sub,
+                color: showResult && isCorrectChoice ? T.successInk : showResult && displayIdx === selected ? T.dangerInk : T.sub,
                 fontSize: 13, fontWeight: 700, flexShrink: 0
               }}>
                 {showResult && isCorrectChoice ? "\u2713" : showResult && displayIdx === selected ? "\u2717" : String.fromCharCode(65 + displayIdx)}
@@ -246,7 +246,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
             </div>
             <div style={{ fontSize: mob ? 12 : 13, color: T.text, lineHeight: 1.45, wordBreak: "break-word" }}>{q.explanation}</div>
             <button onClick={handleNext} style={{
-              width: "100%", marginTop: mob ? 8 : 12, padding: mob ? "11px 0" : "14px 0", background: T.brand, color: "white",
+              width: "100%", marginTop: mob ? 8 : 12, padding: mob ? "11px 0" : "14px 0", background: T.brand, color: T.brandInk,
               border: "none", borderRadius: 10, fontSize: mob ? 14 : 15, fontWeight: 600, cursor: "pointer"
             }}>
               {current + 1 >= quizLen ? "See Results" : "Next Question \u2192"}

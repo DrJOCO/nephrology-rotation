@@ -326,7 +326,7 @@ export default function AssessmentResultsView({
         </button>
         <button
           onClick={() => navigate("today", mode === "pre" ? { type: "preQuiz" } : { type: "postQuiz" })}
-          style={{ background: T.brand, color: "white", border: "none", borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+          style={{ background: T.brand, color: T.brandInk, border: "none", borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
         >
           Retake assessment
         </button>

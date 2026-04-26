@@ -47,7 +47,7 @@ export function AdminShell({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ color: "white", fontFamily: T.serif, fontSize: 19, fontWeight: 700 }}>
-                Admin Panel <span style={{ fontSize: 13, background: T.warning, color: "white", padding: "2px 8px", borderRadius: 6, marginLeft: 8, fontFamily: T.sans, fontWeight: 600, verticalAlign: "middle" }}>ATTENDING</span>
+                Admin Panel <span style={{ fontSize: 13, background: T.warning, color: T.warningInk, padding: "2px 8px", borderRadius: 6, marginLeft: 8, fontFamily: T.sans, fontWeight: 600, verticalAlign: "middle" }}>ATTENDING</span>
               </div>
               <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {heading}

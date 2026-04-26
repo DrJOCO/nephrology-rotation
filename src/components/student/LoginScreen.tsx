@@ -248,7 +248,7 @@ export default function LoginScreen({
     border: `1px solid ${enabled ? T.brand : T.line}`,
     padding: "11px 14px",
     background: enabled ? T.brand : T.grayBg,
-    color: enabled ? "white" : T.muted,
+    color: enabled ? T.brandInk : T.muted,
     fontSize: 13,
     fontWeight: 800,
     cursor: enabled ? "pointer" : "default",

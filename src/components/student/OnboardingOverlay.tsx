@@ -63,7 +63,7 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
             Skip
           </button>
           <button onClick={() => isLast ? handleDismiss() : setStep(step + 1)}
-            style={{ padding: "10px 24px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", minWidth: 120 }}>
+            style={{ padding: "10px 24px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", minWidth: 120 }}>
             {isLast ? "Get Started" : "Next →"}
           </button>
         </div>
