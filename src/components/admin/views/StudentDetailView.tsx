@@ -307,7 +307,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             {assessment?.summary ? (
               <>
                 <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
-                  Teach next: {assessment.summary.recommendedArea.label}
+                  Teach next: {assessment.summary.recommendedArea.label}{assessment.summary.recommendedArea.missedTopics[0] ? ` — ${assessment.summary.recommendedArea.missedTopics[0]}` : ""}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                   <span style={{ background: T.dangerBg, color: T.danger, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>

@@ -224,7 +224,7 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
   const competency = buildAdminCompetencySnapshot(s, settings, articles);
   const assessment = buildAdminAssessmentSignal(s);
   const teachingLine = assessment?.summary
-    ? `Teach next: ${assessment.summary.recommendedArea.shortLabel}`
+    ? `Teach next: ${assessment.summary.recommendedArea.shortLabel}${assessment.summary.recommendedArea.missedTopics[0] ? ` — ${assessment.summary.recommendedArea.missedTopics[0]}` : ""}`
     : assessment
       ? "Assessment detail appears when completed in-app"
       : "No assessment yet";

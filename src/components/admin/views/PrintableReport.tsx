@@ -198,7 +198,7 @@ export function PrintableReport({ mode, students, student, settings, articles, o
           <div style={{ flex: 1, padding: 14, border: `1px solid ${PRINT_THEME.line}`, borderRadius: 8, background: assessment?.summary ? PRINT_THEME.alertBg : PRINT_THEME.surfaceAlt }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: PRINT_THEME.sub, textTransform: "uppercase", marginBottom: 6 }}>Teaching Signal</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: PRINT_THEME.ink }}>
-              {assessment?.summary ? `Teach next: ${assessment.summary.recommendedArea.label}` : assessment ? `Assessment logged: ${assessment.overallPct}%` : "Awaiting assessment"}
+              {assessment?.summary ? `Teach next: ${assessment.summary.recommendedArea.label}${assessment.summary.recommendedArea.missedTopics[0] ? ` — ${assessment.summary.recommendedArea.missedTopics[0]}` : ""}` : assessment ? `Assessment logged: ${assessment.overallPct}%` : "Awaiting assessment"}
             </div>
             <div style={{ fontSize: 13, color: PRINT_THEME.sub, marginTop: 6 }}>
               {assessment?.summary

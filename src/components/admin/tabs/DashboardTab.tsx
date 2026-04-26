@@ -40,7 +40,9 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
     ...teachingFollowUps.slice(0, 2).map(({ student, assessment }) => ({
       key: `teach-${student.studentId}`,
       title: student.name,
-      detail: `Teach next: ${assessment?.summary?.recommendedArea.label || "Targeted follow-up"}`,
+      detail: assessment?.summary
+        ? `Teach next: ${assessment.summary.recommendedArea.label}${assessment.summary.recommendedArea.missedTopics[0] ? ` — ${assessment.summary.recommendedArea.missedTopics[0]}` : ""}`
+        : "Teach next: Targeted follow-up",
       badge: "Teaching",
       tone: "success" as const,
       action: () => navigate("students", { type: "studentDetail", id: String(student.id) }),
