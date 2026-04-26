@@ -10,6 +10,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { CLINIC_GUIDES } from "../data/clinicGuides";
+import { CURRICULUM_DECKS } from "../data/constants";
 import { INPATIENT_GUIDES } from "../data/inpatientGuides";
 import { ROTATION_GUIDES } from "../data/rotationGuides";
 import type { SearchDataSources } from "../types";
@@ -31,6 +32,7 @@ export interface SearchResultItem {
 
 export interface SearchResults {
   articles: SearchResultItem[];
+  decks: SearchResultItem[];
   trials: SearchResultItem[];
   pearls: SearchResultItem[];
   patients: SearchResultItem[];
@@ -160,6 +162,7 @@ export function searchAll(
 
   const results: SearchResults = {
     articles: [],
+    decks: [],
     trials: [],
     pearls: [],
     patients: [],
@@ -207,6 +210,24 @@ export function searchAll(
         });
       }
     });
+  });
+
+  CURRICULUM_DECKS.forEach((deck) => {
+    const score = scoreItem(q, [
+      { value: deck.name, weight: 3 },
+      { value: deck.desc, weight: 2 },
+      { value: deck.tag, weight: 1.5 },
+      { value: deck.topics.join(" "), weight: 1 },
+    ]);
+    if (score > 0) {
+      results.decks.push({
+        label: deck.name,
+        kind: "Teaching deck",
+        tag: `Week ${deck.week} · ${deck.tag}`,
+        score,
+        nav: ["today", { type: "resources", tab: "decks", week: deck.week }],
+      });
+    }
   });
 
   [1, 2, 3, 4].forEach((week) => {
@@ -355,10 +376,10 @@ export function searchAll(
       { value: topics.join(" "), weight: 2 },
     ]);
     if (score > 0) {
-      const topicSummary = topics.length > 0 ? topics.slice(0, 2).join(", ") : "Shared learning snapshot";
+      const topicSummary = topics.length > 0 ? topics.slice(0, 2).join(", ") : "Shared learning overview";
       results.team.push({
         label: snapshot.name || "Team member",
-        kind: "Ask the team",
+        kind: "Cohort",
         tag: topicSummary,
         score,
         nav: ["team", undefined],

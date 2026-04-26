@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { getTopicContent } from "./topicMapping";
-import { ARTICLES, STUDY_SHEETS } from "../data/constants";
+import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import type { TopicRecommendation } from "../types";
 
@@ -21,6 +21,7 @@ interface PatientInput {
 interface CompletedItemsInput {
   articles?: Record<string, boolean>;
   studySheets?: Record<string, boolean>;
+  decks?: Record<string, boolean>;
   cases?: Record<string, unknown>;
 }
 
@@ -79,6 +80,9 @@ export function getPatientRecommendations(
     const unreadSheets = content.studySheets.filter(
       s => !completed.studySheets?.[s.id]
     );
+    const unreviewedDecks = content.decks.filter(
+      d => !completed.decks?.[d.id]
+    );
     const unreadArticles = content.articles.filter(
       a => !completed.articles?.[a.url]
     );
@@ -97,6 +101,9 @@ export function getPatientRecommendations(
     // Build study sheet title list
     const sheetIds: string[] = unreadSheets.map(s => s.id);
 
+    // Build deck ID list
+    const deckIds: string[] = unreviewedDecks.map(d => d.id);
+
     // Build case IDs
     const caseIds: string[] = untriedCases.map(c => c.id);
 
@@ -108,6 +115,7 @@ export function getPatientRecommendations(
     recommendations.push({
       topic,
       studySheets: sheetIds,
+      decks: deckIds,
       articles: articleTitles,
       cases: caseIds,
       quizWeeks: content.quizWeeks,
@@ -155,6 +163,17 @@ export function getPatientSuggestedActions(
         topic: rec.topic,
         contentType: "studySheet",
         nav: ["today", { type: "studySheets", week: sheetWeek }],
+      });
+    } else if (rec.decks.length > 0) {
+      const deckId = rec.decks[0];
+      const deck = CURRICULUM_DECKS.find(item => item.id === deckId);
+      actions.push({
+        icon: "\uD83D\uDCCA",
+        label: `Deck: ${rec.topic}`,
+        detail: `${rec.reason} — teaching slides available`,
+        topic: rec.topic,
+        contentType: "deck",
+        nav: ["today", { type: "resources", tab: "decks", week: deck?.week || 1 }],
       });
     } else if (rec.cases.length > 0) {
       const caseId = rec.cases[0];

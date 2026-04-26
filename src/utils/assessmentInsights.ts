@@ -119,7 +119,7 @@ export function buildAssessmentSummary({
       missedTopics: uniqueTopics(stats[week].missedTopics),
       action: {
         label: `Open Week ${week} teaching`,
-        meta: `Study sheets, cases, and quiz review for ${meta.shortLabel.toLowerCase()}`,
+        meta: `Study sheets, teaching decks, cases, and quiz review for ${meta.shortLabel.toLowerCase()}`,
         tab: "today",
         subView: { type: "studySheets", week },
       },

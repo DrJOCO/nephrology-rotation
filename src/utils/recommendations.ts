@@ -7,7 +7,7 @@
 
 import { WEEKLY_QUIZZES, PRE_QUIZ_BY_WEEK, POST_QUIZ_BY_WEEK } from "../data/quizzes";
 import { WEEKLY_CASES } from "../data/cases";
-import { STUDY_SHEETS } from "../data/constants";
+import { CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEK_TOPIC_MAP } from "../components/student/shared";
 
 interface QuizAttempt {
@@ -67,6 +67,7 @@ interface RecommendationState {
   completedItems?: {
     articles?: Record<string, boolean>;
     studySheets?: Record<string, boolean>;
+    decks?: Record<string, boolean>;
     cases?: Record<string, unknown>;
   };
   patients?: Array<{ topics?: string[] }>;
@@ -132,7 +133,7 @@ function analyzeSrQueue(srQueue: Record<string, SrQueueItem>): { weekCounts: Rec
 
 /**
  * Identify content coverage gaps
- * @param {Object} completedItems - { articles: {}, studySheets: {}, cases: {} }
+ * @param {Object} completedItems - { articles: {}, studySheets: {}, decks: {}, cases: {} }
  * @returns {Object[]} Array of { week, type, label, count, total }
  */
 function findCoverageGaps(completedItems: RecommendationState["completedItems"]): Array<{ week: number; type: string; label: string; done: number; total: number }> {
@@ -145,6 +146,13 @@ function findCoverageGaps(completedItems: RecommendationState["completedItems"])
     const sheetsRead = sheets.filter(s => completed.studySheets?.[s.id]).length;
     if (sheets.length > 0 && sheetsRead < sheets.length) {
       gaps.push({ week, type: "studySheets", label: "Study Sheets", done: sheetsRead, total: sheets.length });
+    }
+
+    // Teaching decks
+    const decks = CURRICULUM_DECKS.filter(deck => deck.week === week);
+    const decksReviewed = decks.filter(deck => completed.decks?.[deck.id]).length;
+    if (decks.length > 0 && decksReviewed < decks.length) {
+      gaps.push({ week, type: "decks", label: "Teaching Decks", done: decksReviewed, total: decks.length });
     }
 
     // Cases
@@ -287,12 +295,25 @@ export function getRecommendations(state: RecommendationState): Recommendations 
     });
   }
 
-  // 4. Complete clinical cases for weak areas
+  // 4. Review teaching decks for weak areas
+  const weekDeckGap = coverageGaps.find(g => g.week === weakWeek.week && g.type === "decks");
+  if (weekDeckGap && weekDeckGap.done < weekDeckGap.total) {
+    suggestedActions.push({
+      type: "teaching_deck",
+      priority: 4,
+      icon: "\uD83D\uDCCA",
+      label: `Review Week ${weakWeek.week} Teaching Decks`,
+      detail: `${weekDeckGap.done}/${weekDeckGap.total} reviewed — use these as the attending-level walkthrough`,
+      nav: ["today", { type: "resources", tab: "decks", week: weakWeek.week }],
+    });
+  }
+
+  // 5. Complete clinical cases for weak areas
   const weekCaseGap = coverageGaps.find(g => g.week === weakWeek.week && g.type === "cases");
   if (weekCaseGap && weekCaseGap.done < weekCaseGap.total) {
     suggestedActions.push({
       type: "clinical_case",
-      priority: 4,
+      priority: 5,
       icon: "🏥",
       label: `Try Week ${weakWeek.week} Clinical Cases`,
       detail: `${weekCaseGap.done}/${weekCaseGap.total} completed — apply knowledge to real scenarios`,
@@ -300,12 +321,12 @@ export function getRecommendations(state: RecommendationState): Recommendations 
     });
   }
 
-  // 5. Retake low-scoring quizzes
+  // 6. Retake low-scoring quizzes
   const lowScoreWeeks = [1, 2, 3, 4].filter(w => weekScores[w] !== null && weekScores[w] < 70);
   for (const w of lowScoreWeeks.slice(0, 1)) {
     suggestedActions.push({
       type: "retake_quiz",
-      priority: 5,
+      priority: 6,
       icon: "🔁",
       label: `Retake Week ${w} Quiz (${weekScores[w]}%)`,
       detail: `Target: 80%+ — review study sheet first for best results`,
@@ -313,11 +334,11 @@ export function getRecommendations(state: RecommendationState): Recommendations 
     });
   }
 
-  // 6. Take pre/post assessment
+  // 7. Take pre/post assessment
   if (!preScore) {
     suggestedActions.push({
       type: "pre_assessment",
-      priority: 6,
+      priority: 7,
       icon: "📊",
       label: "Take Pre-Rotation Assessment",
       detail: "Establish your baseline — helps track growth",
@@ -328,7 +349,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
     if (totalQuizAttempts >= 3) {
       suggestedActions.push({
         type: "post_assessment",
-        priority: 6,
+        priority: 7,
         icon: "🎓",
         label: "Take Post-Rotation Assessment",
         detail: "Measure your growth since the pre-test",
