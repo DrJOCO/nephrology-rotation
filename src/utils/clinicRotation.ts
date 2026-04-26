@@ -1,54 +1,44 @@
-// Clinic guide rotation logic — pure functions, no side effects.
+// Clinic guide scheduling logic — pure functions, no side effects.
 //
-// Cycle: CKD → Transplant → Hypertension (3-week repeating)
-// Deterministic from a fixed reference Monday via modular arithmetic.
-//
-// Scheduling: the guide for a given Friday is determined by which ISO week
-// that Friday falls in.  The app auto-generates a ClinicGuideRecord on
-// load if one doesn't already exist for the current/next Friday.
+// Each outpatient clinic week includes the same three learning tracks:
+// CKD -> Hypertension -> Transplant. Older app versions generated only one
+// Friday topic, so the helpers below preserve compatibility while ensuring
+// all three records exist going forward.
 
 import { CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../data/clinicGuides";
 import type { ClinicGuideRecord } from "../types";
 
-// Anchor: Monday 2026-01-05 maps to index 0 (CKD).
-const REFERENCE_MONDAY = new Date("2026-01-05T00:00:00");
-
 /**
- * Return the Monday 00:00 of the ISO week containing `date`.
- * ISO weeks start on Monday.
+ * Return the clinic topics for a clinic week in the order students should see
+ * them on the page.
  */
-function toMonday(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0=Sun … 6=Sat
-  const diff = (day + 6) % 7; // Mon=0, Tue=1 … Sun=6
-  d.setDate(d.getDate() - diff);
-  return d;
-}
-
-/** Which clinic guide topic is active for the week containing `date`? */
-export function getClinicTopicForDate(date: Date): ClinicGuideTopic {
-  const monday = toMonday(date);
-  const diffMs = monday.getTime() - REFERENCE_MONDAY.getTime();
-  const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
-  const index = ((diffWeeks % 3) + 3) % 3; // safe modulo for negatives
-  return CLINIC_GUIDE_TOPICS[index];
+export function getClinicTopicsForDate(_date: Date): ClinicGuideTopic[] {
+  return [...CLINIC_GUIDE_TOPICS];
 }
 
 /**
- * Return this week's Friday if today is Mon–Fri, otherwise next Friday.
+ * Backward-compatible primary topic helper for older code/tests. The clinic
+ * curriculum is no longer a rotating single-topic cycle; CKD is the first
+ * outpatient clinic track each week.
+ */
+export function getClinicTopicForDate(date: Date): ClinicGuideTopic {
+  return getClinicTopicsForDate(date)[0];
+}
+
+/**
+ * Return this week's Friday if today is Mon-Fri, otherwise next Friday.
  * This is the "upcoming clinic day" from the perspective of anyone
  * opening the app.
  */
 export function getCurrentOrNextFriday(from: Date): Date {
   const d = new Date(from);
   d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0=Sun … 6=Sat
+  const day = d.getDay(); // 0=Sun ... 6=Sat
   if (day >= 1 && day <= 5) {
-    // Mon–Fri → this week's Friday
+    // Mon-Fri -> this week's Friday
     d.setDate(d.getDate() + (5 - day));
   } else {
-    // Sat or Sun → next Friday
+    // Sat or Sun -> next Friday
     d.setDate(d.getDate() + ((5 - day + 7) % 7));
   }
   return d;
@@ -62,56 +52,59 @@ function toDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/**
- * Ensure a ClinicGuideRecord exists for the current/next Friday.
- * Returns the updated array and the newly created record (or null if
- * one already existed).  Pure function — caller persists the result.
- */
-export function ensureCurrentClinicGuide(
-  existingGuides: ClinicGuideRecord[],
-  now: Date = new Date(),
-): { guides: ClinicGuideRecord[]; newGuide: ClinicGuideRecord | null } {
-  const friday = getCurrentOrNextFriday(now);
-  const dateStr = toDateStr(friday);
+function topicRecordId(date: string, topic: ClinicGuideTopic): string {
+  return `clinic-${date}-${topic}`;
+}
 
-  if (existingGuides.some((g) => g.date === dateStr)) {
-    return { guides: existingGuides, newGuide: null };
-  }
-
-  const topic = getClinicTopicForDate(friday);
-  const newGuide: ClinicGuideRecord = {
-    id: `clinic-${dateStr}-${topic}`,
-    date: dateStr,
+function buildRecord(date: string, topic: ClinicGuideTopic, isOverride = false): ClinicGuideRecord {
+  return {
+    id: topicRecordId(date, topic),
+    date,
     topic,
     generatedAt: new Date().toISOString(),
-    isOverride: false,
-  };
-
-  return {
-    guides: [...existingGuides, newGuide],
-    newGuide,
+    isOverride,
   };
 }
 
 /**
- * Override the topic for a specific Friday.  If a record already exists
- * for that date it is replaced; otherwise a new one is appended.
- * Does NOT corrupt other records in the array.
+ * Ensure ClinicGuideRecords exist for all three guides for the current/next
+ * Friday. Returns the updated array plus the first newly created record for
+ * backward compatibility with older callers.
+ */
+export function ensureCurrentClinicGuide(
+  existingGuides: ClinicGuideRecord[],
+  now: Date = new Date(),
+): { guides: ClinicGuideRecord[]; newGuide: ClinicGuideRecord | null; newGuides: ClinicGuideRecord[] } {
+  const friday = getCurrentOrNextFriday(now);
+  const dateStr = toDateStr(friday);
+  const guides = [...existingGuides];
+  const newGuides: ClinicGuideRecord[] = [];
+
+  for (const topic of getClinicTopicsForDate(friday)) {
+    if (guides.some((g) => g.date === dateStr && g.topic === topic)) continue;
+    const record = buildRecord(dateStr, topic);
+    guides.push(record);
+    newGuides.push(record);
+  }
+
+  return {
+    guides,
+    newGuide: newGuides[0] || null,
+    newGuides,
+  };
+}
+
+/**
+ * Mark or create a specific clinic topic record for a date. This is retained
+ * for older admin flows; it no longer removes the other clinic topics.
  */
 export function overrideClinicGuide(
   existingGuides: ClinicGuideRecord[],
   date: string,
   newTopic: ClinicGuideTopic,
 ): ClinicGuideRecord[] {
-  const record: ClinicGuideRecord = {
-    id: `clinic-${date}-${newTopic}`,
-    date,
-    topic: newTopic,
-    generatedAt: new Date().toISOString(),
-    isOverride: true,
-  };
-
-  const idx = existingGuides.findIndex((g) => g.date === date);
+  const record = buildRecord(date, newTopic, true);
+  const idx = existingGuides.findIndex((g) => g.date === date && g.topic === newTopic);
   if (idx >= 0) {
     const copy = [...existingGuides];
     copy[idx] = record;
@@ -121,28 +114,16 @@ export function overrideClinicGuide(
 }
 
 /**
- * Regenerate (reset) the guide for a specific Friday back to whatever
- * the deterministic rotation dictates, removing any prior override.
+ * Regenerate all clinic guide records for a Friday back to the standard three
+ * topic set, removing any old single-topic or override-only representation for
+ * that date.
  */
 export function regenerateClinicGuide(
   existingGuides: ClinicGuideRecord[],
   date: string,
 ): ClinicGuideRecord[] {
+  const otherDates = existingGuides.filter((g) => g.date !== date);
   const friday = new Date(date + "T00:00:00");
-  const topic = getClinicTopicForDate(friday);
-  const record: ClinicGuideRecord = {
-    id: `clinic-${date}-${topic}`,
-    date,
-    topic,
-    generatedAt: new Date().toISOString(),
-    isOverride: false,
-  };
-
-  const idx = existingGuides.findIndex((g) => g.date === date);
-  if (idx >= 0) {
-    const copy = [...existingGuides];
-    copy[idx] = record;
-    return copy;
-  }
-  return [...existingGuides, record];
+  const records = getClinicTopicsForDate(friday).map((topic) => buildRecord(date, topic));
+  return [...otherDates, ...records];
 }

@@ -5,7 +5,7 @@
 //  across weeks, enabling topic-based lookup independent of week.
 // ═══════════════════════════════════════════════════════════════════════
 
-import { ARTICLES, STUDY_SHEETS, TOPIC_RESOURCE_MAP, RESOURCES, ALL_LANDMARK_TRIALS } from "../data/constants";
+import { ARTICLES, STUDY_SHEETS, TOPIC_RESOURCE_MAP, RESOURCES, ALL_LANDMARK_TRIALS, CURRICULUM_DECKS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import type { TopicContentIndex } from "../types";
 
@@ -77,6 +77,7 @@ function matchesResourceTopic(
 export function getTopicContent(topic: string): TopicContentIndex {
   const result: TopicContentIndex = {
     studySheets: [],
+    decks: [],
     articles: [],
     cases: [],
     quizWeeks: [],
@@ -90,6 +91,12 @@ export function getTopicContent(topic: string): TopicContentIndex {
       if (sheet.topics?.includes(topic)) {
         result.studySheets.push({ week, id: sheet.id });
       }
+    }
+  }
+
+  for (const deck of CURRICULUM_DECKS) {
+    if (deck.topics?.includes(topic) || matchesResourceTopic(deck, topic)) {
+      result.decks.push({ week: deck.week, id: deck.id });
     }
   }
 
@@ -168,6 +175,7 @@ export function topicHasContent(topic: string): boolean {
   const content = getTopicContent(topic);
   return (
     content.studySheets.length > 0 ||
+    content.decks.length > 0 ||
     content.articles.length > 0 ||
     content.cases.length > 0 ||
     content.quizWeeks.length > 0 ||

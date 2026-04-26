@@ -1,4 +1,4 @@
-import { ARTICLES, STUDY_SHEETS } from "../data/constants";
+import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { PRE_QUIZ, POST_QUIZ, getQuestionByKey } from "../data/quizzes";
 import type { CompletedItems, QuizQuestion, QuizScore, SrQueue, SubView, WeeklyScores } from "../types";
@@ -307,11 +307,16 @@ function masteryObjectives(
   const weeks = currentWeek
     ? [currentWeek]
     : Array.from({ length: Math.min(totalWeeks || 4, 4) }, (_, index) => index + 1);
-  const label = currentWeek ? `Week ${currentWeek} objectives` : "Rotation objectives";
+  const label = currentWeek ? `Module ${currentWeek} objectives` : "Rotation objectives";
 
   const sheetTotal = weeks.reduce((sum, week) => sum + (STUDY_SHEETS[week] || []).length, 0);
   const sheetDone = weeks.reduce((sum, week) => {
     return sum + (STUDY_SHEETS[week] || []).filter((sheet) => completedItems.studySheets?.[sheet.id]).length;
+  }, 0);
+
+  const deckTotal = weeks.reduce((sum, week) => sum + CURRICULUM_DECKS.filter((deck) => deck.week === week).length, 0);
+  const deckDone = weeks.reduce((sum, week) => {
+    return sum + CURRICULUM_DECKS.filter((deck) => deck.week === week && completedItems.decks?.[deck.id]).length;
   }, 0);
 
   const caseTotal = weeks.reduce((sum, week) => sum + (WEEKLY_CASES[week] || []).length, 0);
@@ -324,6 +329,7 @@ function masteryObjectives(
 
   const objectives: CompetencyObjective[] = [
     { label: "Study sheets", met: sheetTotal === 0 || sheetDone === sheetTotal, detail: `${sheetDone}/${sheetTotal} complete` },
+    { label: "Teaching decks", met: deckTotal === 0 || deckDone === deckTotal, detail: `${deckDone}/${deckTotal} reviewed` },
     { label: "Cases", met: caseTotal === 0 || caseDone === caseTotal, detail: `${caseDone}/${caseTotal} finished` },
     { label: "Quiz", met: bestQuiz !== null && bestQuiz >= 60, detail: bestQuiz === null ? "Not taken yet" : `Best score ${bestQuiz}%` },
   ];
@@ -450,7 +456,7 @@ export function buildCompetencySummary({
     } else if (quizAccuracy === null || quizAccuracy < (tier === "Developing" ? 80 : 60)) {
       const attempts = weeklyScores[primaryWeek] || [];
       action = {
-        label: `${attempts.length > 0 ? "Retake" : "Take"} the Week ${primaryWeek} quiz`,
+        label: `${attempts.length > 0 ? "Retake" : "Take"} the Module ${primaryWeek} quiz`,
         detail: quizAccuracy === null ? "You do not have a scored quiz signal here yet." : `Current quiz signal is ${quizAccuracy}%.`,
         tab: "today",
         subView: { type: "weeklyQuiz", week: primaryWeek },
@@ -458,14 +464,14 @@ export function buildCompetencySummary({
     } else if (nextCase) {
       action = {
         label: `Work another ${definition.label} case`,
-        detail: `${nextCase.title} is still waiting in Week ${nextCase.week}.`,
+        detail: `${nextCase.title} is still waiting in Module ${nextCase.week}.`,
         tab: "today",
         subView: { type: "cases", week: nextCase.week },
       };
     } else if (nextUnreadArticle) {
       action = {
         label: `Browse an optional ${definition.label} reference`,
-        detail: `${nextUnreadArticle.title} is available in Week ${nextUnreadArticle.week} for deeper reading.`,
+        detail: `${nextUnreadArticle.title} is available in Module ${nextUnreadArticle.week} for deeper reading.`,
         tab: "today",
         subView: { type: "articles", week: nextUnreadArticle.week },
       };

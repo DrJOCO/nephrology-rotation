@@ -111,6 +111,13 @@ describe("calculatePoints", () => {
     expect(calculatePoints(state)).toBe(3);
   });
 
+  it("awards 4 pts per reviewed teaching deck", () => {
+    const state = makeState({
+      completedItems: { articles: {}, studySheets: {}, decks: { d1: true }, cases: {} },
+    });
+    expect(calculatePoints(state)).toBe(4);
+  });
+
   it("awards 15 pts per case + 5 bonus for >=80%", () => {
     const state = makeState({
       completedItems: {

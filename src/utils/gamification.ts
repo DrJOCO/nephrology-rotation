@@ -49,6 +49,7 @@ export interface StudentState {
   completedItems?: {
     articles?: Record<string, boolean>;
     studySheets?: Record<string, boolean>;
+    decks?: Record<string, boolean>;
     cases?: Record<string, CaseResult>;
   };
   gamification?: GamificationData;
@@ -98,10 +99,11 @@ export function calculatePoints(state: StudentState): number {
   const streak = state.gamification?.streaks?.currentDays || 0;
   pts += streak * 3;
 
-  // Completion tracking points. Optional references count a little, but core summaries count more.
+  // Completion tracking points. Optional references count a little; core curriculum earns more.
   const completed = state.completedItems || { articles: {}, studySheets: {}, cases: {} };
   pts += Object.keys(completed.articles || {}).length * 1;
   pts += Object.keys(completed.studySheets || {}).length * 3;
+  pts += Object.keys(completed.decks || {}).length * 4;
 
   // Case-based learning points (15 per case, +5 bonus for ≥80%)
   const cases = completed.cases || {};

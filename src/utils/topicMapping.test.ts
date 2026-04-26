@@ -68,6 +68,7 @@ describe("topicMapping", () => {
     it("returns empty results for non-existent topic", () => {
       const content = getTopicContent("Nonexistent Topic");
       expect(content.studySheets).toEqual([]);
+      expect(content.decks).toEqual([]);
       expect(content.articles).toEqual([]);
       expect(content.cases).toEqual([]);
       expect(content.quizWeeks).toEqual([]);
