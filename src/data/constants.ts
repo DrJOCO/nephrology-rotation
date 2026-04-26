@@ -39,6 +39,15 @@ export const T = {
   danger: "var(--c-danger)",      // error / destructive / critical
   dangerBg: "var(--c-danger-bg)",
 
+  // PR 5 — *Ink: foreground for text/icons on a SOLID state background
+  //   (e.g. T.brandInk on background: T.brand). NOT for use on T.brandBg /
+  //   T.successBg / etc. Tinted-bg foregrounds use the state color itself
+  //   (color: T.brand on background: T.brandBg).
+  brandInk: "var(--c-brand-ink)",
+  successInk: "var(--c-success-ink)",
+  warningInk: "var(--c-warning-ink)",
+  dangerInk: "var(--c-danger-ink)",
+
   // Phase 3 (PR 3.1) — info channel + dedicated focus ring.
   // info = non-alarming slate blue (FYI / lab values / secondary links / patient-count chips).
   // focusRing = a single value, no variants — kept distinct from brand and danger.
@@ -46,6 +55,7 @@ export const T = {
   infoDk: "var(--c-info-dk)",
   infoBg: "var(--c-info-bg)",
   infoAlpha: "var(--c-info-alpha)",
+  infoInk: "var(--c-info-ink)",
   focusRing: "var(--c-focus-ring)",
 };
 

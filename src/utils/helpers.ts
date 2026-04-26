@@ -111,10 +111,14 @@ export function ensureThemeStyles(): void {
       --c-success:#1f7a5a;--c-success-bg:#e8f3ee;
       --c-warning:#a86b1f;--c-warning-bg:#faf0dd;
       --c-danger:#c0392b;--c-danger-bg:#fbeae5;
+      /* PR 5: ink = foreground for text/icons on a SOLID state background. White in
+         light mode (state hues are deep enough to clear AA); near-black in dark mode
+         (state hues lift to ~70% L and white fails AA). NOT for tinted -bg surfaces. */
+      --c-brand-ink:#ffffff;--c-success-ink:#ffffff;--c-warning-ink:#ffffff;--c-danger-ink:#ffffff;
       /* Phase 3 (PR 3.1) info channel + focus ring.
          info = non-alarming slate blue for FYI/lab values/secondary links.
          focus-ring is its own var so we can keep it distinct from brand/danger. */
-      --c-info:#3a6ea8;--c-info-dk:#1f4570;--c-info-bg:#eaf1f9;--c-info-alpha:rgba(58,110,168,0.18);
+      --c-info:#3a6ea8;--c-info-dk:#1f4570;--c-info-bg:#eaf1f9;--c-info-alpha:rgba(58,110,168,0.18);--c-info-ink:#ffffff;
       --c-focus-ring:#2563aa;
     }
     html, body {
@@ -142,8 +146,10 @@ export function ensureThemeStyles(): void {
         --c-success:#6dd1a5;--c-success-bg:rgba(109,209,165,0.12);
         --c-warning:#e3b261;--c-warning-bg:rgba(227,178,97,0.14);
         --c-danger:#ef6c5e;--c-danger-bg:rgba(239,108,94,0.14);
+        /* PR 5: ink flips to near-black in dark mode (state hues are too light for white). */
+        --c-brand-ink:#1a0f0f;--c-success-ink:#0a1a14;--c-warning-ink:#1a1208;--c-danger-ink:#1a0a0a;
         /* Phase 3 (PR 3.1) info channel + focus ring (dark). */
-        --c-info:#7fa8d4;--c-info-dk:#a9c4e4;--c-info-bg:rgba(127,168,212,0.14);--c-info-alpha:rgba(127,168,212,0.32);
+        --c-info:#7fa8d4;--c-info-dk:#a9c4e4;--c-info-bg:rgba(127,168,212,0.14);--c-info-alpha:rgba(127,168,212,0.32);--c-info-ink:#0a1420;
         --c-focus-ring:#7fa8d4;
       }
     }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALL_LANDMARK_TRIALS, ARTICLES, RESOURCES, STUDY_SHEETS, TOPICS } from "./constants";
+import { ALL_LANDMARK_TRIALS, ARTICLES, CURRICULUM_DECKS, RESOURCES, STUDY_SHEETS, TOPICS } from "./constants";
 import { GUIDE_DATA, GUIDE_SECTIONS, QUICK_REFS } from "./guides";
 
 const RESOURCE_GROUPS = [
@@ -36,6 +36,12 @@ describe("content integrity", () => {
         for (const topic of sheet.topics || []) {
           expect(topicSet.has(topic)).toBe(true);
         }
+      }
+    }
+
+    for (const deck of CURRICULUM_DECKS) {
+      for (const topic of deck.topics || []) {
+        expect(topicSet.has(topic)).toBe(true);
       }
     }
   });

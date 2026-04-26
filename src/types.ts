@@ -45,7 +45,7 @@ export type SubView =
   | { type: "trials"; week: number }
   | { type: "studySheets"; week: number }
   | { type: "cases"; week: number }
-  | { type: "resources" }
+  | { type: "resources"; tab?: "podcasts" | "websites" | "guidelines" | "decks" | "tools"; week?: number }
   | { type: "abbreviations" }
   | { type: "faq" }
   | { type: "bookmarks" }
@@ -56,7 +56,7 @@ export type SubView =
   | { type: "trialLibrary"; searchTrial?: string }
   | { type: "browseByTopic" }
   | { type: "topicDetail"; topic: string; source?: "studySheets" | "articles" | "browseByTopic"; week?: number }
-  | { type: "clinicGuide"; date: string }
+  | { type: "clinicGuide"; date: string; topic?: "CKD" | "Hypertension" | "Transplant" }
   | { type: "clinicGuideHistory" }
   | { type: "inpatientGuide"; topic: string }
   | { type: "rotationGuide"; guideId: string }
@@ -145,6 +145,7 @@ export interface CompletedItems {
   articles: Record<string, boolean>;
   studySheets: Record<string, boolean>;
   cases: Record<string, CaseCompletion>;
+  decks?: Record<string, boolean>;
 }
 
 export interface Bookmarks {
@@ -172,7 +173,6 @@ export interface AdminStudent {
   id: string | number;
   studentId: string;
   name: string;
-  loginPin?: string;
   year?: string;
   email?: string;
   status: "active" | "completed";
@@ -346,6 +346,7 @@ export type QuickRef = QuickRefCalculator | QuickRefReference | QuickRefAtlas;
 export interface TopicRecommendation {
   topic: string;
   studySheets: string[];
+  decks: string[];
   articles: string[];
   cases: string[];
   quizWeeks: number[];
@@ -373,6 +374,7 @@ export interface TopicLinkedResource {
 
 export interface TopicContentIndex {
   studySheets: { week: number; id: string }[];
+  decks: { week: number; id: string }[];
   articles: { week: number; url: string }[];
   cases: { week: number; id: string }[];
   quizWeeks: number[];

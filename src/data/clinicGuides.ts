@@ -1,10 +1,11 @@
-// Friday Outpatient Nephrology Clinic Guide — pre-authored teaching content
+// Friday Outpatient Nephrology Clinic Guides — pre-authored teaching content
 //
-// Rotation cycle: CKD → Transplant → Hypertension (3-week repeating)
+// Each clinic week includes three outpatient learning tracks:
+// CKD → Hypertension → Transplant.
 // Content is guideline-based, educational, and not patient-specific.
 // Guideline sources are listed in each guide's guidelineBasis field.
 
-export const CLINIC_GUIDE_TOPICS = ["CKD", "Transplant", "Hypertension"] as const;
+export const CLINIC_GUIDE_TOPICS = ["CKD", "Hypertension", "Transplant"] as const;
 export type ClinicGuideTopic = (typeof CLINIC_GUIDE_TOPICS)[number];
 
 export interface ClinicGuideTemplate {
