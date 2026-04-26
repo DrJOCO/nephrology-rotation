@@ -445,7 +445,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
           setShowAdd(!showAdd);
         }}
           style={{ padding: "8px 16px", background: showAdd ? T.sub : T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {showAdd ? "Cancel" : "+ Add Inpatient"}
+          {showAdd ? "Cancel" : "+ Add Patient"}
         </button>
       </div>
 
@@ -569,7 +569,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏥</div>
           <div style={{ fontSize: 14 }}>No active inpatients</div>
-          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Tap "+ Add Inpatient" to track hospital consults</div>
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Tap "+ Add Patient" to track hospital consults</div>
         </div>
       )}
 

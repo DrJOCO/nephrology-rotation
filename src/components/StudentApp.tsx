@@ -1232,7 +1232,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const tabs: Array<{ id: string; Icon: typeof BookOpen; label: string }> = [
     { id: "today", Icon: Home, label: "Today" },
     { id: "library", Icon: BookOpen, label: "Library" },
-    { id: "patients", Icon: Stethoscope, label: "Inpatients" },
+    { id: "patients", Icon: Stethoscope, label: "Consults" },
     { id: "team", Icon: Users, label: "Cohort" },
     { id: "me", Icon: UserIcon, label: "Me" },
   ];
