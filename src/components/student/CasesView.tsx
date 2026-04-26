@@ -278,14 +278,14 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
           <div key={c.id} style={{ position: "relative", marginBottom: 10 }}>
             <button onClick={() => setActiveCase(c)}
               style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, border: done ? `2px solid ${T.success}` : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
-              <div style={{ position: "absolute", top: 10, right: 12, display: "flex", alignItems: "center", gap: 6, paddingLeft: 40 }}>
+              <div style={{ position: "absolute", top: 14, right: 48, display: "flex", alignItems: "center", gap: 6 }}>
                 {done && (
                   <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
                     ✓ {done.score}/{done.total}
                   </span>
                 )}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingRight: 40 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingRight: done ? 110 : 40 }}>
                 <span style={{ fontSize: 22 }}>🏥</span>
                 <div>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
