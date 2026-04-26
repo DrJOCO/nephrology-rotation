@@ -11,6 +11,70 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function signedInEmailLower() {
+      return request.auth.token.email.lower();
+    }
+
+    function hasInviteForSignedInEmail() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && exists(/databases/$(database)/documents/adminInvites/$(signedInEmailLower()));
+    }
+
+    function inviteMatchesSignedInEmail(emailKey) {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && signedInEmailLower() == emailKey;
+    }
+
+    function isBootstrapAdminEmail() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && signedInEmailLower() == 'joncheng5@gmail.com';
+    }
+
+    function isBootstrapLegacyOwnerUid(ownerUid) {
+      return isBootstrapAdminEmail()
+        && [ownerUid].hasAny(['aXjhgOzT0mPQt97bGMqR4CHI1jp1']);
+    }
+
+    function hasRotationDoc(rotationCode) {
+      return exists(/databases/$(database)/documents/rotations/$(rotationCode));
+    }
+
+    function rotationData(rotationCode) {
+      return get(/databases/$(database)/documents/rotations/$(rotationCode)).data;
+    }
+
+    function rotationLooksLegacy(data) {
+      return !data.keys().hasAny(['ownerUid']) && !data.keys().hasAny(['adminUids']);
+    }
+
+    function rotationAllowsAdmin(data) {
+      return isAdmin()
+        && (
+          isBootstrapAdminEmail()
+          || (data.keys().hasAny(['ownerUid']) && data.ownerUid == request.auth.uid)
+          || (data.keys().hasAny(['ownerUid']) && isBootstrapLegacyOwnerUid(data.ownerUid))
+          || (request.auth.token.email != null && data.keys().hasAny(['ownerEmail']) && data.ownerEmail.lower() == signedInEmailLower())
+          || (data.keys().hasAny(['adminUids']) && data.adminUids is list && data.adminUids.hasAny([request.auth.uid]))
+          || rotationLooksLegacy(data)
+        );
+    }
+
+    function isRotationAdmin(rotationCode) {
+      return hasRotationDoc(rotationCode) && rotationAllowsAdmin(rotationData(rotationCode));
+    }
+
+    function isRotationStudent(rotationCode) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/rotations/$(rotationCode)/students/$(request.auth.uid));
+    }
+
+    function canReadRotation(rotationCode) {
+      return isRotationAdmin(rotationCode) || isRotationStudent(rotationCode);
+    }
+
     function isStudentOwner(studentId) {
       return isSignedIn() && request.auth.uid == studentId;
     }
@@ -19,6 +83,10 @@ service cloud.firestore {
       return request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 50;
+    }
+
+    function hasNoLegacyStudentLoginPin() {
+      return !request.resource.data.keys().hasAny(['loginPin']);
     }
 
     function hasValidTeamSnapshot(studentId) {
@@ -43,42 +111,100 @@ service cloud.firestore {
     match /admins/{uid} {
       allow get: if isSignedIn() && request.auth.uid == uid;
       allow list: if false;
-      allow create, update, delete: if false;
+      allow create: if isSignedIn()
+        && request.auth.uid == uid
+        && request.auth.token.email != null
+        && request.resource.data.email.lower() == signedInEmailLower()
+        && (hasInviteForSignedInEmail() || isBootstrapAdminEmail());
+      allow update, delete: if false;
+    }
+
+    match /adminInvites/{emailKey} {
+      // Invitees can read their own invite to claim it; otherwise only the
+      // master (bootstrap) admin sees the invite list and creates/edits invites.
+      allow get: if isBootstrapAdminEmail() || inviteMatchesSignedInEmail(emailKey);
+      allow list: if isBootstrapAdminEmail();
+      allow create: if isBootstrapAdminEmail()
+        && request.resource.data.email == emailKey
+        && request.resource.data.createdByUid == request.auth.uid;
+      allow update: if (
+        isBootstrapAdminEmail()
+        && request.resource.data.email == resource.data.email
+      ) || (
+        inviteMatchesSignedInEmail(emailKey)
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(['claimedAt', 'claimedByUid', 'claimedByEmail', 'status'])
+        && request.resource.data.claimedByUid == request.auth.uid
+        && request.resource.data.claimedByEmail.lower() == signedInEmailLower()
+      );
+      allow delete: if isBootstrapAdminEmail();
+    }
+
+    match /rotationCodes/{rotationCode} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isAdmin()
+        && request.resource.data.rotationCode == rotationCode
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isRotationAdmin(rotationCode);
+    }
+
+    match /studentAssignments/{studentId} {
+      allow get: if isStudentOwner(studentId) || isAdmin();
+      allow list: if false;
+      allow create, update: if isStudentOwner(studentId)
+        && request.resource.data.studentId == studentId
+        && request.resource.data.activeRotationCode is string
+        && request.resource.data.activeRotationCode.size() >= 4
+        && request.resource.data.activeRotationCode.size() <= 20
+        && request.resource.data.rotationCodes is list
+        && request.resource.data.rotationCodes.size() > 0
+        && request.resource.data.updatedAt is string
+        && (!request.resource.data.keys().hasAny(['email']) || request.resource.data.email is string);
+      allow delete: if isStudentOwner(studentId) || isAdmin();
     }
 
     // ─── Rotation documents ────────────────────────────────────────
     match /rotations/{rotationCode} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
+      allow get: if canReadRotation(rotationCode);
+      allow list: if isAdmin() && rotationAllowsAdmin(resource.data);
 
       allow create: if isAdmin()
-                    && request.resource.data.keys().hasAll(['name', 'createdAt']);
+                    && request.resource.data.keys().hasAll(['name', 'createdAt', 'ownerUid', 'ownerEmail', 'adminUids'])
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.adminUids is list
+                    && request.resource.data.adminUids.hasAny([request.auth.uid]);
 
-      allow update: if isAdmin()
+      allow update: if isRotationAdmin(rotationCode)
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['curriculum', 'articles', 'announcements', 'settings',
                                  'clinicGuides', 'name', 'location', 'dates',
-                                 'archived', 'archivedAt']);
+                                 'archived', 'archivedAt', 'ownerUid', 'ownerEmail', 'adminUids']);
 
-      allow delete: if isAdmin();
+      allow delete: if isRotationAdmin(rotationCode);
 
       // ─── Student subcollection ─────────────────────────────────
       match /students/{studentId} {
-        allow get: if isAdmin() || isStudentOwner(studentId);
-        allow list: if isAdmin();
-        allow create: if (isAdmin() || isStudentOwner(studentId))
+        allow get: if isRotationAdmin(rotationCode) || isStudentOwner(studentId);
+        allow list: if isRotationAdmin(rotationCode);
+        allow create: if (isRotationAdmin(rotationCode) || isStudentOwner(studentId))
+                      && exists(/databases/$(database)/documents/rotationCodes/$(rotationCode))
                       && request.resource.data.keys().hasAll(['name'])
-                      && hasValidStudentName();
-        allow update: if (isAdmin() || isStudentOwner(studentId))
-                      && hasValidStudentName();
-        allow delete: if isAdmin();
+                      && hasValidStudentName()
+                      && hasNoLegacyStudentLoginPin();
+        allow update: if (isRotationAdmin(rotationCode) || isStudentOwner(studentId))
+                      && hasValidStudentName()
+                      && hasNoLegacyStudentLoginPin();
+        allow delete: if isRotationAdmin(rotationCode);
       }
 
       match /team/{studentId} {
-        allow get, list: if isSignedIn();
-        allow create, update: if (isAdmin() || isStudentOwner(studentId))
+        allow get, list: if isRotationAdmin(rotationCode) || isRotationStudent(rotationCode);
+        allow create, update: if (isRotationAdmin(rotationCode) || isStudentOwner(studentId))
+                              && exists(/databases/$(database)/documents/rotationCodes/$(rotationCode))
                               && hasValidTeamSnapshot(studentId);
-        allow delete: if isAdmin() || isStudentOwner(studentId);
+        allow delete: if isRotationAdmin(rotationCode) || isStudentOwner(studentId);
       }
     }
 
