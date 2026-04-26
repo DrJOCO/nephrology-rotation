@@ -1,63 +1,67 @@
-# React + Vite
+# Nephrology Rotation Education App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite app for nephrology rotation teaching. Students use it for onboarding, quizzes, cases, study sheets, patient-topic logging, spaced review, and cohort progress. Admins use Firebase-backed tools to manage rotations, curriculum, announcements, student progress, reports, and teaching materials.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React 19, TypeScript, Vite
+- Firebase Auth, Firestore, Firebase Hosting
+- Vitest for unit and content checks
+- ESLint for static checks
+- Vite build plugin for `sw.js` offline shell caching
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-
-## Local Agent Loop
-
-This repo includes a small desktop orchestrator for a bounded Claude/Codex exchange without wiring API keys into your own app.
-
-The script now lives at:
-
-`/Users/joncheng/Documents/Premier Nephrology/Codex_Claude_Testing/agent-loop.mjs`
-
-Its default workspace is:
-
-`/Users/joncheng/Documents/Premier Nephrology/Codex_Claude_Testing`
-
-Run it with:
+## Local Setup
 
 ```bash
-npm run agent:loop -- --prompt "Review the current repo structure"
+npm install
+npm run dev
 ```
 
-Useful flags:
+Create a local `.env.local` with the Firebase web config values:
 
 ```bash
-npm run agent:loop -- --prompt "Audit src/App.jsx" --rounds 2
-npm run agent:loop -- --prompt "Review the admin workflow" --project "Premier Nephrology Admin"
-npm run agent:loop -- --prompt "Suggest a safer auth architecture" --claude-cmd "/opt/homebrew/bin/claude -p"
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
 ```
 
-What it does:
+## Checks
 
-- Runs Claude as the builder
-- Runs Codex as the reviewer
-- Repeats for up to 3 rounds
-- Runs Claude once more to synthesize the final answer
-- Includes the project name in every round so both agents stay anchored to the same target
-- Saves transcripts under `.agent-loop/transcripts/<timestamp>/`
+Run these before a rotation handoff or deploy:
 
-Notes:
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run check:links
+```
 
-- The default Codex command is `codex exec --skip-git-repo-check --full-auto -C "<workspace>"`
-- The default Claude command is `claude -p`
-- The default workspace is `/Users/joncheng/Documents/Premier Nephrology/Codex_Claude_Testing`
-- The project defaults to the current workspace folder name, or you can override it with `--project`
-- In this workspace, `codex` is installed but `claude` was not on `PATH` when this was added, so you may need to pass `--claude-cmd` with the full binary path
+`npm run check:links` reaches external content links and can fail because of network or upstream site behavior. Treat failures as items to review, not as automatic proof that the source is unusable.
 
-## Planning Docs
+## Firebase Notes
 
-- App Store readiness checklist: [docs/app-store-readiness.md](docs/app-store-readiness.md)
+- Admin access uses Firebase Auth plus an `/admins/{uid}` document.
+- Rotation access is scoped through rotation ownership/admin membership in Firestore rules.
+- Student sign-in uses email verification plus a PIN-backed Firebase credential.
+- Raw student login PINs should not be stored in student documents.
+- The admin PIN is a local second lock for an already signed-in admin device; it is intentionally stripped from shared rotation settings.
+
+## May Run Checklist
+
+- Confirm the active rotation exists and has the correct dates, location, curriculum, articles, announcements, and clinic guides.
+- Confirm the admin account can sign in, open the target rotation, and has a local admin PIN set.
+- Confirm at least one test student can verify email, create a PIN, join the rotation, complete an item, and sync progress.
+- Review cohort visibility expectations with the attending before students join.
+- Run the check commands above and review any external link failures.
+- Deploy only after `npm run build` succeeds.
+
+## Repo Hygiene
+
+- `dist/`, `node_modules/`, local env files, Firebase cache, and temporary output are ignored.
+- Deck source scripts live in `scripts/decks/`.
+- Published deck files live in `public/decks/` when they are meant to ship with the app.
+- Planning docs live in `docs/`; dated audit reports are historical snapshots, not the current release checklist.

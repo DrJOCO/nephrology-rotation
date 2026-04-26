@@ -5,28 +5,29 @@ This app is a strong candidate for an iOS wrapper approach when we decide to shi
 1. Keep the existing React + TypeScript + Vite web app.
 2. Add Capacitor for the native iOS shell.
 3. Add iPhone-specific polish and App Store metadata.
-4. Add PWA support later for the web experience.
+4. Keep the existing PWA/offline web support as a companion web experience.
 
-PWA support is useful, but it is not the thing that gets this app into the App Store. The iOS path should start with Capacitor.
+PWA support is useful, but it is not the thing that gets this app into the App Store. The iOS path should still start with Capacitor.
 
 ## Current State
 
-As of March 30, 2026, this repo has:
+As of April 24, 2026, this repo has:
 
 - React 19 + TypeScript + Vite
 - Firebase Hosting for the web deploy
 - Firestore + Firebase Auth
 - Mobile-responsive layouts
 - Safe-area CSS in a few key views
+- A web app manifest
+- App icons in `public/`
+- A generated `sw.js` offline shell cache emitted by the Vite build
 
 This repo does not yet have:
 
-- A web app manifest
-- A service worker
-- App icons or splash assets in the repo
 - Capacitor packages
 - `capacitor.config.*`
 - An `ios/` native project
+- Native iOS icon/splash asset sets
 
 ## Why Capacitor First
 
@@ -83,13 +84,13 @@ Before App Store work begins, these are the main repo gaps to address:
 - Re-check all no-PHI guardrails before submission
 - Prepare App Review notes that explain the educational purpose of the app
 
-### 5. Optional web improvements
+### 5. Web/PWA follow-up
 
-- Add `manifest.webmanifest`
-- Add a service worker
-- Add offline caching rules
+- Review the current generated service worker caching rules against the final production asset set.
+- Decide whether to add offline fallbacks for more educational content beyond the shell.
+- Verify install behavior on iPhone Safari separately from the native wrapper work.
 
-These are worth doing, but they are not prerequisites for generating the iOS shell.
+These are useful web improvements, but they are not prerequisites for generating the iOS shell.
 
 ## Recommended Future Sequence
 
@@ -100,7 +101,7 @@ When we are ready to actually build the iOS app, follow this order:
 3. Add icons, splash assets, and iPhone-specific polish.
 4. Test on simulator and at least one real iPhone.
 5. Prepare privacy policy, screenshots, and submission metadata.
-6. Add optional PWA support for the web app.
+6. Re-test the existing PWA support for the web app.
 7. Submit through App Store Connect.
 
 ## First Commands To Run Later
