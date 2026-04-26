@@ -1,4 +1,4 @@
-import { getFirebase } from "./firebase";
+import { getBootstrapAdminLegacyUids, getCurrentAdminUser, getFirebase, isBootstrapAdminEmail, waitForAuthUser } from "./firebase";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FirestoreData = Record<string, any>;
@@ -16,6 +16,21 @@ export interface RotationInfo {
   location: string;
   dates: string;
   studentCount: number;
+  ownerEmail: string;
+  ownerUid: string;
+}
+
+export interface StudentAssignmentRecord {
+  studentId: string;
+  activeRotationCode: string;
+  rotationCodes: string[];
+  updatedAt: string;
+  email?: string;
+}
+
+interface RotationOwnerSession {
+  uid: string;
+  email?: string;
 }
 
 // Key mapping: SHARED_KEYS string → Firestore field name
@@ -32,6 +47,7 @@ const PENDING_SYNC_EVENT = "neph:pending-sync-changed";
 const rotationDocCacheKey = (code: string) => `neph_rotation_doc_${code}`;
 const studentDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_student_${studentId}`;
 const teamDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_team_${studentId}`;
+const studentAssignmentCacheKey = (studentId: string) => `neph_student_assignment_${studentId}`;
 
 let rotationCode: string | null = localStorage.getItem("neph_rotationCode") || null;
 
@@ -62,6 +78,12 @@ function mergePayload<T extends PendingSyncData | Record<string, unknown>>(exist
     return { ...existing, ...next } as T;
   }
   return next;
+}
+
+function withoutLegacyLoginPin(data: Record<string, unknown>): Record<string, unknown> {
+  const safe = { ...data };
+  delete safe.loginPin;
+  return safe;
 }
 
 function emitPendingSyncChanged(queue: PendingSyncItem[]): void {
@@ -142,12 +164,98 @@ function cacheSharedValue(key: string, value: unknown): void {
 
 function cacheStudentDoc(code: string, studentId: string, data: Record<string, unknown>): void {
   const existing = readJson<Record<string, unknown>>(studentDocCacheKey(code, studentId));
-  writeJson(studentDocCacheKey(code, studentId), mergePayload(existing, data));
+  writeJson(
+    studentDocCacheKey(code, studentId),
+    mergePayload(existing ? withoutLegacyLoginPin(existing) : null, withoutLegacyLoginPin(data)),
+  );
 }
 
 function cacheTeamDoc(code: string, studentId: string, data: Record<string, unknown>): void {
   const existing = readJson<Record<string, unknown>>(teamDocCacheKey(code, studentId));
   writeJson(teamDocCacheKey(code, studentId), mergePayload(existing, data));
+}
+
+function normalizeRotationCodeValue(code: string | undefined | null): string {
+  return typeof code === "string" ? code.trim().toUpperCase() : "";
+}
+
+function normalizeStudentAssignmentRecord(studentId: string, data: Record<string, unknown>): StudentAssignmentRecord | null {
+  const activeRotationCode = normalizeRotationCodeValue(typeof data.activeRotationCode === "string" ? data.activeRotationCode : "");
+  if (!activeRotationCode) return null;
+
+  const rotationCodes = Array.isArray(data.rotationCodes)
+    ? Array.from(new Set(data.rotationCodes
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => normalizeRotationCodeValue(value))
+        .filter(Boolean)))
+    : [activeRotationCode];
+
+  return {
+    studentId,
+    activeRotationCode,
+    rotationCodes: rotationCodes.length > 0 ? rotationCodes : [activeRotationCode],
+    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : new Date().toISOString(),
+    ...(typeof data.email === "string" && data.email.trim() ? { email: data.email.trim().toLowerCase() } : {}),
+  };
+}
+
+function cacheStudentAssignment(studentId: string, record: StudentAssignmentRecord): void {
+  writeJson(studentAssignmentCacheKey(studentId), record);
+}
+
+function normalizeRotationOwnerEmail(email?: string): string {
+  return typeof email === "string" ? email.trim().toLowerCase() : "";
+}
+
+function getRotationAccessPatch(existing: Record<string, unknown> | null | undefined, owner: RotationOwnerSession): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  const ownerEmail = normalizeRotationOwnerEmail(owner.email);
+  const legacyOwnerUids = getBootstrapAdminLegacyUids(ownerEmail);
+  const existingAdminUids = Array.isArray(existing?.adminUids)
+    ? existing.adminUids.filter((value): value is string => typeof value === "string" && value.length > 0)
+    : [];
+  const existingOwnerUid = typeof existing?.ownerUid === "string" ? existing.ownerUid : "";
+
+  if (!existing || !existingOwnerUid) {
+    patch.ownerUid = owner.uid;
+  }
+
+  if (
+    ownerEmail
+    && typeof existing?.ownerEmail === "string"
+    && normalizeRotationOwnerEmail(existing.ownerEmail) === ownerEmail
+    && existing.ownerUid !== owner.uid
+  ) {
+    patch.ownerUid = owner.uid;
+  }
+
+  if (existingOwnerUid && existingOwnerUid !== owner.uid && legacyOwnerUids.includes(existingOwnerUid)) {
+    patch.ownerUid = owner.uid;
+  }
+
+  if (ownerEmail && (!existing || typeof existing.ownerEmail !== "string" || !existing.ownerEmail)) {
+    patch.ownerEmail = ownerEmail;
+  }
+
+  if (!existingAdminUids.includes(owner.uid)) {
+    patch.adminUids = [...new Set([...existingAdminUids, owner.uid])];
+  }
+
+  return patch;
+}
+
+async function ensureRotationCodeDoc(code: string, owner: RotationOwnerSession): Promise<void> {
+  const { db, fs } = await getFirebase();
+  const rotationCodeRef = fs.doc(db, "rotationCodes", code);
+  const rotationCodeSnap = await fs.getDoc(rotationCodeRef);
+  const now = new Date().toISOString();
+
+  await fs.setDoc(rotationCodeRef, {
+    rotationCode: code,
+    ownerUid: owner.uid,
+    ...(normalizeRotationOwnerEmail(owner.email) ? { ownerEmail: normalizeRotationOwnerEmail(owner.email) } : {}),
+    ...(rotationCodeSnap.exists() ? { updatedAt: now } : { createdAt: now }),
+  }, { merge: true });
 }
 
 async function flushPendingSyncQueue(): Promise<number> {
@@ -169,7 +277,12 @@ async function flushPendingSyncQueue(): Promise<number> {
         if (!field) continue;
         await fs.updateDoc(fs.doc(db, "rotations", item.rotationCode), { [field]: item.data });
       } else if (item.kind === "setStudentData") {
-        await fs.setDoc(fs.doc(db, "rotations", item.rotationCode, "students", item.studentId), item.data, { merge: true });
+        const payload = withoutLegacyLoginPin(item.data);
+        await fs.setDoc(
+          fs.doc(db, "rotations", item.rotationCode, "students", item.studentId),
+          { ...payload, loginPin: fs.deleteField() },
+          { merge: true },
+        );
       } else if (item.kind === "setTeamSnapshot") {
         await fs.setDoc(fs.doc(db, "rotations", item.rotationCode, "team", item.studentId), item.data, { merge: true });
       } else if (item.kind === "updateRotation") {
@@ -227,11 +340,14 @@ const store = {
   },
 
   async setShared(key: string, val: FirestoreData | unknown[]): Promise<void> {
-    cacheSharedValue(key, val);
+    const safeValue = key.startsWith("neph_shared_student_") && isPlainObject(val)
+      ? withoutLegacyLoginPin(val)
+      : val;
+    cacheSharedValue(key, safeValue);
     if (!rotationCode) {
       return;
     }
-    const queued: PendingSyncItem = { kind: "setShared", rotationCode, key, data: val, updatedAt: new Date().toISOString() };
+    const queued: PendingSyncItem = { kind: "setShared", rotationCode, key, data: safeValue, updatedAt: new Date().toISOString() };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       queuePendingSync(queued);
       return;
@@ -241,8 +357,13 @@ const store = {
       // Student data goes to subcollection
       if (key.startsWith("neph_shared_student_")) {
         const studentId = key.replace("neph_shared_student_", "");
-        await fs.setDoc(fs.doc(db, "rotations", rotationCode, "students", studentId), val, { merge: true });
-        cacheStudentDoc(rotationCode, studentId, val as Record<string, unknown>);
+        const payload = withoutLegacyLoginPin(safeValue as Record<string, unknown>);
+        await fs.setDoc(
+          fs.doc(db, "rotations", rotationCode, "students", studentId),
+          { ...payload, loginPin: fs.deleteField() },
+          { merge: true },
+        );
+        cacheStudentDoc(rotationCode, studentId, payload);
         clearQueuedSync(queued);
         return;
       }
@@ -306,16 +427,35 @@ const store = {
   },
 
   // ─── Create a new rotation document ──────────────────────────────
-  async createRotation(code: string, data: Record<string, unknown>): Promise<void> {
+  async createRotation(code: string, data: Record<string, unknown>, owner: RotationOwnerSession): Promise<void> {
     const { db, fs } = await getFirebase();
     const payload = {
       ...data,
       createdAt: new Date().toISOString(),
+      ownerUid: owner.uid,
+      ownerEmail: normalizeRotationOwnerEmail(owner.email),
+      adminUids: [owner.uid],
     };
     await fs.setDoc(fs.doc(db, "rotations", code), payload);
+    await ensureRotationCodeDoc(code, owner);
     rotationCode = code;
     localStorage.setItem("neph_rotationCode", code);
     cacheRotationDoc(code, payload);
+  },
+
+  async ensureRotationOwnership(code: string, owner: RotationOwnerSession): Promise<void> {
+    const { db, fs } = await getFirebase();
+    const rotationRef = fs.doc(db, "rotations", code);
+    const snap = await fs.getDoc(rotationRef);
+    if (!snap.exists()) return;
+
+    const patch = getRotationAccessPatch(snap.data() as Record<string, unknown>, owner);
+    if (Object.keys(patch).length > 0) {
+      await fs.updateDoc(rotationRef, patch);
+      cacheRotationDoc(code, patch);
+    }
+
+    await ensureRotationCodeDoc(code, owner);
   },
 
   // ─── Read full rotation document (for hydrating admin state) ─────
@@ -339,9 +479,24 @@ const store = {
   // ─── Validate a rotation code exists ─────────────────────────────
   async validateRotationCode(code: string): Promise<boolean> {
     try {
-      const { db, fs } = await getFirebase();
-      const snap = await fs.getDoc(fs.doc(db, "rotations", code));
-      return snap.exists();
+      const { db, fs, auth, authMod } = await getFirebase();
+      const existingUser = await waitForAuthUser();
+      const createdAnonymousSession = !existingUser;
+      if (!existingUser) {
+        await authMod.signInAnonymously(auth);
+      }
+      try {
+        const snap = await fs.getDoc(fs.doc(db, "rotationCodes", code));
+        return snap.exists();
+      } finally {
+        if (createdAnonymousSession && auth.currentUser?.isAnonymous) {
+          try {
+            await authMod.signOut(auth);
+          } catch (error) {
+            console.warn("Failed to clear temporary anonymous session:", error);
+          }
+        }
+      }
     } catch { return false; }
   },
 
@@ -424,8 +579,9 @@ const store = {
   // ─── Write student data to Firestore directly ────────────────────
   async setStudentData(studentId: string, data: Record<string, unknown>): Promise<void> {
     if (!rotationCode) return;
-    cacheStudentDoc(rotationCode, studentId, data);
-    const queued: PendingSyncItem = { kind: "setStudentData", rotationCode, studentId, data, updatedAt: new Date().toISOString() };
+    const payload = withoutLegacyLoginPin(data);
+    cacheStudentDoc(rotationCode, studentId, payload);
+    const queued: PendingSyncItem = { kind: "setStudentData", rotationCode, studentId, data: payload, updatedAt: new Date().toISOString() };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       queuePendingSync(queued);
       return;
@@ -433,7 +589,7 @@ const store = {
     try {
       const { db, fs } = await getFirebase();
       const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
-      await fs.setDoc(studentRef, data, { merge: true });
+      await fs.setDoc(studentRef, { ...payload, loginPin: fs.deleteField() }, { merge: true });
       clearQueuedSync(queued);
     } catch (e) {
       console.warn("setStudentData failed, queueing for retry:", e);
@@ -478,6 +634,44 @@ const store = {
     }
   },
 
+  async getStudentAssignment(studentId: string): Promise<StudentAssignmentRecord | null> {
+    if (!studentId) return null;
+    try {
+      const { db, fs } = await getFirebase();
+      const snap = await fs.getDoc(fs.doc(db, "studentAssignments", studentId));
+      if (!snap.exists()) return null;
+      const record = normalizeStudentAssignmentRecord(studentId, snap.data() as Record<string, unknown>);
+      if (!record) return null;
+      cacheStudentAssignment(studentId, record);
+      return record;
+    } catch (error) {
+      console.warn("getStudentAssignment failed:", error);
+      return readJson<StudentAssignmentRecord>(studentAssignmentCacheKey(studentId));
+    }
+  },
+
+  async setStudentAssignment(studentId: string, data: { activeRotationCode: string; email?: string }): Promise<void> {
+    const activeRotationCode = normalizeRotationCodeValue(data.activeRotationCode);
+    if (!studentId || !activeRotationCode) return;
+
+    const existing = await this.getStudentAssignment(studentId);
+    const record: StudentAssignmentRecord = {
+      studentId,
+      activeRotationCode,
+      rotationCodes: Array.from(new Set([...(existing?.rotationCodes || []), activeRotationCode])).slice(-10),
+      updatedAt: new Date().toISOString(),
+      ...(typeof data.email === "string" && data.email.trim() ? { email: data.email.trim().toLowerCase() } : existing?.email ? { email: existing.email } : {}),
+    };
+    cacheStudentAssignment(studentId, record);
+
+    try {
+      const { db, fs } = await getFirebase();
+      await fs.setDoc(fs.doc(db, "studentAssignments", studentId), record, { merge: true });
+    } catch (error) {
+      console.warn("setStudentAssignment failed:", error);
+    }
+  },
+
   // ─── Read all students for any rotation (historical analytics) ──
   async getStudentsForRotation(code: string): Promise<FirestoreData[]> {
     try {
@@ -493,10 +687,39 @@ const store = {
   // ─── List all rotations ─────────────────────────────────────────
   async listRotations(): Promise<RotationInfo[]> {
     try {
+      const adminUser = await getCurrentAdminUser();
+      if (!adminUser) return [];
       const { db, fs } = await getFirebase();
-      const snap = await fs.getDocs(fs.collection(db, "rotations"));
-      const rotations = await Promise.all(snap.docs.map(async d => {
-        const data = d.data();
+      const rotationCollection = fs.collection(db, "rotations");
+      const normalizedEmail = normalizeRotationOwnerEmail(adminUser.email || "");
+      const masterAdmin = isBootstrapAdminEmail(adminUser.email || "");
+
+      // Master admin sees every rotation; ordinary admins only see rotations
+      // they own or are listed on.
+      type RotationDoc = Awaited<ReturnType<typeof fs.getDocs>>["docs"][number];
+      const docs = new Map<string, RotationDoc>();
+
+      if (masterAdmin) {
+        const allSnap = await fs.getDocs(rotationCollection);
+        allSnap.docs.forEach((doc) => docs.set(doc.id, doc));
+      } else {
+        const legacyOwnerUids = getBootstrapAdminLegacyUids(normalizedEmail);
+        const [adminSnap, ownerSnap, ...legacyOwnerSnaps] = await Promise.all([
+          fs.getDocs(fs.query(rotationCollection, fs.where("adminUids", "array-contains", adminUser.uid))),
+          normalizedEmail
+            ? fs.getDocs(fs.query(rotationCollection, fs.where("ownerEmail", "==", normalizedEmail)))
+            : Promise.resolve(null),
+          ...legacyOwnerUids.map((legacyUid) =>
+            fs.getDocs(fs.query(rotationCollection, fs.where("ownerUid", "==", legacyUid)))
+          ),
+        ]);
+        adminSnap.docs.forEach((doc) => docs.set(doc.id, doc));
+        ownerSnap?.docs.forEach((doc) => docs.set(doc.id, doc));
+        legacyOwnerSnaps.forEach((snap) => snap.docs.forEach((doc) => docs.set(doc.id, doc)));
+      }
+
+      const rotations = await Promise.all(Array.from(docs.values()).map(async d => {
+        const data = d.data() as FirestoreData;
         let studentCount = 0;
         try {
           const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", d.id, "students"));
@@ -511,6 +734,8 @@ const store = {
           location: data.location || "",
           dates: data.dates || "",
           studentCount,
+          ownerEmail: typeof data.ownerEmail === "string" ? data.ownerEmail : "",
+          ownerUid: typeof data.ownerUid === "string" ? data.ownerUid : "",
         };
       }));
       rotations.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
@@ -567,6 +792,7 @@ const store = {
       }
       // Delete rotation doc
       await fs.deleteDoc(fs.doc(db, "rotations", code));
+      await fs.deleteDoc(fs.doc(db, "rotationCodes", code));
       // If this was the active rotation, disconnect
       if (rotationCode === code) {
         rotationCode = null;

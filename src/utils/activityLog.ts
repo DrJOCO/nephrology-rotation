@@ -1,4 +1,4 @@
-import { ARTICLES as DEFAULT_ARTICLES, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../data/constants";
+import { ARTICLES as DEFAULT_ARTICLES, ALL_LANDMARK_TRIALS, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { GUIDE_SECTIONS } from "../data/guides";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
@@ -94,6 +94,16 @@ export function describeStudentNavigation(
         detail: formatCount((WEEKLY_CASES[subView.week] || []).length, "case"),
       };
     case "resources":
+      if (subView.tab === "decks") {
+        const deckCount = subView.week
+          ? CURRICULUM_DECKS.filter((deck) => deck.week === subView.week).length
+          : CURRICULUM_DECKS.length;
+        return {
+          type: "resource_open",
+          label: subView.week ? `Opened Week ${subView.week} Teaching Decks` : "Opened Teaching Decks",
+          detail: formatCount(deckCount, "deck"),
+        };
+      }
       return { type: "resource_open", label: "Opened Resources", detail: "Reference tools" };
     case "abbreviations":
       return { type: "resource_open", label: "Opened Abbreviations", detail: "Quick reference list" };
@@ -120,11 +130,13 @@ export function describeStudentNavigation(
     case "topicDetail":
       return { type: "resource_open", label: "Opened Topic", detail: subView.topic };
     case "clinicGuide": {
-      const clinicGuide = context.clinicGuides?.find((item) => item.date === subView.date);
+      const clinicGuide = context.clinicGuides?.find((item) =>
+        item.date === subView.date && (!subView.topic || item.topic === subView.topic)
+      );
       return {
         type: "guide_open",
         label: "Opened Clinic Guide",
-        detail: clinicGuide?.topic || subView.date,
+        detail: subView.topic || clinicGuide?.topic || subView.date,
       };
     }
     case "clinicGuideHistory":

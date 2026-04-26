@@ -1,4 +1,4 @@
-import { ARTICLES, STUDY_SHEETS } from "../data/constants";
+import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { WEEKLY_QUIZZES } from "../data/quizzes";
 import type { AdminStudent, Bookmarks, CompletedItems, Gamification } from "../types";
@@ -24,6 +24,8 @@ export interface StudentProgressSummary {
   totalArticles: number;
   completedStudySheets: number;
   totalStudySheets: number;
+  completedDecks: number;
+  totalDecks: number;
   completedCases: number;
   totalCases: number;
   completedCoreItems: number;
@@ -44,6 +46,7 @@ function normalizeCompletedItems(value?: Partial<CompletedItems> | null): Comple
     articles: isRecord(value?.articles) ? (value.articles as CompletedItems["articles"]) : {},
     studySheets: isRecord(value?.studySheets) ? (value.studySheets as CompletedItems["studySheets"]) : {},
     cases: isRecord(value?.cases) ? (value.cases as CompletedItems["cases"]) : {},
+    decks: isRecord(value?.decks) ? (value.decks as NonNullable<CompletedItems["decks"]>) : {},
   };
 }
 
@@ -90,7 +93,6 @@ export function normalizeAdminStudentRecord(
     name: typeof merged.name === "string" && merged.name.trim()
       ? merged.name
       : options.fallbackName || "Unknown",
-    loginPin: typeof merged.loginPin === "string" && merged.loginPin.trim() ? merged.loginPin : undefined,
     year: typeof merged.year === "string" && merged.year.trim()
       ? merged.year
       : options.fallbackYear || "MS3/MS4",
@@ -133,6 +135,9 @@ export function buildStudentProgressSummary(
     return sum + (STUDY_SHEETS[week] || []).filter((sheet) => completed.studySheets[sheet.id]).length;
   }, 0);
 
+  const totalDecks = CURRICULUM_DECKS.length;
+  const completedDecks = CURRICULUM_DECKS.filter((deck) => completed.decks?.[deck.id]).length;
+
   const totalCases = weeks.reduce((sum, week) => sum + (WEEKLY_CASES[week] || []).length, 0);
   const completedCases = weeks.reduce((sum, week) => {
     return sum + (WEEKLY_CASES[week] || []).filter((item) => completed.cases[item.id]).length;
@@ -141,8 +146,8 @@ export function buildStudentProgressSummary(
   const weeklyScores = student.weeklyScores || {};
   const totalQuizWeeks = weeks.filter((week) => (WEEKLY_QUIZZES[week] || []).length > 0).length;
   const quizWeeksStarted = weeks.filter((week) => (weeklyScores[week] || []).length > 0).length;
-  const totalCoreItems = totalStudySheets + totalCases + totalQuizWeeks;
-  const completedCoreItems = completedStudySheets + completedCases + quizWeeksStarted;
+  const totalCoreItems = totalStudySheets + totalDecks + totalCases + totalQuizWeeks;
+  const completedCoreItems = completedStudySheets + completedDecks + completedCases + quizWeeksStarted;
   const totalQuizAttempts = Object.values(weeklyScores).flat().length;
   const assessmentsDone = Number(Boolean(student.preScore)) + Number(Boolean(student.postScore));
 
@@ -151,6 +156,8 @@ export function buildStudentProgressSummary(
     totalArticles,
     completedStudySheets,
     totalStudySheets,
+    completedDecks,
+    totalDecks,
     completedCases,
     totalCases,
     completedCoreItems,

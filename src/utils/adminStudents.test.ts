@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ARTICLES, STUDY_SHEETS } from "../data/constants";
+import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { buildStudentProgressSummary, normalizeAdminStudentRecord } from "./adminStudents";
 
@@ -19,6 +19,7 @@ describe("normalizeAdminStudentRecord", () => {
       completedItems: {
         articles: { [ARTICLES[1][0].url]: true },
         studySheets: { [STUDY_SHEETS[1][0].id]: true },
+        decks: { [CURRICULUM_DECKS[0].id]: true },
         cases: { [WEEKLY_CASES[1][0].id]: { score: 4, total: 5, date: "2026-04-20T12:00:00.000Z" } },
       },
       bookmarks: {
@@ -32,6 +33,7 @@ describe("normalizeAdminStudentRecord", () => {
     });
 
     expect(record.completedItems?.articles[ARTICLES[1][0].url]).toBe(true);
+    expect(record.completedItems?.decks?.[CURRICULUM_DECKS[0].id]).toBe(true);
     expect(record.bookmarks?.trials).toEqual(["trial-1"]);
     expect(record.gamification?.points).toBe(22);
     expect(record.feedbackTags).toHaveLength(1);
@@ -52,6 +54,7 @@ describe("normalizeAdminStudentRecord", () => {
 
     expect(record.completedItems?.studySheets).toEqual({});
     expect(record.completedItems?.cases).toEqual({});
+    expect(record.completedItems?.decks).toEqual({});
     expect(record.bookmarks?.cases).toEqual([]);
     expect(record.bookmarks?.trials).toEqual([]);
   });
@@ -63,6 +66,7 @@ describe("buildStudentProgressSummary", () => {
       completedItems: {
         articles: { [ARTICLES[1][0].url]: true },
         studySheets: { [STUDY_SHEETS[1][0].id]: true },
+        decks: { [CURRICULUM_DECKS[0].id]: true },
         cases: { [WEEKLY_CASES[1][0].id]: { score: 3, total: 5, date: "2026-04-20T12:00:00.000Z" } },
       },
       weeklyScores: {
@@ -75,11 +79,12 @@ describe("buildStudentProgressSummary", () => {
 
     expect(summary.completedArticles).toBe(1);
     expect(summary.completedStudySheets).toBe(1);
+    expect(summary.completedDecks).toBe(1);
     expect(summary.completedCases).toBe(1);
     expect(summary.quizWeeksStarted).toBe(2);
     expect(summary.totalQuizWeeks).toBeGreaterThan(0);
-    expect(summary.completedCoreItems).toBe(summary.completedStudySheets + summary.completedCases + summary.quizWeeksStarted);
-    expect(summary.totalCoreItems).toBe(summary.totalStudySheets + summary.totalCases + summary.totalQuizWeeks);
+    expect(summary.completedCoreItems).toBe(summary.completedStudySheets + summary.completedDecks + summary.completedCases + summary.quizWeeksStarted);
+    expect(summary.totalCoreItems).toBe(summary.totalStudySheets + summary.totalDecks + summary.totalCases + summary.totalQuizWeeks);
     expect(summary.totalQuizAttempts).toBe(2);
     expect(summary.assessmentsDone).toBe(1);
     expect(summary.coreCompletionPercent).toBeGreaterThan(0);
