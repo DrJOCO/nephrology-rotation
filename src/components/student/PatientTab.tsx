@@ -307,7 +307,7 @@ interface TopicSuggestion {
   nav: [string, SubView];
 }
 
-export default function PatientTab({ patients, setPatients, navigate, onLogActivity }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger }) {
+export default function PatientTab({ patients, setPatients, navigate, onLogActivity, onRegisterLocalPatient }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger; onRegisterLocalPatient?: (id: string | number) => void }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
@@ -343,7 +343,9 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       topics: form.topics,
       notes: form.notes.trim(),
     };
-    setPatients(prev => [{ ...sanitized, id: Date.now(), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
+    const newId = Date.now();
+    onRegisterLocalPatient?.(newId);
+    setPatients(prev => [{ ...sanitized, id: newId, date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
     onLogActivity?.("patient", "Inpatient added", summarizeTopics(sanitized.topics));
 
     // Compute topic suggestions

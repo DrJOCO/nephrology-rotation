@@ -186,6 +186,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [tab, setTab] = useState("today");
   const [subView, setSubView] = useState<SubView>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
+  // IDs of patients added locally but not yet confirmed in a Firestore snapshot.
+  // Protects against multi-device "last writer wins" — when another device's
+  // stale auto-save echoes back via the listener, we re-merge any pending
+  // local additions so they don't vanish. IDs are pruned once they appear
+  // in an incoming snapshot.
+  const pendingLocalPatientIdsRef = useRef<Set<string | number>>(new Set());
+  const registerPendingLocalPatient = (id: string | number) => {
+    pendingLocalPatientIdsRef.current.add(id);
+  };
   const [weeklyScores, setWeeklyScores] = useState<WeeklyScores>({});
   const [preScore, setPreScore] = useState<QuizScore | null>(null);
   const [postScore, setPostScore] = useState<QuizScore | null>(null);
@@ -593,7 +602,22 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         if (latestKnownUpdatedAt && incomingUpdatedAt <= latestKnownUpdatedAt) return;
         latestStudentUpdateRef.current = incomingUpdatedAt;
       }
-      if (data.patients) setPatients(data.patients);
+      if (data.patients) {
+        const incoming = data.patients;
+        const incomingIds = new Set(incoming.map((p: Patient) => p.id));
+        // Prune pending IDs that have arrived in this snapshot.
+        for (const id of [...pendingLocalPatientIdsRef.current]) {
+          if (incomingIds.has(id)) pendingLocalPatientIdsRef.current.delete(id);
+        }
+        setPatients(currentLocal => {
+          // Re-merge any local additions still pending so a stale snapshot
+          // from another device doesn't drop them.
+          const stillPending = currentLocal.filter(
+            p => pendingLocalPatientIdsRef.current.has(p.id) && !incomingIds.has(p.id),
+          );
+          return stillPending.length > 0 ? [...stillPending, ...incoming] : incoming;
+        });
+      }
       if (data.weeklyScores) setWeeklyScores(data.weeklyScores);
       // Use hasOwnProperty so admin resets that null-out scores still apply
       if (Object.prototype.hasOwnProperty.call(data, "preScore")) setPreScore(data.preScore);
@@ -1691,7 +1715,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <FaqView onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
-        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} />}
+        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} onRegisterLocalPatient={registerPendingLocalPatient} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}
         </Suspense>
