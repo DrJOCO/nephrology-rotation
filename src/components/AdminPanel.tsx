@@ -746,6 +746,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     { id: "dashboard", icon: "📊", label: "Dashboard" },
     { id: "students", icon: "🎓", label: "Students" },
     { id: "analytics", icon: "📈", label: "Analytics" },
+    { id: "rotation", icon: "📡", label: "Rotation" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ];
 
@@ -766,7 +767,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
       >
         {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} articles={articles} onBack={() => navigate("dashboard")} />}
-        {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} deleteStudentRecord={deleteStudentRecord} requestConfirm={requestConfirm} showToast={showToast} />}
+        {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} deleteStudentRecord={deleteStudentRecord} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} deleteStudentRecord={deleteStudentRecord} navigate={navigate} settings={settings} articles={articles} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
@@ -776,6 +777,33 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "announcements" && <AnnouncementsEditor announcements={announcements} setAnnouncements={setAnnouncements} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "clinicGuides" && <ClinicGuidesEditor clinicGuides={clinicGuides} setClinicGuides={setClinicGuides} onBack={() => navigate("content")} />}
+        {tab === "rotation" && firebaseAdmin && (
+          <SettingsTab
+            settings={settings}
+            setSettings={setSettings}
+            rotationCode={rotationCode}
+            setRotationCodeState={setRotationCodeState}
+            curriculum={curriculum}
+            articles={articles}
+            announcements={announcements}
+            setCurriculum={setCurriculum}
+            setArticles={setArticles}
+            setAnnouncements={setAnnouncements}
+            firebaseAdmin={firebaseAdmin}
+            adminInvites={adminInvites}
+            adminInvitesLoading={adminInvitesLoading}
+            inviteEmail={inviteEmail}
+            setInviteEmail={setInviteEmail}
+            inviteSubmitting={inviteSubmitting}
+            inviteError={inviteError}
+            inviteSuccess={inviteSuccess}
+            onInviteAdmin={handleInviteAdmin}
+            showToast={showToast}
+            requestConfirm={requestConfirm}
+            onOpenContent={(subView) => navigate("content", subView ?? null)}
+            focusSection="rotation"
+          />
+        )}
         {tab === "settings" && firebaseAdmin && (
           <SettingsTab
             settings={settings}

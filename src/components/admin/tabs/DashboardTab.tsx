@@ -207,7 +207,7 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
       })()}
 
       {(() => {
-        const allActivity = students.flatMap(s => (s.activityLog || []).map(a => ({ ...a, studentName: s.name })));
+        const allActivity = activeStudents.flatMap(s => (s.activityLog || []).map(a => ({ ...a, studentName: s.name })));
         allActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         const recent = allActivity.slice(0, 15);
         if (recent.length === 0) return null;

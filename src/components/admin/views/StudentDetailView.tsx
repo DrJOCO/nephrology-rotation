@@ -400,7 +400,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       {/* Score Entry */}
       {showScoreEntry && (
         <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.warning}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 10 }}>ENTER SCORE</div>
+          <span style={{ display: "inline-block", fontSize: 13, fontWeight: 700, color: T.warning, background: T.warningBg, border: `1px solid ${T.warning}`, padding: "3px 10px", borderRadius: 999, marginBottom: 12 }}>Enter score</span>
           <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Quiz Type</label>
             <div style={{ display: "flex", gap: 6 }}>
@@ -447,7 +447,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       {/* Patient Entry */}
       {showAddPatient && (
         <div ref={patientEntryRef} style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `2px solid ${T.success}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.success, marginBottom: 10 }}>LOG CONSULT</div>
+          <span style={{ display: "inline-block", fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, border: `1px solid ${T.success}`, padding: "3px 10px", borderRadius: 999, marginBottom: 12 }}>Log consult</span>
           <div style={{ background: T.infoBg, borderRadius: 10, padding: 10, marginBottom: 12, border: `1px solid ${T.info}`, fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
             <strong style={{ color: T.info }}>No PHI:</strong> {PHI_WARNING}
           </div>

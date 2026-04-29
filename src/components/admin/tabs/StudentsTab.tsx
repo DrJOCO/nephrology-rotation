@@ -6,7 +6,7 @@ import type { AdminStudent, AdminSubView, SharedSettings } from "../../../types"
 import { buildAdminCompetencySnapshot, buildAdminAssessmentSignal } from "../lib/student-analytics";
 import { getScorePct, getMinutesSince } from "../lib/format";
 
-export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, deleteStudentRecord, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; deleteStudentRecord: (student: AdminStudent) => Promise<void>; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
+export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, deleteStudentRecord, writeStudentToFirestore, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; deleteStudentRecord: (student: AdminStudent) => Promise<void>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", year: "MS3", startDate: "" });
   const [search, setSearch] = useState("");
@@ -41,7 +41,19 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
   };
 
   const toggleStatus = (id: number | string) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, status: s.status === "active" ? "completed" : "active" } : s));
+    const target = students.find(s => s.id === id);
+    if (!target) return;
+    const nextStatus = target.status === "active" ? "completed" : "active";
+    setStudents(prev => prev.map(s => s.id === id ? { ...s, status: nextStatus } : s));
+    if (isConnected && target.studentId) {
+      writeStudentToFirestore(target.studentId, { status: nextStatus });
+    }
+    showToast(
+      nextStatus === "completed"
+        ? `${target.name} marked complete. They keep app access; you stop seeing them in teaching call-outs.`
+        : `${target.name} reactivated.`,
+      "success",
+    );
   };
 
   const yearOptions = Array.from(new Set(students.map((student) => student.year).filter((value): value is string => !!value))).sort((a, b) => a.localeCompare(b));
@@ -76,10 +88,6 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
 
   const active = filteredStudents.filter(s => s.status === "active");
   const completed = filteredStudents.filter(s => s.status === "completed");
-  const staleCount = students.filter((student) => {
-    const minutes = getMinutesSince(student.lastSyncedAt || null);
-    return minutes === null || minutes > 60;
-  }).length;
   const needsAssessmentCount = students.filter((student) => !student.preScore || !student.postScore).length;
 
   return (
@@ -109,10 +117,6 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
           <div style={{ background: T.bg, borderRadius: 12, padding: 12 }}>
             <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", fontWeight: 700 }}>Active</div>
             <div style={{ fontSize: 24, color: T.navy, fontWeight: 700, fontFamily: T.mono }}>{students.filter((student) => student.status === "active").length}</div>
-          </div>
-          <div style={{ background: T.bg, borderRadius: 12, padding: 12 }}>
-            <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", fontWeight: 700 }}>Stale Sync</div>
-            <div style={{ fontSize: 24, color: staleCount > 0 ? T.warning : T.navy, fontWeight: 700, fontFamily: T.mono }}>{staleCount}</div>
           </div>
           <div style={{ background: T.bg, borderRadius: 12, padding: 12 }}>
             <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", fontWeight: 700 }}>Need Assessment</div>
@@ -201,7 +205,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
       )}
 
       {active.map(s => (
-        <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={() => { void removeStudent(s); }} settings={settings} articles={articles} />
+        <StudentRow key={s.id} student={s} navigate={navigate} onToggle={() => toggleStatus(s.id)} onRemove={() => { void removeStudent(s); }} settings={settings} articles={articles} />
       ))}
 
       {completed.length > 0 && (
@@ -210,7 +214,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
             Completed Rotations ({completed.length})
           </div>
           {completed.map(s => (
-            <StudentRow key={s.id} student={s} navigate={navigate} onToggle={isConnected ? null : () => toggleStatus(s.id)} onRemove={() => { void removeStudent(s); }} dimmed settings={settings} articles={articles} />
+            <StudentRow key={s.id} student={s} navigate={navigate} onToggle={() => toggleStatus(s.id)} onRemove={() => { void removeStudent(s); }} dimmed settings={settings} articles={articles} />
           ))}
         </>
       )}

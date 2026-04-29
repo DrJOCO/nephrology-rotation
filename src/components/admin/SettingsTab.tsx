@@ -55,6 +55,7 @@ export function SettingsTab({
   showToast,
   requestConfirm,
   onOpenContent,
+  focusSection,
 }: {
   settings: SharedSettings;
   setSettings: React.Dispatch<React.SetStateAction<SharedSettings>>;
@@ -78,7 +79,10 @@ export function SettingsTab({
   showToast: (message: string, tone?: AdminToastTone) => void;
   requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>;
   onOpenContent: (subView?: AdminSubView) => void;
+  focusSection?: "rotation";
 }) {
+  const showRotation = focusSection === "rotation";
+  const showOtherSections = !focusSection;
   const [creating, setCreating] = useState(false);
   const [rejoinCode, setRejoinCode] = useState("");
   const [rejoinError, setRejoinError] = useState("");
@@ -264,27 +268,31 @@ export function SettingsTab({
   };
 
   const masterAdmin = isBootstrapAdminEmail(firebaseAdmin.email || "");
-  const sectionButtons = [
-    { label: "Rotation", ref: rotationRef },
-    { label: "Profile", ref: profileRef },
-    { label: "Content", ref: contentRef },
-    { label: "Security", ref: securityRef },
-    ...(masterAdmin ? [{ label: "Admin Access", ref: adminAccessRef }] : []),
-  ];
+  const sectionButtons = focusSection === "rotation"
+    ? []
+    : [
+        { label: "Profile", ref: profileRef },
+        { label: "Content", ref: contentRef },
+        { label: "Security", ref: securityRef },
+        ...(masterAdmin ? [{ label: "Admin Access", ref: adminAccessRef }] : []),
+      ];
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
-      <div style={{ background: T.card, borderRadius: 16, padding: 16, border: `1px solid ${T.line}`, position: "sticky", top: 84, zIndex: 20 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Jump To</div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {sectionButtons.map((section) => (
-            <button key={section.label} onClick={() => jumpTo(section.ref)} style={{ padding: "8px 12px", borderRadius: 999, border: `1px solid ${T.line}`, background: T.bg, color: T.navy, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              {section.label}
-            </button>
-          ))}
+      {sectionButtons.length > 0 && (
+        <div style={{ background: T.card, borderRadius: 16, padding: 16, border: `1px solid ${T.line}`, position: "sticky", top: 84, zIndex: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 }}>Jump To</div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {sectionButtons.map((section) => (
+              <button key={section.label} onClick={() => jumpTo(section.ref)} style={{ padding: "8px 12px", borderRadius: 999, border: `1px solid ${T.line}`, background: T.bg, color: T.navy, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                {section.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
+      {showRotation && (
       <SettingsSection sectionRef={rotationRef} title="Rotation Workspace" description="Create a new rotation, reconnect to an existing one, and manage the learner roster tied to each code.">
         <div style={{ display: "grid", gap: 16 }}>
           <div style={{ background: `linear-gradient(135deg, ${T.navyBg}, ${T.deepBg})`, borderRadius: 16, padding: 20, color: "white" }}>
@@ -426,7 +434,9 @@ export function SettingsTab({
           </div>
         </div>
       </SettingsSection>
+      )}
 
+      {showOtherSections && (
       <SettingsSection sectionRef={profileRef} title="Profile" description="Update the identity and schedule details students see across this rotation.">
         <div style={{ display: "grid", gap: 16 }}>
           <div>
@@ -468,7 +478,9 @@ export function SettingsTab({
           </div>
         </div>
       </SettingsSection>
+      )}
 
+      {showOtherSections && (
       <SettingsSection sectionRef={contentRef} title="Curriculum & Content" description="Edit the weekly curriculum, articles, announcements, and clinic guides students see. You only need this between rotations.">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
           <button
@@ -505,7 +517,9 @@ export function SettingsTab({
           </button>
         </div>
       </SettingsSection>
+      )}
 
+      {showOtherSections && (
       <SettingsSection sectionRef={securityRef} title="Security" description="Keep the shared panel protected on any device used during rounds or teaching.">
         <div>
           <label style={adminLabel}>Admin PIN</label>
@@ -513,8 +527,9 @@ export function SettingsTab({
           <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>Choose a private PIN and avoid sharing it with students. Right now the PIN is still local to this browser.</div>
         </div>
       </SettingsSection>
+      )}
 
-      {isBootstrapAdminEmail(firebaseAdmin.email || "") && (
+      {showOtherSections && isBootstrapAdminEmail(firebaseAdmin.email || "") && (
       <SettingsSection sectionRef={adminAccessRef} title="Admin Access" description="Invite another attending or educator to create their own admin sign-in and manage their own rotations.">
         <div style={{ background: T.bg, borderRadius: 12, padding: 12, border: `1px solid ${T.line}`, marginBottom: 14 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>Signed In Account</div>
