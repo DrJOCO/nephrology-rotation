@@ -1549,7 +1549,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <LandmarkTrialsView week={subView.week} onBack={() => navigate("today")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
         {tab === "today" && subView?.type === "studySheets" && (
-          <StudySheetsView week={subView.week} onBack={() => navigate("today")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
+          <StudySheetsView week={subView.week} initialSheetId={subView.sheetId} onBack={() => navigate("today")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
             const sheet = (STUDY_SHEETS[subView.week] || []).find((item) => item.id === sheetId);
             const wasCompleted = Boolean(completedItems.studySheets[sheetId]);
             setCompletedItems(prev => {

@@ -123,29 +123,26 @@ function getPearlIndex(date: Date): number {
 }
 
 function PearlToast({ tip, onDismiss }: { tip: string; onDismiss: () => void }) {
-  const [open, setOpen] = useState(false);
   return (
-    <section style={{ background: T.ice, borderRadius: 12, border: `1px solid ${T.pale}`, padding: "8px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
-      <Sparkles size={14} strokeWidth={1.75} color={T.brand} aria-hidden="true" style={{ flexShrink: 0 }} />
-      <button
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-        style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer", color: T.text, fontSize: 13, fontFamily: "inherit", display: "flex", flexDirection: "column", gap: 2 }}
-      >
-        <span style={{ fontWeight: 700, color: T.brand, textTransform: "uppercase", letterSpacing: 0.7, fontSize: 11 }}>
-          Pearl {open ? "▾" : "▸"}
-        </span>
-        {open
-          ? <span style={{ lineHeight: 1.55 }}>{tip}</span>
-          : <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: T.sub }}>{tip}</span>}
-      </button>
-      <button
-        onClick={onDismiss}
-        aria-label="Dismiss pearl"
-        style={{ background: "none", border: "none", color: T.muted, fontSize: 12, fontWeight: 600, cursor: "pointer", padding: "4px 6px", flexShrink: 0 }}
-      >
-        Dismiss
-      </button>
+    <section style={{ background: T.ice, borderRadius: 18, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Sparkles size={16} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, textTransform: "uppercase", letterSpacing: 0.9 }}>
+            Pearl of the day
+          </div>
+        </div>
+        <button
+          onClick={onDismiss}
+          aria-label="Dismiss pearl"
+          style={{ background: "none", border: "none", color: T.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: 0 }}
+        >
+          Dismiss
+        </button>
+      </div>
+      <div style={{ fontSize: 14, color: T.text, lineHeight: 1.65 }}>
+        {tip}
+      </div>
     </section>
   );
 }
@@ -379,7 +376,12 @@ function buildHeroCard({
     tab: "today",
     onClick: onOpenSuggested,
   };
-  const suggestedOrLearningAction = hasConsultSuggestions ? suggestedAction : learningPlan.nextAction;
+  const learningActionIsModuleQuiz = learningPlan.nextAction.subView?.type === "weeklyQuiz";
+  const roundsSecondaryAction = hasConsultSuggestions
+    ? suggestedAction
+    : learningActionIsModuleQuiz
+      ? null
+      : learningPlan.nextAction;
 
   if (rotationEnded) {
     return {
@@ -406,7 +408,7 @@ function buildHeroCard({
       body: "Use the CKD, hypertension, and transplant clinic guides as separate outpatient teaching tracks, then tighten one more core module item before clinic.",
       tone: "clinic",
       badge: friday.toLocaleDateString("en-US", { weekday: "short" }),
-      actions: [clinicAction, suggestedOrLearningAction],
+      actions: roundsSecondaryAction ? [clinicAction, roundsSecondaryAction] : [clinicAction],
     };
   }
 
@@ -414,16 +416,16 @@ function buildHeroCard({
     return {
       eyebrow: "Next up",
       title: "Rounds",
-      body: "Use today to sharpen one high-yield idea before rounds.",
+      body: "Use today to start with your consult list and the topics your patients are raising.",
       tone: "rounds",
       badge: "Rounds",
-      actions: [learningPlan.nextAction, hasConsultSuggestions ? suggestedAction : patientsAction],
+      actions: roundsSecondaryAction ? [patientsAction, roundsSecondaryAction] : [patientsAction],
     };
   }
 
   // Default Morning rounds: pair the consult list with the consult-driven
-  // "Suggested" entry point. Falls back to the learning plan's next action
-  // when there are no consults yet (so the second slot stays useful).
+  // "Suggested" entry point. If the next core item is the module quiz, skip it
+  // here because the core-path card immediately below already owns that CTA.
   return {
     eyebrow: "Next up",
     title: activePatientCount > 0 ? "Morning rounds" : "Build your rounding list",
@@ -432,10 +434,7 @@ function buildHeroCard({
       : "No consults logged yet. Add some first so Today can start tailoring the right prep.",
     tone: "rounds",
     badge: "Rounds",
-    actions: [
-      patientsAction,
-      suggestedOrLearningAction,
-    ],
+    actions: roundsSecondaryAction ? [patientsAction, roundsSecondaryAction] : [patientsAction],
   };
 }
 
@@ -608,7 +607,7 @@ export default function HomeTab({
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile || heroCard.actions.length === 1 ? "1fr" : "1fr 1fr", gap: 10 }}>
           {heroCard.actions.map((action, index) => (
             <button
               key={`${action.label}-${index}`}
@@ -702,7 +701,7 @@ export default function HomeTab({
                       {active.sheets.map(s => (
                         <button
                           key={s.id}
-                          onClick={() => navigate("today", { type: "studySheets", week: s.week })}
+                          onClick={() => navigate("today", { type: "studySheets", week: s.week, sheetId: s.id })}
                           style={{ background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left", color: T.brand, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}
                         >
                           <ArrowRight size={13} strokeWidth={2} aria-hidden="true" /> {s.title}

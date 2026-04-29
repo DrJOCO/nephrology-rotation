@@ -1,4 +1,4 @@
-import { useRef, useState, CSSProperties } from "react";
+import { useEffect, useRef, useState, CSSProperties } from "react";
 import { T, WEEKLY, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { backBtnStyle, EduDisclaimer } from "./shared";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
@@ -7,12 +7,26 @@ import { getTopicContent } from "../../utils/topicMapping";
 const imgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 10, marginBottom: 6, border: `1px solid ${T.line}` };
 const captionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.4 };
 
-export default function StudySheetsView({ week, onBack, navigate, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
+export default function StudySheetsView({ week, initialSheetId, onBack, navigate, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const sheets = STUDY_SHEETS[week] || [];
   const wk = WEEKLY[week];
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const initialExpandedIndex = initialSheetId ? sheets.findIndex(sheet => sheet.id === initialSheetId) : -1;
+  const [expanded, setExpanded] = useState<number | null>(initialExpandedIndex >= 0 ? initialExpandedIndex : null);
   const doneCount = sheets.filter(s => (completedItems?.studySheets || {})[s.id]).length;
   const sheetRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!initialSheetId) {
+      setExpanded(null);
+      return;
+    }
+    const index = sheets.findIndex(sheet => sheet.id === initialSheetId);
+    if (index < 0) return;
+    setExpanded(index);
+    requestAnimationFrame(() => {
+      sheetRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [initialSheetId, week]);
 
   function handleToggle(si: number, isOpen: boolean) {
     setExpanded(isOpen ? null : si);

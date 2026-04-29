@@ -43,7 +43,7 @@ export type SubView =
   | { type: "postResults" }
   | { type: "articles"; week: number }
   | { type: "trials"; week: number }
-  | { type: "studySheets"; week: number }
+  | { type: "studySheets"; week: number; sheetId?: string }
   | { type: "cases"; week: number }
   | { type: "resources"; tab?: "podcasts" | "websites" | "guidelines" | "decks" | "tools"; week?: number }
   | { type: "abbreviations" }
