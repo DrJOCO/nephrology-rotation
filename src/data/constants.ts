@@ -411,7 +411,7 @@ export const RESOURCES = {
       desc: "CGA staging, renoprotective therapy, BP, CKD complications, modality education, and transplant timing.",
       url: "/decks/04-CKD.pptx",
       tag: "CKD",
-      topics: ["CKD", "Anemia of CKD", "CKD-MBD", "SGLT2 Inhibitors", "Polycystic Kidney Disease"] },
+      topics: ["CKD", "Anemia of CKD", "CKD-MBD", "SGLT2 Inhibitors"] },
     { id: "deck-dialysis", week: 4, name: "Dialysis & KRT",
       desc: "AEIOU indications, IHD vs CRRT vs SLED vs PD, vascular access, complications, and home dialysis basics.",
       url: "/decks/05-Dialysis.pptx",
@@ -935,7 +935,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1F48A}",
       title: "CKD & the SGLT2i Revolution",
       subtitle: "Four pillars of DKD therapy you must know",
-      topics: ["CKD", "Anemia of CKD", "Hypertension", "Proteinuria", "Polycystic Kidney Disease"],
+      topics: ["CKD", "Anemia of CKD", "Hypertension", "Proteinuria", "Diabetic Kidney Disease", "SGLT2 Inhibitors"],
       sections: [
         {
           heading: "CKD Staging (KDIGO Heat Map)",
@@ -1401,7 +1401,7 @@ export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWee
   "Fluid Management":     { studySheets: ["sodium-cheatsheet"],             quizWeeks: [2] },
   "Calcium/Phosphorus":   { studySheets: ["potassium-acidbase-cheatsheet"], quizWeeks: [2] },
   "Proteinuria":          { studySheets: ["gn-nephrotic-cheatsheet"],       quizWeeks: [3] },
-  "Polycystic Kidney Disease": { studySheets: ["adpkd-cheatsheet", "ckd-sglt2i-cheatsheet"], quizWeeks: [3] },
+  "Polycystic Kidney Disease": { studySheets: ["adpkd-cheatsheet"], quizWeeks: [3] },
   "APOL1-Associated Kidney Disease": { studySheets: ["gn-nephrotic-cheatsheet"], quizWeeks: [3] },
   "Hepatorenal Syndrome": { studySheets: ["hrs-contrast-rhabdo-cheatsheet"], quizWeeks: [1] },
   "Contrast-Associated AKI": { studySheets: ["hrs-contrast-rhabdo-cheatsheet"], quizWeeks: [1] },

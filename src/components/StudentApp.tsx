@@ -186,14 +186,21 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [tab, setTab] = useState("today");
   const [subView, setSubView] = useState<SubView>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
-  // IDs of patients added locally but not yet confirmed in a Firestore snapshot.
-  // Protects against multi-device "last writer wins" — when another device's
-  // stale auto-save echoes back via the listener, we re-merge any pending
-  // local additions so they don't vanish. IDs are pruned once they appear
-  // in an incoming snapshot.
-  const pendingLocalPatientIdsRef = useRef<Set<string | number>>(new Set());
-  const registerPendingLocalPatient = (id: string | number) => {
-    pendingLocalPatientIdsRef.current.add(id);
+  // Tracks locally-mutated patients that haven't been flushed to Firestore yet.
+  // Protects against multi-device "last writer wins": when another device's
+  // stale auto-save echoes back via the listener, we keep the local version
+  // for any ID still in `dirty` (adds/edits/discharges/follow-ups) and drop
+  // any ID still in `removed`. Both sets are cleared once our 2s debounce
+  // flushes — at that point our state is canonical until the next mutation.
+  const pendingDirtyPatientIdsRef = useRef<Set<string | number>>(new Set());
+  const pendingRemovedPatientIdsRef = useRef<Set<string | number>>(new Set());
+  const markPatientDirty = (id: string | number) => {
+    pendingRemovedPatientIdsRef.current.delete(id);
+    pendingDirtyPatientIdsRef.current.add(id);
+  };
+  const markPatientRemoved = (id: string | number) => {
+    pendingDirtyPatientIdsRef.current.delete(id);
+    pendingRemovedPatientIdsRef.current.add(id);
   };
   const [weeklyScores, setWeeklyScores] = useState<WeeklyScores>({});
   const [preScore, setPreScore] = useState<QuizScore | null>(null);
@@ -556,6 +563,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           points,
           updatedAt,
         }));
+        // Our snapshot is the canonical state up to this point — clear pending
+        // mutation tracking so future foreign writes merge normally.
+        pendingDirtyPatientIdsRef.current.clear();
+        pendingRemovedPatientIdsRef.current.clear();
       }, 2000);
     }
   }, [patients, weeklyScores, preScore, postScore, studentName, nameSet, loading, completedItems, bookmarks, srQueue, activityLog, reflections, gamification, studentId, studentEmail, studentSyncIdentity]);
@@ -604,18 +615,26 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       }
       if (data.patients) {
         const incoming = data.patients;
-        const incomingIds = new Set(incoming.map((p: Patient) => p.id));
-        // Prune pending IDs that have arrived in this snapshot.
-        for (const id of [...pendingLocalPatientIdsRef.current]) {
-          if (incomingIds.has(id)) pendingLocalPatientIdsRef.current.delete(id);
-        }
+        const incomingById = new Map(incoming.map((p: Patient) => [p.id, p]));
         setPatients(currentLocal => {
-          // Re-merge any local additions still pending so a stale snapshot
-          // from another device doesn't drop them.
-          const stillPending = currentLocal.filter(
-            p => pendingLocalPatientIdsRef.current.has(p.id) && !incomingIds.has(p.id),
-          );
-          return stillPending.length > 0 ? [...stillPending, ...incoming] : incoming;
+          // ID-based merge: keep local for any ID with pending dirty state,
+          // drop any ID still in pendingRemoved, and append incoming-only
+          // entries (additions made on the other device).
+          const result: Patient[] = [];
+          const seen = new Set<string | number>();
+          for (const local of currentLocal) {
+            if (pendingRemovedPatientIdsRef.current.has(local.id)) continue;
+            seen.add(local.id);
+            if (pendingDirtyPatientIdsRef.current.has(local.id)) {
+              result.push(local);
+            } else if (incomingById.has(local.id)) {
+              result.push(incomingById.get(local.id) as Patient);
+            }
+          }
+          for (const inc of incoming) {
+            if (!seen.has(inc.id)) result.push(inc);
+          }
+          return result;
         });
       }
       if (data.weeklyScores) setWeeklyScores(data.weeklyScores);
@@ -1715,7 +1734,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <FaqView onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
-        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} onRegisterLocalPatient={registerPendingLocalPatient} />}
+        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}
         </Suspense>

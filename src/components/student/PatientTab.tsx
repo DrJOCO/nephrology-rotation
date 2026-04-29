@@ -307,7 +307,7 @@ interface TopicSuggestion {
   nav: [string, SubView];
 }
 
-export default function PatientTab({ patients, setPatients, navigate, onLogActivity, onRegisterLocalPatient }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger; onRegisterLocalPatient?: (id: string | number) => void }) {
+export default function PatientTab({ patients, setPatients, navigate, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
@@ -344,7 +344,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       notes: form.notes.trim(),
     };
     const newId = Date.now();
-    onRegisterLocalPatient?.(newId);
+    onMarkPatientDirty?.(newId);
     setPatients(prev => [{ ...sanitized, id: newId, date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
     onLogActivity?.("patient", "Inpatient added", summarizeTopics(sanitized.topics));
 
@@ -390,11 +390,13 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
     const patient = patients.find(p => p.id === id);
     if (!patient) return;
     const nextStatus = patient.status === "active" ? "discharged" : "active";
+    onMarkPatientDirty?.(id);
     setPatients(prev => prev.map(p => p.id === id ? { ...p, status: nextStatus } : p));
     onLogActivity?.("patient", nextStatus === "discharged" ? "Inpatient discharged" : "Inpatient reactivated", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
   };
   const remove = (id: string | number) => {
     const patient = patients.find(p => p.id === id);
+    onMarkPatientRemoved?.(id);
     setPatients(prev => prev.filter(p => p.id !== id));
     if (patient) {
       onLogActivity?.("patient", "Inpatient removed", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
@@ -428,6 +430,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       notes: editForm.notes.trim(),
     };
     const existing = patients.find(p => p.id === editingId);
+    if (editingId != null) onMarkPatientDirty?.(editingId);
     setPatients(prev => prev.map(p => p.id === editingId ? { ...p, ...sanitized } : p));
     onLogActivity?.("patient", "Inpatient updated", buildPatientUpdateDetail(existing, sanitized));
     cancelEdit();
@@ -436,6 +439,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
   const addFollowUp = (patientId: string | number, noteText: string) => {
     if (!noteText.trim()) return;
     const patient = patients.find(p => p.id === patientId);
+    onMarkPatientDirty?.(patientId);
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
       followUps: [...(p.followUps || []), { id: Date.now(), date: new Date().toISOString(), note: noteText.trim() }]
@@ -445,6 +449,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
 
   const removeFollowUp = (patientId: string | number, followUpId: number) => {
     const patient = patients.find(p => p.id === patientId);
+    onMarkPatientDirty?.(patientId);
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
       followUps: (p.followUps || []).filter(f => f.id !== followUpId)
