@@ -66,7 +66,7 @@ export function ensureGoogleFonts(): void {
   link.rel = "stylesheet";
   // Phase 1 (Clinical Paper spec v1): Inter Tight + Source Serif 4 + JetBrains Mono.
   // Crimson Pro retained as serif fallback until Phase 2 sweep.
-  link.href = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
+  link.href = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Source+Serif+4:wght@400;500;600;700&family=Crimson+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
   document.head.appendChild(link);
 }
 
@@ -125,16 +125,37 @@ export function ensureThemeStyles(): void {
       background: var(--c-bg);
       margin: 0;
     }
+    /* Halation fix: bump body weight on dark backgrounds. Inter Tight at 400
+       blooms against dark bg; 425 keeps the airy feel but reads sharper. */
+    [data-theme="dark"] body {
+      font-weight: 425;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    /* Browser autofill override — Chrome/Safari paint a yellow/white background on
+       autofilled inputs that ignores our theme. Pin the inner box-shadow to the
+       current input bg and force text color to match. */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px var(--c-card) inset !important;
+      -webkit-text-fill-color: var(--c-text) !important;
+      caret-color: var(--c-text);
+      transition: background-color 9999s ease-in-out 0s;
+    }
     @media screen {
       /* Dark mode: Clinical Paper paired palette (spec §10) */
       [data-theme="dark"] {
-        --c-navy:#F0EADB;--c-deep:#C9C2AF;--c-text:#F0EADB;--c-sub:#C9C2AF;--c-dark:#F0EADB;
-        --c-muted:#9A907F;
+        /* Halation-tuned: text dropped from #F0EADB → #E1D8C3 (88% L), bg lifted from
+           #12100D → #16130E so contrast ratio sits ~12:1 instead of ~17:1. */
+        --c-navy:#E1D8C3;--c-deep:#BDB29E;--c-text:#E1D8C3;--c-sub:#BDB29E;--c-dark:#E1D8C3;
+        --c-muted:#8E8573;
         --c-med:#C07A7A;--c-sky:#C07A7A;--c-accent:#C07A7A;--c-purple:#C07A7A;
-        --c-ice:#201C17;--c-pale:#201C17;
+        --c-ice:#221E18;--c-pale:#221E18;
         --c-green:#9DA77A;--c-greenDk:#C4CCA7;--c-gold:#D19A6B;--c-orange:#D19A6B;
-        --c-line:#3A342D;--c-bg:#12100D;--c-card:#181510;
-        --c-navy-bg:#12100D;--c-deep-bg:#181510;
+        --c-line:#3A342D;--c-bg:#16130E;--c-card:#1C1812;
+        --c-navy-bg:#16130E;--c-deep-bg:#1C1812;
         --c-yellow-bg:#221B14;--c-red-bg:#211615;--c-purple-bg:#221818;
         --c-green-bg:#1A1C15;--c-blue-bg:#201C17;--c-gray-bg:#181510;--c-warm-bg:#181510;
         --c-gold-alpha:rgba(209,154,107,0.18);--c-gold-alpha-md:rgba(209,154,107,0.28);

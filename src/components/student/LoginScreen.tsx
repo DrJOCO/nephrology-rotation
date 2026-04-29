@@ -535,6 +535,8 @@ export default function LoginScreen({
                   pattern="[0-9]*"
                   placeholder=""
                   maxLength={STUDENT_AUTH_PIN_LENGTH}
+                  name="rotation-pin"
+                  autoComplete="one-time-code"
                   value={studentPin}
                   onChange={e => setStudentPin(e.target.value)}
                   onKeyDown={e => {
@@ -558,6 +560,8 @@ export default function LoginScreen({
                     pattern="[0-9]*"
                     placeholder=""
                     maxLength={STUDENT_AUTH_PIN_LENGTH}
+                    name="rotation-pin-confirm"
+                    autoComplete="one-time-code"
                     value={studentPinConfirm}
                     onChange={e => setStudentPinConfirm(e.target.value)}
                     onKeyDown={e => {
