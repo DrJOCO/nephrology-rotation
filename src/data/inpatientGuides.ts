@@ -45,7 +45,7 @@ export const INPATIENT_GUIDES: Record<
   AKI: {
     topic: "AKI",
     icon: "🔬",
-    title: "AKI Consult Essentials",
+    title: "AKI Consult",
     subtitle: "Severity, mechanism, and what needs to happen today",
 
     whyWeGetConsulted:
@@ -125,7 +125,7 @@ export const INPATIENT_GUIDES: Record<
   Hyponatremia: {
     topic: "Hyponatremia",
     icon: "💧",
-    title: "Hyponatremia Consult Essentials",
+    title: "Hyponatremia Consult",
     subtitle: "Physiology, symptom severity, and safe correction",
 
     whyWeGetConsulted:
@@ -199,7 +199,7 @@ export const INPATIENT_GUIDES: Record<
   Hyperkalemia: {
     topic: "Hyperkalemia",
     icon: "⚡",
-    title: "Hyperkalemia Consult Essentials",
+    title: "Hyperkalemia Consult",
     subtitle: "Stabilize, shift, remove, and find the driver",
 
     whyWeGetConsulted:
@@ -417,7 +417,7 @@ export const INPATIENT_GUIDES: Record<
   HRS: {
     topic: "HRS",
     icon: "🫀",
-    title: "HRS-AKI Consult Essentials",
+    title: "HRS-AKI Consult",
     subtitle: "Cirrhosis + AKI = exclude everything, then diagnose HRS",
     whyWeGetConsulted:
       "AKI in a cirrhotic patient with ascites. The primary team wants to know: Is this HRS? Should we start terlipressin? Does this patient need dialysis?",
@@ -484,7 +484,7 @@ export const INPATIENT_GUIDES: Record<
   "Contrast AKI": {
     topic: "Contrast AKI",
     icon: "💧",
-    title: "Contrast-Associated AKI Essentials",
+    title: "Contrast-Associated AKI",
     subtitle: "Is it really the contrast, or just a coincidence?",
     whyWeGetConsulted:
       "Team wants to know if a post-contrast Cr rise is CI-AKI, whether it will recover, and whether the patient can get future contrast studies safely.",
@@ -547,7 +547,7 @@ export const INPATIENT_GUIDES: Record<
   Rhabdo: {
     topic: "Rhabdo",
     icon: "💪",
-    title: "Rhabdomyolysis Consult Essentials",
+    title: "Rhabdomyolysis Consult",
     subtitle: "CK through the roof — now prevent the AKI",
     whyWeGetConsulted:
       "Elevated CK with or without AKI. Team wants guidance on fluid management to prevent AKI, electrolyte management (especially hyperkalemia), and when to dialyze.",
@@ -615,7 +615,7 @@ export const INPATIENT_GUIDES: Record<
   Cardiorenal: {
     topic: "Cardiorenal",
     icon: "❤️",
-    title: "Cardiorenal Syndrome Essentials",
+    title: "Cardiorenal Syndrome",
     subtitle: "The Cr is rising during diuresis — is this bad?",
     whyWeGetConsulted:
       "Rising creatinine in a heart failure patient being diuresed. The team is worried about 'kidney injury' and wants to know if they should back off diuretics.",
@@ -683,7 +683,7 @@ export const INPATIENT_GUIDES: Record<
   DKD: {
     topic: "DKD",
     icon: "🩸",
-    title: "Diabetic Kidney Disease Essentials",
+    title: "Diabetic Kidney Disease",
     subtitle: "The #1 cause of ESKD — optimize every pillar",
     whyWeGetConsulted:
       "Progressive CKD in a diabetic patient, rising proteinuria, or medication optimization for DKD. The team wants to know: Is this DKD or something else? Are we maximizing therapy?",
@@ -748,7 +748,7 @@ export const INPATIENT_GUIDES: Record<
   "PD Peritonitis": {
     topic: "PD Peritonitis",
     icon: "🫧",
-    title: "PD Peritonitis Consult Essentials",
+    title: "PD Peritonitis Consult",
     subtitle: "Cloudy bag = peritonitis until proven otherwise",
     whyWeGetConsulted:
       "PD patient admitted with cloudy effluent ± abdominal pain. Team wants guidance on diagnosis confirmation, empiric antibiotics, and whether the catheter needs to come out.",

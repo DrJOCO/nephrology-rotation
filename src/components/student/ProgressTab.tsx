@@ -6,38 +6,6 @@ import { ACHIEVEMENTS, getLevel } from "../../utils/gamification";
 import type { Gamification, Patient, QuizScore, SubView, WeeklyScores } from "../../types";
 import type { CompetencyDomainSummary, CompetencySummary } from "../../utils/competency";
 
-function MasteryRing({ value }: { value: number }) {
-  const size = 120;
-  const stroke = 10;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - Math.max(0, Math.min(value, 100)) / 100);
-
-  return (
-    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
-      <svg width={size} height={size} aria-hidden="true">
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke={T.line} strokeWidth={stroke} fill="none" />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={T.brand}
-          strokeWidth={stroke}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </svg>
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ fontSize: 28, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{value}%</div>
-        <div style={{ fontSize: 13, color: T.muted }}>Mastery</div>
-      </div>
-    </div>
-  );
-}
-
 const tierStyles: Record<CompetencyDomainSummary["tier"], { bg: string; border: string; text: string }> = {
   Novice: { bg: T.grayBg, border: T.line, text: T.muted },
   Developing: { bg: T.warningBg, border: T.warning, text: T.warning },
@@ -75,21 +43,18 @@ export default function ProgressTab({
   return (
     <div style={{ padding: 16 }}>
       <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "18px 16px", marginBottom: 16 }}>
-        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 18, alignItems: isMobile ? "flex-start" : "center" }}>
-          <MasteryRing value={competencySummary.masteryPercent} />
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 6 }}>
-              {competencySummary.masteryLabel}
-            </div>
-            <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 24, fontWeight: 700 }}>
-              {competencySummary.masteryDetail}
-            </h2>
-            <p style={{ margin: "8px 0 0", fontSize: 13, color: T.sub, lineHeight: 1.6, maxWidth: 520 }}>
-              {currentWeek
-                ? `Module ${currentWeek} is measured against core study sheets, cases, and a scored quiz signal. Optional references stay available for deeper reading.`
-                : "The mastery ring rolls up the core objectives across your active rotation work."}
-            </p>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 6 }}>
+            {competencySummary.masteryLabel}
           </div>
+          <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 24, fontWeight: 700 }}>
+            {competencySummary.masteryDetail}
+          </h2>
+          <p style={{ margin: "8px 0 0", fontSize: 13, color: T.sub, lineHeight: 1.6, maxWidth: 520 }}>
+            {currentWeek
+              ? `Module ${currentWeek} is measured against core study sheets, cases, and a scored quiz signal. Optional references stay available for deeper reading.`
+              : "Core objectives roll up across your active rotation work."}
+          </p>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginTop: 16 }}>
@@ -311,7 +276,7 @@ export default function ProgressTab({
             {!preScore && (
               <button
                 onClick={() => navigate("today", { type: "preQuiz" })}
-                style={{ background: T.brand, color: T.brandInk, border: "none", borderRadius: 12, padding: "11px 16px", cursor: "pointer", fontSize: 14, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 6 }}
+                style={{ background: "transparent", color: T.brand, border: `1px solid ${T.brand}`, borderRadius: 12, padding: "10px 16px", cursor: "pointer", fontSize: 14, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}
               >
                 Take baseline quiz
                 <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />

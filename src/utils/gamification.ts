@@ -50,6 +50,7 @@ export interface StudentState {
     articles?: Record<string, boolean>;
     studySheets?: Record<string, boolean>;
     decks?: Record<string, boolean>;
+    consultTopics?: Record<string, unknown>;
     cases?: Record<string, CaseResult>;
   };
   gamification?: GamificationData;
@@ -104,6 +105,7 @@ export function calculatePoints(state: StudentState): number {
   pts += Object.keys(completed.articles || {}).length * 1;
   pts += Object.keys(completed.studySheets || {}).length * 3;
   pts += Object.keys(completed.decks || {}).length * 4;
+  pts += Object.keys(completed.consultTopics || {}).length * 2;
 
   // Case-based learning points (15 per case, +5 bonus for ≥80%)
   const cases = completed.cases || {};

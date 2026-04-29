@@ -117,8 +117,8 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Resources</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Curated links and teaching decks for your nephrology rotation</p>
 
-      {/* Tab bar */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto" }}>
+      {/* Tab bar — wraps to second row instead of clipping at narrow widths. */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
         {tabList.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
             style={{ padding: "8px 14px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",

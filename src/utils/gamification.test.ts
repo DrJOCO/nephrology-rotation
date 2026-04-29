@@ -118,6 +118,25 @@ describe("calculatePoints", () => {
     expect(calculatePoints(state)).toBe(4);
   });
 
+  it("awards 2 pts per reviewed consult topic", () => {
+    const state = makeState({
+      completedItems: {
+        articles: {},
+        studySheets: {},
+        cases: {},
+        consultTopics: {
+          aki: {
+            topic: "AKI",
+            completedAt: "2026-03-08T12:00:00.000Z",
+            sheetIds: [],
+            trialNames: [],
+          },
+        },
+      },
+    });
+    expect(calculatePoints(state)).toBe(2);
+  });
+
   it("awards 15 pts per case + 5 bonus for >=80%", () => {
     const state = makeState({
       completedItems: {

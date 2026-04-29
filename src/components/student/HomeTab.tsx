@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  ClipboardList,
+  Check,
   Download,
   Megaphone,
   RefreshCw,
@@ -14,7 +14,7 @@ import { PRO_TIPS } from "./shared";
 import { getCurrentOrNextFriday } from "../../utils/clinicRotation";
 import { useIsMobile } from "../../utils/helpers";
 import { getLevel } from "../../utils/gamification";
-import { getPatientSuggestedActions } from "../../utils/patientRecommendations";
+import { getPatientSuggestedTopicGroups } from "../../utils/patientRecommendations";
 import type {
   Announcement,
   Bookmarks,
@@ -29,15 +29,7 @@ import type {
 import type { CompetencySummary } from "../../utils/competency";
 
 const PEARL_STORAGE_KEY = "neph_todayPearlDismissed";
-const START_CHECKLIST_DISMISSED_KEY = "neph_startChecklistDismissed";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
-const PATIENT_ACTION_TYPE_LABELS: Record<string, string> = {
-  studySheet: "Study sheet",
-  deck: "Deck",
-  case: "Case",
-  quiz: "Quiz",
-};
 
 interface HomeTabProps {
   navigate: (tab: string, sv?: SubView) => void;
@@ -62,6 +54,7 @@ interface HomeTabProps {
   installPromptVariant: "native" | "ios" | null;
   onInstallApp: () => Promise<void>;
   onDismissInstallPrompt: () => void;
+  onCompleteConsultTopic: (payload: { topic: string; sheetIds: string[]; trialNames: string[] }) => void;
 }
 
 interface NavAction {
@@ -69,11 +62,14 @@ interface NavAction {
   meta: string;
   tab: string;
   subView?: SubView;
+  /** Optional override — when set, the hero button calls this instead of navigating. */
+  onClick?: () => void;
 }
 
 interface LearningPlan {
   label: string;
   detail: string;
+  detailParts: string[];
   remaining: number;
   done: number;
   total: number;
@@ -97,8 +93,6 @@ interface StartChecklistItem {
   action?: NavAction;
   scrollTargetId?: string;
 }
-
-type PatientSuggestedAction = ReturnType<typeof getPatientSuggestedActions>[number];
 
 function makeAction(label: string, meta: string, tab: string, subView?: SubView): NavAction {
   return { label, meta, tab, subView };
@@ -126,6 +120,34 @@ function formatRelativeTime(dateStr?: string, now: Date = new Date()): string {
 function getPearlIndex(date: Date): number {
   const dayNumber = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
   return dayNumber % PRO_TIPS.length;
+}
+
+function PearlToast({ tip, onDismiss }: { tip: string; onDismiss: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section style={{ background: T.ice, borderRadius: 12, border: `1px solid ${T.pale}`, padding: "8px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
+      <Sparkles size={14} strokeWidth={1.75} color={T.brand} aria-hidden="true" style={{ flexShrink: 0 }} />
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer", color: T.text, fontSize: 13, fontFamily: "inherit", display: "flex", flexDirection: "column", gap: 2 }}
+      >
+        <span style={{ fontWeight: 700, color: T.brand, textTransform: "uppercase", letterSpacing: 0.7, fontSize: 11 }}>
+          Pearl {open ? "▾" : "▸"}
+        </span>
+        {open
+          ? <span style={{ lineHeight: 1.55 }}>{tip}</span>
+          : <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: T.sub }}>{tip}</span>}
+      </button>
+      <button
+        onClick={onDismiss}
+        aria-label="Dismiss pearl"
+        style={{ background: "none", border: "none", color: T.muted, fontSize: 12, fontWeight: 600, cursor: "pointer", padding: "4px 6px", flexShrink: 0 }}
+      >
+        Dismiss
+      </button>
+    </section>
+  );
 }
 
 function buildLearningPlan({
@@ -249,6 +271,11 @@ function buildLearningPlan({
       : optionalRemaining > 0
         ? `Core work complete · ${optionalRemaining} optional reference${optionalRemaining !== 1 ? "s" : ""} available`
         : "All core work complete",
+    detailParts: remaining > 0
+      ? detailParts
+      : optionalRemaining > 0
+        ? [`${optionalRemaining} optional reference${optionalRemaining !== 1 ? "s" : ""}`]
+        : [],
     remaining,
     done,
     total,
@@ -315,6 +342,9 @@ function buildHeroCard({
   learningPlan,
   activePatientCount,
   postScore,
+  suggestedTopicCount,
+  onOpenSuggested,
+  suggestedExpanded,
 }: {
   now: Date;
   currentWeek: number | null;
@@ -322,6 +352,9 @@ function buildHeroCard({
   learningPlan: LearningPlan;
   activePatientCount: number;
   postScore: QuizScore | null;
+  suggestedTopicCount: number;
+  onOpenSuggested: () => void;
+  suggestedExpanded: boolean;
 }): HeroCard {
   const friday = getCurrentOrNextFriday(now);
   const weekday = now.getDay();
@@ -337,6 +370,16 @@ function buildHeroCard({
       : "Start your rounding list",
     tab: "patients",
   };
+  const hasConsultSuggestions = activePatientCount > 0 && suggestedTopicCount > 0;
+  const suggestedAction: NavAction = {
+    label: suggestedExpanded ? "Hide suggestions" : "Suggested from your consults",
+    meta: suggestedTopicCount > 0
+      ? `${suggestedTopicCount} topic${suggestedTopicCount !== 1 ? "s" : ""} from your active consults`
+      : "Sheets and trials matched to your consults",
+    tab: "today",
+    onClick: onOpenSuggested,
+  };
+  const suggestedOrLearningAction = hasConsultSuggestions ? suggestedAction : learningPlan.nextAction;
 
   if (rotationEnded) {
     return {
@@ -363,7 +406,7 @@ function buildHeroCard({
       body: "Use the CKD, hypertension, and transplant clinic guides as separate outpatient teaching tracks, then tighten one more core module item before clinic.",
       tone: "clinic",
       badge: friday.toLocaleDateString("en-US", { weekday: "short" }),
-      actions: [clinicAction, learningPlan.nextAction],
+      actions: [clinicAction, suggestedOrLearningAction],
     };
   }
 
@@ -374,19 +417,25 @@ function buildHeroCard({
       body: "Use today to sharpen one high-yield idea before rounds.",
       tone: "rounds",
       badge: "Rounds",
-      actions: [learningPlan.nextAction, patientsAction],
+      actions: [learningPlan.nextAction, hasConsultSuggestions ? suggestedAction : patientsAction],
     };
   }
 
+  // Default Morning rounds: pair the consult list with the consult-driven
+  // "Suggested" entry point. Falls back to the learning plan's next action
+  // when there are no consults yet (so the second slot stays useful).
   return {
     eyebrow: "Next up",
     title: activePatientCount > 0 ? "Morning rounds" : "Build your rounding list",
     body: activePatientCount > 0
-      ? "Start with your active consults, then knock out one high-yield prep task before the day gets noisy."
+      ? "Start with your active consults, then dig into the topics they raise."
       : "No consults logged yet. Add some first so Today can start tailoring the right prep.",
     tone: "rounds",
     badge: "Rounds",
-    actions: [patientsAction, learningPlan.nextAction],
+    actions: [
+      patientsAction,
+      suggestedOrLearningAction,
+    ],
   };
 }
 
@@ -414,13 +463,13 @@ export default function HomeTab({
   installPromptVariant,
   onInstallApp,
   onDismissInstallPrompt,
+  onCompleteConsultTopic,
 }: HomeTabProps) {
   const isMobile = useIsMobile();
   const level = getLevel(gamification?.points || 0);
   const now = useMemo(() => new Date(), []);
   const todayKey = useMemo(() => toDateKey(now), [now]);
   const [pearlDismissed, setPearlDismissed] = useState(false);
-  const [startChecklistDismissed, setStartChecklistDismissed] = useState(() => localStorage.getItem(START_CHECKLIST_DISMISSED_KEY) === "1");
 
   useEffect(() => {
     setPearlDismissed(localStorage.getItem(PEARL_STORAGE_KEY) === todayKey);
@@ -433,10 +482,15 @@ export default function HomeTab({
       .slice(0, isMobile ? 3 : 4),
     [isMobile, patients],
   );
-  const patientSuggestedActions = useMemo(
-    () => getPatientSuggestedActions(patients || [], completedItems),
+  const patientSuggestedGroups = useMemo(
+    () => getPatientSuggestedTopicGroups(patients || [], completedItems),
     [completedItems, patients],
   );
+  const [suggestedExpanded, setSuggestedExpanded] = useState(false);
+  const [selectedTopicIdx, setSelectedTopicIdx] = useState(0);
+  // Reset the active topic if the underlying group set changes (new consult, etc.).
+  useEffect(() => { setSelectedTopicIdx(0); }, [patientSuggestedGroups.length]);
+  const toggleSuggested = () => setSuggestedExpanded(v => !v);
 
   const activeAnnouncements = useMemo(
     () => (announcements || [])
@@ -457,8 +511,11 @@ export default function HomeTab({
       learningPlan,
       activePatientCount: activePatients.length,
       postScore,
+      suggestedTopicCount: patientSuggestedGroups.length,
+      onOpenSuggested: toggleSuggested,
+      suggestedExpanded,
     }),
-    [activePatients.length, currentWeek, learningPlan, now, postScore, rotationEnded],
+    [activePatients.length, currentWeek, learningPlan, now, postScore, rotationEnded, patientSuggestedGroups.length, suggestedExpanded],
   );
 
   const pearlIndex = useMemo(() => getPearlIndex(now), [now]);
@@ -506,14 +563,13 @@ export default function HomeTab({
     }
   };
 
-  const handlePatientSuggestedActionClick = (action: PatientSuggestedAction) => {
-    const [tab, subView] = action.nav;
-    navigate(tab, subView as SubView);
-  };
-
-  const dismissStartChecklist = () => {
-    localStorage.setItem(START_CHECKLIST_DISMISSED_KEY, "1");
-    setStartChecklistDismissed(true);
+  const handleCompleteSuggestedTopic = (group: (typeof patientSuggestedGroups)[number]) => {
+    onCompleteConsultTopic({
+      topic: group.topic,
+      sheetIds: group.sheets.map(sheet => sheet.id),
+      trialNames: group.trials.map(trial => trial.name),
+    });
+    setSelectedTopicIdx(0);
   };
 
   return (
@@ -556,7 +612,7 @@ export default function HomeTab({
           {heroCard.actions.map((action, index) => (
             <button
               key={`${action.label}-${index}`}
-              onClick={() => navigate(action.tab, action.subView)}
+              onClick={() => action.onClick ? action.onClick() : navigate(action.tab, action.subView)}
               style={{
                 width: "100%",
                 background: index === 0 ? T.brand : T.card,
@@ -582,134 +638,193 @@ export default function HomeTab({
             </button>
           ))}
         </div>
+
+        {suggestedExpanded && patientSuggestedGroups.length > 0 && (() => {
+          const safeIdx = Math.min(selectedTopicIdx, patientSuggestedGroups.length - 1);
+          const active = patientSuggestedGroups[safeIdx];
+          return (
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${T.line}` }}>
+              {/* Topic tabs */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }} aria-label="Consult topics">
+                {patientSuggestedGroups.map((group, idx) => {
+                  const sel = idx === safeIdx;
+                  return (
+                    <button
+                      key={group.topic}
+                      aria-pressed={sel}
+                      onClick={() => setSelectedTopicIdx(idx)}
+                      style={{
+                        background: sel ? T.brand : "transparent",
+                        color: sel ? T.brandInk : T.text,
+                        border: `1px solid ${sel ? T.brand : T.line}`,
+                        borderRadius: 999,
+                        padding: "6px 12px",
+                        fontSize: 13,
+                        fontWeight: sel ? 700 : 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {group.topic}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active topic content */}
+              <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: "12px 14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
+                  <div style={{ fontSize: 12, color: T.muted }}>{active.reason}</div>
+                  <button
+                    onClick={() => handleCompleteSuggestedTopic(active)}
+                    title="Dismiss this consult topic"
+                    style={{
+                      background: T.successBg,
+                      color: T.success,
+                      border: `1px solid ${T.success}`,
+                      borderRadius: 999,
+                      padding: "6px 10px",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <Check size={13} strokeWidth={2.4} aria-hidden="true" /> Done
+                  </button>
+                </div>
+                {active.sheets.length > 0 && (
+                  <div style={{ marginBottom: active.trials.length > 0 ? 12 : 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>Study sheets</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {active.sheets.map(s => (
+                        <button
+                          key={s.id}
+                          onClick={() => navigate("today", { type: "studySheets", week: s.week })}
+                          style={{ background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left", color: T.brand, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}
+                        >
+                          <ArrowRight size={13} strokeWidth={2} aria-hidden="true" /> {s.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {active.trials.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>Landmark trials</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {active.trials.map(t => (
+                        <button
+                          key={t.name}
+                          onClick={() => navigate("today", { type: "trials", week: t.week })}
+                          style={{ background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left", color: T.brand, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "flex-start", gap: 6 }}
+                        >
+                          <ArrowRight size={13} strokeWidth={2} aria-hidden="true" style={{ marginTop: 4, flexShrink: 0 }} />
+                          <span><span style={{ fontWeight: 700 }}>{t.name}</span> <span style={{ color: T.sub, fontWeight: 400 }}>— {t.takeaway}</span></span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
-      {patientSuggestedActions.length > 0 && (
-        <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "16px 16px", marginBottom: 14 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-            <div>
-              <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
-                Suggested from your consults
-              </h2>
-              <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.55, maxWidth: 620 }}>
-                Based on the consults you've logged.
-              </p>
-            </div>
-            <div style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
-              {patientSuggestedActions.length} suggestion{patientSuggestedActions.length !== 1 ? "s" : ""}
-            </div>
-          </div>
+      {(() => {
+        const remaining = startChecklist.length - startChecklistDone;
+        const allDone = remaining === 0;
+        // Slim mode kicks in when "mostly done" — at most 1 item left. Renders a
+        // single line + Continue CTA instead of the full 4-card grid, which gets
+        // visually heavy once most boxes are checked.
+        const slim = startChecklist.length > 0 && remaining <= 1;
+        const nextItem = startChecklist.find(item => !item.done);
+        const moduleLabel = currentWeek ? `Module ${currentWeek}` : "Core path";
 
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
-            {patientSuggestedActions.map((action) => (
-              <button
-                key={`${action.topic}-${action.contentType}-${action.label}`}
-                onClick={() => handlePatientSuggestedActionClick(action)}
-                style={{
-                  background: T.warmBg,
-                  border: `1px solid ${T.line}`,
-                  borderRadius: 14,
-                  padding: "12px 12px",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  minHeight: 112,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  gap: 10,
-                }}
-              >
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden="true">{action.icon}</span>
-                    <span style={{ background: T.card, color: T.brand, border: `1px solid ${T.line}`, borderRadius: 999, padding: "4px 8px", fontSize: 12, fontWeight: 800 }}>
-                      {PATIENT_ACTION_TYPE_LABELS[action.contentType] || "Review"}
+        if (slim) {
+          return (
+            <section style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: "14px 14px", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 999, background: allDone ? T.success : T.brandBg, color: allDone ? T.successInk : T.brand, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
+                  {allDone ? "✓" : remaining}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.navy, lineHeight: 1.3 }}>
+                    {allDone ? `${moduleLabel} · all done` : `${moduleLabel} · 1 left`}
+                  </div>
+                  {nextItem && (
+                    <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nextItem.label}</div>
+                  )}
+                </div>
+              </div>
+              {nextItem && (
+                <button
+                  onClick={() => handleStartChecklistClick(nextItem)}
+                  style={{ marginTop: 10, width: "100%", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+                >
+                  Continue <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+              )}
+            </section>
+          );
+        }
+
+        return (
+          <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "16px 16px", marginBottom: 14 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+              <div>
+                <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
+                  Core path for this module
+                </h2>
+                <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.55, maxWidth: 600 }}>
+                  Study sheets, decks, cases, and quiz. Follow your consults first if they point you elsewhere today.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <div style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+                  {startChecklistDone}/{startChecklist.length} done
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+              {startChecklist.map((item, index) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleStartChecklistClick(item)}
+                  style={{
+                    background: item.done ? T.successBg : T.warmBg,
+                    border: `1px solid ${item.done ? T.success : T.line}`,
+                    borderRadius: 14,
+                    padding: "12px 12px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    minHeight: 118,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? T.successInk : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
+                      {item.done ? "✓" : index + 1}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: item.done ? T.success : T.brand, textTransform: "uppercase", letterSpacing: 0.6 }}>
+                      {item.done ? "Done" : "Start"}
                     </span>
                   </div>
                   <div style={{ fontSize: 14, fontWeight: 800, color: T.navy, lineHeight: 1.25, marginBottom: 6 }}>
-                    {action.label}
+                    {item.label}
                   </div>
                   <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>
-                    {action.detail}
+                    {item.meta}
                   </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, color: T.brand, fontSize: 13, fontWeight: 800 }}>
-                  Open
-                  <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {!startChecklistDismissed && (
-        <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "16px 16px", marginBottom: 14 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-            <div>
-              <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
-                Core path for this module
-              </h2>
-              <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.55, maxWidth: 600 }}>
-                Study sheets, decks, cases, and quiz. Follow your consults first if they point you elsewhere today.
-              </p>
+                </button>
+              ))}
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-              <div style={{ background: startChecklistDone === startChecklist.length ? T.successBg : T.brandBg, color: startChecklistDone === startChecklist.length ? T.success : T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
-                {startChecklistDone}/{startChecklist.length} done
-              </div>
-              <button
-                onClick={dismissStartChecklist}
-                style={{
-                  background: T.warmBg,
-                  color: T.sub,
-                  border: `1px solid ${T.line}`,
-                  borderRadius: 999,
-                  padding: "6px 10px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
-            {startChecklist.map((item, index) => (
-              <button
-                key={item.label}
-                onClick={() => handleStartChecklistClick(item)}
-                style={{
-                  background: item.done ? T.successBg : T.warmBg,
-                  border: `1px solid ${item.done ? T.success : T.line}`,
-                  borderRadius: 14,
-                  padding: "12px 12px",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  minHeight: 118,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? T.successInk : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
-                    {item.done ? "✓" : index + 1}
-                  </div>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: item.done ? T.success : T.brand, textTransform: "uppercase", letterSpacing: 0.6 }}>
-                    {item.done ? "Done" : "Start"}
-                  </span>
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: T.navy, lineHeight: 1.25, marginBottom: 6 }}>
-                  {item.label}
-                </div>
-                <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>
-                  {item.meta}
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+          </section>
+        );
+      })()}
 
       {latestAnnouncement && (
         <div style={{ background: T.card, borderRadius: 16, padding: "12px 14px", border: `1px solid ${T.line}`, display: "flex", gap: 12, alignItems: "flex-start", marginBottom: 14 }}>
@@ -780,65 +895,29 @@ export default function HomeTab({
       )}
 
       <section style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 10 }}>
-          <h2 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Due today</h2>
-          <div style={{ fontSize: 13, color: T.muted }}>Two fast wins before the day gets away</div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
-          <button
-            onClick={() => navigate(srAction.tab, srAction.subView)}
-            style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
-          >
-            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <RefreshCw size={18} strokeWidth={1.75} color={T.warning} aria-hidden="true" />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{srAction.label}</div>
-              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>{srAction.meta}</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate(learningPlan.nextAction.tab, learningPlan.nextAction.subView)}
-            style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start" }}
-          >
-            <div style={{ width: 38, height: 38, borderRadius: 12, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <ClipboardList size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
-            </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
-                {learningPlan.remaining > 0 ? `${learningPlan.remaining} core item${learningPlan.remaining !== 1 ? "s" : ""} still open` : "Core work for this block is covered"}
-              </div>
-              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>
-                {learningPlan.total > 0 ? `${learningPlan.done}/${learningPlan.total} complete · ` : ""}
-                {learningPlan.detail}
-              </div>
-            </div>
-          </button>
-        </div>
+        <h2 style={{ margin: "0 0 10px", color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Quick review</h2>
+        <button
+          onClick={() => navigate(srAction.tab, srAction.subView)}
+          style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start", width: "100%" }}
+        >
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <RefreshCw size={18} strokeWidth={1.75} color={T.warning} aria-hidden="true" />
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{srAction.label}</div>
+            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>{srAction.meta}</div>
+          </div>
+        </button>
       </section>
 
       {!pearlDismissed && (
-        <section style={{ background: T.ice, borderRadius: 18, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Sparkles size={16} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, textTransform: "uppercase", letterSpacing: 0.9 }}>Pearl of the day</div>
-            </div>
-            <button
-              onClick={() => {
-                localStorage.setItem(PEARL_STORAGE_KEY, todayKey);
-                setPearlDismissed(true);
-              }}
-              style={{ background: "none", border: "none", color: T.muted, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: 0 }}
-            >
-              Dismiss
-            </button>
-          </div>
-          <div style={{ fontSize: 14, color: T.text, lineHeight: 1.65 }}>
-            {PRO_TIPS[pearlIndex]}
-          </div>
-        </section>
+        <PearlToast
+          tip={PRO_TIPS[pearlIndex]}
+          onDismiss={() => {
+            localStorage.setItem(PEARL_STORAGE_KEY, todayKey);
+            setPearlDismissed(true);
+          }}
+        />
       )}
 
     </div>

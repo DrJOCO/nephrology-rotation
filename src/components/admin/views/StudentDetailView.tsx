@@ -494,7 +494,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             {patErrors.initials && <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.initials}</div>}
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Learning Tags</label>
+            <label style={adminLabel}>Learning Tags (2+ if relevant)</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
               {visibleAdminTopics.map(t => {
                 const sel = patForm.topics.includes(t);
@@ -517,7 +517,15 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                 {showAllPatTopics ? "Show fewer topics" : `More topics (${hiddenAdminTopicCount})`}
               </button>
             )}
-            {(patForm.topics.length === 0 || patErrors.topics) && <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.topics || "Select at least one"}</div>}
+            {patErrors.topics ? (
+              <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.topics}</div>
+            ) : (
+              <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>
+                {patForm.topics.length < LIMITS.PATIENT_TOPICS_MIN
+                  ? `${patForm.topics.length}/${LIMITS.PATIENT_TOPICS_MIN} selected`
+                  : "Add more if clinically relevant."}
+              </div>
+            )}
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Diagnosis</label>

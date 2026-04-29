@@ -40,7 +40,7 @@ export const LIMITS = {
   ANNOUNCEMENT_BODY_MAX: 500,
   ARTICLE_TITLE_MAX: 200,
   ARTICLE_URL_MAX: 500,
-  PATIENT_TOPICS_MAX: 2,
+  PATIENT_TOPICS_MIN: 2,
 };
 
 export const PHI_WARNING =
@@ -127,9 +127,9 @@ export function validatePatientForm(form: PatientFormData): ValidationResult {
     if (dxPhi) errors.dx = dxPhi;
   }
 
-  // Topics: at least one required
-  if (!form.topics || form.topics.length === 0) {
-    errors.topics = "Select at least one topic";
+  // Topics: at least two required so consult-driven recommendations have useful context.
+  if (!form.topics || form.topics.length < LIMITS.PATIENT_TOPICS_MIN) {
+    errors.topics = `Select at least ${LIMITS.PATIENT_TOPICS_MIN} topics`;
   }
 
   // Notes: optional, max 1000

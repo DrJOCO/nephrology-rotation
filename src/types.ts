@@ -141,11 +141,19 @@ export interface CaseCompletion {
   date: string;
 }
 
+export interface ConsultTopicCompletion {
+  topic: string;
+  completedAt: string;
+  sheetIds: string[];
+  trialNames: string[];
+}
+
 export interface CompletedItems {
   articles: Record<string, boolean>;
   studySheets: Record<string, boolean>;
   cases: Record<string, CaseCompletion>;
   decks?: Record<string, boolean>;
+  consultTopics?: Record<string, ConsultTopicCompletion>;
 }
 
 export interface Bookmarks {

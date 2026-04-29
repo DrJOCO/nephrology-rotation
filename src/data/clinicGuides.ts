@@ -142,7 +142,7 @@ export const CLINIC_GUIDES: Record<ClinicGuideTopic, ClinicGuideTemplate> = {
   Transplant: {
     topic: "Transplant",
     icon: "💊",
-    title: "Kidney Transplant Clinic Essentials",
+    title: "Kidney Transplant Clinic",
     subtitle: "Graft surveillance, immunosuppression review, and complication monitoring",
 
     whyItMatters:
@@ -240,7 +240,7 @@ export const CLINIC_GUIDES: Record<ClinicGuideTopic, ClinicGuideTemplate> = {
   Hypertension: {
     topic: "Hypertension",
     icon: "🩺",
-    title: "Outpatient Hypertension Clinic Essentials",
+    title: "Outpatient Hypertension Clinic",
     subtitle: "Home BP patterns, medication strategy, and secondary cause recognition",
 
     whyItMatters:

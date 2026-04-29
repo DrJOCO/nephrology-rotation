@@ -21,6 +21,14 @@ describe("normalizeAdminStudentRecord", () => {
         studySheets: { [STUDY_SHEETS[1][0].id]: true },
         decks: { [CURRICULUM_DECKS[0].id]: true },
         cases: { [WEEKLY_CASES[1][0].id]: { score: 4, total: 5, date: "2026-04-20T12:00:00.000Z" } },
+        consultTopics: {
+          aki: {
+            topic: "AKI",
+            completedAt: "2026-04-20T12:00:00.000Z",
+            sheetIds: [STUDY_SHEETS[1][0].id],
+            trialNames: [],
+          },
+        },
       },
       bookmarks: {
         trials: ["trial-1"],
@@ -34,6 +42,7 @@ describe("normalizeAdminStudentRecord", () => {
 
     expect(record.completedItems?.articles[ARTICLES[1][0].url]).toBe(true);
     expect(record.completedItems?.decks?.[CURRICULUM_DECKS[0].id]).toBe(true);
+    expect(record.completedItems?.consultTopics?.aki?.topic).toBe("AKI");
     expect(record.bookmarks?.trials).toEqual(["trial-1"]);
     expect(record.gamification?.points).toBe(22);
     expect(record.feedbackTags).toHaveLength(1);
@@ -55,6 +64,7 @@ describe("normalizeAdminStudentRecord", () => {
     expect(record.completedItems?.studySheets).toEqual({});
     expect(record.completedItems?.cases).toEqual({});
     expect(record.completedItems?.decks).toEqual({});
+    expect(record.completedItems?.consultTopics).toEqual({});
     expect(record.bookmarks?.cases).toEqual([]);
     expect(record.bookmarks?.trials).toEqual([]);
   });

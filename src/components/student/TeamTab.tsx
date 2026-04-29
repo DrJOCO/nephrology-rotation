@@ -83,7 +83,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                <div style={{ minWidth: 44, textAlign: "center", fontSize: 16, fontWeight: 700, color: T.navy }}>
+                <div style={{ width: 36, height: 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: rank <= 3 ? 22 : 14, fontWeight: 700, color: T.navy, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
                   {getRankLabel(rank)}
                 </div>
                 <div style={{ minWidth: 0 }}>

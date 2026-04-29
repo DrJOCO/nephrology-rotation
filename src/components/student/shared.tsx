@@ -9,7 +9,18 @@ export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, righ
 
 export const inputLabel: CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 
-export const inputStyle: CSSProperties = { width: "100%", padding: "10px 12px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 14, boxSizing: "border-box", fontFamily: "-apple-system, sans-serif", outline: "none" };
+export const inputStyle: CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  border: `1.5px solid ${T.line}`,
+  borderRadius: 8,
+  fontSize: 14,
+  boxSizing: "border-box",
+  fontFamily: T.sans,
+  outline: "none",
+  background: T.surface2,
+  color: T.text,
+};
 
 export function EduDisclaimer() {
   return (

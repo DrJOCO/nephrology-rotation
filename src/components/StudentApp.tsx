@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { BookOpen, Stethoscope, Activity, Users, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home } from "lucide-react";
+import { BookOpen, Stethoscope, Activity, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home, Trophy } from "lucide-react";
 import { T, WEEKLY, ARTICLES, STUDY_SHEETS, CURRICULUM_DECKS } from "../data/constants";
 import { PRE_QUIZ, POST_QUIZ, TOPIC_REINFORCEMENT_BANK, WEEKLY_QUIZZES, getQuestionByKey, resolveReinforcementTopic, topicToSlug } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems, seedTopicReinforcementSr } from "../utils/spacedRepetition";
@@ -25,6 +25,7 @@ import { getStudentCurrentModule, hasRotationEnded } from "../utils/moduleProgre
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { buildBookmarkActivityDetail, describeStudentNavigation } from "../utils/activityLog";
 import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
+import { getConsultTopicCompletionKey } from "../utils/patientRecommendations";
 import { LIMITS } from "../utils/validation";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../types";
 import type { User } from "firebase/auth";
@@ -213,7 +214,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [joining, setJoining] = useState(false);
   const [gamification, setGamification] = useState<Gamification>({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
   const [sharedSettings, setSharedSettings] = useState<SharedSettings | null>(null);
-  const [completedItems, setCompletedItems] = useState<CompletedItems>({ articles: {}, studySheets: {}, cases: {}, decks: {} });
+  const [completedItems, setCompletedItems] = useState<CompletedItems>({ articles: {}, studySheets: {}, cases: {}, decks: {}, consultTopics: {} });
   const [searchOpen, setSearchOpen] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmarks>({ trials: [], articles: [], cases: [], studySheets: [] });
   const [srQueue, setSrQueue] = useState<SrQueue>({});
@@ -313,6 +314,33 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
+  };
+
+  const handleCompleteConsultTopic = (payload: { topic: string; sheetIds: string[]; trialNames: string[] }) => {
+    const key = getConsultTopicCompletionKey(payload.topic);
+    const wasCompleted = Boolean(completedItems.consultTopics?.[key]);
+    const completedAt = new Date().toISOString();
+    setCompletedItems(prev => ({
+      ...prev,
+      consultTopics: {
+        ...(prev.consultTopics || {}),
+        [key]: {
+          topic: payload.topic,
+          completedAt,
+          sheetIds: payload.sheetIds,
+          trialNames: payload.trialNames,
+        },
+      },
+    }));
+
+    if (!wasCompleted) {
+      const linkedCount = payload.sheetIds.length + payload.trialNames.length;
+      logActivity(
+        "consult_topic",
+        `Consult Topic Reviewed: ${payload.topic}`,
+        linkedCount > 0 ? `${linkedCount} linked item${linkedCount !== 1 ? "s" : ""}` : "Topic reviewed",
+      );
+    }
   };
 
   const noteStudentUpdatedAt = (updatedAt: string) => {
@@ -1136,7 +1164,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setPreScore(null);
     setPostScore(null);
     setGamification({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
-    setCompletedItems({ articles: {}, studySheets: {}, cases: {}, decks: {} });
+    setCompletedItems({ articles: {}, studySheets: {}, cases: {}, decks: {}, consultTopics: {} });
     setBookmarks({ trials: [], articles: [], cases: [], studySheets: [] });
     setSrQueue({});
     setActivityLog([]);
@@ -1233,7 +1261,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     { id: "today", Icon: Home, label: "Today" },
     { id: "library", Icon: BookOpen, label: "Library" },
     { id: "patients", Icon: Stethoscope, label: "Consults" },
-    { id: "team", Icon: Users, label: "Cohort" },
+    { id: "team", Icon: Trophy, label: "Cohort" },
     { id: "me", Icon: UserIcon, label: "Me" },
   ];
 
@@ -1286,17 +1314,22 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: 48 }}>
-          <span
-            onClick={handleTitleTap}
+          <button
+            type="button"
+            onClick={() => { handleTitleTap(); navigate("today"); }}
+            aria-label="Nephrology Rotation — go to Today"
+            title="Go to Today"
             style={{
-              color: T.ink, fontFamily: T.serif,
+              color: T.ink, fontFamily: T.serif, background: "none", border: "none",
               fontSize: isMobile ? 16 : 18, fontWeight: 600, letterSpacing: -0.3,
-              cursor: "default", WebkitUserSelect: "none", userSelect: "none",
+              cursor: "pointer", WebkitUserSelect: "none", userSelect: "none",
               minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              padding: 0, display: "inline-flex", alignItems: "center",
             }}
           >
-            Nephrology Rotation
-          </span>
+            {/* Logomark on narrow widths so the wordmark doesn't truncate as "Nephrolog…". */}
+            {isMobile ? <span style={{ fontSize: 22, lineHeight: 1 }} aria-hidden="true">🫘</span> : "Nephrology Rotation"}
+          </button>
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
             {online && (gamification.streaks?.currentDays ?? 0) > 0 && (
               <span
@@ -1383,8 +1416,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       )}
 
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
-      <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + env(safe-area-inset-bottom, 0px))` }}>
-        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={handleSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={handleInstallApp} onDismissInstallPrompt={dismissInstallPrompt} />}
+      <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + ${subView ? "80px + " : ""}env(safe-area-inset-bottom, 0px))` }}>
+        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={handleSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={handleInstallApp} onDismissInstallPrompt={dismissInstallPrompt} onCompleteConsultTopic={handleCompleteConsultTopic} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Module ${subView.week} Quiz`}
@@ -1664,7 +1697,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         </Suspense>
       </main>
 
-      {/* Bottom Nav */}
+      {/* Bottom Nav — hidden during quiz sessions so feedback isn't covered. */}
+      {!(subView && (subView.type === "weeklyQuiz" || subView.type === "reviewMissed" || subView.type === "preQuiz" || subView.type === "postQuiz")) && (
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: T.card, borderTop: `1px solid ${T.line}`, display: "flex", zIndex: 100, boxShadow: "0 -2px 12px rgba(0,0,0,0.06)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
         {tabs.map(t => {
           const active = tab === t.id;
@@ -1681,6 +1715,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

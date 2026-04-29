@@ -7,7 +7,7 @@ describe("validation", () => {
       initials: "J.S.",
       room: "4B-12",
       dx: "AKI in the setting of sepsis",
-      topics: ["AKI"],
+      topics: ["AKI", "Hyperkalemia"],
       notes: "Teaching point about urine sediment",
     });
 
@@ -20,13 +20,26 @@ describe("validation", () => {
       initials: "J.S.",
       room: "4B-12",
       dx: "DOB 03/14/1990 with AKI",
-      topics: ["AKI"],
+      topics: ["AKI", "Hyperkalemia"],
       notes: "MRN 12345678",
     });
 
     expect(result.valid).toBe(false);
     expect(result.errors.dx).toBeTruthy();
     expect(result.errors.notes).toBeTruthy();
+  });
+
+  it("requires at least two patient topics", () => {
+    const result = validatePatientForm({
+      initials: "J.S.",
+      room: "4B-12",
+      dx: "AKI in the setting of sepsis",
+      topics: ["AKI"],
+      notes: "",
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.topics).toContain("at least 2");
   });
 
   it("detects contact details as likely PHI", () => {

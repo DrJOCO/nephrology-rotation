@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { getPatientRecommendations, getPatientSuggestedActions } from "./patientRecommendations";
+import {
+  getConsultTopicCompletionKey,
+  getPatientRecommendations,
+  getPatientSuggestedActions,
+  getPatientSuggestedTopicGroups,
+} from "./patientRecommendations";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -123,6 +128,61 @@ describe("patientRecommendations", () => {
       // Should still get recommendations but possibly different content type
       // (the study sheet action should be skipped since it's completed)
       expect(actions.length).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe("getPatientSuggestedTopicGroups", () => {
+    it("does not rebuild already completed study sheets into grouped suggestions", () => {
+      const patients = [
+        { topics: ["AKI"], date: "2026-03-09", status: "active" as const },
+      ];
+      const groups = getPatientSuggestedTopicGroups(patients, {
+        articles: {},
+        studySheets: { "aki-cheatsheet": true },
+        cases: {},
+      });
+      const akiGroup = groups.find(group => group.topic === "AKI");
+      expect(akiGroup?.sheets.some(sheet => sheet.id === "aki-cheatsheet")).toBe(false);
+    });
+
+    it("hides consult topics when they were reviewed after the latest matching consult", () => {
+      const patients = [
+        { topics: ["AKI"], date: "2026-03-09", status: "active" as const },
+      ];
+      const groups = getPatientSuggestedTopicGroups(patients, {
+        articles: {},
+        studySheets: {},
+        cases: {},
+        consultTopics: {
+          [getConsultTopicCompletionKey("AKI")]: {
+            topic: "AKI",
+            completedAt: "2026-03-09T12:00:00.000Z",
+            sheetIds: [],
+            trialNames: [],
+          },
+        },
+      });
+      expect(groups.find(group => group.topic === "AKI")).toBeUndefined();
+    });
+
+    it("shows a reviewed topic again when a newer matching consult is logged", () => {
+      const patients = [
+        { topics: ["AKI"], date: "2026-03-09T15:00:00.000Z", status: "active" as const },
+      ];
+      const groups = getPatientSuggestedTopicGroups(patients, {
+        articles: {},
+        studySheets: {},
+        cases: {},
+        consultTopics: {
+          [getConsultTopicCompletionKey("AKI")]: {
+            topic: "AKI",
+            completedAt: "2026-03-09T12:00:00.000Z",
+            sheetIds: [],
+            trialNames: [],
+          },
+        },
+      });
+      expect(groups.find(group => group.topic === "AKI")).toBeDefined();
     });
   });
 });

@@ -82,12 +82,14 @@ function mergeCompletedItems(source?: CompletedItems, target?: CompletedItems): 
     studySheets: { ...(source?.studySheets || {}), ...(target?.studySheets || {}) },
     cases: { ...(source?.cases || {}), ...(target?.cases || {}) },
     decks: { ...(source?.decks || {}), ...(target?.decks || {}) },
+    consultTopics: { ...(source?.consultTopics || {}), ...(target?.consultTopics || {}) },
   };
   if (
     Object.keys(merged.articles).length === 0 &&
     Object.keys(merged.studySheets).length === 0 &&
     Object.keys(merged.cases).length === 0 &&
-    Object.keys(merged.decks || {}).length === 0
+    Object.keys(merged.decks || {}).length === 0 &&
+    Object.keys(merged.consultTopics || {}).length === 0
   ) {
     return undefined;
   }

@@ -47,6 +47,7 @@ function normalizeCompletedItems(value?: Partial<CompletedItems> | null): Comple
     studySheets: isRecord(value?.studySheets) ? (value.studySheets as CompletedItems["studySheets"]) : {},
     cases: isRecord(value?.cases) ? (value.cases as CompletedItems["cases"]) : {},
     decks: isRecord(value?.decks) ? (value.decks as NonNullable<CompletedItems["decks"]>) : {},
+    consultTopics: isRecord(value?.consultTopics) ? (value.consultTopics as NonNullable<CompletedItems["consultTopics"]>) : {},
   };
 }
 

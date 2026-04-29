@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import store from "../../utils/store";
@@ -43,6 +43,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
   const [showExplanation, setShowExplanation] = useState(false);
   const [shuffledOrder, setShuffledOrder] = useState<number[] | null>(null);
   const [choiceOrders, setChoiceOrders] = useState<Record<number, number[]> | null>(null);
+  const explanationRef = useRef<HTMLDivElement | null>(null);
 
   // Quiz persistence
   const quizKey = "quiz_" + title.replace(/[^a-zA-Z0-9]/g, "_");
@@ -101,6 +102,9 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
     const isCorrect = originalChoiceIdx === questions[origQIdx].answer;
     if (isCorrect) setCorrectCount(c => c + 1);
     setAnswers(a => [...a, { qIdx: origQIdx, chosen: originalChoiceIdx, correct: isCorrect }]);
+    requestAnimationFrame(() => {
+      explanationRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   };
 
   const quizLen = shuffledOrder ? shuffledOrder.length : questions.length;
@@ -240,7 +244,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
         const selectedOrigIdx = choiceMap[selected!];
         const wasCorrect = selectedOrigIdx === q.answer;
         return (
-          <div style={{ background: T.brandBg, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.brand}` }}>
+          <div ref={explanationRef} style={{ background: T.brandBg, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.brand}` }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.success : T.danger, marginBottom: 4 }}>
               {wasCorrect ? "\u2713 Correct!" : "\u2717 Not quite"}
             </div>

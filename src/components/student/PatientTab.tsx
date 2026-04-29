@@ -126,27 +126,25 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
           })()}
         </div>
         <div style={{ marginBottom: 10 }}>
-          <label style={inputLabel}>Learning Tags (up to {LIMITS.PATIENT_TOPICS_MAX})</label>
+          <label style={inputLabel}>Learning Tags (2+ if relevant)</label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
             {visibleEditTopics.map(t => {
               const sel = editForm.topics.includes(t);
-              const atCap = !sel && editForm.topics.length >= LIMITS.PATIENT_TOPICS_MAX;
               return (
-                <button key={t} type="button" onClick={() => onEditToggleTopic(t)} disabled={atCap} aria-disabled={atCap}
-                  style={{ padding: isMobile ? "8px 14px" : "5px 10px", borderRadius: 20, fontSize: isMobile ? 12 : 11, fontWeight: sel ? 600 : 400, cursor: atCap ? "not-allowed" : "pointer",
+                <button key={t} type="button" onClick={() => onEditToggleTopic(t)}
+                  style={{ padding: isMobile ? "8px 14px" : "5px 10px", borderRadius: 20, fontSize: isMobile ? 12 : 11, fontWeight: sel ? 600 : 400, cursor: "pointer",
                     background: sel ? T.brand : T.card, color: sel ? T.brandInk : T.sub,
-                    border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`,
-                    opacity: atCap ? 0.4 : 1 }}>
+                    border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}` }}>
                   {sel ? "✓ " : ""}{t}
                 </button>
               );
             })}
           </div>
-          {editForm.topics.length >= LIMITS.PATIENT_TOPICS_MAX && (
-            <div style={{ fontSize: 13, color: T.sub, marginTop: 6 }}>
-              Max {LIMITS.PATIENT_TOPICS_MAX} tags — remove one to add another.
-            </div>
-          )}
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>
+            {editForm.topics.length < LIMITS.PATIENT_TOPICS_MIN
+              ? `${editForm.topics.length}/${LIMITS.PATIENT_TOPICS_MIN} selected`
+              : "Add more if clinically relevant."}
+          </div>
           {(hiddenEditTopicCount > 0 || showAllEditTopics) && (
             <button
               type="button"
@@ -173,35 +171,35 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
   const accentBorder = followUpState === "stale" ? T.warning : followUpState === "active" ? T.line : null;
 
   return (
-    <div style={{ background: T.card, borderRadius: 10, marginBottom: 10, overflow: "hidden",
+    <div style={{ background: T.card, borderRadius: 9, marginBottom: 8, overflow: "hidden",
       border: `1px solid ${T.line}`, ...(accentBorder ? { borderLeft: `3px solid ${accentBorder}` } : {}) }}>
-      <div style={{ padding: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ padding: isMobile ? "9px 10px 8px" : "10px 12px 8px" }}>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "stretch" : "flex-start", gap: isMobile ? 7 : 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3, flexWrap: "wrap" }}>
               <span style={{ fontWeight: 700, color: dimmed ? T.muted : T.navy, fontSize: 14 }}>{p.initials}</span>
-              {p.room && <span style={{ fontSize: 13, color: T.sub, background: T.bg, padding: "2px 8px", borderRadius: 4 }}>Rm {p.room}</span>}
+              {p.room && <span style={{ fontSize: 12, color: T.sub, background: T.bg, padding: "1px 7px", borderRadius: 4 }}>Rm {p.room}</span>}
+              <span style={{ fontSize: 12, color: T.muted }}>Added {new Date(p.date).toLocaleDateString()}</span>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 4 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 3 }}>
               {topics.map(t => (
-                <span key={t} style={labelChip}>{t}</span>
+                <span key={t} style={{ ...labelChip, fontSize: 10.5, padding: "2px 6px", borderRadius: 5 }}>{t}</span>
               ))}
             </div>
-            {p.dx && <div style={{ fontSize: 13, color: dimmed ? T.muted : T.text, marginBottom: 2, wordBreak: "break-word" }}>{p.dx}</div>}
+            {p.dx && <div style={{ fontSize: 13, color: dimmed ? T.muted : T.text, marginBottom: 0, lineHeight: 1.35, wordBreak: "break-word" }}>{p.dx}</div>}
             {p.notes && (
-              <div style={{ fontSize: 13, color: T.sub, fontStyle: "italic", marginTop: 4, wordBreak: "break-word", display: "flex", alignItems: "flex-start", gap: 4 }}>
+              <div style={{ fontSize: 12, color: T.sub, fontStyle: "italic", marginTop: 3, wordBreak: "break-word", display: "flex", alignItems: "flex-start", gap: 4, lineHeight: 1.35 }}>
                 <Lightbulb size={12} strokeWidth={1.75} color={T.warning} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
                 <span>{p.notes}</span>
               </div>
             )}
-            <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>Added {new Date(p.date).toLocaleDateString()}</div>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: isMobile ? "wrap" : "nowrap", justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end", flexShrink: 0 }}>
             {!dimmed && (
               <button
                 onClick={onStartEdit}
                 aria-label={`Edit inpatient ${p.initials || ""}`.trim()}
-                style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: T.brand, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
+                style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "5px 8px", minHeight: 28, fontSize: 11, cursor: "pointer", color: T.brand, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
               >
                 <Pencil size={12} strokeWidth={1.75} aria-hidden="true" /> Edit
               </button>
@@ -209,30 +207,30 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
             <button
               onClick={onToggle}
               aria-label={dimmed ? `Reactivate inpatient ${p.initials || ""}`.trim() : `Discharge inpatient ${p.initials || ""}`.trim()}
-              style={{ background: "none", border: `1px solid ${dimmed ? T.success : T.muted}`, borderRadius: 6, padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 36 : 30, fontSize: isMobile ? 12 : 11, cursor: "pointer", color: dimmed ? T.success : T.sub, display: "inline-flex", alignItems: "center", gap: 4 }}
+              style={{ background: "none", border: `1px solid ${dimmed ? T.success : T.muted}`, borderRadius: 6, padding: "5px 8px", minHeight: 28, fontSize: 11, cursor: "pointer", color: dimmed ? T.success : T.sub, display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               {dimmed ? <><RotateCcw size={12} strokeWidth={1.75} aria-hidden="true" /> Reactivate</> : <><Check size={12} strokeWidth={2} aria-hidden="true" /> Discharge</>}
             </button>
             <button
               onClick={onRemove}
-              aria-label={`Remove inpatient ${p.initials || ""}`.trim()}
-              title="Remove"
-              style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, minHeight: isMobile ? 36 : 30, minWidth: isMobile ? 36 : 30, padding: isMobile ? "8px" : "6px", cursor: "pointer", color: T.muted, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+              aria-label={`Remove inpatient ${p.initials || ""} — added in error`.trim()}
+              title="Remove (added in error)"
+              style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, minHeight: 28, padding: "5px 8px", fontSize: 11, cursor: "pointer", color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}
             >
-              <X size={14} strokeWidth={1.75} aria-hidden="true" />
+              <X size={12} strokeWidth={1.75} aria-hidden="true" /> Remove
             </button>
           </div>
         </div>
       </div>
 
       {/* Follow-ups section */}
-      <div style={{ borderTop: `1px solid ${T.line}`, padding: "8px 12px" }}>
+      <div style={{ borderTop: `1px solid ${T.line}`, padding: "6px 10px" }}>
         {followUps.length > 0 && (
           <button
             onClick={() => setShowFollowUps(!showFollowUps)}
             aria-expanded={showFollowUps}
             aria-label={`${showFollowUps ? "Collapse" : "Expand"} follow-ups`}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: T.brand, fontWeight: 600, padding: "6px 0", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, minHeight: 32 }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: T.brand, fontWeight: 600, padding: "4px 0", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, minHeight: 28 }}
           >
             <ChevronRight size={14} strokeWidth={2} aria-hidden="true" style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }} />
             Follow-ups ({followUps.length})
@@ -261,13 +259,36 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
                 onChange={e => { setFollowUpText(clampLength(e.target.value, LIMITS.FOLLOWUP_MAX)); setFollowUpError(null); }}
                 onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
                 placeholder="Add follow-up note..."
-                style={{ flex: 1, padding: isMobile ? "8px 12px" : "6px 10px", fontSize: 13, border: `1px solid ${followUpError ? T.danger : T.line}`, borderRadius: 6, outline: "none", fontFamily: T.sans }} />
+                style={{
+                  flex: 1,
+                  padding: "6px 9px",
+                  fontSize: 12,
+                  border: `1px solid ${followUpError ? T.danger : T.line}`,
+                  borderRadius: 6,
+                  outline: "none",
+                  fontFamily: T.sans,
+                  background: T.surface2,
+                  color: T.text,
+                  boxSizing: "border-box",
+                }} />
               <button
                 onClick={handleAddFollowUp}
                 aria-label="Add follow-up note"
                 title="Add follow-up"
                 disabled={!followUpText.trim()}
-                style={{ padding: isMobile ? "8px 12px" : "6px 10px", minHeight: isMobile ? 40 : 32, minWidth: isMobile ? 40 : 32, background: followUpText.trim() ? T.brand : T.pale, color: followUpText.trim() ? T.brandInk : T.muted, border: "none", borderRadius: 6, cursor: followUpText.trim() ? "pointer" : "not-allowed", display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                style={{
+                  padding: "6px 9px",
+                  minHeight: 30,
+                  minWidth: 34,
+                  background: followUpText.trim() ? T.brand : T.surface2,
+                  color: followUpText.trim() ? T.brandInk : T.muted,
+                  border: `1px solid ${followUpText.trim() ? T.brand : T.line}`,
+                  borderRadius: 6,
+                  cursor: followUpText.trim() ? "pointer" : "not-allowed",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
               >
                 <Plus size={16} strokeWidth={2.25} aria-hidden="true" />
               </button>
@@ -300,7 +321,6 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
   const toggleTopic = (t: string) => {
     setForm(prev => {
       const isSelected = prev.topics.includes(t);
-      if (!isSelected && prev.topics.length >= LIMITS.PATIENT_TOPICS_MAX) return prev;
       return { ...prev, topics: isSelected ? prev.topics.filter(x => x !== t) : [...prev.topics, t] };
     });
     setFormErrors(prev => ({ ...prev, topics: undefined }));
@@ -309,7 +329,6 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
   const editToggleTopic = (t: string) => {
     setEditForm(prev => {
       const isSelected = prev.topics.includes(t);
-      if (!isSelected && prev.topics.length >= LIMITS.PATIENT_TOPICS_MAX) return prev;
       return { ...prev, topics: isSelected ? prev.topics.filter(x => x !== t) : [...prev.topics, t] };
     });
   };
@@ -435,6 +454,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
   const discharged = patients.filter(p => p.status === "discharged");
   const visibleAddTopics = getVisibleTopicOptions(form.topics, showAllTopics);
   const hiddenAddTopicCount = getHiddenTopicCount(form.topics, showAllTopics);
+  const showCompactPhiWarning = patients.length > 0 && !showAdd;
 
   return (
     <div style={{ padding: 16 }}>
@@ -449,9 +469,22 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
         </button>
       </div>
 
-      <div style={{ background: T.warningBg, borderRadius: 12, padding: 12, marginBottom: 16, border: `1px solid ${T.warning}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 4 }}>No PHI</div>
-        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>{PHI_WARNING}</div>
+      <div
+        style={{
+          background: T.warningBg,
+          borderRadius: showCompactPhiWarning ? 999 : 12,
+          padding: showCompactPhiWarning ? "7px 10px" : 12,
+          marginBottom: showCompactPhiWarning ? 10 : 16,
+          border: `1px solid ${T.warning}`,
+          display: showCompactPhiWarning ? "flex" : "block",
+          alignItems: showCompactPhiWarning ? "center" : undefined,
+          gap: showCompactPhiWarning ? 8 : undefined,
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: showCompactPhiWarning ? 0 : 4, flexShrink: 0 }}>No PHI</div>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: showCompactPhiWarning ? 1.35 : 1.5 }}>
+          {showCompactPhiWarning ? "Initials and learning points only." : PHI_WARNING}
+        </div>
       </div>
 
       {showAdd && (
@@ -495,27 +528,20 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
             })()}
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={inputLabel}>Learning Tags (up to {LIMITS.PATIENT_TOPICS_MAX})</label>
+            <label style={inputLabel}>Learning Tags (2+ if relevant)</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
               {visibleAddTopics.map(t => {
                 const sel = form.topics.includes(t);
-                const atCap = !sel && form.topics.length >= LIMITS.PATIENT_TOPICS_MAX;
                 return (
-                <button key={t} type="button" onClick={() => toggleTopic(t)} disabled={atCap} aria-disabled={atCap}
-                    style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: atCap ? "not-allowed" : "pointer", transition: "all 0.15s",
+                <button key={t} type="button" onClick={() => toggleTopic(t)}
+                    style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
                       background: sel ? T.brand : T.card, color: sel ? T.brandInk : T.sub,
-                      border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`,
-                      opacity: atCap ? 0.4 : 1 }}>
+                      border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}` }}>
                     {sel ? "✓ " : ""}{t}
                   </button>
                 );
               })}
             </div>
-            {form.topics.length >= LIMITS.PATIENT_TOPICS_MAX && (
-              <div style={{ fontSize: 13, color: T.sub, marginTop: 6 }}>
-                Max {LIMITS.PATIENT_TOPICS_MAX} tags — remove one to add another.
-              </div>
-            )}
             {(hiddenAddTopicCount > 0 || showAllTopics) && (
               <button
                 type="button"
@@ -525,7 +551,15 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
                 {showAllTopics ? "Show fewer topics" : `More topics (${hiddenAddTopicCount})`}
               </button>
             )}
-            {(form.topics.length === 0 || formErrors.topics) && <div style={errorStyle}>{formErrors.topics || "Select at least one topic"}</div>}
+            {formErrors.topics ? (
+              <div style={errorStyle}>{formErrors.topics}</div>
+            ) : (
+              <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>
+                {form.topics.length < LIMITS.PATIENT_TOPICS_MIN
+                  ? `${form.topics.length}/${LIMITS.PATIENT_TOPICS_MIN} selected`
+                  : "Add more if clinically relevant."}
+              </div>
+            )}
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={inputLabel}>Teaching Notes (optional)</label>

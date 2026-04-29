@@ -15,7 +15,7 @@ export const T = {
   // Overlay
   overlay: "var(--c-overlay)",
   // Fonts and layout — Phase 1 (Clinical Paper spec v1)
-  serif: "'Source Serif 4', 'Crimson Pro', Georgia, serif",
+  serif: "'Newsreader', 'Source Serif 4', 'Crimson Pro', Georgia, serif",
   sans: "'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
   mono: "'JetBrains Mono', ui-monospace, monospace",
   navH: 56, navPad: 8,

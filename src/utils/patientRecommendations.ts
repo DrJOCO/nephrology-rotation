@@ -9,6 +9,7 @@
 import { getTopicContent } from "./topicMapping";
 import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
+import { ALL_LANDMARK_TRIALS } from "../data/trials";
 import type { TopicRecommendation } from "../types";
 
 interface PatientInput {
@@ -23,6 +24,51 @@ interface CompletedItemsInput {
   studySheets?: Record<string, boolean>;
   decks?: Record<string, boolean>;
   cases?: Record<string, unknown>;
+  consultTopics?: Record<string, unknown>;
+}
+
+interface ConsultTopicCompletionInput {
+  completedAt?: string;
+}
+
+export function getConsultTopicCompletionKey(topic: string): string {
+  return topic
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "topic";
+}
+
+function getPatientTopics(patient: PatientInput): string[] {
+  return patient.topics?.length ? patient.topics : patient.topic ? [patient.topic] : [];
+}
+
+function getLatestConsultDatesByTopic(patients: PatientInput[]): Map<string, string> {
+  const latest = new Map<string, string>();
+  for (const patient of patients || []) {
+    for (const topic of getPatientTopics(patient)) {
+      if (topic === "Other") continue;
+      const existing = latest.get(topic);
+      if (!existing || new Date(patient.date).getTime() > new Date(existing).getTime()) {
+        latest.set(topic, patient.date);
+      }
+    }
+  }
+  return latest;
+}
+
+function getReviewedAt(value: unknown): string | null {
+  if (!value || typeof value !== "object") return null;
+  const completedAt = (value as ConsultTopicCompletionInput).completedAt;
+  return typeof completedAt === "string" ? completedAt : null;
+}
+
+function isConsultTopicReviewedAfterLatestConsult(reviewedAt: string | null, latestConsultAt?: string): boolean {
+  if (!reviewedAt || !latestConsultAt) return false;
+  const reviewedTime = new Date(reviewedAt).getTime();
+  const latestConsultTime = new Date(latestConsultAt).getTime();
+  if (!Number.isFinite(reviewedTime) || !Number.isFinite(latestConsultTime)) return false;
+  return reviewedTime >= latestConsultTime;
 }
 
 /**
@@ -46,7 +92,7 @@ export function getPatientRecommendations(
   const topicScores = new Map<string, { score: number; lastSeen: string }>();
 
   for (const patient of patients) {
-    const topics = patient.topics?.length ? patient.topics : patient.topic ? [patient.topic] : [];
+    const topics = getPatientTopics(patient);
     const patientDate = new Date(patient.date);
     const daysAgo = Math.max(0, (today.getTime() - patientDate.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -193,17 +239,61 @@ export function getPatientSuggestedActions(
         contentType: "case",
         nav: ["today", { type: "cases", week: caseWeek }],
       });
-    } else if (rec.quizWeeks.length > 0) {
-      actions.push({
-        icon: "\uD83D\uDCDD",
-        label: `Quiz: ${rec.topic}`,
-        detail: `${rec.reason} — test your knowledge`,
-        topic: rec.topic,
-        contentType: "quiz",
-        nav: ["today", { type: "weeklyQuiz", week: rec.quizWeeks[0] }],
-      });
     }
+    // Quizzes intentionally excluded from "Suggested from consults" — this surface
+    // is for informational/reading content (sheets, decks, cases). Quizzes live
+    // in Core path and Due today.
   }
 
   return actions;
+}
+
+/**
+ * Per-topic groupings for the "Suggested from your consults" surface.
+ * Each group lists the relevant study sheets and landmark trials for a topic
+ * the student has seen on consults. Quizzes/decks/cases excluded by design —
+ * this surface is for *informational* content.
+ */
+export interface PatientSuggestedTopicGroup {
+  topic: string;
+  reason: string;
+  sheets: Array<{ id: string; title: string; week: number }>;
+  trials: Array<{ name: string; week: number; takeaway: string }>;
+}
+
+export function getPatientSuggestedTopicGroups(
+  patients: PatientInput[],
+  completedItems?: CompletedItemsInput,
+): PatientSuggestedTopicGroup[] {
+  const recs = getPatientRecommendations(patients, completedItems);
+  const completedConsultTopics = completedItems?.consultTopics || {};
+  const latestConsultDates = getLatestConsultDatesByTopic(patients);
+  const groups: PatientSuggestedTopicGroup[] = [];
+
+  for (const rec of recs) {
+    const completion = completedConsultTopics[getConsultTopicCompletionKey(rec.topic)];
+    if (isConsultTopicReviewedAfterLatestConsult(getReviewedAt(completion), latestConsultDates.get(rec.topic))) continue;
+
+    const content = getTopicContent(rec.topic);
+    const sheetRefsById = new Map(content.studySheets.map(ref => [ref.id, ref]));
+
+    const sheets: PatientSuggestedTopicGroup["sheets"] = [];
+    for (const sheetId of rec.studySheets) {
+      const ref = sheetRefsById.get(sheetId);
+      if (!ref) continue;
+      const sheet = (STUDY_SHEETS[ref.week] || []).find(s => s.id === ref.id);
+      if (sheet) sheets.push({ id: sheet.id, title: sheet.title, week: ref.week });
+    }
+
+    const trials: PatientSuggestedTopicGroup["trials"] = [];
+    for (const trialName of content.trials) {
+      const trial = ALL_LANDMARK_TRIALS.find(t => t.name === trialName);
+      if (trial) trials.push({ name: trial.name, week: trial.week, takeaway: trial.takeaway });
+    }
+
+    if (sheets.length === 0 && trials.length === 0) continue;
+    groups.push({ topic: rec.topic, reason: rec.reason, sheets, trials });
+  }
+
+  return groups.slice(0, 5);
 }
