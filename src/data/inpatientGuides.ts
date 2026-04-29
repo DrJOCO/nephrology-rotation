@@ -261,6 +261,8 @@ export const INPATIENT_GUIDES: Record<
     discussionQuestions: [
       "A patient with CKD stage 4 on lisinopril and spironolactone presents with potassium 7.1 and peaked T waves. Walk through your management in order.",
       "After treating hyperkalemia with insulin/glucose, the potassium drops from 6.8 to 5.9. Is the patient safe? What happens next?",
+      "When should you reach for a K⁺ binder (patiromer or SZC) instead of stopping a RAAS blocker or MRA? AMBER showed patiromer kept 86% of CKD patients on spironolactone vs 66% on placebo — what does that mean for your discharge plan?",
+      "POTCAST (NEJM 2025) targeted plasma K⁺ 4.5–5.0 in ICD patients and reduced arrhythmia/death by 24%. How should that change your reflex to hold MRA at K⁺ 5.0 in cardiomyopathy patients?",
     ],
   },
 
@@ -334,6 +336,8 @@ export const INPATIENT_GUIDES: Record<
     discussionQuestions: [
       "A patient with AKI has potassium 6.2 (responding to medical therapy), bicarbonate 16, and is making 30 mL/hr of urine. Does this patient need dialysis right now? How do you frame your recommendation?",
       "An ESRD patient on thrice-weekly HD missed their last two sessions and presents with shortness of breath and potassium 7.0. What is different about this scenario compared to AKI?",
+      "CONVINCE (NEJM 2023) showed 23% lower mortality with high-dose online hemodiafiltration vs high-flux HD in select prevalent HD patients. Where does HDF fit in current US dialysis practice, and what are the limitations?",
+      "ACHIEVE (Lancet 2025) was stopped for futility — spironolactone in maintenance dialysis didn't reduce CV death/HF hospitalization and increased severe hyperkalemia. How does this change a request to start an MRA on a HD patient with HFrEF?",
     ],
   },
 
@@ -408,6 +412,8 @@ export const INPATIENT_GUIDES: Record<
     discussionQuestions: [
       "A patient presents with creatinine rising from 1.2 to 4.0 in one week, UA with 3+ blood and 2+ protein, and RBC casts on microscopy. What is your differential and immediate plan?",
       "You send ANCA, anti-GBM, C3/C4, ANA, and hepatitis panel. What findings on each would change your management urgently?",
+      "How would you frame the role of obinutuzumab (REGENCY, NEJM 2025; FDA-approved Oct 2025) in active proliferative lupus nephritis on top of MMF + steroids? When would you reach for it vs belimumab or voclosporin?",
+      "ORIGIN-3 (NEJM 2025) showed atacicept reduced UPCR 42% vs placebo at 36 weeks in IgAN. Together with sibeprenlimab (VISIONARY) and iptacopan (APPLAUSE-IgAN), how do you sequence the new IgAN therapies on top of supportive care?",
     ],
   },
 
@@ -674,6 +680,7 @@ export const INPATIENT_GUIDES: Record<
       "What is the role of chloride in diuretic resistance?",
       "Why did CARRESS-HF show that ultrafiltration was NOT better than diuretics?",
       "How does RV dysfunction impair LV filling (ventricular interdependence)?",
+      "DAPA-HF (NEJM 2019) showed dapagliflozin reduced HF/CV death 26% in HFrEF and slowed eGFR decline. How does the initial 'eGFR dip' from SGLT2i fit into your conversation with the cardiology team about Cr changes during decongestion?",
     ],
   },
 
@@ -739,6 +746,7 @@ export const INPATIENT_GUIDES: Record<
       "Why does the initial eGFR dip from SGLT2i and ACEi/ARB represent protection, not injury?",
       "How does finerenone differ from spironolactone?",
       "What is the role of the KFRE (Kidney Failure Risk Equation) in managing DKD?",
+      "CONFIDENCE (NEJM 2025) showed simultaneous initiation of finerenone + empagliflozin reduced UACR more than either alone (-29% vs finerenone, -32% vs empagliflozin). Should you start both pillars at once instead of stepwise — and what are the safety considerations?",
     ],
   },
 

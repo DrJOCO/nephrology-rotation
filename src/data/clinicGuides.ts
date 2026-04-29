@@ -127,12 +127,16 @@ export const CLINIC_GUIDES: Record<ClinicGuideTopic, ClinicGuideTemplate> = {
     discussionQuestions: [
       "A patient with CKD stage 4 (eGFR 18, stable) has no uremic symptoms but is losing weight and has declining albumin. How would you approach dialysis planning for this patient?",
       "A patient is referred with CKD stage 5 (eGFR 10) and has a PICC line in the left arm from a recent hospitalization. What concerns does this raise, and how would you counsel the patient going forward?",
+      "A diabetic CKD patient is on max ACEi and an SGLT2i. CONFIDENCE (NEJM 2025) showed simultaneous initiation of finerenone and empagliflozin produced additive UACR reduction. Would you start finerenone at the same visit as the SGLT2i, or stagger them?",
+      "A CKD patient asks if allopurinol will protect their kidneys. CKD-FIX (NEJM 2020) and PERL showed it does not slow eGFR decline despite a 35% urate drop. How do you counsel them, and when does urate-lowering still belong in the plan?",
     ],
 
     guidelineBasis: [
       "KDIGO 2024 Clinical Practice Guideline for CKD Evaluation and Management",
       "KDIGO 2021 Clinical Practice Guideline for Blood Pressure Management in CKD",
       "IDEAL Trial (NEJM 2010) — timing of dialysis initiation",
+      "CONFIDENCE (NEJM 2025) — simultaneous finerenone + empagliflozin in DKD",
+      "CKD-FIX (NEJM 2020) — allopurinol does NOT slow CKD progression",
     ],
   },
 
@@ -320,6 +324,9 @@ export const CLINIC_GUIDES: Record<ClinicGuideTopic, ClinicGuideTemplate> = {
     discussionQuestions: [
       "A patient is on lisinopril 40 mg, amlodipine 10 mg, and chlorthalidone 25 mg, but home BPs average 155/95. What is your systematic approach to evaluating and managing this patient's resistant hypertension?",
       "A 28-year-old woman is referred for new-onset hypertension with BPs around 160/100 and a potassium of 3.2 mEq/L. What secondary causes would you consider, and how would you prioritize your workup?",
+      "A 72-year-old with diffuse atherosclerosis has resistant HTN and is found on imaging to have 80% stenosis of the right renal artery. CORAL (NEJM 2014) showed stenting did not reduce CV/renal events vs medical therapy alone — what are the few remaining indications where you would still consider intervention?",
+      "After PATHWAY-2 spironolactone, what is the role of newer agents in resistant HTN? Aprocitentan (PRECISION, Lancet 2022) is FDA-approved (Tryvio) and lowered BP and proteinuria; baxdrostat (BaxHTN/Bax24, 2025) cut 24h ambulatory SBP ~14 mmHg in resistant HTN. Where would each fit?",
+      "AMBER (Lancet 2019): patiromer kept 86% of CKD patients (eGFR 25–45) on spironolactone vs 66% on placebo. How does that change your approach to MRA tolerance in resistant HTN with advanced CKD?",
     ],
 
     guidelineBasis: [
@@ -327,6 +334,9 @@ export const CLINIC_GUIDES: Record<ClinicGuideTopic, ClinicGuideTemplate> = {
       "KDIGO 2021 Clinical Practice Guideline for Blood Pressure Management in CKD",
       "Endocrine Society 2025 Guideline for Primary Aldosteronism",
       "PATHWAY-2 Trial (Lancet 2015) — spironolactone for resistant hypertension",
+      "CORAL (NEJM 2014) — renal-artery stenting no benefit over medical therapy",
+      "PRECISION (Lancet 2022) — aprocitentan for resistant HTN; FDA-approved 2024",
+      "AMBER (Lancet 2019) — patiromer enables MRA continuation in advanced-CKD resistant HTN",
     ],
   },
 };

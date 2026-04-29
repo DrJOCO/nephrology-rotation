@@ -216,7 +216,7 @@ export const LANDMARK_TRIALS = {
       takeaway: "Patiromer enabled significantly more CKD patients to remain on spironolactone for resistant hypertension by preventing hyperkalemia (86% vs 66% at 12 weeks).",
       details: "Design: Multicenter phase 2 double-blind RCT. N=295 patients with resistant HTN and CKD (eGFR 25\u201345). All started spironolactone 25 mg/day. Arms: Patiromer 8.4 g/day vs placebo, with titration. Primary endpoint: proportion remaining on spironolactone at 12 weeks. Results: 86% (patiromer) vs 66% (placebo) remained on spironolactone (p<0.0001). Significant reduction in hyperkalemia events. Larger BP reduction with sustained spironolactone exposure. Advanced CKD subgroup (eGFR 25-30): 84% vs 56%.",
       significance: "Practical answer to a common bedside problem: how to keep advanced-CKD patients on an MRA. Patiromer (and SZC) lets you continue MRA therapy that would otherwise be held for hyperkalemia. Underpins KDIGO 2024 guidance to use binders proactively rather than discontinuing GDMT.",
-      topics: ["Hyperkalemia", "Resistant Hypertension"] },
+      topics: ["Hyperkalemia", "Hypertension", "CKD"] },
     { name: "POTCAST", category: "Hyperkalemia & Potassium Management",
       full_title: "Increasing the Potassium Level in Patients at High Risk for Ventricular Arrhythmias",
       journal: "NEJM", year: 2025,
@@ -312,7 +312,8 @@ export const LANDMARK_TRIALS = {
       url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2410659",
       takeaway: "Simultaneous initiation of finerenone + empagliflozin reduced UACR 29% more than finerenone alone and 32% more than empagliflozin alone — supporting upfront combination over sequential titration.",
       details: "Design: Multinational double-blind 1:1:1 phase 2 RCT (143 sites, 14 countries). N=818 adults with T2DM and CKD (eGFR 30–90, UACR 100–5000 mg/g) on max-tolerated ACEi/ARB. Arms: Finerenone + empagliflozin vs finerenone + placebo vs empagliflozin + placebo. Doses: empagliflozin 10 mg daily; finerenone 10 or 20 mg daily depending on eGFR. Primary endpoint: relative change in UACR at day 180. Results: Combination vs finerenone alone: -29% (95% CI -35 to -22). Combination vs empagliflozin alone: -32% (95% CI -38 to -26). Symptomatic hypotension, AKI, and hyperkalemia leading to discontinuation were uncommon and balanced.",
-      significance: "Clinical paradigm shift: rather than waiting weeks-to-months between starting each pillar, simultaneous initiation is feasible, additive, and tolerated. Supports KDIGO 'pillar-stacking' implementation strategies (alongside MIRO-CKD). Caveat: 6-month surrogate endpoint, not hard outcomes." },
+      significance: "Clinical paradigm shift: rather than waiting weeks-to-months between starting each pillar, simultaneous initiation is feasible, additive, and tolerated. Supports KDIGO 'pillar-stacking' implementation strategies (alongside MIRO-CKD). Caveat: 6-month surrogate endpoint, not hard outcomes.",
+      topics: ["Diabetic Kidney Disease", "SGLT2 Inhibitors", "Proteinuria"] },
 
     // ── BP & Lipids in CKD ──
     { name: "SPRINT", category: "BP & Lipids in CKD",
@@ -345,7 +346,7 @@ export const LANDMARK_TRIALS = {
       takeaway: "Renal-artery stenting added to optimal medical therapy did NOT reduce CV/renal events in atherosclerotic renal artery stenosis with HTN or CKD.",
       details: "Design: Multicenter open-label RCT. N=947 patients with atherosclerotic RAS (≥60% stenosis with systolic gradient >20 mmHg, or 80–99% stenosis) plus HTN on ≥2 drugs or CKD. Arms: Renal-artery stenting + medical therapy vs medical therapy alone. Demographics: Mean age 69, mean eGFR 58. Median follow-up 3.6 years. Primary composite (CV/renal death, MI, stroke, HF hospitalization, progressive renal insufficiency, RRT): 35.1% (stent) vs 35.8% (medical), HR 0.94 (p=0.58). No subgroup benefit.",
       significance: "Together with ASTRAL, definitively ended routine stenting for atherosclerotic RAS. Optimal medical therapy (ACEi/ARB + statin + antiplatelet + BP control) is the standard. Stenting reserved for the rare flash pulmonary edema, refractory HTN despite ≥3 drugs, or rapidly progressive AKI on RAAS blockade. Frequently tested concept on boards.",
-      topics: ["Resistant Hypertension"] },
+      topics: ["Hypertension"] },
     { name: "PRECISION (Aprocitentan)", category: "Renovascular & Resistant Hypertension",
       full_title: "Dual endothelin antagonist aprocitentan for resistant hypertension",
       journal: "Lancet", year: 2022,
@@ -353,14 +354,15 @@ export const LANDMARK_TRIALS = {
       takeaway: "Aprocitentan (dual endothelin A/B antagonist) lowered office and 24h ambulatory BP and reduced UACR in resistant hypertension on top of ≥3 drugs including a diuretic.",
       details: "Design: Multinational phase 3 trial with 4-week double-blind dose-finding, 32-week single-blind, and 12-week randomized withdrawal. N=730 randomized resistant HTN patients on standardized 3-drug background. Arms: Aprocitentan 12.5 mg, 25 mg, or placebo. Primary endpoint: change in office SBP at week 4. Results: Placebo-adjusted SBP -3.8 mmHg (12.5 mg) and -3.7 mmHg (25 mg); 24h ambulatory SBP reductions larger (~-5 mmHg). UACR also reduced. Main AE: mild-to-moderate edema (9% at 12.5 mg, 18% at 25 mg vs 2% placebo). Effective even in advanced CKD without hyperkalemia.",
       significance: "FDA-approved as Tryvio in 2024 — first novel endothelin-pathway antihypertensive for resistant HTN. Useful add-on when patients have failed ≥3 drugs including a diuretic, especially in CKD. Watch for fluid retention; consider co-administration with a diuretic.",
-      topics: ["Resistant Hypertension"] },
+      topics: ["Hypertension", "CKD", "Proteinuria"] },
     { name: "CKD-FIX", category: "Renovascular & Resistant Hypertension",
       full_title: "Effects of Allopurinol on the Progression of Chronic Kidney Disease",
       journal: "NEJM", year: 2020,
       url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa1915833",
       takeaway: "Allopurinol did NOT slow eGFR decline in stage 3–4 CKD at risk of progression, despite a sustained 35% reduction in serum urate.",
-      details: "Design: Multicenter double-blind RCT (Australia/New Zealand). N=369 patients with stage 3–4 CKD and risk factors for progression (urate ≥8 OR eGFR loss ≥3 mL/min/yr OR UACR ≥265). Arms: Allopurinol 100–300 mg/day vs placebo for 104 weeks. Primary endpoint: change in eGFR at 104 weeks. Results: eGFR change -3.33 (allopurinol) vs -3.23 (placebo) mL/min/1.73m²/yr — no difference (p=0.90). No benefit on proteinuria, BP, or composite kidney outcomes. Companion PERL trial in T1DM/DKD reached the same negative conclusion.",
-      significance: "Together with PERL (T1DM) and FEATHER (febuxostat), CKD-FIX put the urate-lowering hypothesis to rest. Treat hyperuricemia for gout, not for nephroprotection. Important counter-dogma trial — allopurinol is still occasionally proposed as 'kidney-sparing.'" },
+      details: "Design: Multicenter double-blind RCT (Australia/New Zealand). N=369 patients with stage 3–4 CKD and risk factors for progression (urate ≥8 OR eGFR loss ≥3 mL/min/yr OR UACR ≥265). Arms: Allopurinol titrated to 300 mg/day vs placebo for 104 weeks. Primary endpoint: change in eGFR at 104 weeks. Results: eGFR change -3.33 (allopurinol) vs -3.23 (placebo) mL/min/1.73m²/yr — mean difference -0.10 (95% CI -1.18 to 0.97, p=0.85). No benefit on proteinuria, BP, or composite kidney outcomes despite 35% mean reduction in serum urate. Companion PERL trial (NEJM 2020) in T1DM/DKD reached the same negative conclusion.",
+      significance: "Together with PERL (T1DM) and FEATHER (febuxostat), CKD-FIX put the urate-lowering hypothesis to rest. Treat hyperuricemia for gout, not for nephroprotection. Important counter-dogma trial — allopurinol is still occasionally proposed as 'kidney-sparing.'",
+      topics: ["CKD"] },
 
     // ── Glomerular Diseases ──
     { name: "MENTOR", category: "Glomerular Diseases",
@@ -437,14 +439,16 @@ export const LANDMARK_TRIALS = {
       url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2304820",
       takeaway: "High-dose online hemodiafiltration (HDF) reduced all-cause mortality 23% vs high-flux hemodialysis in patients on maintenance dialysis.",
       details: "Design: Multicenter randomized controlled trial (61 centers, 8 European countries). N=1,360 prevalent HD patients (≥3 months on HD) judged able to achieve high HDF convection volume. Arms: High-dose online HDF (target convection volume ≥23 L/session) vs conventional high-flux HD, both 3x/week. Median follow-up 30 months. Demographics: Mean age 62, 60% male. Results: All-cause mortality 17.3% (HDF) vs 21.9% (HD), HR 0.77 (95% CI 0.65–0.93). 4.6 percentage-point absolute risk reduction. CV mortality and infectious mortality both numerically lower with HDF. Quality-of-life metrics also favored HDF.",
-      significance: "First adequately powered RCT to show a survival benefit for HDF over conventional HD. Caveats: only patients capable of high convection volumes were enrolled (selection bias toward healthier patients with good vascular access); availability of HDF in the US is limited. Reignited interest in HDF as a modality choice; shifts the modern dialysis 'dose' question from Kt/V to convective clearance." },
+      significance: "First adequately powered RCT to show a survival benefit for HDF over conventional HD. Caveats: only patients capable of high convection volumes were enrolled (selection bias toward healthier patients with good vascular access); availability of HDF in the US is limited. Reignited interest in HDF as a modality choice; shifts the modern dialysis 'dose' question from Kt/V to convective clearance.",
+      topics: ["Dialysis"] },
     { name: "ACHIEVE", category: "Dialysis Timing & Dose",
       full_title: "Spironolactone versus placebo in patients undergoing maintenance dialysis (ACHIEVE)",
       journal: "Lancet", year: 2025,
       url: "https://pubmed.ncbi.nlm.nih.gov/?term=ACHIEVE%20spironolactone%20dialysis",
       takeaway: "Spironolactone 25 mg daily did NOT reduce CV death or HF hospitalization in maintenance dialysis patients, and increased severe hyperkalemia.",
-      details: "Design: Multinational double-blind placebo-controlled RCT. N=2,538 maintenance dialysis patients (HD or PD) tolerant of a run-in spironolactone period. Arms: Spironolactone 25 mg/day vs placebo. Median follow-up ~3 years. Demographics: Mean age 61, 63% male. Results: Primary composite (CV death or HF hospitalization) 20.5% (spironolactone) vs 21.6% (placebo), HR 0.92 (95% CI 0.78–1.09, p=0.35). All-cause mortality, vascular death, and hospitalizations similar. Severe hyperkalemia: 6.6% vs 4.5%. Trial stopped early for futility.",
-      significance: "Definitive answer to a long-standing question. Despite mechanistic rationale and prior small positive trials, MRA therapy in dialysis does NOT improve outcomes and increases hyperkalemia risk. Together with the smaller ALCHEMIST trial, closes the door on routine spironolactone in dialysis." },
+      details: "Design: International double-blind placebo-controlled RCT with 7-week open-label run-in. N=2,538 maintenance dialysis patients (1,260 spironolactone, 1,278 placebo) tolerant of run-in spironolactone. Arms: Spironolactone 25 mg/day vs placebo. Median follow-up 1.8 years (stopped early at pre-specified interim analysis after 78% of expected events). Demographics: Mean age 61, 63% male. Results: Primary composite (CV death or HF hospitalization) 20.5% (spironolactone) vs 21.6% (placebo), HR 0.92 (95% CI 0.78–1.09, p=0.35). CV mortality HR 0.89, all-cause mortality HR 0.95, HF hospitalization HR 0.97 — all NS. Severe hyperkalemia: 6.6% vs 4.5%. Trial stopped for futility.",
+      significance: "Definitive answer to a long-standing question. Despite mechanistic rationale and prior small positive trials, MRA therapy in dialysis does NOT improve outcomes and increases hyperkalemia risk. Together with the smaller ALCHEMIST trial, closes the door on routine spironolactone in dialysis.",
+      topics: ["Dialysis", "Hyperkalemia", "Cardiorenal Syndrome"] },
 
     // ── Transplant ──
     { name: "SYMPHONY", category: "Transplant",
@@ -504,7 +508,8 @@ export const LANDMARK_TRIALS = {
       url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2510198",
       takeaway: "Atacicept (dual BAFF/APRIL inhibitor) reduced 24-h UPCR by 42% vs placebo at week 36 in IgAN, with reductions in Gd-IgA1 and resolution of hematuria.",
       details: "Design: Multinational phase 3 double-blind RCT. N=431 adults with biopsy-proven IgAN and proteinuria despite max ACEi/ARB. Arms: Atacicept 150 mg subcutaneous weekly (self-administered) vs placebo. Prespecified interim at 36 weeks: 42% placebo-adjusted reduction in 24-h UPCR (atacicept arm achieved ~46% reduction from baseline). Gd-IgA1 down 68%; hematuria resolved in 81% of treated patients. Adverse events generally balanced; serious AEs less frequent with atacicept (0.5% vs 5%). No immunosuppression signal.",
-      significance: "First phase 3 trial of a dual B-cell axis modulator (BAFF + APRIL) to show clinical efficacy in IgAN. BLA submitted Q4 2025; positions atacicept alongside sibeprenlimab as upstream B-cell-axis options. The 2-year eGFR-slope analysis is expected in 2027 \u2014 proteinuria endpoint only at this stage." },
+      significance: "First phase 3 trial of a dual B-cell axis modulator (BAFF + APRIL) to show clinical efficacy in IgAN. BLA submitted Q4 2025; positions atacicept alongside sibeprenlimab as upstream B-cell-axis options. The 2-year eGFR-slope analysis is expected in 2027 \u2014 proteinuria endpoint only at this stage.",
+      topics: ["Glomerulonephritis", "Proteinuria"] },
 
     // \u2500\u2500 FSGS \u2500\u2500
     { name: "DUPLEX (Sparsentan in FSGS)", category: "FSGS Therapeutics",
@@ -572,8 +577,9 @@ export const LANDMARK_TRIALS = {
       journal: "NEJM", year: 2025,
       url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2410965",
       takeaway: "Obinutuzumab (type II anti-CD20 mAb) added to MMF + steroids significantly increased complete renal response at week 76 in active lupus nephritis (46.4% vs 33.1%).",
-      details: "Design: Multinational phase 3 double-blind placebo-controlled RCT. N=271 adults with biopsy-proven active proliferative LN (class III or IV \u00b1 V). Arms: Obinutuzumab IV (1 g on days 1 and 15, weeks 24 and 26) vs placebo, both on background MMF and tapered glucocorticoids. Primary endpoint: complete renal response (CRR) at week 76. Results: CRR 46.4% (obinutuzumab) vs 33.1% (placebo), adjusted difference 13.4% (95% CI 2.0\u201324.8, p=0.02). CRR with successful prednisone taper: 42.7% vs 30.9%. Proteinuric response (no intercurrent events): 55.5% vs 41.9%. Safety profile consistent with rituximab class.",
-      significance: "FDA-approved (Gazyva) October 20, 2025 for adults with active LN \u2014 second biologic approved for LN after belimumab. Type II anti-CD20 mAbs achieve more profound B-cell depletion than rituximab. Adds to current 'triple therapy' options (MMF + steroids + biologic/CNI). KDIGO guidance is being updated to incorporate obinutuzumab as a recommended adjunct." },
+      details: "Design: Multinational phase 3 double-blind placebo-controlled RCT. N=271 adults with biopsy-proven active proliferative LN (class III or IV \u00b1 V). Arms: Obinutuzumab IV 1000 mg on day 1 and at weeks 2, 24, 26, and 52 vs placebo, both on background MMF and tapered prednisone (target 7.5 mg/day by week 12, 5 mg/day by week 24). Primary endpoint: complete renal response (CRR) at week 76 (UPCR <0.5, eGFR \u226585% of baseline, no intercurrent events). Results: CRR 46.4% (obinutuzumab) vs 33.1% (placebo), adjusted difference 13.4 percentage points (95% CI 2.0\u201324.8, p=0.02). CRR with prednisone \u22647.5 mg/day: 42.7% vs 30.9% (adjusted difference 11.9 pp, p=0.04). Safety profile consistent with anti-CD20 class.",
+      significance: "FDA-approved (Gazyva) October 20, 2025 for adults with active LN \u2014 second biologic approved for LN after belimumab. Type II anti-CD20 mAbs achieve more profound B-cell depletion than rituximab. Adds to current 'triple therapy' options (MMF + steroids + biologic/CNI). KDIGO guidance is being updated to incorporate obinutuzumab as a recommended adjunct.",
+      topics: ["Glomerulonephritis", "Proteinuria"] },
 
     // ── ANCA Vasculitis Therapeutics ──
     { name: "ADVOCATE (Avacopan)", category: "ANCA Vasculitis Therapeutics",
