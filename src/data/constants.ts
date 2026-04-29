@@ -704,7 +704,7 @@ export const STUDY_SHEETS = {
         },
       ],
       trialCallouts: [
-        { trial: "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)", pearl: "In 300 HRS-AKI patients, terlipressin + albumin reversed HRS in 39% vs 18% on placebo + albumin. FDA-approved 2022 \u2014 watch for respiratory failure if volume-overloaded." },
+        { trial: "CONFIRM", pearl: "In 300 HRS-AKI patients, terlipressin + albumin reversed HRS in 39% vs 18% on placebo + albumin. FDA-approved 2022 \u2014 watch for respiratory failure if volume-overloaded." },
         { trial: "PRESERVE", pearl: "In 5177 high-risk CKD patients getting angiography, IV sodium bicarb and N-acetylcysteine did NOT prevent contrast AKI vs IV saline. Adequate isotonic hydration is enough." },
       ],
     },
@@ -812,7 +812,6 @@ export const STUDY_SHEETS = {
         },
       ],
       trialCallouts: [
-        { trial: "PRESERVE", pearl: "In 5177 high-risk CKD patients getting angiography, IV sodium bicarb and N-acetylcysteine did NOT beat IV saline for preventing contrast AKI. Just hydrate with an isotonic crystalloid." },
         { trial: "BiCARB (CKD Bicarb Supplementation)", pearl: "In 300 older CKD patients (eGFR <30, bicarb <22), the 2020 BiCARB RCT found NO kidney, function, or hospitalization benefit from oral NaHCO3. KDIGO 2024 now only considers alkali around bicarb <18." },
       ],
     },
@@ -856,7 +855,7 @@ export const STUDY_SHEETS = {
         },
       ],
       trialCallouts: [
-        { trial: "Ultrafiltration vs IV Diuretics for Decompensated HF (CARRESS-HF)", pearl: "In 188 cardiorenal syndrome patients, ultrafiltration had similar 96-h weight loss but a HIGHER Cr rise and more adverse events vs stepped IV diuretics. Diuretics remain first-line." },
+        { trial: "CARRESS-HF", pearl: "In 188 cardiorenal syndrome patients, ultrafiltration had similar 96-h weight loss but a HIGHER Cr rise and more adverse events vs stepped IV diuretics. Diuretics remain first-line." },
         { trial: "DOSE", pearl: "In 308 ADHF patients, high-dose IV furosemide (2.5\u00d7 home oral dose) gave more net fluid loss and symptom relief with only a transient Cr bump; continuous infusion showed NO advantage over q12h bolus. Bolus q12h is fine \u2014 don\u2019t under-dose." },
         { trial: "ADVOR", pearl: "In 519 ADHF patients on IV loop diuretics, adding IV acetazolamide 500 mg/d improved successful decongestion at 3 days (OR 1.46). Especially helpful with metabolic alkalosis / hypochloremia." },
         { trial: "EMPULSE", pearl: "In 530 patients hospitalized with acute HF (HFrEF or HFpEF, diabetic or not), starting empagliflozin before discharge improved a clinical benefit composite at 90 days. Safe and effective to start in-hospital once stable." },
@@ -1250,7 +1249,6 @@ export const STUDY_SHEETS = {
       trialCallouts: [
         { trial: "SYMPHONY", pearl: "In 1645 kidney transplant recipients, low-dose tacrolimus + MMF + daclizumab induction beat 3 other regimens for 1-year eGFR and biopsy-proven rejection. Basis for modern tacrolimus-based maintenance." },
         { trial: "BENEFIT", pearl: "In kidney transplant recipients, belatacept (costimulation blocker) maintenance yielded better 5\u20137-year GFR than cyclosporine with less CNI nephrotoxicity \u2014 at cost of more early acute rejection. CNI-free alternative." },
-        { trial: "PRESERVE", pearl: "In 5177 high-risk CKD patients getting angiography, IV sodium bicarb and N-acetylcysteine did NOT beat IV saline for preventing contrast AKI. Just hydrate with an isotonic crystalloid." },
       ],
     },
     {
