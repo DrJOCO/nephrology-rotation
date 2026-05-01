@@ -24,7 +24,9 @@ export interface ClinicGuideTemplate {
   guidelineBasis: string[];
 }
 
-export const CLINIC_GUIDES: Record<ClinicGuideTopic, ClinicGuideTemplate> = {
+export type ClinicGuideTemplates = Record<ClinicGuideTopic, ClinicGuideTemplate>;
+
+export const CLINIC_GUIDES: ClinicGuideTemplates = {
   // ═══════════════════════════════════════════════════════════════════
   //  CKD CLINIC GUIDE
   // ═══════════════════════════════════════════════════════════════════

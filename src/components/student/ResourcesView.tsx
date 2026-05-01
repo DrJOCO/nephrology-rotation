@@ -149,9 +149,9 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
         const tc = tagColors[r.tag] || { bg: T.ice, text: T.brand };
         const hasCurbsidersFallback = isCurbsidersResource(r.url);
         const appleSearchUrl = hasCurbsidersFallback ? getCurbsidersAppleSearchUrl(r.name) : null;
-        const primaryUrl = appleSearchUrl || r.url;
-        const primaryLabel = activeTab === "decks" ? "Open Deck" : hasCurbsidersFallback ? "Open Episode" : "Open Resource";
         const isDeck = activeTab === "decks" && isDeckResource(r);
+        const primaryUrl = appleSearchUrl || r.url;
+        const primaryLabel = isDeck ? "Open PDF" : hasCurbsidersFallback ? "Open Episode" : "Open Resource";
         const deckId = isDeck ? r.id : r.url;
         const deckReviewed = isDeck && Boolean(completedItems?.decks?.[deckId]);
         return (
@@ -190,12 +190,6 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
                     <a href={r.url} target="_blank" rel="noopener noreferrer"
                       style={secondaryActionStyle}>
                       Curbsiders Notes
-                    </a>
-                  )}
-                  {activeTab === "decks" && (
-                    <a href={r.url} download
-                      style={secondaryActionStyle}>
-                      Download PPTX
                     </a>
                   )}
                   {activeTab === "decks" && onToggleDeckComplete && (

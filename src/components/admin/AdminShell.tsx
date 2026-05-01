@@ -31,6 +31,7 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   const [isDesktop, setIsDesktop] = useState(() => (typeof window !== "undefined" ? window.innerWidth >= 1100 : false));
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -40,26 +41,54 @@ export function AdminShell({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  useEffect(() => {
+    if (isDesktop) setMobileMenuOpen(false);
+  }, [isDesktop]);
+
   if (!isDesktop) {
     return (
       <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.sans }}>
-        <div style={{ background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, padding: `calc(14px + env(safe-area-inset-top, 0px)) 20px 14px`, position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(0,0,0,0.2)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, padding: `calc(12px + env(safe-area-inset-top, 0px)) 16px 12px`, position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 12px rgba(0,0,0,0.2)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, position: "relative" }}>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ color: "white", fontFamily: T.serif, fontSize: 19, fontWeight: 700 }}>
-                Admin Panel <span style={{ fontSize: 13, background: T.warning, color: T.warningInk, padding: "2px 8px", borderRadius: 6, marginLeft: 8, fontFamily: T.sans, fontWeight: 600, verticalAlign: "middle" }}>ATTENDING</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                <div style={{ color: "white", fontFamily: T.serif, fontSize: 18, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {heading}
+                </div>
+                <span style={{ fontSize: 11, background: T.warning, color: T.warningInk, padding: "2px 7px", borderRadius: 6, fontFamily: T.sans, fontWeight: 800, flexShrink: 0 }}>ATTENDING</span>
               </div>
-              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {heading}
-                {rotationCode && <span style={{ marginLeft: 8, fontSize: 13, background: "rgba(255,255,255,0.15)", padding: "2px 8px", borderRadius: 6, fontFamily: T.mono, letterSpacing: 1 }}>Code: {rotationCode}</span>}
+              <div style={{ color: "rgba(255,255,255,0.58)", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 3 }}>
+                {subheading}
+                {rotationCode && <span style={{ marginLeft: 8, fontSize: 12, background: "rgba(255,255,255,0.14)", padding: "2px 7px", borderRadius: 999, fontFamily: T.mono, letterSpacing: 0.8 }}>Code {rotationCode}</span>}
               </div>
             </div>
-            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-              {themeToggle}
-              {onExit && <button onClick={onExit} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>← Student</button>}
-              <button onClick={onLock} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Lock 🔒</button>
-              <button onClick={onSignOut} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 13, padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}>Sign Out</button>
-            </div>
+            <button
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-expanded={mobileMenuOpen}
+              aria-label="Admin actions"
+              style={{ width: 38, height: 38, borderRadius: 10, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 20, lineHeight: 1, cursor: "pointer", flexShrink: 0 }}
+            >
+              ⋯
+            </button>
+            {mobileMenuOpen && (
+              <div style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, width: 220, background: T.card, border: `1px solid ${T.line}`, borderRadius: 14, padding: 10, boxShadow: "0 18px 42px rgba(0,0,0,0.28)", zIndex: 120 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "8px 6px", color: T.text, fontSize: 13, fontWeight: 700 }}>
+                  <span>Theme</span>
+                  {themeToggle}
+                </div>
+                {onExit && (
+                  <button onClick={() => { setMobileMenuOpen(false); onExit(); }} style={{ width: "100%", padding: "10px 10px", background: "none", border: "none", color: T.text, borderRadius: 10, textAlign: "left", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                    Student App
+                  </button>
+                )}
+                <button onClick={() => { setMobileMenuOpen(false); onLock(); }} style={{ width: "100%", padding: "10px 10px", background: "none", border: "none", color: T.text, borderRadius: 10, textAlign: "left", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                  Lock Panel
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onSignOut(); }} style={{ width: "100%", padding: "10px 10px", background: T.dangerBg, border: "none", color: T.danger, borderRadius: 10, textAlign: "left", fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
         </div>
         <div className="tab-content-enter" key={contentKey} style={{ padding: `0 0 ${T.navH + T.navPad}px` }}>

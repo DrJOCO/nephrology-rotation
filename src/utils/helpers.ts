@@ -287,9 +287,11 @@ export function useIsMobile(maxWidth = 480): boolean {
 export const SHARED_KEYS: Record<string, string> = {
   curriculum: "neph_shared_curriculum",
   articles: "neph_shared_articles",
+  studySheets: "neph_shared_studySheets",
   announcements: "neph_shared_announcements",
   settings: "neph_shared_settings",
   clinicGuides: "neph_shared_clinicGuides",
+  clinicGuideTemplates: "neph_shared_clinicGuideTemplates",
   studentPrefix: "neph_shared_student_",
 };
 

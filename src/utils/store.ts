@@ -37,9 +37,11 @@ interface RotationOwnerSession {
 const KEY_TO_FIELD: Record<string, string> = {
   neph_shared_curriculum: "curriculum",
   neph_shared_articles: "articles",
+  neph_shared_studySheets: "studySheets",
   neph_shared_announcements: "announcements",
   neph_shared_settings: "settings",
   neph_shared_clinicGuides: "clinicGuides",
+  neph_shared_clinicGuideTemplates: "clinicGuideTemplates",
 };
 
 const PENDING_SYNC_KEY = "neph_pendingSyncQueue";

@@ -5,11 +5,13 @@ import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
 import { getTopicIcon } from "../../data/topicIcons";
 import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
+import type { StudySheetsData } from "../../utils/studySheets";
 
 interface TopicBrowseViewProps {
   onBack: () => void;
   navigate: (tab: string, sv?: Record<string, unknown> | null) => void;
   initialTopic?: string | null;
+  studySheets?: StudySheetsData;
   completedItems?: {
     articles?: Record<string, boolean>;
     studySheets?: Record<string, boolean>;
@@ -25,7 +27,7 @@ const resourceGroupLabels = {
   tools: "Tool",
 } as const;
 
-export default function TopicBrowseView({ onBack, navigate, completedItems, initialTopic = null }: TopicBrowseViewProps) {
+export default function TopicBrowseView({ onBack, navigate, completedItems, studySheets = STUDY_SHEETS, initialTopic = null }: TopicBrowseViewProps) {
   const isMobile = useIsMobile();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(initialTopic);
   const completed = completedItems || {};
@@ -71,7 +73,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, init
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 8 }}>Study Sheets</div>
                 {content.studySheets.map(s => {
-                  const sheet = (STUDY_SHEETS[s.week] || []).find(sh => sh.id === s.id);
+                  const sheet = (studySheets[s.week] || []).find(sh => sh.id === s.id);
                   if (!sheet) return null;
                   const done = !!completed.studySheets?.[s.id];
                   return (

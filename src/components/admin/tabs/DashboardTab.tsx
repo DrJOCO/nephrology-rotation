@@ -6,6 +6,7 @@ import type { AdminConfirmOptions, AdminToastTone } from "../shared";
 import { buildCohortTeachingSignals, buildCohortCompetencyNeeds } from "../lib/cohort";
 import { buildAdminAssessmentSignal } from "../lib/student-analytics";
 import { buildExposureCurriculumGap } from "../lib/exposure";
+import { buildDuplicateNameGroups } from "../lib/duplicates";
 
 export function DashboardTab({ students, navigate, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
   const activeStudents = students.filter(s => s.status === "active");
@@ -17,17 +18,17 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
   const teachingFollowUps = activeStudents
     .map((student) => ({ student, assessment: buildAdminAssessmentSignal(student) }))
     .filter((entry) => entry.assessment?.summary);
-  const duplicateNameGroups = Array.from(
-    activeStudents.reduce((map, student) => {
-      const key = student.name.trim().toLowerCase();
-      if (!key) return map;
-      const current = map.get(key) || [];
-      current.push(student);
-      map.set(key, current);
-      return map;
-    }, new Map<string, AdminStudent[]>()),
-  ).filter(([, group]) => group.length > 1);
+  const duplicateNameGroups = buildDuplicateNameGroups(activeStudents);
   const attentionItems = [
+    ...duplicateNameGroups.slice(0, 1).map((group) => ({
+      key: `duplicate-${group[0].name}`,
+      title: "Duplicate roster records",
+      detail: `${duplicateNameGroups.length} duplicate-name group${duplicateNameGroups.length === 1 ? "" : "s"} need review. First group: ${group.map((student) => student.name).join(", ")}`,
+      badge: "Roster",
+      tone: "warning" as const,
+      action: () => navigate("students", { type: "reviewDuplicates" }),
+      actionLabel: "Review duplicates",
+    })),
     ...missingPre.slice(0, 2).map((student) => ({
       key: `pre-${student.studentId}`,
       title: student.name,
@@ -72,8 +73,10 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
           {attentionItems.length > 0 ? (
             <div style={{ display: "grid", gap: 10 }}>
               {attentionItems.map((item) => {
-                const tone = item.tone === "success"
-                  ? { bg: T.successBg, text: T.success, border: T.success }
+              const tone = item.tone === "success"
+                ? { bg: T.successBg, text: T.success, border: T.success }
+                : item.tone === "warning"
+                  ? { bg: T.warningBg, text: T.warning, border: T.warning }
                   : { bg: T.infoBg, text: T.info, border: T.info };
                 return (
                   <div key={item.key} style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 12, padding: 12, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap" }}>

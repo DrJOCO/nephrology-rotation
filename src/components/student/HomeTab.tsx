@@ -7,7 +7,7 @@ import {
   RefreshCw,
   Sparkles,
 } from "lucide-react";
-import { T, WEEKLY, ARTICLES, STUDY_SHEETS, CURRICULUM_DECKS } from "../../data/constants";
+import { T, WEEKLY, ARTICLES, CURRICULUM_DECKS } from "../../data/constants";
 import { WEEKLY_QUIZZES } from "../../data/quizzes";
 import { WEEKLY_CASES } from "../../data/cases";
 import { PRO_TIPS } from "./shared";
@@ -27,6 +27,7 @@ import type {
   WeeklyScores,
 } from "../../types";
 import type { CompetencySummary } from "../../utils/competency";
+import type { StudySheetsData } from "../../utils/studySheets";
 
 const PEARL_STORAGE_KEY = "neph_todayPearlDismissed";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -37,6 +38,7 @@ interface HomeTabProps {
   postScore: QuizScore | null;
   curriculum: typeof WEEKLY;
   articles: typeof ARTICLES;
+  studySheets: StudySheetsData;
   announcements: Announcement[];
   currentWeek: number | null;
   totalWeeks?: number;
@@ -152,6 +154,7 @@ function buildLearningPlan({
   totalWeeks,
   rotationEnded,
   articles,
+  studySheets,
   completedItems,
   weeklyScores,
 }: {
@@ -159,6 +162,7 @@ function buildLearningPlan({
   totalWeeks: number;
   rotationEnded: boolean;
   articles: typeof ARTICLES;
+  studySheets: StudySheetsData;
   completedItems: CompletedItems;
   weeklyScores: WeeklyScores;
 }): LearningPlan {
@@ -182,7 +186,7 @@ function buildLearningPlan({
   let optionalReferenceAction: NavAction | null = null;
 
   for (const week of activeWeeks) {
-    const weekSheets = STUDY_SHEETS[week] || [];
+    const weekSheets = studySheets[week] || [];
     const weekDecks = CURRICULUM_DECKS.filter((deck) => deck.week === week);
     const weekArticles = articles[week] || [];
     const weekCases = WEEKLY_CASES[week] || [];
@@ -288,14 +292,16 @@ function buildLearningPlan({
 
 function buildStartChecklist({
   displayWeek,
+  studySheets,
   completedItems,
   weeklyScores,
 }: {
   displayWeek: number;
+  studySheets: StudySheetsData;
   completedItems: CompletedItems;
   weeklyScores: WeeklyScores;
 }): StartChecklistItem[] {
-  const weekSheets = STUDY_SHEETS[displayWeek] || [];
+  const weekSheets = studySheets[displayWeek] || [];
   const sheetsDone = weekSheets.filter((sheet) => completedItems.studySheets?.[sheet.id]).length;
   const weekDecks = CURRICULUM_DECKS.filter((deck) => deck.week === displayWeek);
   const decksDone = weekDecks.filter((deck) => completedItems.decks?.[deck.id]).length;
@@ -445,6 +451,7 @@ export default function HomeTab({
   postScore,
   curriculum,
   articles,
+  studySheets,
   announcements,
   currentWeek,
   totalWeeks = 4,
@@ -499,8 +506,8 @@ export default function HomeTab({
   );
   const latestAnnouncement = activeAnnouncements[0] || null;
   const learningPlan = useMemo(
-    () => buildLearningPlan({ currentWeek, totalWeeks, rotationEnded, articles, completedItems, weeklyScores }),
-    [articles, completedItems, currentWeek, rotationEnded, totalWeeks, weeklyScores],
+    () => buildLearningPlan({ currentWeek, totalWeeks, rotationEnded, articles, studySheets, completedItems, weeklyScores }),
+    [articles, studySheets, completedItems, currentWeek, rotationEnded, totalWeeks, weeklyScores],
   );
   const heroCard = useMemo(
     () => buildHeroCard({
@@ -520,8 +527,8 @@ export default function HomeTab({
   const pearlIndex = useMemo(() => getPearlIndex(now), [now]);
   const displayWeek = currentWeek || 1;
   const startChecklist = useMemo(
-    () => buildStartChecklist({ displayWeek, completedItems, weeklyScores }),
-    [completedItems, displayWeek, weeklyScores],
+    () => buildStartChecklist({ displayWeek, studySheets, completedItems, weeklyScores }),
+    [completedItems, displayWeek, studySheets, weeklyScores],
   );
   const headerKicker = currentWeek ? `Module ${currentWeek} · ${now.toLocaleDateString("en-US", { weekday: "short" })}` : rotationEnded ? `Rotation complete · ${now.toLocaleDateString("en-US", { weekday: "short" })}` : `Getting started · ${now.toLocaleDateString("en-US", { weekday: "short" })}`;
   const headerSub = rotationEnded

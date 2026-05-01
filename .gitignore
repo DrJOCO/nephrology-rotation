@@ -27,6 +27,7 @@ tmp/
 
 # PDFs (copyrighted materials)
 *.pdf
+!public/decks/*.pdf
 
 # Claude config
 .claude/

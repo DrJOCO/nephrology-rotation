@@ -41,6 +41,16 @@ export const adminInput: React.CSSProperties = {
 };
 
 export function AdminToast({ toast, onClose }: { toast: AdminToastState | null; onClose: () => void }) {
+  const [isMobile, setIsMobile] = React.useState(() => (typeof window !== "undefined" ? window.innerWidth < 700 : false));
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const onResize = () => setIsMobile(window.innerWidth < 700);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(onClose, 2600);
@@ -56,7 +66,17 @@ export function AdminToast({ toast, onClose }: { toast: AdminToastState | null; 
       : { bg: T.infoBg, border: T.info, text: T.info, icon: "i" };
 
   return (
-    <div style={{ position: "fixed", top: 18, right: 18, zIndex: 12000, maxWidth: 360, width: "calc(100vw - 32px)" }}>
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        position: "fixed",
+        ...(isMobile
+          ? { left: 12, right: 12, bottom: `calc(${T.navH + T.navPad + 12}px + env(safe-area-inset-bottom, 0px))` }
+          : { top: 18, right: 18, maxWidth: 360, width: "calc(100vw - 32px)" }),
+        zIndex: 12000,
+      }}
+    >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, background: tone.bg, border: `1px solid ${tone.border}`, color: tone.text, borderRadius: 14, padding: "12px 14px", boxShadow: "0 16px 36px rgba(0,0,0,0.18)" }}>
         <div style={{ width: 22, height: 22, borderRadius: 999, background: "rgba(255,255,255,0.72)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
           {tone.icon}

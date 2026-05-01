@@ -4,9 +4,10 @@ import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone }
 import type { NavigateFn, ArticlesData } from "../types";
 import type { AdminStudent, AdminSubView, SharedSettings } from "../../../types";
 import { buildAdminCompetencySnapshot, buildAdminAssessmentSignal } from "../lib/student-analytics";
+import { buildDuplicateNameGroups, buildDuplicateStudentIdSet } from "../lib/duplicates";
 import { getScorePct, getMinutesSince } from "../lib/format";
 
-export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, deleteStudentRecord, writeStudentToFirestore, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; deleteStudentRecord: (student: AdminStudent) => Promise<void>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
+export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, duplicateReview = false, deleteStudentRecord, writeStudentToFirestore, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; duplicateReview?: boolean; deleteStudentRecord: (student: AdminStudent) => Promise<void>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", year: "MS3", startDate: "" });
   const [search, setSearch] = useState("");
@@ -15,6 +16,8 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
   const [syncFilter, setSyncFilter] = useState<"all" | "fresh" | "stale" | "unsynced" | "needsAssessment">("all");
   const [sortBy, setSortBy] = useState<"name" | "newest" | "oldest" | "masteryLow" | "masteryHigh" | "syncOldest" | "syncNewest">("name");
   const isConnected = !!rotationCode;
+  const duplicateNameGroups = buildDuplicateNameGroups(students.filter((student) => student.status === "active"));
+  const duplicateStudentIds = buildDuplicateStudentIdSet(duplicateNameGroups);
 
   const addStudent = () => {
     if (!form.name.trim()) return;
@@ -60,6 +63,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
   const filteredStudents = students
     .filter((student) => {
       const searchTarget = `${student.name} ${student.email || ""}`.toLowerCase();
+      if (duplicateReview && !duplicateStudentIds.has(student.id)) return false;
       if (search.trim() && !searchTarget.includes(search.trim().toLowerCase())) return false;
       if (statusFilter !== "all" && student.status !== statusFilter) return false;
       if (yearFilter !== "all" && (student.year || "") !== yearFilter) return false;
@@ -93,7 +97,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ color: T.text, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Students</h2>
+        <h2 style={{ color: T.text, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{duplicateReview ? "Review Duplicates" : "Students"}</h2>
         {!isConnected && (
           <button onClick={() => setShowAdd(!showAdd)}
             style={{ padding: "8px 16px", background: showAdd ? T.sub : T.warning, color: showAdd ? "white" : T.warningInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -105,6 +109,52 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
       {isConnected && (
         <div style={{ background: T.infoBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.navy, lineHeight: 1.5 }}>
           📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code. Use <strong>Remove</strong> for test users, duplicates, or mistaken joins.
+        </div>
+      )}
+
+      {duplicateReview && (
+        <div style={{ background: T.warningBg, border: `1px solid ${T.warning}55`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap", marginBottom: duplicateNameGroups.length > 0 ? 12 : 0 }}>
+            <div>
+              <div style={{ color: T.warning, fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.4 }}>Duplicate Review</div>
+              <div style={{ color: T.navy, fontSize: 15, fontWeight: 800, marginTop: 3 }}>{duplicateNameGroups.length} active duplicate-name group{duplicateNameGroups.length === 1 ? "" : "s"}</div>
+              <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginTop: 3 }}>Open the real learner record, remove test joins, or mark older records complete.</div>
+            </div>
+            <button onClick={() => navigate("students")} style={{ padding: "8px 12px", background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
+              Show Full Roster
+            </button>
+          </div>
+
+          {duplicateNameGroups.length > 0 ? (
+            <div style={{ display: "grid", gap: 10 }}>
+              {duplicateNameGroups.map((group) => (
+                <div key={group.map((student) => student.id).join("-")} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: 12 }}>
+                  <div style={{ color: T.navy, fontSize: 14, fontWeight: 800, marginBottom: 8 }}>{group[0].name}</div>
+                  <div style={{ display: "grid", gap: 8 }}>
+                    {group.map((student) => (
+                      <div key={student.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", background: T.bg, borderRadius: 10, padding: 10 }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 13, color: T.text, fontWeight: 800 }}>{student.email || "No email"} · {student.year || "Year not set"}</div>
+                          <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>
+                            {student.status} · {(student.patients || []).length} consults · {student.lastSyncedAt ? `synced ${new Date(student.lastSyncedAt).toLocaleDateString()}` : "never synced"}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          <button onClick={() => navigate("students", { type: "studentDetail", id: String(student.id) })} style={{ padding: "7px 10px", background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Open</button>
+                          <button onClick={() => toggleStatus(student.id)} style={{ padding: "7px 10px", background: T.bg, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>{student.status === "active" ? "Complete" : "Reactivate"}</button>
+                          <button onClick={() => { void removeStudent(student); }} style={{ padding: "7px 10px", background: T.dangerBg, color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Remove</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ background: T.successBg, color: T.success, border: `1px solid ${T.success}`, borderRadius: 12, padding: "10px 12px", fontSize: 13, fontWeight: 800 }}>
+              No active duplicate-name records right now.
+            </div>
+          )}
         </div>
       )}
 
@@ -157,7 +207,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
           </div>
         </div>
         <div style={{ fontSize: 13, color: T.muted, marginTop: 10 }}>
-          Showing {filteredStudents.length} of {students.length} students.
+          Showing {filteredStudents.length} of {students.length} students{duplicateReview ? " in duplicate review" : ""}.
         </div>
       </div>
 

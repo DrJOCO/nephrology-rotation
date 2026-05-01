@@ -96,6 +96,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       const merged = { ...s, ...updates };
       writeStudentToFirestore(s.studentId, {
         name: merged.name,
+        year: merged.year,
         patients: merged.patients,
         weeklyScores: merged.weeklyScores,
         preScore: merged.preScore,

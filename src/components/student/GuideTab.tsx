@@ -2,7 +2,7 @@ import { useState } from "react";
 import { HelpCircle, BookOpen } from "lucide-react";
 import { T, ALL_LANDMARK_TRIALS, RESOURCES } from "../../data/constants";
 import { GUIDE_SECTIONS, GUIDE_DATA } from "../../data/guides";
-import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../../data/clinicGuides";
+import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTemplates, type ClinicGuideTopic } from "../../data/clinicGuides";
 import { INPATIENT_GUIDES, INPATIENT_GUIDE_TOPICS } from "../../data/inpatientGuides";
 import { ROTATION_GUIDES, ROTATION_GUIDE_IDS } from "../../data/rotationGuides";
 import { getCurrentOrNextFriday } from "../../utils/clinicRotation";
@@ -104,7 +104,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
   );
 }
 
-export default function GuideTab({ navigate, subView, clinicGuides }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null; clinicGuides?: ClinicGuideRecord[] }) {
+export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideTemplates = CLINIC_GUIDES }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null; clinicGuides?: ClinicGuideRecord[]; clinicGuideTemplates?: ClinicGuideTemplates }) {
   const isMobile = useIsMobile();
 
   if (subView?.type === "guideDetail") {
@@ -160,7 +160,7 @@ export default function GuideTab({ navigate, subView, clinicGuides }: { navigate
             </div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
               {CLINIC_GUIDE_TOPICS.map((topic) => {
-                const template = CLINIC_GUIDES[topic as ClinicGuideTopic];
+                const template = clinicGuideTemplates[topic as ClinicGuideTopic] || CLINIC_GUIDES[topic as ClinicGuideTopic];
                 const record = (clinicGuides || []).find(g => g.date === dateStr && g.topic === topic);
                 return (
                   <button

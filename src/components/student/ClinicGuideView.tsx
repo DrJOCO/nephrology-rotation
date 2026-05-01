@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { T } from "../../data/constants";
-import { CLINIC_GUIDES, CLINIC_GUIDE_FOOTER, type ClinicGuideTopic } from "../../data/clinicGuides";
+import { CLINIC_GUIDES, CLINIC_GUIDE_FOOTER, type ClinicGuideTemplates, type ClinicGuideTopic } from "../../data/clinicGuides";
 import { backBtnStyle } from "./shared";
 
 interface Props {
   date: string;
   topic: string;
   isOverride?: boolean;
+  clinicGuideTemplates: ClinicGuideTemplates;
   onBack: () => void;
 }
 
@@ -23,9 +24,9 @@ const bulletList = (items: string[], color: string) =>
     </div>
   ));
 
-export default function ClinicGuideView({ date, topic, isOverride, onBack }: Props) {
+export default function ClinicGuideView({ date, topic, isOverride, clinicGuideTemplates, onBack }: Props) {
   const [openSection, setOpenSection] = useState(0);
-  const guide = CLINIC_GUIDES[topic as ClinicGuideTopic];
+  const guide = clinicGuideTemplates[topic as ClinicGuideTopic] || CLINIC_GUIDES[topic as ClinicGuideTopic];
 
   if (!guide) {
     return (
@@ -128,6 +129,19 @@ export default function ClinicGuideView({ date, topic, isOverride, onBack }: Pro
           </div>
         ))}
       </div>
+
+      {/* Discussion questions */}
+      {guide.discussionQuestions.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Discussion Questions</h3>
+          {guide.discussionQuestions.map((question, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, background: T.card, borderRadius: 12, padding: "12px 14px", border: `1px solid ${T.line}` }}>
+              <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{i + 1}.</span>
+              <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{question}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Guideline basis */}
       <div style={{ background: T.grayBg, borderRadius: 12, padding: "12px 14px", marginBottom: 14 }}>

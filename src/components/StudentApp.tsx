@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { BookOpen, Stethoscope, Activity, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home, Trophy } from "lucide-react";
-import { T, WEEKLY, ARTICLES, STUDY_SHEETS, CURRICULUM_DECKS } from "../data/constants";
+import { T, WEEKLY, ARTICLES, CURRICULUM_DECKS } from "../data/constants";
+import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import { PRE_QUIZ, POST_QUIZ, TOPIC_REINFORCEMENT_BANK, WEEKLY_QUIZZES, getQuestionByKey, resolveReinforcementTopic, topicToSlug } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems, seedTopicReinforcementSr } from "../utils/spacedRepetition";
 import store from "../utils/store";
@@ -20,6 +21,8 @@ import {
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
 import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
+import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
+import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import { buildCompetencySummary } from "../utils/competency";
 import { getStudentCurrentModule, hasRotationEnded } from "../utils/moduleProgression";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
@@ -237,6 +240,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [reflections, setReflections] = useState<ReflectionEntry[]>([]);
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
+  const [clinicGuideTemplates, setClinicGuideTemplates] = useState<ClinicGuideTemplates>(() => normalizeClinicGuideTemplates());
+  const [studySheets, setStudySheets] = useState<StudySheetsData>(() => normalizeStudySheets());
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
   const [installPromptEvent, setInstallPromptEvent] = useState<DeferredInstallPromptEvent | null>(null);
   const [installPromptDismissed, setInstallPromptDismissed] = useState(() => localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === "1");
@@ -478,8 +483,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       const sharedCurriculum = await store.getShared<typeof WEEKLY>(SHARED_KEYS.curriculum);
       const sharedArticles = await store.getShared<typeof ARTICLES>(SHARED_KEYS.articles);
+      const sharedStudySheets = await store.getShared<Partial<StudySheetsData>>(SHARED_KEYS.studySheets);
       const sharedAnnouncements = await store.getShared<Announcement[]>(SHARED_KEYS.announcements);
       const sharedSettingsData = await store.getShared<SharedSettings>(SHARED_KEYS.settings);
+      const sharedClinicGuideTemplates = await store.getShared<Partial<ClinicGuideTemplates>>(SHARED_KEYS.clinicGuideTemplates);
 
       if (!sessionStudentId && sidFromStore) setStudentId(sidFromStore);
       if (name) { setStudentName(name); setNameSet(true); }
@@ -493,8 +500,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       if (post) setPostScore(post);
       if (sharedCurriculum) setCurriculum(sharedCurriculum);
       if (sharedArticles) setArticles(sharedArticles);
+      if (sharedStudySheets) setStudySheets(normalizeStudySheets(sharedStudySheets));
       if (sharedAnnouncements) setAnnouncements(sharedAnnouncements);
       if (sharedSettingsData) setSharedSettings(sharedSettingsData);
+      if (sharedClinicGuideTemplates) setClinicGuideTemplates(normalizeClinicGuideTemplates(sharedClinicGuideTemplates));
       const sharedClinicGuides = await store.getShared<ClinicGuideRecord[]>(SHARED_KEYS.clinicGuides);
       const loadedGuides = sharedClinicGuides || [];
       const { guides: updatedGuides } = ensureCurrentClinicGuide(loadedGuides);
@@ -596,9 +605,11 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     const unsub = store.onRotationChanged((data) => {
       if (data.curriculum) setCurriculum(data.curriculum);
       if (data.articles) setArticles(data.articles);
+      if (data.studySheets) setStudySheets(normalizeStudySheets(data.studySheets as Partial<StudySheetsData>));
       if (data.announcements) setAnnouncements(data.announcements);
       if (data.settings) setSharedSettings(data.settings);
       if (data.clinicGuides) setClinicGuides(data.clinicGuides);
+      if (data.clinicGuideTemplates) setClinicGuideTemplates(normalizeClinicGuideTemplates(data.clinicGuideTemplates as Partial<ClinicGuideTemplates>));
     });
     return () => unsub();
   }, [rotationCode]);
@@ -1318,6 +1329,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           onClose={() => setSearchOpen(false)}
           onNavigate={(t, sv) => { navigate(t, sv as SubView | undefined); setSearchOpen(false); }}
           articles={articles}
+          studySheets={studySheets}
           patients={patients}
           currentStudentId={studentId}
         />
@@ -1460,7 +1472,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
       <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + ${subView ? "80px + " : ""}env(safe-area-inset-bottom, 0px))` }}>
-        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={handleSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={handleInstallApp} onDismissInstallPrompt={dismissInstallPrompt} onCompleteConsultTopic={handleCompleteConsultTopic} />}
+        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} studySheets={studySheets} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={handleSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={handleInstallApp} onDismissInstallPrompt={dismissInstallPrompt} onCompleteConsultTopic={handleCompleteConsultTopic} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Module ${subView.week} Quiz`}
@@ -1549,8 +1561,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <LandmarkTrialsView week={subView.week} onBack={() => navigate("today")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
         {tab === "today" && subView?.type === "studySheets" && (
-          <StudySheetsView week={subView.week} initialSheetId={subView.sheetId} onBack={() => navigate("today")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
-            const sheet = (STUDY_SHEETS[subView.week] || []).find((item) => item.id === sheetId);
+          <StudySheetsView week={subView.week} initialSheetId={subView.sheetId} studySheets={studySheets} onBack={() => navigate("today")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
+            const sheet = (studySheets[subView.week] || []).find((item) => item.id === sheetId);
             const wasCompleted = Boolean(completedItems.studySheets[sheetId]);
             setCompletedItems(prev => {
               const next = { ...prev, studySheets: { ...prev.studySheets } };
@@ -1600,10 +1612,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <FaqView onBack={() => navigate("today")} />
         )}
         {tab === "today" && subView?.type === "bookmarks" && (
-          <BookmarksView bookmarks={bookmarks} onBack={() => navigate("today")} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} />
+          <BookmarksView bookmarks={bookmarks} onBack={() => navigate("today")} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} studySheets={studySheets} />
         )}
         {tab === "today" && subView?.type === "browseByTopic" && (
-          <TopicBrowseView onBack={() => navigate("today")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} />
+          <TopicBrowseView onBack={() => navigate("today")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} studySheets={studySheets} />
         )}
         {tab === "today" && subView?.type === "topicDetail" && (
           <TopicBrowseView
@@ -1620,6 +1632,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             }}
             navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void}
             completedItems={completedItems}
+            studySheets={studySheets}
             initialTopic={subView.topic}
           />
         )}
@@ -1703,7 +1716,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         })()}
         {/* Library hub (Phase 3a shell): lands on a simple stacked view of Guide + Refs sections.
             Phase 3b+ will restructure to the spec §03 Library (filterable by week). */}
-        {tab === "library" && !subView && <LibraryHub navigate={navigate} clinicGuides={clinicGuides} />}
+        {tab === "library" && !subView && <LibraryHub navigate={navigate} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
         {tab === "library" && subView?.type === "refDetail" && (
           <RefDetailView refId={subView.id} onBack={() => navigate("library")} />
         )}
@@ -1718,11 +1731,12 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             date={subView.date}
             topic={subView.topic || clinicGuides.find(g => g.date === subView.date)?.topic || "CKD"}
             isOverride={clinicGuides.find(g => g.date === subView.date && g.topic === (subView.topic || "CKD"))?.isOverride}
+            clinicGuideTemplates={clinicGuideTemplates}
             onBack={() => navigate("library")}
           />
         )}
         {tab === "library" && subView?.type === "clinicGuideHistory" && (
-          <ClinicGuideHistoryView guides={clinicGuides} onSelect={(date, topic) => navigate("library", { type: "clinicGuide", date, topic })} onBack={() => navigate("library")} />
+          <ClinicGuideHistoryView guides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} onSelect={(date, topic) => navigate("library", { type: "clinicGuide", date, topic })} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "inpatientGuide" && (
           <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={() => navigate("library")} />
@@ -1733,7 +1747,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "library" && subView?.type === "faq" && (
           <FaqView onBack={() => navigate("library")} />
         )}
-        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} />}
+        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}
@@ -1771,10 +1785,11 @@ export default StudentApp;
 // heading. Phase 3b+ restructures to the spec's week-filterable Library layout.
 // ─────────────────────────────────────────────────────────────────────────
 function LibraryHub({
-  navigate, clinicGuides,
+  navigate, clinicGuides, clinicGuideTemplates,
 }: {
   navigate: (tab: string, sv?: SubView) => void;
   clinicGuides: ClinicGuideRecord[];
+  clinicGuideTemplates: ClinicGuideTemplates;
 }) {
   return (
     <div>
@@ -1789,6 +1804,7 @@ function LibraryHub({
         navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void}
         subView={null}
         clinicGuides={clinicGuides}
+        clinicGuideTemplates={clinicGuideTemplates}
       />
       <div style={{ padding: "8px 16px", borderTop: `1px solid ${T.line}` }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, margin: "8px 0 4px" }}>Quick references</div>

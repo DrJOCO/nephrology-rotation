@@ -3,12 +3,14 @@ import { T, WEEKLY, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constan
 import { backBtnStyle, EduDisclaimer } from "./shared";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
 import { getTopicContent } from "../../utils/topicMapping";
+import type { StudySheetsData } from "../../utils/studySheets";
+import type { SubView } from "../../types";
 
 const imgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 10, marginBottom: 6, border: `1px solid ${T.line}` };
 const captionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "0 0 8px", lineHeight: 1.4 };
 
-export default function StudySheetsView({ week, initialSheetId, onBack, navigate, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
-  const sheets = STUDY_SHEETS[week] || [];
+export default function StudySheetsView({ week, initialSheetId, studySheets = STUDY_SHEETS, onBack, navigate, completedItems, bookmarks, onToggleBookmark, onToggleComplete }: { week: number; initialSheetId?: string; studySheets?: StudySheetsData; onBack: () => void; navigate: (tab: string, sv?: SubView) => void; completedItems: { studySheets?: Record<string, boolean> }; bookmarks: { studySheets?: string[] }; onToggleBookmark: (id: string) => void; onToggleComplete: (id: string) => void }) {
+  const sheets = studySheets[week] || [];
   const wk = WEEKLY[week];
   const initialExpandedIndex = initialSheetId ? sheets.findIndex(sheet => sheet.id === initialSheetId) : -1;
   const [expanded, setExpanded] = useState<number | null>(initialExpandedIndex >= 0 ? initialExpandedIndex : null);

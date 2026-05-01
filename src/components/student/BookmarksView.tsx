@@ -1,9 +1,10 @@
 import { T, ARTICLES as DEFAULT_ARTICLES, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { backBtnStyle } from "./shared";
-import type { Bookmarks, SubView } from "../../types";
+import type { Bookmarks, StudySheet, SubView } from "../../types";
+import type { StudySheetsData } from "../../utils/studySheets";
 
-export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleBookmark, articles: liveArticles }: { bookmarks: Bookmarks; onBack: () => void; onNavigate: (tab: string, sv?: SubView) => void; onToggleBookmark: (type: keyof Bookmarks, id: string) => void; articles: typeof DEFAULT_ARTICLES }) {
+export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleBookmark, articles: liveArticles, studySheets: liveStudySheets = STUDY_SHEETS }: { bookmarks: Bookmarks; onBack: () => void; onNavigate: (tab: string, sv?: SubView) => void; onToggleBookmark: (type: keyof Bookmarks, id: string) => void; articles: typeof DEFAULT_ARTICLES; studySheets?: StudySheetsData }) {
   const bk = bookmarks || {};
   const articleData = liveArticles || DEFAULT_ARTICLES;
   const bookmarkedTrials = ALL_LANDMARK_TRIALS.filter(t => (bk.trials || []).includes(t.name));
@@ -11,8 +12,8 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
   [1,2,3,4].forEach(w => (articleData[w] || []).forEach(a => { if ((bk.articles || []).includes(a.url)) bookmarkedArticles.push({ ...a, _week: w }); }));
   const bookmarkedCases: (typeof WEEKLY_CASES[1][0] & { _week: number })[] = [];
   [1,2,3,4].forEach(w => (WEEKLY_CASES[w] || []).forEach(c => { if ((bk.cases || []).includes(c.id)) bookmarkedCases.push({ ...c, _week: w }); }));
-  const bookmarkedSheets: (typeof STUDY_SHEETS[1][0] & { _week: number })[] = [];
-  [1,2,3,4].forEach(w => (STUDY_SHEETS[w] || []).forEach(s => { if ((bk.studySheets || []).includes(s.id)) bookmarkedSheets.push({ ...s, _week: w }); }));
+  const bookmarkedSheets: (StudySheet & { _week: number })[] = [];
+  [1,2,3,4].forEach(w => (liveStudySheets[w] || []).forEach(s => { if ((bk.studySheets || []).includes(s.id)) bookmarkedSheets.push({ ...s, _week: w }); }));
 
   const total = bookmarkedTrials.length + bookmarkedArticles.length + bookmarkedCases.length + bookmarkedSheets.length;
 

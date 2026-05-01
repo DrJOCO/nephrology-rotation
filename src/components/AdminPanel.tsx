@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
+import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import store from "../utils/store";
 import { createAdminInvite, getCurrentAdminUser, listAdminInvites, normalizeEmailAddress, registerInvitedAdmin, sendAdminPasswordReset, signInAdmin, signInAdminWithGoogle, signOutFirebase, type AdminInviteRecord } from "../utils/firebase";
 import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
+import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { normalizeAdminStudentRecord } from "../utils/adminStudents";
 import { AdminAuthScreen } from "./admin/AdminAuthScreen";
@@ -15,6 +17,7 @@ import { ArticleEditor } from "./admin/editors/ArticleEditor";
 import { CurriculumEditor } from "./admin/editors/CurriculumEditor";
 import { AnnouncementsEditor } from "./admin/editors/AnnouncementsEditor";
 import { ClinicGuidesEditor } from "./admin/editors/ClinicGuidesEditor";
+import { StudySheetsEditor } from "./admin/editors/StudySheetsEditor";
 import { ContentTab } from "./admin/tabs/ContentTab";
 import { DashboardTab } from "./admin/tabs/DashboardTab";
 import { StudentsTab } from "./admin/tabs/StudentsTab";
@@ -22,9 +25,105 @@ import { AnalyticsTab } from "./admin/tabs/AnalyticsTab";
 import { RotationSummaryReport } from "./admin/views/RotationSummaryReport";
 import { PrintableReport } from "./admin/views/PrintableReport";
 import { StudentDetailView } from "./admin/views/StudentDetailView";
+import { getAdminPinValidationError } from "./admin/pinValidation";
 import { adminScopedKey, getStoredAdminRotationCode, setStoredAdminRotationCode } from "./admin/storage";
+import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import type { NavigateFn, WeeklyData, ArticlesData, AdminSession, AdminAuthMode } from "./admin/types";
 import type { AdminSubView, AdminStudent, Announcement, SharedSettings, Patient, QuizScore, WeeklyScores, ClinicGuideRecord, CompletedItems, Bookmarks, ActivityLogEntry, ReflectionEntry } from "../types";
+
+type PublishableSharedState = {
+  curriculum: WeeklyData;
+  articles: ArticlesData;
+  studySheets: StudySheetsData;
+  announcements: Announcement[];
+  settings: SharedSettings;
+  clinicGuides: ClinicGuideRecord[];
+  clinicGuideTemplates: ClinicGuideTemplates;
+};
+
+function getPublicSettings(settings: SharedSettings): SharedSettings {
+  const { adminPin: _adminPin, ...publicSettings } = settings;
+  return publicSettings;
+}
+
+function buildPublishSnapshot({
+  curriculum,
+  articles,
+  studySheets,
+  announcements,
+  settings,
+  clinicGuides,
+  clinicGuideTemplates,
+}: PublishableSharedState): PublishableSharedState {
+  return {
+    curriculum,
+    articles,
+    studySheets: normalizeStudySheets(studySheets),
+    announcements,
+    settings: getPublicSettings(settings),
+    clinicGuides,
+    clinicGuideTemplates: normalizeClinicGuideTemplates(clinicGuideTemplates),
+  };
+}
+
+function serializePublishSnapshot(snapshot: PublishableSharedState): string {
+  return JSON.stringify(snapshot);
+}
+
+function PublishStatusBar({
+  rotationCode,
+  dirty,
+  publishing,
+  lastPublishedAt,
+  onPublish,
+}: {
+  rotationCode: string;
+  dirty: boolean;
+  publishing: boolean;
+  lastPublishedAt: string | null;
+  onPublish: () => void;
+}) {
+  const canPublish = Boolean(rotationCode) && dirty && !publishing;
+  const lastPublishedLabel = lastPublishedAt
+    ? new Date(lastPublishedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : null;
+
+  return (
+    <div style={{ background: dirty ? T.warningBg : T.successBg, border: `1px solid ${dirty ? T.warning : T.success}55`, borderRadius: 14, padding: 14, marginBottom: 14, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <div style={{ minWidth: 240, flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ color: dirty ? T.warning : T.success, fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.3 }}>
+            {rotationCode ? (dirty ? "Unsaved changes" : "Published") : "Draft only"}
+          </span>
+          {rotationCode && <span style={{ color: T.muted, fontFamily: T.mono, fontSize: 12, letterSpacing: 0.8 }}>Code {rotationCode}</span>}
+        </div>
+        <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginTop: 3 }}>
+          {rotationCode
+            ? `Drafts are saved locally. Students ${dirty ? "will not see these changes until you publish." : "are seeing the latest published version."}${lastPublishedLabel ? ` Last published ${lastPublishedLabel}.` : ""}`
+            : "Connect or create a rotation before publishing settings or content to students."}
+        </div>
+      </div>
+      <button
+        onClick={onPublish}
+        disabled={!canPublish}
+        style={{
+          padding: "10px 14px",
+          background: canPublish ? T.brand : T.bg,
+          color: canPublish ? "white" : T.muted,
+          border: `1px solid ${canPublish ? T.brand : T.line}`,
+          borderRadius: 10,
+          fontSize: 13,
+          fontWeight: 800,
+          cursor: canPublish ? "pointer" : "not-allowed",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {!rotationCode ? "No Live Rotation" : publishing ? "Publishing..." : dirty ? "Publish to Students" : "No Changes"}
+      </button>
+    </div>
+  );
+}
+
 function getAdminAuthErrorMessage(error: unknown) {
   const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: unknown }).code) : "";
   const message = error instanceof Error ? error.message : "";
@@ -241,23 +340,49 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   // Admin data
   const [students, setStudents] = useState<AdminStudent[]>([]);
   const [articles, setArticles] = useState(ARTICLES);
+  const [studySheets, setStudySheets] = useState<StudySheetsData>(() => normalizeStudySheets());
   const [curriculum, setCurriculum] = useState(WEEKLY);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [settings, setSettings] = useState<SharedSettings>({ attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "" });
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
+  const [clinicGuideTemplates, setClinicGuideTemplates] = useState<ClinicGuideTemplates>(() => normalizeClinicGuideTemplates());
   const [rotationCode, setRotationCodeState] = useState("");
+  const [lastPublishedSnapshotJson, setLastPublishedSnapshotJson] = useState("");
+  const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null);
+  const [publishingSharedData, setPublishingSharedData] = useState(false);
+  const [publishBaselineResetToken, setPublishBaselineResetToken] = useState(0);
+  const publishBaselineHandledRef = useRef(0);
+
+  const publishSnapshot = useMemo(() => buildPublishSnapshot({
+    curriculum,
+    articles,
+    studySheets,
+    announcements,
+    settings,
+    clinicGuides,
+    clinicGuideTemplates,
+  }), [curriculum, articles, studySheets, announcements, settings, clinicGuides, clinicGuideTemplates]);
+  const publishSnapshotJson = useMemo(() => serializePublishSnapshot(publishSnapshot), [publishSnapshot]);
+  const sharedDataDirty = Boolean(rotationCode && lastPublishedSnapshotJson && publishSnapshotJson !== lastPublishedSnapshotJson);
+
+  const markSharedSnapshotClean = useCallback(() => {
+    setPublishBaselineResetToken((token) => token + 1);
+  }, []);
 
   const resetAdminWorkspace = useCallback(() => {
     setStudents([]);
     setArticles(ARTICLES);
+    setStudySheets(normalizeStudySheets());
     setCurriculum(WEEKLY);
     setAnnouncements([]);
     setSettings({ attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "" });
     setClinicGuides([]);
+    setClinicGuideTemplates(normalizeClinicGuideTemplates());
     setRotationCodeState("");
+    markSharedSnapshotClean();
     setTab("dashboard");
     setSubView(null);
-  }, []);
+  }, [markSharedSnapshotClean]);
 
   const showToast = useCallback((message: string, tone: AdminToastTone = "info") => {
     setToast({ id: Date.now(), message, tone });
@@ -282,12 +407,22 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     void store.flushPendingSyncQueue();
   }, [firebaseAdmin]);
 
+  useEffect(() => {
+    if (loading || publishBaselineResetToken === 0 || publishBaselineHandledRef.current === publishBaselineResetToken) return;
+    publishBaselineHandledRef.current = publishBaselineResetToken;
+    setLastPublishedSnapshotJson(publishSnapshotJson);
+    setLastPublishedAt(null);
+  }, [loading, publishBaselineResetToken, publishSnapshotJson]);
+
   const loadLocalAdminData = useCallback(async (uid: string) => {
     const settingsState = await store.get<SharedSettings>(adminScopedKey(uid, "settings"));
     const s = await store.get<AdminStudent[]>(adminScopedKey(uid, "students"));
     const a = await store.get<ArticlesData>(adminScopedKey(uid, "articles"));
+    const ss = await store.get<Partial<StudySheetsData>>(adminScopedKey(uid, "studySheets"));
     const c = await store.get<WeeklyData>(adminScopedKey(uid, "curriculum"));
     const an = await store.get<Announcement[]>(adminScopedKey(uid, "announcements"));
+    const cg = await store.get<ClinicGuideRecord[]>(adminScopedKey(uid, "clinicGuides"));
+    const cgt = await store.get<Partial<ClinicGuideTemplates>>(adminScopedKey(uid, "clinicGuideTemplates"));
     if (settingsState) {
       setSettings(prev => ({ ...prev, ...settingsState }));
     }
@@ -303,8 +438,11 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
       )));
     }
     if (a) setArticles(a);
+    if (ss) setStudySheets(normalizeStudySheets(ss));
     if (c) setCurriculum(c);
     if (an) setAnnouncements(an);
+    if (cg) setClinicGuides(cg);
+    if (cgt) setClinicGuideTemplates(normalizeClinicGuideTemplates(cgt));
   }, []);
 
   const hydrateRotationData = useCallback(async (code: string, session: AdminSession) => {
@@ -317,11 +455,14 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     if (!remote) return false;
     if (remote.curriculum) setCurriculum(remote.curriculum);
     if (remote.articles) setArticles(remote.articles);
+    setStudySheets(normalizeStudySheets(remote.studySheets as Partial<StudySheetsData> | undefined));
     if (remote.announcements) setAnnouncements(remote.announcements);
     if (remote.settings) setSettings(prev => ({ ...prev, ...remote.settings }));
-    if (remote.clinicGuides) setClinicGuides(remote.clinicGuides);
+    setClinicGuides(Array.isArray(remote.clinicGuides) ? remote.clinicGuides as ClinicGuideRecord[] : []);
+    setClinicGuideTemplates(normalizeClinicGuideTemplates(remote.clinicGuideTemplates as Partial<ClinicGuideTemplates> | undefined));
+    markSharedSnapshotClean();
     return true;
-  }, []);
+  }, [markSharedSnapshotClean]);
 
   // Load — when connected to a rotation, hydrate from Firestore first to avoid
   // overwriting shared state with stale local defaults
@@ -386,22 +527,44 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   useEffect(() => {
     if (!loading && firebaseAdmin) {
       store.set(adminScopedKey(firebaseAdmin.uid, "articles"), articles);
+      store.set(adminScopedKey(firebaseAdmin.uid, "studySheets"), studySheets);
       store.set(adminScopedKey(firebaseAdmin.uid, "curriculum"), curriculum);
       store.set(adminScopedKey(firebaseAdmin.uid, "announcements"), announcements);
+      store.set(adminScopedKey(firebaseAdmin.uid, "clinicGuides"), clinicGuides);
+      store.set(adminScopedKey(firebaseAdmin.uid, "clinicGuideTemplates"), clinicGuideTemplates);
       store.set(adminScopedKey(firebaseAdmin.uid, "settings"), settings);
     }
-  }, [articles, curriculum, announcements, settings, loading, firebaseAdmin]);
+  }, [articles, studySheets, curriculum, announcements, clinicGuides, clinicGuideTemplates, settings, loading, firebaseAdmin]);
 
-  // Save shared state (consolidated) — strip adminPin before publishing
-  useEffect(() => {
-    if (!loading && firebaseAdmin) {
-      store.setShared(SHARED_KEYS.curriculum, curriculum);
-      store.setShared(SHARED_KEYS.articles, articles);
-      store.setShared(SHARED_KEYS.announcements, announcements);
-      const { adminPin: _pin, ...publicSettings } = settings;
-      store.setShared(SHARED_KEYS.settings, publicSettings);
+  const publishSharedChanges = useCallback(async () => {
+    if (!firebaseAdmin || !rotationCode) {
+      showToast("Connect or create a rotation before publishing to students.", "error");
+      return;
     }
-  }, [curriculum, articles, announcements, settings, loading, firebaseAdmin]);
+
+    const snapshot = publishSnapshot;
+    const serialized = serializePublishSnapshot(snapshot);
+    setPublishingSharedData(true);
+    try {
+      await Promise.all([
+        store.setShared(SHARED_KEYS.curriculum, snapshot.curriculum),
+        store.setShared(SHARED_KEYS.articles, snapshot.articles),
+        store.setShared(SHARED_KEYS.studySheets, snapshot.studySheets),
+        store.setShared(SHARED_KEYS.announcements, snapshot.announcements),
+        store.setShared(SHARED_KEYS.clinicGuides, snapshot.clinicGuides),
+        store.setShared(SHARED_KEYS.clinicGuideTemplates, snapshot.clinicGuideTemplates),
+        store.setShared(SHARED_KEYS.settings, snapshot.settings),
+      ]);
+      setLastPublishedSnapshotJson(serialized);
+      setLastPublishedAt(new Date().toISOString());
+      showToast("Published settings and content to students.", "success");
+    } catch (error) {
+      console.error("Publish shared changes failed:", error);
+      showToast("Publish failed. Check your connection and try again.", "error");
+    } finally {
+      setPublishingSharedData(false);
+    }
+  }, [firebaseAdmin, publishSnapshot, rotationCode, showToast]);
 
   // Real-time listener: students auto-appear when connected to a rotation
   useEffect(() => {
@@ -667,8 +830,9 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
   const handlePinSetupSubmit = () => {
     const nextPin = pinSetupValue.trim();
-    if (nextPin.length < 4) {
-      setPinSetupError("Use at least 4 characters.");
+    const validationError = getAdminPinValidationError(nextPin);
+    if (validationError) {
+      setPinSetupError(validationError);
       return;
     }
     if (nextPin !== pinSetupConfirm.trim()) {
@@ -751,6 +915,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     { id: "rotation", icon: "📡", label: "Rotation" },
     { id: "settings", icon: "⚙️", label: "Settings" },
   ];
+  const showPublishBar = tab === "content" || tab === "settings";
 
   return (
     <>
@@ -767,18 +932,28 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         themeToggle={<AdminThemeToggle />}
         contentKey={tab + (subView ? JSON.stringify(subView) : "")}
       >
+        {showPublishBar && (
+          <PublishStatusBar
+            rotationCode={rotationCode}
+            dirty={sharedDataDirty}
+            publishing={publishingSharedData}
+            lastPublishedAt={lastPublishedAt}
+            onPublish={() => { void publishSharedChanges(); }}
+          />
+        )}
         {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} articles={articles} onBack={() => navigate("dashboard")} />}
-        {tab === "students" && !subView && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} deleteStudentRecord={deleteStudentRecord} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
+        {tab === "students" && (!subView || subView.type === "reviewDuplicates") && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} duplicateReview={subView?.type === "reviewDuplicates"} deleteStudentRecord={deleteStudentRecord} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} deleteStudentRecord={deleteStudentRecord} navigate={navigate} settings={settings} articles={articles} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "analytics" && <AnalyticsTab students={students} rotationCode={rotationCode} settings={settings} articles={articles} />}
-        {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} />}
+        {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} studySheets={studySheets} />}
         {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
+        {tab === "content" && subView?.type === "editStudySheets" && <StudySheetsEditor studySheets={studySheets} setStudySheets={setStudySheets} onBack={() => navigate("content")} showToast={showToast} />}
         {tab === "content" && subView?.type === "announcements" && <AnnouncementsEditor announcements={announcements} setAnnouncements={setAnnouncements} onBack={() => navigate("content")} />}
-        {tab === "content" && subView?.type === "clinicGuides" && <ClinicGuidesEditor clinicGuides={clinicGuides} setClinicGuides={setClinicGuides} onBack={() => navigate("content")} />}
+        {tab === "content" && subView?.type === "clinicGuides" && <ClinicGuidesEditor clinicGuides={clinicGuides} setClinicGuides={setClinicGuides} clinicGuideTemplates={clinicGuideTemplates} setClinicGuideTemplates={setClinicGuideTemplates} onBack={() => navigate("content")} showToast={showToast} />}
         {tab === "rotation" && firebaseAdmin && (
           <SettingsTab
             settings={settings}
@@ -787,9 +962,14 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             setRotationCodeState={setRotationCodeState}
             curriculum={curriculum}
             articles={articles}
+            studySheets={studySheets}
             announcements={announcements}
+            clinicGuideTemplates={clinicGuideTemplates}
+            setClinicGuideTemplates={setClinicGuideTemplates}
+            setClinicGuides={setClinicGuides}
             setCurriculum={setCurriculum}
             setArticles={setArticles}
+            setStudySheets={setStudySheets}
             setAnnouncements={setAnnouncements}
             firebaseAdmin={firebaseAdmin}
             adminInvites={adminInvites}
@@ -803,6 +983,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             showToast={showToast}
             requestConfirm={requestConfirm}
             onOpenContent={(subView) => navigate("content", subView ?? null)}
+            onSharedDataLoaded={markSharedSnapshotClean}
             focusSection="rotation"
           />
         )}
@@ -814,9 +995,14 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             setRotationCodeState={setRotationCodeState}
             curriculum={curriculum}
             articles={articles}
+            studySheets={studySheets}
             announcements={announcements}
+            clinicGuideTemplates={clinicGuideTemplates}
+            setClinicGuideTemplates={setClinicGuideTemplates}
+            setClinicGuides={setClinicGuides}
             setCurriculum={setCurriculum}
             setArticles={setArticles}
+            setStudySheets={setStudySheets}
             setAnnouncements={setAnnouncements}
             firebaseAdmin={firebaseAdmin}
             adminInvites={adminInvites}
@@ -830,6 +1016,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             showToast={showToast}
             requestConfirm={requestConfirm}
             onOpenContent={(subView) => navigate("content", subView ?? null)}
+            onSharedDataLoaded={markSharedSnapshotClean}
           />
         )}
       </AdminShell>

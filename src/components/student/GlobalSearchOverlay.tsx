@@ -7,6 +7,7 @@ import type { Patient, TeamSnapshot } from "../../types";
 import { useFocusTrap, useIsMobile } from "../../utils/helpers";
 import { searchAll, type SearchResultItem, type SearchScope } from "../../utils/search";
 import store from "../../utils/store";
+import type { StudySheetsData } from "../../utils/studySheets";
 
 interface RecentQuery {
   query: string;
@@ -89,12 +90,14 @@ export default function GlobalSearchOverlay({
   onClose,
   onNavigate,
   articles: liveArticles,
+  studySheets: liveStudySheets,
   patients = [],
   currentStudentId,
 }: {
   onClose: () => void;
   onNavigate: (tab: string, sv?: Record<string, unknown>) => void;
   articles?: typeof DEFAULT_ARTICLES;
+  studySheets?: StudySheetsData;
   patients?: Patient[];
   currentStudentId: string;
 }) {
@@ -146,17 +149,18 @@ export default function GlobalSearchOverlay({
     const trimmed = query.trim();
     if (trimmed.length < 2) return null;
     const articleData = liveArticles || DEFAULT_ARTICLES;
+    const sheetData = liveStudySheets || STUDY_SHEETS;
     return searchAll(trimmed, {
       trials: ALL_LANDMARK_TRIALS,
       articlesByWeek: articleData,
       cases: WEEKLY_CASES,
-      studySheets: STUDY_SHEETS,
+      studySheets: sheetData,
       abbreviations: ABBREVIATIONS,
       quickRefs: QUICK_REFS,
       patients,
       teamSnapshots,
     });
-  }, [query, liveArticles, patients, teamSnapshots]);
+  }, [query, liveArticles, liveStudySheets, patients, teamSnapshots]);
 
   const groups = useMemo<SearchGroup[]>(() => {
     if (!results) return [];

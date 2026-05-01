@@ -1,10 +1,11 @@
 import { T } from "../../data/constants";
-import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../../data/clinicGuides";
+import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTemplates, type ClinicGuideTopic } from "../../data/clinicGuides";
 import { backBtnStyle } from "./shared";
 import type { ClinicGuideRecord } from "../../types";
 
 interface Props {
   guides: ClinicGuideRecord[];
+  clinicGuideTemplates: ClinicGuideTemplates;
   onSelect: (date: string, topic: ClinicGuideTopic) => void;
   onBack: () => void;
 }
@@ -14,7 +15,7 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString("en-US", { weekday: "short", year: "numeric", month: "short", day: "numeric" });
 }
 
-export default function ClinicGuideHistoryView({ guides, onSelect, onBack }: Props) {
+export default function ClinicGuideHistoryView({ guides, clinicGuideTemplates, onSelect, onBack }: Props) {
   const topicOrder = new Map<ClinicGuideTopic, number>(CLINIC_GUIDE_TOPICS.map((topic, index) => [topic, index]));
   const sorted = [...guides].sort((a, b) =>
     b.date.localeCompare(a.date) ||
@@ -32,11 +33,11 @@ export default function ClinicGuideHistoryView({ guides, onSelect, onBack }: Pro
 
       {sorted.length === 0 ? (
         <div style={{ textAlign: "center", padding: 32, color: T.muted, fontSize: 14 }}>
-          No clinic guides generated yet. Guides are created automatically each week.
+          No clinic guide records yet. Guides are added automatically for the active Friday set.
         </div>
       ) : (
         sorted.map((g) => {
-          const template = CLINIC_GUIDES[g.topic as ClinicGuideTopic];
+          const template = clinicGuideTemplates[g.topic as ClinicGuideTopic] || CLINIC_GUIDES[g.topic as ClinicGuideTopic];
           return (
             <button key={g.id} onClick={() => onSelect(g.date, g.topic as ClinicGuideTopic)}
               style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, marginBottom: 10, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "box-shadow 0.2s" }}

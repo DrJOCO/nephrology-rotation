@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { T } from "../../data/constants";
+import type { ClinicGuideTemplates } from "../../data/clinicGuides";
 import { createRotationCode } from "../../utils/helpers";
+import { normalizeClinicGuideTemplates } from "../../utils/clinicGuideTemplates";
+import { normalizeStudySheets, type StudySheetsData } from "../../utils/studySheets";
 import store, { RotationInfo } from "../../utils/store";
 import { isBootstrapAdminEmail, type AdminInviteRecord } from "../../utils/firebase";
-import type { AdminSubView, Announcement, SharedSettings } from "../../types";
+import type { AdminSubView, Announcement, ClinicGuideRecord, SharedSettings } from "../../types";
 import type { ArticlesData, AdminSession, WeeklyData } from "./types";
 import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone } from "./shared";
 import { setStoredAdminRotationCode } from "./storage";
+import { getAdminPinValidationError } from "./pinValidation";
 
 function SettingsSection({
   sectionRef,
@@ -32,6 +36,80 @@ function SettingsSection({
   );
 }
 
+function RotationRecordCard({
+  rotation,
+  active,
+  note,
+  onConnect,
+  onDelete,
+  onDraftFieldChange,
+  onCommitField,
+}: {
+  rotation: RotationInfo;
+  active?: boolean;
+  note?: string;
+  onConnect?: () => void;
+  onDelete?: () => void;
+  onDraftFieldChange: (field: "dates" | "location", value: string) => void;
+  onCommitField: (field: "dates" | "location", value: string) => void;
+}) {
+  return (
+    <div style={{ background: active ? T.ice : T.bg, borderRadius: 14, padding: 14, border: active ? `2px solid ${T.brand}` : `1px solid ${T.line}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+        <div style={{ fontFamily: T.mono, fontWeight: 700, fontSize: 16, color: T.navy, letterSpacing: 2 }}>{rotation.code}</div>
+        {active && (
+          <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, border: `1px solid ${T.success}`, padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Active</span>
+        )}
+      </div>
+      {note && <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 10 }}>{note}</div>}
+      <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 13, color: T.muted, minWidth: 62 }}>Owner:</span>
+          <span style={{ fontSize: 13, color: T.text }}>{rotation.ownerEmail || <span style={{ color: T.muted, fontStyle: "italic" }}>Legacy rotation (no owner recorded)</span>}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 13, color: T.muted, minWidth: 62 }}>Dates:</span>
+          <input
+            value={rotation.dates || ""}
+            onChange={(event) => onDraftFieldChange("dates", event.target.value)}
+            onBlur={(event) => onCommitField("dates", event.target.value)}
+            placeholder="e.g. Mar 1-28, 2026"
+            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, background: T.card, outline: "none" }}
+          />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 13, color: T.muted, minWidth: 62 }}>Location:</span>
+          <input
+            value={rotation.location || ""}
+            onChange={(event) => onDraftFieldChange("location", event.target.value)}
+            onBlur={(event) => onCommitField("location", event.target.value)}
+            placeholder="e.g. City Medical Center"
+            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, background: T.card, outline: "none" }}
+          />
+        </div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.muted, marginBottom: onConnect || onDelete ? 10 : 0, flexWrap: "wrap" }}>
+        <span>{rotation.studentCount} student{rotation.studentCount !== 1 ? "s" : ""}</span>
+        {rotation.createdAt && <span>Created {new Date(rotation.createdAt).toLocaleDateString()}</span>}
+      </div>
+      {(onConnect || onDelete) && (
+        <div style={{ display: "flex", gap: 8 }}>
+          {onConnect && (
+            <button onClick={onConnect} style={{ flex: 1, padding: "8px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              Connect
+            </button>
+          )}
+          {onDelete && (
+            <button onClick={onDelete} style={{ minWidth: 88, padding: "8px 12px", background: T.dangerBg, color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              Delete
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SettingsTab({
   settings,
   setSettings,
@@ -39,9 +117,14 @@ export function SettingsTab({
   setRotationCodeState,
   curriculum,
   articles,
+  studySheets,
   announcements,
+  clinicGuideTemplates,
+  setClinicGuideTemplates,
+  setClinicGuides,
   setCurriculum,
   setArticles,
+  setStudySheets,
   setAnnouncements,
   firebaseAdmin,
   adminInvites,
@@ -55,6 +138,7 @@ export function SettingsTab({
   showToast,
   requestConfirm,
   onOpenContent,
+  onSharedDataLoaded,
   focusSection,
 }: {
   settings: SharedSettings;
@@ -63,9 +147,14 @@ export function SettingsTab({
   setRotationCodeState: React.Dispatch<React.SetStateAction<string>>;
   curriculum: WeeklyData;
   articles: ArticlesData;
+  studySheets: StudySheetsData;
   announcements: Announcement[];
+  clinicGuideTemplates: ClinicGuideTemplates;
+  setClinicGuideTemplates: React.Dispatch<React.SetStateAction<ClinicGuideTemplates>>;
+  setClinicGuides: React.Dispatch<React.SetStateAction<ClinicGuideRecord[]>>;
   setCurriculum: React.Dispatch<React.SetStateAction<WeeklyData>>;
   setArticles: React.Dispatch<React.SetStateAction<ArticlesData>>;
+  setStudySheets: React.Dispatch<React.SetStateAction<StudySheetsData>>;
   setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>>;
   firebaseAdmin: AdminSession;
   adminInvites: AdminInviteRecord[];
@@ -79,6 +168,7 @@ export function SettingsTab({
   showToast: (message: string, tone?: AdminToastTone) => void;
   requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>;
   onOpenContent: (subView?: AdminSubView) => void;
+  onSharedDataLoaded: () => void;
   focusSection?: "rotation";
 }) {
   const showRotation = focusSection === "rotation";
@@ -93,8 +183,18 @@ export function SettingsTab({
   const [newLocation, setNewLocation] = useState("");
   const [newCustomCode, setNewCustomCode] = useState("");
   const [selectedRotationCode, setSelectedRotationCode] = useState<string>("");
+  const [pinChangeOpen, setPinChangeOpen] = useState(false);
+  const [pinCurrent, setPinCurrent] = useState("");
+  const [pinNext, setPinNext] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+  const [pinChangeError, setPinChangeError] = useState("");
+  const [pinChangeSuccess, setPinChangeSuccess] = useState("");
 
-  const selectedRotation = rotationHistory.find((r) => r.code === selectedRotationCode) || null;
+  const activeRotation = rotationCode ? rotationHistory.find((r) => r.code === rotationCode) || null : null;
+  const selectableRotations = rotationCode ? rotationHistory.filter((r) => r.code !== rotationCode) : rotationHistory;
+  const selectedRotation = selectableRotations.find((r) => r.code === selectedRotationCode) || null;
+  const activeAdminPin = (settings.adminPin || "").trim();
+  const hasAdminPin = activeAdminPin.length > 0;
 
   const rotationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -109,11 +209,11 @@ export function SettingsTab({
     const list = await store.listRotations();
     setRotationHistory(list);
     setHistoryLoading(false);
-    // Default the dropdown to the active rotation, falling back to the newest.
+    // Keep the selector focused on rotations that are not already active.
     setSelectedRotationCode((prev) => {
-      if (prev && list.some((r) => r.code === prev)) return prev;
-      if (rotationCode && list.some((r) => r.code === rotationCode)) return rotationCode;
-      return list[0]?.code || "";
+      const selectable = rotationCode ? list.filter((r) => r.code !== rotationCode) : list;
+      if (prev && selectable.some((r) => r.code === prev)) return prev;
+      return selectable[0]?.code || "";
     });
   };
 
@@ -137,15 +237,19 @@ export function SettingsTab({
         settings: sharedSettings,
         curriculum,
         articles,
+        studySheets: normalizeStudySheets(studySheets),
         announcements,
+        clinicGuideTemplates,
         dates: newDates,
         location: newLocation,
       }, firebaseAdmin);
       setStoredAdminRotationCode(firebaseAdmin.uid, code);
       setRotationCodeState(code);
+      setClinicGuides([]);
       setNewDates("");
       setNewLocation("");
       setNewCustomCode("");
+      onSharedDataLoaded();
       await refreshRotationHistory();
       showToast(`Rotation ${code} created. Students can join with this code.`, "success");
     } catch (error) {
@@ -188,11 +292,15 @@ export function SettingsTab({
       }
       if (remote.curriculum) setCurriculum(remote.curriculum);
       if (remote.articles) setArticles(remote.articles);
+      setStudySheets(normalizeStudySheets(remote.studySheets as Partial<StudySheetsData> | undefined));
       if (remote.announcements) setAnnouncements(remote.announcements);
+      setClinicGuides(Array.isArray(remote.clinicGuides) ? remote.clinicGuides as ClinicGuideRecord[] : []);
+      setClinicGuideTemplates(normalizeClinicGuideTemplates(remote.clinicGuideTemplates as Partial<ClinicGuideTemplates> | undefined));
       if (remote.settings) setSettings((prev) => ({ ...prev, ...remote.settings }));
       store.setRotationCode(code);
       setStoredAdminRotationCode(firebaseAdmin.uid, code);
       setRotationCodeState(code);
+      onSharedDataLoaded();
       showToast(`Connected to rotation ${code}.`, "success");
     } catch (error) {
       console.error("Connect rotation failed:", error);
@@ -205,11 +313,56 @@ export function SettingsTab({
     setRotationHistory((prev) => prev.map((rotation) => rotation.code === code ? { ...rotation, [field]: value } : rotation));
   };
 
+  const updateRotationHistoryDraft = (code: string, field: "dates" | "location", value: string) => {
+    setRotationHistory((prev) => prev.map((rotation) => rotation.code === code ? { ...rotation, [field]: value } : rotation));
+  };
+
   const handleDisconnect = () => {
     store.setRotationCode(null);
     setStoredAdminRotationCode(firebaseAdmin.uid, null);
     setRotationCodeState("");
+    onSharedDataLoaded();
     showToast("Disconnected from the current rotation.", "info");
+  };
+
+  const resetPinChangeForm = () => {
+    setPinCurrent("");
+    setPinNext("");
+    setPinConfirm("");
+    setPinChangeError("");
+  };
+
+  const handleCancelPinChange = () => {
+    resetPinChangeForm();
+    setPinChangeOpen(false);
+  };
+
+  const handleSavePinChange = () => {
+    const current = pinCurrent.trim();
+    const next = pinNext.trim();
+    const confirmation = pinConfirm.trim();
+
+    if (hasAdminPin && current !== activeAdminPin) {
+      setPinChangeError("Current PIN is incorrect.");
+      return;
+    }
+
+    const validationError = getAdminPinValidationError(next, activeAdminPin);
+    if (validationError) {
+      setPinChangeError(validationError);
+      return;
+    }
+
+    if (next !== confirmation) {
+      setPinChangeError("New PINs need to match.");
+      return;
+    }
+
+    setSettings((prev) => ({ ...prev, adminPin: next }));
+    resetPinChangeForm();
+    setPinChangeOpen(false);
+    setPinChangeSuccess("Admin PIN changed on this browser.");
+    showToast("Admin PIN changed.", "success");
   };
 
   const handleRejoin = async () => {
@@ -226,12 +379,16 @@ export function SettingsTab({
       }
       if (remote.curriculum) setCurriculum(remote.curriculum);
       if (remote.articles) setArticles(remote.articles);
+      setStudySheets(normalizeStudySheets(remote.studySheets as Partial<StudySheetsData> | undefined));
       if (remote.announcements) setAnnouncements(remote.announcements);
+      setClinicGuides(Array.isArray(remote.clinicGuides) ? remote.clinicGuides as ClinicGuideRecord[] : []);
+      setClinicGuideTemplates(normalizeClinicGuideTemplates(remote.clinicGuideTemplates as Partial<ClinicGuideTemplates> | undefined));
       if (remote.settings) setSettings((prev) => ({ ...prev, ...remote.settings }));
       store.setRotationCode(rejoinCode);
       setStoredAdminRotationCode(firebaseAdmin.uid, rejoinCode);
       setRotationCodeState(rejoinCode);
       setRejoinCode("");
+      onSharedDataLoaded();
       showToast(`Connected to rotation ${rejoinCode}.`, "success");
     } catch (error) {
       console.error("Rejoin rotation failed:", error);
@@ -360,10 +517,25 @@ export function SettingsTab({
             )}
           </div>
 
+          {rotationCode && activeRotation && (
+            <div style={{ display: "grid", gap: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                Active Rotation
+              </div>
+              <RotationRecordCard
+                rotation={activeRotation}
+                active
+                note="This is the live workspace students are currently joining. To switch blocks, choose a different rotation below."
+                onDraftFieldChange={(field, value) => updateRotationHistoryDraft(activeRotation.code, field, value)}
+                onCommitField={(field, value) => { void handleUpdateRotationField(activeRotation.code, field, value); }}
+              />
+            </div>
+          )}
+
           <div style={{ display: "grid", gap: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                {isBootstrapAdminEmail(firebaseAdmin.email || "") ? "All Rotations" : "Your Rotations"}
+                {rotationCode ? "Other Rotations" : (isBootstrapAdminEmail(firebaseAdmin.email || "") ? "All Rotations" : "Your Rotations")}
               </div>
               {isBootstrapAdminEmail(firebaseAdmin.email || "") && (
                 <div style={{ fontSize: 12, color: T.muted, fontStyle: "italic" }}>Master admin — viewing every admin's rotations</div>
@@ -373,6 +545,10 @@ export function SettingsTab({
               <div style={{ textAlign: "center", color: T.muted, fontSize: 13, padding: 16 }}>Loading rotations...</div>
             ) : rotationHistory.length === 0 ? (
               <div style={{ textAlign: "center", color: T.muted, fontSize: 13, padding: 16, background: T.bg, borderRadius: 12, border: `1px solid ${T.line}` }}>No rotations created yet.</div>
+            ) : selectableRotations.length === 0 ? (
+              <div style={{ textAlign: "center", color: T.muted, fontSize: 13, padding: 16, background: T.bg, borderRadius: 12, border: `1px solid ${T.line}` }}>
+                No other rotations available. The active rotation is shown above.
+              </div>
             ) : (
               <>
                 <select
@@ -380,54 +556,25 @@ export function SettingsTab({
                   onChange={(event) => setSelectedRotationCode(event.target.value)}
                   style={{ ...adminInput, fontFamily: T.mono, letterSpacing: 1, fontWeight: 600 }}
                 >
-                  {rotationHistory.map((rotation) => {
-                    const isActive = rotation.code === rotationCode;
+                  {selectableRotations.map((rotation) => {
                     const ownerTag = rotation.ownerEmail ? ` — ${rotation.ownerEmail}` : "";
                     return (
                       <option key={rotation.code} value={rotation.code}>
-                        {rotation.code}{isActive ? " (active)" : ""}{ownerTag}
+                        {rotation.code}{ownerTag}
                       </option>
                     );
                   })}
                 </select>
 
                 {selectedRotation && (
-                  <div style={{ background: rotationCode === selectedRotation.code ? T.ice : T.bg, borderRadius: 14, padding: 14, border: rotationCode === selectedRotation.code ? `2px solid ${T.brand}` : `1px solid ${T.line}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
-                      <div style={{ fontFamily: T.mono, fontWeight: 700, fontSize: 16, color: T.navy, letterSpacing: 2 }}>{selectedRotation.code}</div>
-                      {rotationCode === selectedRotation.code && (
-                        <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, border: `1px solid ${T.success}`, padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Active</span>
-                      )}
-                    </div>
-                    <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 13, color: T.muted, minWidth: 62 }}>Owner:</span>
-                        <span style={{ fontSize: 13, color: T.text }}>{selectedRotation.ownerEmail || <span style={{ color: T.muted, fontStyle: "italic" }}>Legacy rotation (no owner recorded)</span>}</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 13, color: T.muted, minWidth: 62 }}>Dates:</span>
-                        <input value={selectedRotation.dates || ""} onChange={(event) => { const value = event.target.value; setRotationHistory((prev) => prev.map((item) => item.code === selectedRotation.code ? { ...item, dates: value } : item)); }} onBlur={(event) => { void handleUpdateRotationField(selectedRotation.code, "dates", event.target.value); }} placeholder="e.g. Mar 1–28, 2026" style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, background: T.card, outline: "none" }} />
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 13, color: T.muted, minWidth: 62 }}>Location:</span>
-                        <input value={selectedRotation.location || ""} onChange={(event) => { const value = event.target.value; setRotationHistory((prev) => prev.map((item) => item.code === selectedRotation.code ? { ...item, location: value } : item)); }} onBlur={(event) => { void handleUpdateRotationField(selectedRotation.code, "location", event.target.value); }} placeholder="e.g. City Medical Center" style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, background: T.card, outline: "none" }} />
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.muted, marginBottom: 10, flexWrap: "wrap" }}>
-                      <span>👥 {selectedRotation.studentCount} student{selectedRotation.studentCount !== 1 ? "s" : ""}</span>
-                      {selectedRotation.createdAt && <span>• Created {new Date(selectedRotation.createdAt).toLocaleDateString()}</span>}
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {rotationCode !== selectedRotation.code && (
-                        <button onClick={() => { void handleConnectRotation(selectedRotation.code); }} style={{ flex: 1, padding: "8px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                          Connect
-                        </button>
-                      )}
-                      <button onClick={() => { void handleDeleteRotation(selectedRotation.code); }} style={{ flex: rotationCode === selectedRotation.code ? 1 : 0, minWidth: rotationCode === selectedRotation.code ? 0 : 88, padding: "8px 12px", background: T.dangerBg, color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+                  <RotationRecordCard
+                    rotation={selectedRotation}
+                    note="Review this saved block before connecting. Connecting will switch the live admin workspace."
+                    onConnect={() => { void handleConnectRotation(selectedRotation.code); }}
+                    onDelete={() => { void handleDeleteRotation(selectedRotation.code); }}
+                    onDraftFieldChange={(field, value) => updateRotationHistoryDraft(selectedRotation.code, field, value)}
+                    onCommitField={(field, value) => { void handleUpdateRotationField(selectedRotation.code, field, value); }}
+                  />
                 )}
               </>
             )}
@@ -521,10 +668,91 @@ export function SettingsTab({
 
       {showOtherSections && (
       <SettingsSection sectionRef={securityRef} title="Security" description="Keep the shared panel protected on any device used during rounds or teaching.">
-        <div>
-          <label style={adminLabel}>Admin PIN</label>
-          <input type="password" value={settings.adminPin || ""} onChange={(event) => update("adminPin", event.target.value)} placeholder="Choose a private PIN" style={adminInput} />
-          <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>Choose a private PIN and avoid sharing it with students. Right now the PIN is still local to this browser.</div>
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={{ background: T.bg, borderRadius: 12, padding: 12, border: `1px solid ${T.line}`, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5 }}>Admin PIN</div>
+              <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.5, marginTop: 4 }}>
+                {hasAdminPin ? "PIN is set and hidden. Change it with current PIN verification." : "No local admin PIN is set for this browser."}
+              </div>
+            </div>
+            <span style={{ background: hasAdminPin ? T.successBg : T.warningBg, color: hasAdminPin ? T.success : T.warning, border: `1px solid ${hasAdminPin ? T.success : T.warning}`, borderRadius: 999, padding: "4px 10px", fontSize: 13, fontWeight: 700 }}>
+              {hasAdminPin ? "Set" : "Needs setup"}
+            </span>
+          </div>
+
+          {!pinChangeOpen ? (
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPinChangeSuccess("");
+                  setPinChangeOpen(true);
+                }}
+                style={{ padding: "10px 14px", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >
+                {hasAdminPin ? "Change PIN" : "Set PIN"}
+              </button>
+              {pinChangeSuccess && <div style={{ fontSize: 13, color: T.success, marginTop: 8, fontWeight: 700 }}>{pinChangeSuccess}</div>}
+            </div>
+          ) : (
+            <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}`, display: "grid", gap: 12 }}>
+              {hasAdminPin && (
+                <div>
+                  <label style={adminLabel}>Current PIN</label>
+                  <input
+                    type="password"
+                    value={pinCurrent}
+                    onChange={(event) => { setPinCurrent(event.target.value); setPinChangeError(""); }}
+                    placeholder="Enter current PIN"
+                    style={{ ...adminInput, fontFamily: T.mono, letterSpacing: 4 }}
+                  />
+                </div>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+                <div>
+                  <label style={adminLabel}>New PIN</label>
+                  <input
+                    type="password"
+                    value={pinNext}
+                    onChange={(event) => { setPinNext(event.target.value); setPinChangeError(""); }}
+                    placeholder="Choose a new PIN"
+                    style={{ ...adminInput, fontFamily: T.mono, letterSpacing: 4 }}
+                  />
+                </div>
+                <div>
+                  <label style={adminLabel}>Confirm New PIN</label>
+                  <input
+                    type="password"
+                    value={pinConfirm}
+                    onChange={(event) => { setPinConfirm(event.target.value); setPinChangeError(""); }}
+                    placeholder="Repeat new PIN"
+                    style={{ ...adminInput, fontFamily: T.mono, letterSpacing: 4 }}
+                  />
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.5 }}>
+                Use at least 4 characters. Avoid defaults, repeated digits, or simple sequences like 1234.
+              </div>
+              {pinChangeError && <div style={{ fontSize: 13, color: T.danger, background: T.dangerBg, borderRadius: 10, padding: "9px 11px", fontWeight: 700 }}>{pinChangeError}</div>}
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={handleSavePinChange}
+                  style={{ padding: "10px 14px", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Save New PIN
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelPinChange}
+                  style={{ padding: "10px 14px", background: T.bg, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </SettingsSection>
       )}

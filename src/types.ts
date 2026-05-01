@@ -66,10 +66,12 @@ export type SubView =
 export type AdminSubView =
   | { type: "printCohort" }
   | { type: "studentDetail"; id: string }
+  | { type: "reviewDuplicates" }
   | { type: "printStudent"; id: string }
   | { type: "exportPdf"; id: string }
   | { type: "editArticles"; week: number }
   | { type: "editCurriculum" }
+  | { type: "editStudySheets" }
   | { type: "announcements" }
   | { type: "clinicGuides" }
   | null;
