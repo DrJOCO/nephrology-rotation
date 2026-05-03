@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Star } from "lucide-react";
 import { T, TRIAL_CATEGORY_ORDER } from "../../data/constants";
 import type { Trial, Bookmarks } from "../../types";
+import { Icon } from "./Icon";
 
 export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookmark }: { trial: Trial; isOpen: boolean; onToggle: () => void; isBookmarked: boolean; onToggleBookmark?: (name: string) => void }) {
   return (
@@ -8,7 +10,9 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
       <button onClick={onToggle}
         style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.warningBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 9, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</div>
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <Icon as={Star} size={16} color={T.warning} />
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 2, flex: 1, paddingRight: onToggleBookmark ? 32 : 0 }}>{trial.name}</div>
@@ -23,8 +27,8 @@ export function TrialCard({ trial, isOpen, onToggle, isBookmarked, onToggleBookm
         <button
           onClick={(e) => { e.stopPropagation(); onToggleBookmark(trial.name); }}
           aria-label={isBookmarked ? `Unbookmark ${trial.name}` : `Bookmark ${trial.name}`}
-          style={{ position: "absolute", top: 10, right: 40, background: "none", border: "none", fontSize: 16, color: isBookmarked ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
-          {isBookmarked ? "\u2605" : "\u2606"}
+          style={{ position: "absolute", top: 10, right: 40, background: "none", border: "none", color: isBookmarked ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+          <Icon as={Star} size={16} color={isBookmarked ? T.warning : T.muted} fill={isBookmarked ? T.warning : "none"} />
         </button>
       )}
       {isOpen && (

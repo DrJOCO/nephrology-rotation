@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { Camera } from "lucide-react";
 import { T } from "../../data/constants";
 import { QUICK_REFS } from "../../data/guides";
 import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
+import { Icon } from "./Icon";
 import type { QuickRefCalculator, QuickRefReference, QuickRefAtlas, CalcResult } from "../../types";
+
+const WARNING_CODE_POINT = 0x26A0;
 
 // ─── Calculator Component ──────────────────────────────────────
 function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
@@ -95,8 +99,8 @@ function ReferenceCardView({ refData }: { refData: QuickRefReference }) {
                   </div>
                 );
               }
-              // Check if item starts with emoji
-              const startsWithEmoji = /^[^\w\s]/.test(item) || item.startsWith("⚠");
+              // Check if item starts with a symbol marker.
+              const startsWithEmoji = /^[^\w\s]/.test(item) || item.codePointAt(0) === WARNING_CODE_POINT;
               return (
                 <div key={j} style={{ fontSize: 13, color: T.text, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 8 }}>
                   {!startsWithEmoji && <span style={{ color: T.brand, fontWeight: 700, flexShrink: 0 }}>•</span>}
@@ -127,7 +131,10 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
 
       {/* External Image Links banner */}
       <div style={{ background: T.infoBg, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${T.info}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.info, marginBottom: 6 }}>📷 OPTIONAL UA IMAGE RESOURCES</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.info, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+          <Icon as={Camera} size={15} color={T.info} />
+          <span>OPTIONAL UA IMAGE RESOURCES</span>
+        </div>
         <div style={{ fontSize: 13, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images when you want extra visual practice. Pair them with the descriptions here.</div>
         {refData.imageLinks.map((link, i) => (
           <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"

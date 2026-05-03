@@ -1,6 +1,8 @@
 import { useState, lazy, Suspense, Component, ErrorInfo, ReactNode } from "react";
+import { AlertTriangle } from "lucide-react";
 import { T } from "./data/constants";
 import StudentApp from "./components/StudentApp";
+import { Icon } from "./components/student/Icon";
 const AdminPanel = lazy(() => import("./components/AdminPanel"));
 
 interface ErrorBoundaryProps {
@@ -28,7 +30,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       return (
         <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
           <div style={{ background: T.card, borderRadius: 20, padding: 36, maxWidth: 400, width: "100%", textAlign: "center", border: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+            <div style={{ marginBottom: 12 }}>
+              <Icon as={AlertTriangle} size={36} color={T.danger} />
+            </div>
             <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, margin: "0 0 8px", fontWeight: 700 }}>Something went wrong</h2>
             <p style={{ color: T.sub, fontSize: 13, margin: "0 0 8px", lineHeight: 1.5 }}>
               The app encountered an unexpected error. Your data is safe.

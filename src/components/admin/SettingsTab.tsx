@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, ClipboardList, Mail, Megaphone, Stethoscope } from "lucide-react";
 import { T } from "../../data/constants";
 import type { ClinicGuideTemplates } from "../../data/clinicGuides";
 import { createRotationCode } from "../../utils/helpers";
@@ -12,6 +13,7 @@ import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone }
 import { setStoredAdminRotationCode } from "./storage";
 import { getAdminPinValidationError } from "./pinValidation";
 import { Button } from "./ui/Button";
+import { Icon } from "../student/Icon";
 
 function useActiveSectionId(ids: string[]): string {
   const [activeId, setActiveId] = useState<string>(ids[0] || "");
@@ -706,7 +708,10 @@ export function SettingsTab({
             onClick={() => onOpenContent()}
             style={{ padding: "14px 16px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
           >
-            📝 Open content editor
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <Icon as={ClipboardList} size={16} color="white" />
+              <span>Open content editor</span>
+            </span>
             <div style={{ fontSize: 12, fontWeight: 500, opacity: 0.82, marginTop: 3 }}>Curriculum, articles, announcements, guides</div>
           </button>
           <button
@@ -714,7 +719,10 @@ export function SettingsTab({
             onClick={() => onOpenContent({ type: "editCurriculum" })}
             style={{ padding: "14px 16px", background: T.bg, color: T.text, border: `1px solid ${T.line}`, borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
           >
-            📚 Edit curriculum
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <Icon as={BookOpen} size={16} color={T.text} />
+              <span>Edit curriculum</span>
+            </span>
             <div style={{ fontSize: 12, fontWeight: 500, color: T.muted, marginTop: 3 }}>Module topics and lesson plans</div>
           </button>
           <button
@@ -722,7 +730,10 @@ export function SettingsTab({
             onClick={() => onOpenContent({ type: "announcements" })}
             style={{ padding: "14px 16px", background: T.bg, color: T.text, border: `1px solid ${T.line}`, borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
           >
-            📣 Announcements
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <Icon as={Megaphone} size={16} color={T.text} />
+              <span>Announcements</span>
+            </span>
             <div style={{ fontSize: 12, fontWeight: 500, color: T.muted, marginTop: 3 }}>Post banners to the student app</div>
           </button>
           <button
@@ -730,7 +741,10 @@ export function SettingsTab({
             onClick={() => onOpenContent({ type: "clinicGuides" })}
             style={{ padding: "14px 16px", background: T.bg, color: T.text, border: `1px solid ${T.line}`, borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", textAlign: "left" }}
           >
-            🩺 Clinic guides
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+              <Icon as={Stethoscope} size={16} color={T.text} />
+              <span>Clinic guides</span>
+            </span>
             <div style={{ fontSize: 12, fontWeight: 500, color: T.muted, marginTop: 3 }}>Custom per-rotation guidance</div>
           </button>
         </div>
@@ -871,7 +885,10 @@ export function SettingsTab({
                     onClick={() => openInviteMailto(invite.email)}
                     style={{ marginTop: 10, padding: "8px 14px", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
                   >
-                    ✉ Send invite email
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <Icon as={Mail} size={14} color="white" />
+                      <span>Send invite email</span>
+                    </span>
                   </button>
                 )}
               </div>

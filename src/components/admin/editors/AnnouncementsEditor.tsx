@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { T } from "../../../data/constants";
 import { adminInput, adminLabel } from "../shared";
 import type { Announcement } from "../../../types";
 import { backBtn, tinyBtn } from "../lib/styles";
+import { Icon } from "../../student/Icon";
 
 export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }: { announcements: Announcement[]; setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>>; onBack: () => void }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -71,7 +73,9 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
                 {a.body && <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, wordBreak: "break-word" }}>{a.body}</div>}
                 <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>{new Date(a.date).toLocaleString()}</div>
               </div>
-              <button onClick={() => remove(a.id)} style={tinyBtn}>🗑</button>
+              <button onClick={() => remove(a.id)} aria-label={`Remove ${a.title}`} style={tinyBtn}>
+                <Icon as={Trash2} size={14} color={T.danger} />
+              </button>
             </div>
           </div>
         );

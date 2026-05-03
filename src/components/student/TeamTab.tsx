@@ -6,9 +6,6 @@ import { sortTopicCounts } from "../../utils/teamSnapshots";
 import type { TeamSnapshot } from "../../types";
 
 function getRankLabel(rank: number): string {
-  if (rank === 1) return "🥇";
-  if (rank === 2) return "🥈";
-  if (rank === 3) return "🥉";
   return `#${rank}`;
 }
 
@@ -91,7 +88,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
                     {student.name || "Unknown"}{isMe ? " (You)" : ""}
                   </div>
                   <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>
-                    {student.levelIcon} {student.levelName} • {student.activePatientCount} active • {student.patientCount} total patients
+                    {student.levelName} • {student.activePatientCount} active • {student.patientCount} total patients
                   </div>
                 </div>
               </div>

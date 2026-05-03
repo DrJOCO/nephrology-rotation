@@ -1,6 +1,8 @@
+import { ClipboardList } from "lucide-react";
 import { T } from "../../data/constants";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTemplates, type ClinicGuideTopic } from "../../data/clinicGuides";
 import { backBtnStyle } from "./shared";
+import { Icon } from "./Icon";
 import type { ClinicGuideRecord } from "../../types";
 
 interface Props {
@@ -37,15 +39,14 @@ export default function ClinicGuideHistoryView({ guides, clinicGuideTemplates, o
         </div>
       ) : (
         sorted.map((g) => {
-          const template = clinicGuideTemplates[g.topic as ClinicGuideTopic] || CLINIC_GUIDES[g.topic as ClinicGuideTopic];
           return (
             <button key={g.id} onClick={() => onSelect(g.date, g.topic as ClinicGuideTopic)}
               style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, marginBottom: 10, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", transition: "box-shadow 0.2s" }}
               onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)")}
               onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
-                  {template?.icon || "📋"}
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon as={ClipboardList} size={22} color={T.brand} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{g.topic}</div>

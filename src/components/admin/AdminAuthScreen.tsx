@@ -1,6 +1,8 @@
 import React from "react";
+import { KeyRound } from "lucide-react";
 import { T } from "../../data/constants";
 import type { AdminAuthMode } from "./types";
+import { Icon } from "../student/Icon";
 
 export function AdminAuthScreen({
   authMode,
@@ -38,7 +40,9 @@ export function AdminAuthScreen({
   return (
     <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
       <div style={{ background: T.card, borderRadius: 20, padding: 36, maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
-        <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🔐</div>
+        <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <Icon as={KeyRound} size={28} color={T.brand} />
+        </div>
         <h1 style={{ color: T.navy, fontFamily: T.serif, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>
           {authMode === "signup" ? "Create Admin Account" : "Admin Sign-In"}
         </h1>

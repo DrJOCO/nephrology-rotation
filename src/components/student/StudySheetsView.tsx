@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, CSSProperties } from "react";
+import { BookOpen, Check, Star } from "lucide-react";
 import { T, WEEKLY, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { backBtnStyle, EduDisclaimer } from "./shared";
+import { Icon } from "./Icon";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
 import { getTopicContent } from "../../utils/topicMapping";
 import type { StudySheetsData } from "../../utils/studySheets";
@@ -64,7 +66,9 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
             <button onClick={() => handleToggle(si, isOpen)}
               style={{ width: "100%", padding: 16, background: isOpen ? T.infoBg : isDone ? T.successBg : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 11, background: isDone ? T.successBg : T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{isDone ? "\u2705" : sheet.icon}</div>
+                <div style={{ width: 44, height: 44, borderRadius: 11, background: isDone ? T.successBg : T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon as={isDone ? Check : BookOpen} size={22} color={isDone ? T.success : T.info} />
+                </div>
                 <div style={{ flex: 1, minWidth: 0, paddingRight: 40 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{sheet.title}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{sheet.subtitle}</div>
@@ -75,8 +79,8 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(sheet.id); }}
               aria-label={(bookmarks?.studySheets || []).includes(sheet.id) ? `Unbookmark ${sheet.title}` : `Bookmark ${sheet.title}`}
-              style={{ position: "absolute", top: 12, right: 40, background: "none", border: "none", fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
-              {(bookmarks?.studySheets || []).includes(sheet.id) ? "\u2605" : "\u2606"}
+              style={{ position: "absolute", top: 12, right: 40, background: "none", border: "none", color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+              <Icon as={Star} size={16} color={(bookmarks?.studySheets || []).includes(sheet.id) ? T.warning : T.muted} fill={(bookmarks?.studySheets || []).includes(sheet.id) ? T.warning : "none"} />
             </button>
 
             {/* Sheet Content */}
@@ -109,7 +113,8 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
                 {sheet.trialCallouts && sheet.trialCallouts.length > 0 && (
                   <div style={{ marginTop: 8, paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 13 }}>{"\u2B50"}</span> Trial Connections
+                      <Icon as={Star} size={13} color={T.warning} />
+                      <span>Trial Connections</span>
                     </div>
                     {sheet.trialCallouts.map((callout, ci) => {
                       const trialExists = ALL_LANDMARK_TRIALS.some(t => t.name === callout.trial);
@@ -159,7 +164,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
                   )}
                   <button onClick={() => onToggleComplete(sheet.id)}
                     style={{ padding: "8px 14px", background: isDone ? T.success : T.brand, color: isDone ? T.successInk : "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, marginLeft: isDone ? "auto" : 0 }}>
-                    <span>{"\u2713"}</span>
+                    <Icon as={Check} size={13} color={isDone ? T.successInk : "white"} />
                     {isDone ? "Completed" : "Mark complete"}
                   </button>
                 </div>

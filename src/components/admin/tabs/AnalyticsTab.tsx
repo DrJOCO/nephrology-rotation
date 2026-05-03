@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ChartLine } from "lucide-react";
 import { T } from "../../../data/constants";
 import store, { RotationInfo } from "../../../utils/store";
 import { normalizeAdminStudentRecord, buildStudentProgressSummary } from "../../../utils/adminStudents";
@@ -16,6 +17,7 @@ import {
   getScorePct,
 } from "../lib/format";
 import { MiniBarChart } from "../ui/MiniBarChart";
+import { Icon } from "../../student/Icon";
 
 type HistoricalRotationAnalytics = {
   rotation: RotationInfo;
@@ -326,7 +328,9 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
 
       {active.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: "center", padding: 40 }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>📈</div>
+          <div style={{ marginBottom: 8 }}>
+            <Icon as={ChartLine} size={40} color={T.muted} />
+          </div>
           <div style={{ color: T.sub, fontSize: 14 }}>No student data is loaded for the current rotation yet.</div>
         </div>
       ) : (

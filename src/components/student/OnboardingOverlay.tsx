@@ -1,21 +1,28 @@
 import { useState } from "react";
+import { ArrowRight, BookOpen, ClipboardList, Lightbulb, Stethoscope, Sunrise, type LucideIcon } from "lucide-react";
 import { T } from "../../data/constants";
+import { Icon } from "./Icon";
 
-const ONBOARDING_STEPS = [
+const ONBOARDING_STEPS: Array<{
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  hint: string;
+}> = [
   {
-    icon: "\uD83D\uDCDD",
+    icon: ClipboardList,
     title: "Optional Baseline Check-In",
     body: "You can start with a short assessment to see which nephrology topics are already strong and which ones need more teaching during the rotation.",
     hint: "Results can tailor Today, review, and spaced repetition",
   },
   {
-    icon: "\uD83D\uDCDA",
+    icon: BookOpen,
     title: "Explore Your Module Curriculum",
     body: "Each module is built around core study sheets, quizzes, and cases, with journal articles, landmark trials, and guidelines available as optional reference.",
     hint: "Tap any module to see its content",
   },
   {
-    icon: "\uD83C\uDFE5",
+    icon: Stethoscope,
     title: "Log Inpatients on Rounds",
     body: "Track the hospital patients you see, tag diagnoses, and add follow-up notes to build your inpatient experience log.",
     hint: "Use the Inpatients tab during ward time",
@@ -43,7 +50,9 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
         </div>
 
         {/* Icon */}
-        <div style={{ fontSize: 48, marginBottom: 16 }}>{s.icon}</div>
+        <div style={{ marginBottom: 16 }}>
+          <Icon as={s.icon} size={48} color={T.brand} />
+        </div>
 
         {/* Title */}
         <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>{s.title}</h2>
@@ -52,8 +61,9 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
         <p style={{ fontSize: 14, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>{s.body}</p>
 
         {/* Hint */}
-        <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-block", marginBottom: 24 }}>
-          💡 {s.hint}
+        <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 24 }}>
+          <Icon as={Lightbulb} size={14} color={T.brand} />
+          <span>{s.hint}</span>
         </div>
 
         {/* Actions */}
@@ -71,8 +81,10 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
         {/* First Day Guide link on last step */}
         {isLast && onViewFirstDay && (
           <button onClick={() => { localStorage.setItem("neph_hasSeenOnboarding", "true"); onViewFirstDay(); }}
-            style={{ marginTop: 16, background: "none", border: "none", color: T.brand, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
-            🌅 View First Day Orientation Guide →
+            style={{ marginTop: 16, background: "none", border: "none", color: T.brand, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <Icon as={Sunrise} size={14} color={T.brand} />
+            <span>View First Day Orientation Guide</span>
+            <Icon as={ArrowRight} size={14} color={T.brand} />
           </button>
         )}
       </div>

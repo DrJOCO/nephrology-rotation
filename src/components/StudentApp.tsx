@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { BookOpen, Stethoscope, Activity, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home, Trophy } from "lucide-react";
+import { Bean, BookOpen, Check, ClipboardList, Stethoscope, Activity, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home, RefreshCw, Trophy } from "lucide-react";
 import { T, WEEKLY, ARTICLES, CURRICULUM_DECKS } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import { PRE_QUIZ, POST_QUIZ, TOPIC_REINFORCEMENT_BANK, WEEKLY_QUIZZES, getQuestionByKey, resolveReinforcementTopic, topicToSlug } from "../data/quizzes";
@@ -39,6 +39,7 @@ import OnboardingOverlay from "./student/OnboardingOverlay";
 import LoginScreen from "./student/LoginScreen";
 import GlobalSearchOverlay from "./student/GlobalSearchOverlay";
 import HomeTab from "./student/HomeTab";
+import { Icon } from "./student/Icon";
 
 // Lazy-loaded sub-views
 const BookmarksView = lazy(() => import("./student/BookmarksView"));
@@ -1384,7 +1385,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             }}
           >
             {/* Logomark on narrow widths so the wordmark doesn't truncate as "Nephrolog…". */}
-            {isMobile ? <span style={{ fontSize: 22, lineHeight: 1 }} aria-hidden="true">🫘</span> : "Nephrology Rotation"}
+            {isMobile ? <Icon as={Bean} size={22} color={T.ink} /> : "Nephrology Rotation"}
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
             {online && (gamification.streaks?.currentDays ?? 0) > 0 && (
@@ -1648,7 +1649,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               {dueKeys.length > 0 && (
                 <button onClick={() => navigate("today", { type: "srReview" })}
                   style={{ width: "100%", background: `linear-gradient(135deg, ${T.warning}, ${T.warning})`, borderRadius: 12, padding: 16, border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
-                  <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDD04"}</span>
+                  <Icon as={RefreshCw} size={26} color="white" style={{ flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: "white", fontSize: 15 }}>Spaced Repetition Review</div>
                     <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>{dueKeys.length} question{dueKeys.length !== 1 ? "s" : ""} due — missed questions resurface at increasing intervals</div>
@@ -1658,7 +1659,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               )}
               <button onClick={() => navigate("today", { type: "practiceQuiz" })}
                 style={{ width: "100%", background: T.card, borderRadius: 12, padding: 16, border: `1.5px solid ${T.brand}`, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
-                <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
+                <Icon as={ClipboardList} size={26} color={T.brand} style={{ flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Practice Questions</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>15 random questions from the full bank of {allWeeklyQs.length}</div>
@@ -1697,7 +1698,9 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               }} />
           ) : (
             <div style={{ padding: 40, textAlign: "center" }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>{"\u2705"}</div>
+              <div style={{ marginBottom: 12 }}>
+                <Icon as={Check} size={48} color={T.success} />
+              </div>
               <div style={{ color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>All caught up!</div>
               <div style={{ color: T.sub, fontSize: 13, marginBottom: 20 }}>No questions due for review right now.</div>
               <button onClick={() => navigate("today", { type: "extraPractice" })} style={{ padding: "10px 24px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>

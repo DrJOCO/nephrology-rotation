@@ -1,5 +1,7 @@
 import React from "react";
+import { KeyRound, Lock } from "lucide-react";
 import { T } from "../../data/constants";
+import { Icon } from "../student/Icon";
 
 export function AdminPinGate({
   pin,
@@ -21,7 +23,9 @@ export function AdminPinGate({
   return (
     <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
       <div style={{ background: T.card, borderRadius: 20, padding: 36, maxWidth: 380, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
-        <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🔒</div>
+        <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <Icon as={Lock} size={28} color={T.brand} />
+        </div>
         <h1 style={{ color: T.navy, fontFamily: T.serif, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>Admin Panel</h1>
         <p style={{ color: T.sub, fontSize: 13, margin: "0 0 24px" }}>Nephrology Rotation Management</p>
         <div style={{ animation: pinError ? "shake 0.4s ease" : "none" }}>
@@ -70,7 +74,9 @@ export function AdminPinSetupGate({
   return (
     <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
       <div style={{ background: T.card, borderRadius: 20, padding: 36, maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
-        <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🔐</div>
+        <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+          <Icon as={KeyRound} size={28} color={T.brand} />
+        </div>
         <h1 style={{ color: T.navy, fontFamily: T.serif, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>Create Admin PIN</h1>
         <p style={{ color: T.sub, fontSize: 13, margin: "0 0 24px", lineHeight: 1.5 }}>
           Set a private local PIN before opening this admin workspace on this device.

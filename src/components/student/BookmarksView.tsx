@@ -1,8 +1,10 @@
+import { Star } from "lucide-react";
 import { T, ARTICLES as DEFAULT_ARTICLES, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { backBtnStyle } from "./shared";
 import type { Bookmarks, StudySheet, SubView } from "../../types";
 import type { StudySheetsData } from "../../utils/studySheets";
+import { Icon } from "./Icon";
 
 export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleBookmark, articles: liveArticles, studySheets: liveStudySheets = STUDY_SHEETS }: { bookmarks: Bookmarks; onBack: () => void; onNavigate: (tab: string, sv?: SubView) => void; onToggleBookmark: (type: keyof Bookmarks, id: string) => void; articles: typeof DEFAULT_ARTICLES; studySheets?: StudySheetsData }) {
   const bk = bookmarks || {};
@@ -27,12 +29,17 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
-      <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>{"\u2B50"} Saved Items</h2>
+      <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700, display: "flex", alignItems: "center", gap: 7 }}>
+        <Icon as={Star} size={20} color={T.warning} />
+        <span>Saved Items</span>
+      </h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>{total} bookmarked</p>
-      {total === 0 && <div style={{ textAlign: "center", padding: 40, color: T.muted, fontSize: 13 }}>Tap the {"\u2606"} on any trial, article, case, or study sheet to save it here.</div>}
+      {total === 0 && <div style={{ textAlign: "center", padding: 40, color: T.muted, fontSize: 13 }}>Use the bookmark button on any trial, article, case, or study sheet to save it here.</div>}
       {renderSection("Landmark Trials", bookmarkedTrials, (t, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
-          <button onClick={() => onToggleBookmark("trials", t.name)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
+          <button onClick={() => onToggleBookmark("trials", t.name)} aria-label={`Unbookmark ${t.name}`} style={{ background: "none", border: "none", cursor: "pointer", color: T.warning, padding: 0, flexShrink: 0 }}>
+            <Icon as={Star} size={16} color={T.warning} fill={T.warning} />
+          </button>
           <button onClick={() => onNavigate("library", { type: "trialLibrary" })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{t.name}</div>
             <div style={{ fontSize: 13, color: T.muted }}>{t.category}</div>
@@ -41,7 +48,9 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
       ))}
       {renderSection("Articles", bookmarkedArticles, (a, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
-          <button onClick={() => onToggleBookmark("articles", a.url)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
+          <button onClick={() => onToggleBookmark("articles", a.url)} aria-label={`Unbookmark ${a.title}`} style={{ background: "none", border: "none", cursor: "pointer", color: T.warning, padding: 0, flexShrink: 0 }}>
+            <Icon as={Star} size={16} color={T.warning} fill={T.warning} />
+          </button>
           <button onClick={() => onNavigate("today", { type: "articles", week: a._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.title}</div>
             <div style={{ fontSize: 13, color: T.muted }}>Module {a._week} {"\u2022"} {a.type || "Article"}</div>
@@ -50,7 +59,9 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
       ))}
       {renderSection("Clinical Cases", bookmarkedCases, (c, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
-          <button onClick={() => onToggleBookmark("cases", c.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
+          <button onClick={() => onToggleBookmark("cases", c.id)} aria-label={`Unbookmark ${c.title}`} style={{ background: "none", border: "none", cursor: "pointer", color: T.warning, padding: 0, flexShrink: 0 }}>
+            <Icon as={Star} size={16} color={T.warning} fill={T.warning} />
+          </button>
           <button onClick={() => onNavigate("today", { type: "cases", week: c._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{c.title}</div>
             <div style={{ fontSize: 13, color: T.muted }}>Module {c._week} {"\u2022"} {c.difficulty}</div>
@@ -59,9 +70,11 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
       ))}
       {renderSection("Study Sheets", bookmarkedSheets, (s, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
-          <button onClick={() => onToggleBookmark("studySheets", s.id)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
+          <button onClick={() => onToggleBookmark("studySheets", s.id)} aria-label={`Unbookmark ${s.title}`} style={{ background: "none", border: "none", cursor: "pointer", color: T.warning, padding: 0, flexShrink: 0 }}>
+            <Icon as={Star} size={16} color={T.warning} fill={T.warning} />
+          </button>
           <button onClick={() => onNavigate("today", { type: "studySheets", week: s._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{s.icon} {s.title}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{s.title}</div>
             <div style={{ fontSize: 13, color: T.muted }}>Module {s._week}</div>
           </button>
         </div>

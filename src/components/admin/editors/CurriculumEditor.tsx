@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { Pencil } from "lucide-react";
 import { T, WEEKLY } from "../../../data/constants";
 import { adminInput, adminLabel } from "../shared";
 import type { WeeklyData } from "../types";
 import { backBtn, tinyBtn } from "../lib/styles";
+import { Icon } from "../../student/Icon";
 
 export function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curriculum: WeeklyData; setCurriculum: React.Dispatch<React.SetStateAction<WeeklyData>>; onBack: () => void }) {
   const [editWeek, setEditWeek] = useState<number | null>(null);
@@ -68,7 +70,9 @@ export function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curric
                   ))}
                 </div>
               </div>
-              <button onClick={() => startEdit(w)} style={{ ...tinyBtn, fontSize: 13 }}>✏️</button>
+              <button onClick={() => startEdit(w)} aria-label={`Edit module ${w}`} style={{ ...tinyBtn, fontSize: 13 }}>
+                <Icon as={Pencil} size={14} color={T.ink2} />
+              </button>
             </div>
           </div>
         );

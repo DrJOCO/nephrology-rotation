@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { BookOpen } from "lucide-react";
 import { T, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { CategoryGroupedTrials } from "./TrialCard";
 import { backBtnStyle } from "./shared";
+import { Icon } from "./Icon";
 
 export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, initialSearch }: { onBack: () => void; bookmarks: any; onToggleBookmark: (name: string) => void; initialSearch?: string }) {
   const [searchQ, setSearchQ] = useState(initialSearch || "");
@@ -19,7 +21,9 @@ export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, 
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{"\uD83D\uDCDA"}</div>
+        <div style={{ width: 44, height: 44, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon as={BookOpen} size={22} color={T.warning} />
+        </div>
         <div>
           <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Landmark Trial Library</h2>
           <p style={{ color: T.sub, fontSize: 13, margin: "2px 0 0" }}>{ALL_LANDMARK_TRIALS.length} trials across all weeks</p>

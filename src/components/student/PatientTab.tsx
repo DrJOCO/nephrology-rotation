@@ -1,7 +1,8 @@
 import { useState, useEffect, CSSProperties } from "react";
-import { Pencil, RotateCcw, Check, X, Plus, ChevronRight, Lightbulb } from "lucide-react";
+import { ClipboardList, FileText, Pencil, RotateCcw, Check, X, Plus, ChevronRight, Lightbulb, Stethoscope, Wrench } from "lucide-react";
 import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS, TOPIC_KEYWORDS, labelChip } from "../../data/constants";
 import { inputLabel, inputStyle, EduDisclaimer } from "./shared";
+import { Icon } from "./Icon";
 import { useIsMobile } from "../../utils/helpers";
 import { getFollowUpState } from "../../utils/patient";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
@@ -20,6 +21,12 @@ interface PatientForm {
 }
 
 type ActivityLogger = (type: string, label: string, detail?: string) => void;
+
+function getSuggestionIcon(type: string) {
+  if (type === "studySheet") return ClipboardList;
+  if (type === "tool") return Wrench;
+  return FileText;
+}
 
 function getVisibleTopicOptions(selectedTopics: string[], expanded: boolean): string[] {
   if (expanded) return TOPICS;
@@ -132,10 +139,11 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
               const sel = editForm.topics.includes(t);
               return (
                 <button key={t} type="button" onClick={() => onEditToggleTopic(t)}
-                  style={{ padding: isMobile ? "8px 14px" : "5px 10px", borderRadius: 20, fontSize: isMobile ? 12 : 11, fontWeight: sel ? 600 : 400, cursor: "pointer",
-                    background: sel ? T.brand : T.card, color: sel ? T.brandInk : T.sub,
-                    border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}` }}>
-                  {sel ? "✓ " : ""}{t}
+                    style={{ padding: isMobile ? "8px 14px" : "5px 10px", borderRadius: 20, fontSize: isMobile ? 12 : 11, fontWeight: sel ? 600 : 400, cursor: "pointer",
+                      background: sel ? T.brand : T.card, color: sel ? T.brandInk : T.sub,
+                    border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  {sel && <Icon as={Check} size={12} color={T.brandInk} />}
+                  <span>{t}</span>
                 </button>
               );
             })}
@@ -558,8 +566,9 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
                 <button key={t} type="button" onClick={() => toggleTopic(t)}
                     style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
                       background: sel ? T.brand : T.card, color: sel ? T.brandInk : T.sub,
-                      border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}` }}>
-                    {sel ? "✓ " : ""}{t}
+                      border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    {sel && <Icon as={Check} size={12} color={T.brandInk} />}
+                    <span>{t}</span>
                   </button>
                 );
               })}
@@ -613,8 +622,9 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
                 style={{ padding: isMobile ? "8px 12px" : "6px 12px", borderRadius: 8, fontSize: isMobile ? 12 : 11, fontWeight: 600, cursor: "pointer",
                   background: s.type === "studySheet" ? T.card : s.type === "tool" ? T.infoBg : T.ice,
                   color: s.type === "studySheet" || s.type === "tool" ? T.info : T.brand,
-                  border: `1px solid ${s.type === "studySheet" ? T.muted : s.type === "tool" ? T.info : T.brand}` }}>
-                {s.type === "studySheet" ? "📋" : s.type === "tool" ? "🛠" : "📝"} {s.label}
+                  border: `1px solid ${s.type === "studySheet" ? T.muted : s.type === "tool" ? T.info : T.brand}`, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Icon as={getSuggestionIcon(s.type)} size={14} color={s.type === "studySheet" || s.type === "tool" ? T.info : T.brand} />
+                <span>{s.label}</span>
               </button>
             ))}
           </div>
@@ -623,7 +633,9 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
 
       {active.length === 0 && !showAdd && (
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>🏥</div>
+          <div style={{ marginBottom: 8 }}>
+            <Icon as={Stethoscope} size={36} color={T.muted} />
+          </div>
           <div style={{ fontSize: 14 }}>No active inpatients</div>
           <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Tap "+ Add Patient" to track hospital consults</div>
         </div>

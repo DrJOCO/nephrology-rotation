@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { ChartColumn, ClipboardList, Globe, Headphones, Wrench, type LucideIcon } from "lucide-react";
 import { T, RESOURCES } from "../../data/constants";
 import { backBtnStyle } from "./shared";
+import { Icon } from "./Icon";
 import type { CompletedItems } from "../../types";
 
 type ResourceTabId = "podcasts" | "websites" | "guidelines" | "decks" | "tools";
@@ -29,12 +31,12 @@ function getCurbsidersAppleSearchUrl(name: string) {
 
 export default function ResourcesView({ onBack, initialTab = "podcasts", focusWeek, completedItems, onToggleDeckComplete }: ResourcesViewProps) {
   const [activeTab, setActiveTab] = useState<ResourceTabId>(initialTab);
-  const tabList: Array<{ id: ResourceTabId; label: string; data: typeof RESOURCES[ResourceTabId] }> = [
-    { id: "podcasts", label: "\uD83C\uDFA7 Podcasts", data: RESOURCES.podcasts },
-    { id: "websites", label: "\uD83C\uDF10 Websites", data: RESOURCES.websites },
-    { id: "guidelines", label: "\uD83D\uDCCB Guidelines", data: RESOURCES.guidelines },
-    { id: "decks", label: "\uD83D\uDCCA Decks", data: RESOURCES.decks },
-    { id: "tools", label: "\uD83D\uDEE0 Tools", data: RESOURCES.tools },
+  const tabList: Array<{ id: ResourceTabId; label: string; icon: LucideIcon; data: typeof RESOURCES[ResourceTabId] }> = [
+    { id: "podcasts", label: "Podcasts", icon: Headphones, data: RESOURCES.podcasts },
+    { id: "websites", label: "Websites", icon: Globe, data: RESOURCES.websites },
+    { id: "guidelines", label: "Guidelines", icon: ClipboardList, data: RESOURCES.guidelines },
+    { id: "decks", label: "Decks", icon: ChartColumn, data: RESOURCES.decks },
+    { id: "tools", label: "Tools", icon: Wrench, data: RESOURCES.tools },
   ];
 
   const tagColors = {
@@ -121,9 +123,10 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
         {tabList.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ padding: "8px 14px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+            style={{ padding: "8px 14px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 6,
               ...(activeTab === t.id ? activeTabStyle : inactiveTabStyle) }}>
-            {t.label}
+            <Icon as={t.icon} size={14} color={activeTab === t.id ? T.brand : T.ink2} />
+            <span>{t.label}</span>
           </button>
         ))}
       </div>

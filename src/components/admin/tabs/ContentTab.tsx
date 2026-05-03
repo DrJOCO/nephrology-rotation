@@ -1,8 +1,10 @@
 import React from "react";
+import { BookOpen, ClipboardList, Megaphone, Stethoscope } from "lucide-react";
 import { T, WEEKLY } from "../../../data/constants";
 import type { NavigateFn, ArticlesData, WeeklyData } from "../types";
 import type { ClinicGuideRecord } from "../../../types";
 import type { StudySheetsData } from "../../../utils/studySheets";
+import { Icon } from "../../student/Icon";
 
 export function ContentTab({ navigate, articles, curriculum, clinicGuides, studySheets }: { navigate: NavigateFn; articles: ArticlesData; curriculum: WeeklyData; clinicGuides: ClinicGuideRecord[]; studySheets: StudySheetsData }) {
   const studySheetCount = Object.values(studySheets).reduce((count, sheets) => count + sheets.length, 0);
@@ -15,7 +17,9 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides, study
       <button onClick={() => navigate("content", { type: "editCurriculum" })}
         style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 18, marginBottom: 12, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📚</div>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon as={BookOpen} size={24} color={T.brand} />
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Weekly Curriculum</div>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Edit week titles, subtitles, and topics</div>
@@ -43,7 +47,9 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides, study
       <button onClick={() => navigate("content", { type: "editStudySheets" })}
         style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 18, marginTop: 16, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📋</div>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon as={ClipboardList} size={24} color={T.info} />
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Study Sheets</div>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Edit student-facing sheet text, sections, and trial callouts ({studySheetCount} sheets)</div>
@@ -56,7 +62,9 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides, study
       <button onClick={() => navigate("content", { type: "announcements" })}
         style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 18, marginTop: 16, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📢</div>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon as={Megaphone} size={24} color={T.warning} />
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Announcements</div>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Post notes or reminders for students</div>
@@ -69,7 +77,9 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides, study
       <button onClick={() => navigate("content", { type: "clinicGuides" })}
         style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 18, marginTop: 12, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.successBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🩺</div>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: T.successBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon as={Stethoscope} size={24} color={T.success} />
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Clinic Guides</div>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Edit CKD, hypertension, and transplant guide content plus dated clinic records ({clinicGuides.length} records)</div>
