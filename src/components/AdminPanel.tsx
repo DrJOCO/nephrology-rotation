@@ -26,6 +26,7 @@ import { AnalyticsTab } from "./admin/tabs/AnalyticsTab";
 import { RotationSummaryReport } from "./admin/views/RotationSummaryReport";
 import { PrintableReport } from "./admin/views/PrintableReport";
 import { StudentDetailView } from "./admin/views/StudentDetailView";
+import { Button } from "./admin/ui/Button";
 import { Icon } from "./student/Icon";
 import { getAdminPinValidationError } from "./admin/pinValidation";
 import { adminScopedKey, getStoredAdminRotationCode, setStoredAdminRotationCode } from "./admin/storage";
@@ -145,24 +146,9 @@ function PublishStatusBar({
           {centerText}
         </span>
       </div>
-      <button
-        onClick={onPublish}
-        disabled={!canPublish}
-        style={{
-          padding: "8px 14px",
-          background: canPublish ? T.navy : T.bg,
-          color: canPublish ? "white" : T.muted,
-          border: `1px solid ${canPublish ? T.navy : T.line}`,
-          borderRadius: 2,
-          fontSize: 13,
-          fontWeight: 600,
-          cursor: canPublish ? "pointer" : "not-allowed",
-          whiteSpace: "nowrap",
-          boxShadow: "none",
-        }}
-      >
+      <Button variant={canPublish ? "primary" : "default"} onClick={onPublish} disabled={!canPublish}>
         {ctaLabel}
-      </button>
+      </Button>
     </div>
   );
 }

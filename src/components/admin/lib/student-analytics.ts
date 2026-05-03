@@ -3,8 +3,61 @@ import { buildCompetencySummary } from "../../../utils/competency";
 import { buildAssessmentSummary } from "../../../utils/assessmentInsights";
 import type { AdminStudent, Patient, SharedSettings } from "../../../types";
 import type { ArticlesData } from "../types";
+import type { StatTileState } from "../ui/StatTile";
 import { getScorePct, getRotationTiming, isWithinHours } from "./format";
 import { CASE_META_BY_ID } from "./exposure";
+
+// ── Named tile-state rules ─────────────────────────────────────────────
+// One predicate per "is this a flag" decision. Each returns the state
+// the tile should render in (default / attention / strength). Keep these
+// small and named so callers can read the policy at the call site.
+
+export function missingTrainingYear(student: AdminStudent): StatTileState {
+  const year = (student.year || "").trim();
+  if (!year || year === "MS3/MS4") return "attention";
+  return "default";
+}
+
+export function missingPreScore(student: AdminStudent): StatTileState {
+  return student.preScore ? "default" : "attention";
+}
+
+export function missingPostScore(student: AdminStudent): StatTileState {
+  return student.postScore ? "default" : "attention";
+}
+
+export function postTestStale(student: AdminStudent): StatTileState {
+  // Pre exists but post is missing or older than 14 days after the rotation start.
+  if (!student.preScore) return "default";
+  if (!student.postScore) return "attention";
+  const postAge = (Date.now() - new Date(student.postScore.date).getTime()) / (1000 * 60 * 60 * 24);
+  if (postAge > 14) return "attention";
+  return "default";
+}
+
+export function preToPostGrowthState(student: AdminStudent): StatTileState {
+  const pre = getScorePct(student.preScore);
+  const post = getScorePct(student.postScore);
+  if (pre === null || post === null) return "default";
+  if (post - pre >= 15) return "strength";
+  if (post - pre <= 0) return "attention";
+  return "default";
+}
+
+export function progressFractionState(completed: number, total: number): StatTileState {
+  if (total === 0) return "default";
+  const ratio = completed / total;
+  if (ratio >= 1) return "strength";
+  if (ratio < 0.25) return "attention";
+  return "default";
+}
+
+export function progressPercentState(percent: number | null | undefined): StatTileState {
+  if (percent === null || percent === undefined) return "default";
+  if (percent >= 90) return "strength";
+  if (percent < 25) return "attention";
+  return "default";
+}
 
 export type AdminAssessmentSignal = {
   mode: "pre" | "post";

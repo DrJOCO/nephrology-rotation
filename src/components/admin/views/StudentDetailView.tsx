@@ -8,9 +8,16 @@ import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone }
 import {
   buildAdminCompetencySnapshot,
   buildAdminAssessmentSignal,
+  missingPreScore,
+  postTestStale,
+  preToPostGrowthState,
+  progressFractionState,
+  progressPercentState,
 } from "../lib/student-analytics";
 import { backBtn } from "../lib/styles";
 import { getScorePct } from "../lib/format";
+import { Button } from "../ui/Button";
+import { StatTile } from "../ui/StatTile";
 
 const ADMIN_YEAR_OPTIONS = ["MS3/MS4", "MS3", "MS4", "PA Student", "NP Student", "Resident"] as const;
 
@@ -346,42 +353,31 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-          <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
-            {patients.length} consult{patients.length !== 1 ? "s" : ""}
-          </span>
-          <span style={{ background: T.bg, color: T.sub, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 600 }}>
-            {totalQuizAttempts} quiz signal{totalQuizAttempts !== 1 ? "s" : ""}
-          </span>
-          {streakDays > 0 && (
-            <span style={{ background: T.dangerBg, color: T.danger, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
-              🔥 {streakDays} day streak
-            </span>
-          )}
+        <div style={{ marginTop: 10, fontFamily: T.mono, fontSize: 12, color: T.sub, letterSpacing: 0.4, textTransform: "uppercase" }}>
+          {[
+            `${patients.length} CONSULT${patients.length !== 1 ? "S" : ""}`,
+            `${totalQuizAttempts} QUIZ SIGNAL${totalQuizAttempts !== 1 ? "S" : ""}`,
+            streakDays > 0 ? `${streakDays} DAY STREAK` : null,
+          ].filter(Boolean).join("  ·  ")}
         </div>
 
-        <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
-          <button onClick={() => { setShowScoreEntry(true); setScoreType("pre"); setScoreForm({ correct: "", total: "25" }); }}
-            style={{ fontSize: 13, color: T.warning, background: T.warningBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+          <Button size="sm" onClick={() => { setShowScoreEntry(true); setScoreType("pre"); setScoreForm({ correct: "", total: "25" }); }}>
             + Enter Score
-          </button>
-          <button onClick={() => setShowAddPatient(!showAddPatient)}
-            onClickCapture={() => { if (showAddPatient) setShowAllPatTopics(false); }}
-            style={{ fontSize: 13, color: T.success, background: T.successBg, border: `1px solid ${T.success}`, padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+          </Button>
+          <Button size="sm" onClick={() => setShowAddPatient(!showAddPatient)}
+            onClickCapture={() => { if (showAddPatient) setShowAllPatTopics(false); }}>
             {showAddPatient ? "Close consult form" : "+ Add Consult"}
-          </button>
-          <button onClick={() => navigate("students", { type: "printStudent", id: String(s.id) })}
-            style={{ fontSize: 13, color: T.info, background: T.infoBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+          </Button>
+          <Button size="sm" onClick={() => navigate("students", { type: "printStudent", id: String(s.id) })}>
             Print Report
-          </button>
-          <button onClick={() => navigate("students", { type: "exportPdf", id: String(s.id) })}
-            style={{ fontSize: 13, color: T.info, background: T.infoBg, border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+          </Button>
+          <Button size="sm" onClick={() => navigate("students", { type: "exportPdf", id: String(s.id) })}>
             Export PDF
-          </button>
-          <button onClick={handleRemoveStudent} disabled={removeBusy}
-            style={{ fontSize: 13, color: removeBusy ? "white" : T.dangerInk, background: removeBusy ? T.muted : T.danger, border: "none", padding: "6px 12px", borderRadius: 6, cursor: removeBusy ? "wait" : "pointer", fontWeight: 600 }}>
-            {removeBusy ? "Removing..." : "Remove from Rotation"}
-          </button>
+          </Button>
+          <Button size="sm" variant="destructive" onClick={handleRemoveStudent} disabled={removeBusy}>
+            {removeBusy ? "Removing…" : "Remove from rotation"}
+          </Button>
         </div>
         <div style={{ fontSize: 12, color: T.muted, marginTop: 8 }}>
           Use remove for test users, duplicates, or mistaken joins. For finished learners, prefer marking the rotation complete instead.
@@ -407,8 +403,8 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             <div style={{ display: "flex", gap: 6 }}>
               {["pre", "post", "weekly"].map(t => (
                 <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); }}
-                  style={{ flex: 1, padding: "8px 0", background: scoreType === t ? `linear-gradient(135deg, ${T.brand}, ${T.deepBg})` : T.bg, color: scoreType === t ? "white" : T.sub,
-                    border: scoreType === t ? `1px solid ${T.danger}` : `1px solid ${T.line}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
+                  style={{ flex: 1, padding: "8px 0", background: scoreType === t ? T.ink : T.bg, color: scoreType === t ? T.bg : T.sub,
+                    border: `1px solid ${scoreType === t ? T.ink : T.line}`, borderRadius: 2, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
                   {t === "weekly" ? "Weekly" : t + "-Test"}
                 </button>
               ))}
@@ -439,8 +435,8 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={saveScore} style={{ flex: 1, padding: "10px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save Score</button>
-            <button onClick={() => setShowScoreEntry(false)} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+            <Button block variant="primary" onClick={saveScore} style={{ flex: 1 }}>Save Score</Button>
+            <Button block onClick={() => setShowScoreEntry(false)} style={{ flex: 1 }}>Cancel</Button>
           </div>
         </div>
       )}
@@ -534,67 +530,72 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             {patErrors.dx && <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.dx}</div>}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={addPatient} style={{ flex: 1, padding: "10px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <Button block variant="primary" onClick={addPatient} style={{ flex: 1 }}>
               {patientStudentIds.length > 1 ? `Add to ${patientStudentIds.length} Students` : "Add Consult"}
-            </button>
-            <button onClick={() => { setShowAllPatTopics(false); setShowAddPatient(false); }} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+            </Button>
+            <Button block onClick={() => { setShowAllPatTopics(false); setShowAddPatient(false); }} style={{ flex: 1 }}>Cancel</Button>
           </div>
         </div>
       )}
 
       <h3 style={detailSectionHeadingStyle}>Assessment &amp; Progress</h3>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 16 }}>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Core Curriculum</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.coreCompletionPercent}%</div>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>{progress.completedCoreItems}/{progress.totalCoreItems} required items done</div>
-        </div>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Optional References</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.completedArticles}/{progress.totalArticles}</div>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Guidelines and long-form readings reviewed</div>
-        </div>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Study Sheets</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.completedStudySheets}/{progress.totalStudySheets}</div>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Core summaries marked complete</div>
-        </div>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Teaching Decks</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.completedDecks}/{progress.totalDecks}</div>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Core slide decks reviewed</div>
-        </div>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Cases</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.completedCases}/{progress.totalCases}</div>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Worked by the student in the app</div>
-        </div>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Quiz Weeks</div>
-          <div style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{progress.quizWeeksStarted}/{progress.totalQuizWeeks}</div>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Required question sets started</div>
-        </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 0, marginBottom: 16, borderBottom: `1px solid ${T.line}` }}>
+        <StatTile
+          label="Pre-Test"
+          value={prePct !== null ? `${prePct}%` : null}
+          caption="Baseline assessment"
+          state={missingPreScore(s)}
+        />
+        <StatTile
+          label="Post-Test"
+          value={postPct !== null ? `${postPct}%` : null}
+          caption="Closing assessment"
+          state={postTestStale(s)}
+        />
+        <StatTile
+          label="Growth"
+          value={prePct !== null && postPct !== null ? `+${postPct - prePct}%` : null}
+          caption="Post minus pre"
+          state={preToPostGrowthState(s)}
+        />
+        <StatTile
+          label="Core Curriculum"
+          value={`${progress.coreCompletionPercent}%`}
+          caption={`${progress.completedCoreItems}/${progress.totalCoreItems} required items`}
+          state={progressPercentState(progress.coreCompletionPercent)}
+        />
+        <StatTile
+          label="Optional References"
+          value={`${progress.completedArticles}/${progress.totalArticles}`}
+          caption="Guidelines + long-form"
+          state={progressFractionState(progress.completedArticles, progress.totalArticles)}
+        />
+        <StatTile
+          label="Study Sheets"
+          value={`${progress.completedStudySheets}/${progress.totalStudySheets}`}
+          caption="Core summaries"
+          state={progressFractionState(progress.completedStudySheets, progress.totalStudySheets)}
+        />
+        <StatTile
+          label="Teaching Decks"
+          value={`${progress.completedDecks}/${progress.totalDecks}`}
+          caption="Core slide decks"
+          state={progressFractionState(progress.completedDecks, progress.totalDecks)}
+        />
+        <StatTile
+          label="Cases"
+          value={`${progress.completedCases}/${progress.totalCases}`}
+          caption="Worked in-app"
+          state={progressFractionState(progress.completedCases, progress.totalCases)}
+        />
+        <StatTile
+          label="Quiz Weeks"
+          value={`${progress.quizWeeksStarted}/${progress.totalQuizWeeks}`}
+          caption="Required sets started"
+          state={progressFractionState(progress.quizWeeksStarted, progress.totalQuizWeeks)}
+        />
       </div>
-
-      {/* Score cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, textTransform: "uppercase" }}>Pre-Test</div>
-          {prePct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.warning, fontFamily: T.mono }}>{prePct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
-        </div>
-        <div style={{ background: T.card, borderRadius: 14, padding: 16, border: `1px solid ${T.line}`, textAlign: "center" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.success, textTransform: "uppercase" }}>Post-Test</div>
-          {postPct !== null ? <div style={{ fontSize: 30, fontWeight: 700, color: T.success, fontFamily: T.mono }}>{postPct}%</div> : <div style={{ fontSize: 14, color: T.muted }}>—</div>}
-        </div>
-      </div>
-
-      {prePct !== null && postPct !== null && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, textAlign: "center", borderLeft: `4px solid ${T.success}` }}>
-          <span style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>Growth: </span>
-          <span style={{ fontSize: 20, fontWeight: 700, color: T.success, fontFamily: T.mono }}>+{postPct - prePct}%</span>
-        </div>
-      )}
 
       {/* Weekly Scores */}
       <h3 style={detailSectionHeadingStyle}>Weekly Quizzes</h3>
@@ -640,10 +641,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif }}>Attending Feedback</div>
-          <button onClick={() => setShowAddFeedback(!showAddFeedback)}
-            style={{ fontSize: 13, color: T.info, background: T.infoBg, border: "none", padding: "5px 10px", borderRadius: 6, cursor: "pointer", fontWeight: 600 }}>
+          <Button size="sm" onClick={() => setShowAddFeedback(!showAddFeedback)}>
             {showAddFeedback ? "Cancel" : "+ Add"}
-          </button>
+          </Button>
         </div>
         {(s.feedbackTags || []).length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: showAddFeedback ? 12 : 0 }}>
@@ -724,10 +724,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                 );
               })}
             </select>
-            <button onClick={handleRecovery} disabled={recoveryBusy}
-              style={{ padding: "10px 14px", background: recoveryBusy ? T.muted : T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: recoveryBusy ? "not-allowed" : "pointer" }}>
-              {recoveryBusy ? "Moving Progress..." : "Move Progress To New Device Record"}
-            </button>
+            <Button variant="primary" onClick={handleRecovery} disabled={recoveryBusy}>
+              {recoveryBusy ? "Moving Progress…" : "Move Progress To New Device Record"}
+            </Button>
             {recoveryError && <div style={{ fontSize: 13, color: T.danger, marginTop: 8 }}>{recoveryError}</div>}
           </>
         )}
