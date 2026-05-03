@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
+import { Check, X } from "lucide-react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import store from "../../utils/store";
 import { backBtnStyle } from "./shared";
+import { Icon } from "./Icon";
 import type { QuizQuestion, QuizScore, QuizAnswer } from "../../types";
 
 interface SavedQuizProgress {
@@ -131,7 +133,6 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
     return (
       <div style={{ padding: 16 }}>
         <div style={{ background: T.card, borderRadius: 16, padding: 28, textAlign: "center", border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 48, marginBottom: 8 }}>{pct >= 80 ? "\uD83C\uDF89" : pct >= 60 ? "\uD83D\uDC4D" : "\uD83D\uDCD6"}</div>
           <h2 style={{ color: T.navy, fontFamily: T.serif, margin: "0 0 8px", fontSize: 22, fontWeight: 700 }}>{title} Complete</h2>
           <div style={{ fontSize: 40, fontWeight: 700, color: pct >= 80 ? T.success : pct >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>
             {correctCount}/{quizLen}
@@ -147,11 +148,13 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
               {missed.map((a, i) => (
                 <div key={i} style={{ background: T.dangerBg, borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: `3px solid ${T.danger}` }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 8, lineHeight: 1.4 }}>{questions[a.qIdx].q}</div>
-                  <div style={{ fontSize: 13, color: T.danger, marginBottom: 4 }}>
-                    {"\u2717"} Your answer: {questions[a.qIdx].choices[a.chosen]}
+                  <div style={{ fontSize: 13, color: T.danger, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon as={X} size={14} color={T.danger} />
+                    <span>Your answer: {questions[a.qIdx].choices[a.chosen]}</span>
                   </div>
-                  <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6 }}>
-                    {"\u2713"} Correct: {questions[a.qIdx].choices[questions[a.qIdx].answer]}
+                  <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                    <Icon as={Check} size={14} color={T.success} />
+                    <span>Correct: {questions[a.qIdx].choices[questions[a.qIdx].answer]}</span>
                   </div>
                   <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, background: T.card, borderRadius: 6, padding: 10 }}>
                     {questions[a.qIdx].explanation}
@@ -231,7 +234,11 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
                 color: showResult && isCorrectChoice ? T.successInk : showResult && displayIdx === selected ? T.dangerInk : T.sub,
                 fontSize: 13, fontWeight: 700, flexShrink: 0
               }}>
-                {showResult && isCorrectChoice ? "\u2713" : showResult && displayIdx === selected ? "\u2717" : String.fromCharCode(65 + displayIdx)}
+                {showResult && isCorrectChoice ? (
+                  <Icon as={Check} size={13} color={T.successInk} />
+                ) : showResult && displayIdx === selected ? (
+                  <Icon as={X} size={13} color={T.dangerInk} />
+                ) : String.fromCharCode(65 + displayIdx)}
               </span>
               <span style={{ paddingTop: 1 }}>{c}</span>
             </button>
@@ -245,8 +252,9 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
         const wasCorrect = selectedOrigIdx === q.answer;
         return (
           <div ref={explanationRef} style={{ background: T.brandBg, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.brand}` }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.success : T.danger, marginBottom: 4 }}>
-              {wasCorrect ? "\u2713 Correct!" : "\u2717 Not quite"}
+            <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.success : T.danger, marginBottom: 4, display: "flex", alignItems: "center", gap: 6 }}>
+              <Icon as={wasCorrect ? Check : X} size={14} color={wasCorrect ? T.success : T.danger} />
+              <span>{wasCorrect ? "Correct!" : "Not quite"}</span>
             </div>
             <div style={{ fontSize: mob ? 12 : 13, color: T.text, lineHeight: 1.45, wordBreak: "break-word" }}>{q.explanation}</div>
             <button onClick={handleNext} style={{

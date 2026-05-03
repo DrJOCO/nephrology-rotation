@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { T } from "../../../data/constants";
 import { adminInput, adminLabel } from "../shared";
 import type { ArticlesData } from "../types";
 import { backBtn, tinyBtn } from "../lib/styles";
+import { Icon } from "../../student/Icon";
 
 export function ArticleEditor({ week, articles, setArticles, onBack }: { week: number; articles: ArticlesData; setArticles: React.Dispatch<React.SetStateAction<ArticlesData>>; onBack: () => void }) {
   const weekArticles = articles[week] || [];
@@ -109,8 +111,12 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
               </div>
             </div>
             <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-              <button onClick={() => startEdit(i)} style={tinyBtn}>✏️</button>
-              <button onClick={() => remove(i)} style={tinyBtn}>🗑</button>
+              <button onClick={() => startEdit(i)} aria-label={`Edit ${a.title}`} style={tinyBtn}>
+                <Icon as={Pencil} size={14} color={T.ink2} />
+              </button>
+              <button onClick={() => remove(i)} aria-label={`Remove ${a.title}`} style={tinyBtn}>
+                <Icon as={Trash2} size={14} color={T.danger} />
+              </button>
             </div>
           </div>
         </div>

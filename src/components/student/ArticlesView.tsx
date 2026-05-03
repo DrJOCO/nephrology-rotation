@@ -1,12 +1,8 @@
+import { Check, ClipboardList, FileText, Star } from "lucide-react";
 import { T, WEEKLY, labelChip } from "../../data/constants";
 import { backBtnStyle } from "./shared";
 import { getTopicContent } from "../../utils/topicMapping";
-
-const typePrefix = (type: string) => {
-  if (type === "Guideline") return "\u25C6 ";
-  if (type === "Landmark" || type === "Landmark Study") return "\u2605 ";
-  return "";
-};
+import { Icon } from "./Icon";
 
 export default function ArticlesView({ week, onBack, navigate, curriculum, articles, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const arts = articles[week] || [];
@@ -43,13 +39,13 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
               onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: T.grayBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <span style={{ fontSize: 18 }}>{a.type === "Guideline" ? "\uD83D\uDCCB" : (a.type === "Landmark Study" || a.type === "Landmark") ? "\u2B50" : "\uD83D\uDCC4"}</span>
+                  <Icon as={a.type === "Guideline" ? ClipboardList : (a.type === "Landmark Study" || a.type === "Landmark") ? Star : FileText} size={18} color={(a.type === "Landmark Study" || a.type === "Landmark") ? T.warning : T.ink2} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, lineHeight: 1.35, marginBottom: 4 }}>{a.title}</div>
                   <div style={{ fontSize: 13, color: T.sub }}>{a.journal} ({a.year})</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 6, alignItems: "center" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.4 }}>{typePrefix(a.type)}{a.type}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.4 }}>{a.type}</span>
                     <span style={labelChip}>{a.topic}</span>
                   </div>
                   <button
@@ -76,14 +72,14 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
               <button onClick={() => onToggleBookmark(a.url)}
                 aria-label={(bookmarks?.articles || []).includes(a.url) ? `Unbookmark ${a.title}` : `Bookmark ${a.title}`}
                 title={(bookmarks?.articles || []).includes(a.url) ? "Bookmarked" : "Save for later"}
-                style={{ width: 40, height: 40, borderRadius: 20, border: `1.5px solid ${(bookmarks?.articles || []).includes(a.url) ? T.warning : T.line}`, background: (bookmarks?.articles || []).includes(a.url) ? T.warningBg : T.card, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: (bookmarks?.articles || []).includes(a.url) ? T.warning : T.muted }}>
-                {(bookmarks?.articles || []).includes(a.url) ? "\u2605" : "\u2606"}
+                style={{ width: 40, height: 40, borderRadius: 20, border: `1.5px solid ${(bookmarks?.articles || []).includes(a.url) ? T.warning : T.line}`, background: (bookmarks?.articles || []).includes(a.url) ? T.warningBg : T.card, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: (bookmarks?.articles || []).includes(a.url) ? T.warning : T.muted }}>
+                <Icon as={Star} size={16} color={(bookmarks?.articles || []).includes(a.url) ? T.warning : T.muted} fill={(bookmarks?.articles || []).includes(a.url) ? T.warning : "none"} />
               </button>
               <button onClick={() => onToggleComplete(a.url)}
                 aria-label={isRead ? `Mark ${a.title} unreviewed` : `Mark ${a.title} as reviewed`}
                 title={isRead ? "Reviewed — click to undo" : "Mark reviewed"}
-                style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.success : T.brand}`, background: isRead ? T.success : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, fontWeight: 700, color: isRead ? T.successInk : T.brand }}>
-                {"\u2713"}
+                style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.success : T.brand}`, background: isRead ? T.success : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 700, color: isRead ? T.successInk : T.brand }}>
+                <Icon as={Check} size={15} color={isRead ? T.successInk : T.brand} />
               </button>
             </div>
           </div>

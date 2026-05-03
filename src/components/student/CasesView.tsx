@@ -1,9 +1,11 @@
 import { useState, CSSProperties } from "react";
+import { Check, Star, Stethoscope, X } from "lucide-react";
 import { T } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
 import type { CompletedItems, Bookmarks } from "../../types";
 import { EduDisclaimer } from "./shared";
+import { Icon } from "./Icon";
 
 const caseImgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 12, border: `1px solid ${T.line}` };
 const caseCaptionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 };
@@ -66,7 +68,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
         <div style={{ background: T.card, borderRadius: 16, padding: 20, border: `1px solid ${T.line}`, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-            <span style={{ fontSize: 28 }}>🏥</span>
+            <Icon as={Stethoscope} size={22} color={T.brand} />
             <div>
               <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{caseData.title}</h2>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{caseData.difficulty}</div>
@@ -82,7 +84,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
         {done && (
           <div style={{ background: T.successBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.success, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.success}` }}>
-            <span style={{ fontSize: 16 }}>✓</span>
+            <Icon as={Check} size={16} color={T.success} />
             <span>Previously completed: {done.score}/{done.total} correct ({Math.round((done.score / done.total) * 100)}%)</span>
           </div>
         )}
@@ -102,7 +104,6 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
     return (
       <div style={{ padding: 16 }}>
         <div style={{ background: T.card, borderRadius: 16, padding: 24, border: `1px solid ${T.line}`, textAlign: "center", marginBottom: 16 }}>
-          <div style={{ fontSize: 48, marginBottom: 8 }}>{pct >= 80 ? "🎉" : pct >= 60 ? "👍" : "📚"}</div>
           <h2 style={{ color: T.navy, fontSize: 22, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Case Complete</h2>
           <div style={{ fontSize: 14, color: T.sub, marginBottom: 16 }}>{caseData.title}</div>
           <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? T.success : pct >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>
@@ -122,8 +123,9 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
               <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6, lineHeight: 1.4 }}>
                 {i + 1}. {q.q}
               </div>
-              <div style={{ fontSize: 13, color: isCorrect ? T.success : T.danger, fontWeight: 600, marginBottom: 6 }}>
-                {isCorrect ? "✓ Correct" : `✗ Your answer: ${q.choices[ans.selected]}`}
+              <div style={{ fontSize: 13, color: isCorrect ? T.success : T.danger, fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                <Icon as={isCorrect ? Check : X} size={14} color={isCorrect ? T.success : T.danger} />
+                <span>{isCorrect ? "Correct" : `Your answer: ${q.choices[ans.selected]}`}</span>
               </div>
               {!isCorrect && (
                 <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6 }}>
@@ -207,8 +209,8 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
                   {String.fromCharCode(65 + i)}.
                 </span>
                 <span>{choice}</span>
-                {showExplanation && isCorrect && <span style={{ marginLeft: "auto", flexShrink: 0 }}>✓</span>}
-                {showExplanation && isSelected && !isCorrect && <span style={{ marginLeft: "auto", flexShrink: 0 }}>✗</span>}
+                {showExplanation && isCorrect && <Icon as={Check} size={16} color={T.success} style={{ marginLeft: "auto", flexShrink: 0 }} />}
+                {showExplanation && isSelected && !isCorrect && <Icon as={X} size={16} color={T.danger} style={{ marginLeft: "auto", flexShrink: 0 }} />}
               </button>
             );
           })}
@@ -274,19 +276,21 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
       {cases.map(c => {
         const done = (completedItems?.cases || {})[c.id];
         const diff = diffColors[c.difficulty] || diffColors["MS4 Core"];
+        const bookmarked = (bookmarks?.cases || []).includes(c.id);
         return (
           <div key={c.id} style={{ position: "relative", marginBottom: 10 }}>
             <button onClick={() => setActiveCase(c)}
               style={{ display: "block", width: "100%", background: T.card, borderRadius: 14, padding: 16, border: done ? `2px solid ${T.success}` : `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
               <div style={{ position: "absolute", top: 14, right: 48, display: "flex", alignItems: "center", gap: 6 }}>
                 {done && (
-                  <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
-                    ✓ {done.score}/{done.total}
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <Icon as={Check} size={12} color={T.success} />
+                    {done.score}/{done.total}
                   </span>
                 )}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingRight: done ? 110 : 40 }}>
-                <span style={{ fontSize: 22 }}>🏥</span>
+                <Icon as={Stethoscope} size={22} color={T.brand} />
                 <div>
                   <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{c.questions.length} questions</div>
@@ -300,9 +304,9 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(c.id); }}
-              aria-label={(bookmarks?.cases || []).includes(c.id) ? `Unbookmark ${c.title}` : `Bookmark ${c.title}`}
-              style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
-              {(bookmarks?.cases || []).includes(c.id) ? "★" : "☆"}
+              aria-label={bookmarked ? `Unbookmark ${c.title}` : `Bookmark ${c.title}`}
+              style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", color: bookmarked ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+              <Icon as={Star} size={16} color={bookmarked ? T.warning : T.muted} fill={bookmarked ? T.warning : "none"} />
             </button>
           </div>
         );

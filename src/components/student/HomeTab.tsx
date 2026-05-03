@@ -28,6 +28,7 @@ import type {
 } from "../../types";
 import type { CompetencySummary } from "../../utils/competency";
 import type { StudySheetsData } from "../../utils/studySheets";
+import { Icon } from "./Icon";
 
 const PEARL_STORAGE_KEY = "neph_todayPearlDismissed";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -755,7 +756,7 @@ export default function HomeTab({
             <section style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: "14px 14px", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 32, height: 32, borderRadius: 999, background: allDone ? T.success : T.brandBg, color: allDone ? T.successInk : T.brand, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
-                  {allDone ? "✓" : remaining}
+                  {allDone ? <Icon as={Check} size={16} color={T.successInk} /> : remaining}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: T.navy, lineHeight: 1.3 }}>
@@ -813,7 +814,7 @@ export default function HomeTab({
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
                     <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? T.successInk : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
-                      {item.done ? "✓" : index + 1}
+                      {item.done ? <Icon as={Check} size={15} color={T.successInk} /> : index + 1}
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 800, color: item.done ? T.success : T.brand, textTransform: "uppercase", letterSpacing: 0.6 }}>
                       {item.done ? "Done" : "Start"}

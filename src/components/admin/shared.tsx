@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
+import { Check, CircleAlert, Info } from "lucide-react";
 import { T } from "../../data/constants";
+import { Icon } from "../student/Icon";
 
 export type AdminToastTone = "success" | "error" | "info";
 
@@ -60,10 +62,10 @@ export function AdminToast({ toast, onClose }: { toast: AdminToastState | null; 
   if (!toast) return null;
 
   const tone = toast.tone === "success"
-    ? { bg: T.successBg, border: T.success, text: T.success, icon: "✓" }
+    ? { bg: T.successBg, border: T.success, text: T.success, icon: Check }
     : toast.tone === "error"
-      ? { bg: T.dangerBg, border: T.danger, text: T.danger, icon: "!" }
-      : { bg: T.infoBg, border: T.info, text: T.info, icon: "i" };
+      ? { bg: T.dangerBg, border: T.danger, text: T.danger, icon: CircleAlert }
+      : { bg: T.infoBg, border: T.info, text: T.info, icon: Info };
 
   return (
     <div
@@ -79,7 +81,7 @@ export function AdminToast({ toast, onClose }: { toast: AdminToastState | null; 
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, background: tone.bg, border: `1px solid ${tone.border}`, color: tone.text, borderRadius: 14, padding: "12px 14px", boxShadow: "0 16px 36px rgba(0,0,0,0.18)" }}>
         <div style={{ width: 22, height: 22, borderRadius: 999, background: "rgba(255,255,255,0.72)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
-          {tone.icon}
+          <Icon as={tone.icon} size={14} color={tone.text} />
         </div>
         <div style={{ fontSize: 13, lineHeight: 1.55, fontWeight: 600, flex: 1 }}>{toast.message}</div>
         <button onClick={onClose} style={{ background: "none", border: "none", color: tone.text, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 0 }}>

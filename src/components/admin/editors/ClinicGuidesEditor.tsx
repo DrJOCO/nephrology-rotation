@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { ClipboardList } from "lucide-react";
 import { T } from "../../../data/constants";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTemplate, type ClinicGuideTemplates, type ClinicGuideTopic } from "../../../data/clinicGuides";
 import { getCurrentOrNextFriday, ensureCurrentClinicGuide, regenerateClinicGuide } from "../../../utils/clinicRotation";
 import { normalizeClinicGuideTemplate, normalizeClinicGuideTemplates } from "../../../utils/clinicGuideTemplates";
 import { adminInput, adminLabel, type AdminToastTone } from "../shared";
 import type { ClinicGuideRecord } from "../../../types";
+import { Icon } from "../../student/Icon";
 
 type GuideSectionDraft = {
   heading: string;
@@ -327,10 +329,9 @@ export function ClinicGuidesEditor({
         <div style={{ textAlign: "center", padding: 20, color: T.muted, fontSize: 13 }}>No clinic guide records have been added yet.</div>
       ) : (
         sorted.map(g => {
-          const t = clinicGuideTemplates[g.topic as ClinicGuideTopic] || CLINIC_GUIDES[g.topic as ClinicGuideTopic];
           return (
             <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${T.line}` }}>
-              <span style={{ fontSize: 20 }}>{t?.icon || "📋"}</span>
+              <Icon as={ClipboardList} size={20} color={T.ink2} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>{g.topic}</div>
                 <div style={{ fontSize: 13, color: T.sub }}>{new Date(g.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>

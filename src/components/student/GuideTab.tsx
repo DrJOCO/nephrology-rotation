@@ -24,6 +24,13 @@ const GUIDE_THEME_COLOR_MAP: Record<string, string> = {
   "#1c2833": "#3D372E",
 };
 
+const WARNING_CODE_POINT = 0x26A0;
+const NO_ENTRY_CODE_POINT = 0x1F6AB;
+
+function startsWithCodePoint(value: string, codePoint: number) {
+  return value.codePointAt(0) === codePoint;
+}
+
 function getGuideThemeColor(color: string) {
   return GUIDE_THEME_COLOR_MAP[color.toLowerCase()] || color;
 }
@@ -76,8 +83,8 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
               <div style={{ padding: "0 16px 16px" }}>
                 <div style={{ height: 1, background: T.line, marginBottom: 12 }} />
                 {cat.items.map((item, ii) => {
-                  const isWarning = item.startsWith("⚠");
-                  const isNever = item.startsWith("NEVER") || item.startsWith("🚫");
+                  const isWarning = startsWithCodePoint(item, WARNING_CODE_POINT);
+                  const isNever = item.startsWith("NEVER") || startsWithCodePoint(item, NO_ENTRY_CODE_POINT);
 
                   return (
                     <div key={ii} style={{

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Check } from "lucide-react";
 import { T, TOPICS, FEEDBACK_TAGS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../../../data/constants";
 import { validatePatientForm, clampLength, LIMITS, PHI_WARNING } from "../../../utils/validation";
 import { buildStudentProgressSummary } from "../../../utils/adminStudents";
@@ -18,6 +19,7 @@ import { backBtn } from "../lib/styles";
 import { getScorePct } from "../lib/format";
 import { Button } from "../ui/Button";
 import { StatTile } from "../ui/StatTile";
+import { Icon } from "../../student/Icon";
 
 const ADMIN_YEAR_OPTIONS = ["MS3/MS4", "MS3", "MS4", "PA Student", "NP Student", "Resident"] as const;
 
@@ -471,9 +473,13 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                       background: selected ? T.brand : T.bg,
                       color: selected ? "white" : T.sub,
                       border: selected ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}`,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
                     }}
                   >
-                    {selected ? "✓ " : ""}{student.name}
+                    {selected && <Icon as={Check} size={12} color="white" />}
+                    <span>{student.name}</span>
                   </button>
                 );
               })}
@@ -499,8 +505,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                   <button key={t} type="button" onClick={() => togglePatTopic(t)}
                     style={{ padding: "5px 10px", borderRadius: 16, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
                       background: sel ? T.warning : T.card, color: sel ? T.warningInk : T.sub,
-                      border: sel ? `1.5px solid ${T.warning}` : `1.5px solid ${T.line}` }}>
-                    {sel ? "✓ " : ""}{t}
+                      border: sel ? `1.5px solid ${T.warning}` : `1.5px solid ${T.line}`, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                    {sel && <Icon as={Check} size={12} color={T.warningInk} />}
+                    <span>{t}</span>
                   </button>
                 );
               })}

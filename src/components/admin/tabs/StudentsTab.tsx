@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Check, GraduationCap, Radio, RotateCcw } from "lucide-react";
 import { T } from "../../../data/constants";
 import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone } from "../shared";
 import { Button } from "../ui/Button";
@@ -7,6 +8,7 @@ import type { AdminStudent, AdminSubView, SharedSettings } from "../../../types"
 import { buildAdminCompetencySnapshot, buildAdminAssessmentSignal } from "../lib/student-analytics";
 import { buildDuplicateNameGroups, buildDuplicateStudentIdSet } from "../lib/duplicates";
 import { getScorePct, getMinutesSince } from "../lib/format";
+import { Icon } from "../../student/Icon";
 
 export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, duplicateReview = false, deleteStudentRecord, writeStudentToFirestore, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; duplicateReview?: boolean; deleteStudentRecord: (student: AdminStudent) => Promise<void>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -108,8 +110,9 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
       </div>
 
       {isConnected && (
-        <div style={{ background: T.infoBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.navy, lineHeight: 1.5 }}>
-          📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code. Use <strong>Remove</strong> for test users, duplicates, or mistaken joins.
+        <div style={{ background: T.infoBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.navy, lineHeight: 1.5, display: "flex", gap: 8, alignItems: "flex-start" }}>
+          <Icon as={Radio} size={15} color={T.info} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code. Use <strong>Remove</strong> for test users, duplicates, or mistaken joins.</span>
         </div>
       )}
 
@@ -247,7 +250,9 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
       {/* Active students */}
       {active.length === 0 && completed.length === 0 && !showAdd && (
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>🎓</div>
+          <div style={{ marginBottom: 8 }}>
+            <Icon as={GraduationCap} size={40} color={T.muted} />
+          </div>
           <div style={{ fontSize: 14 }}>{students.length === 0 ? "No students yet" : "No students match these filters"}</div>
           <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>{students.length === 0 ? (isConnected ? "Students will appear when they join with the rotation code" : "Add your first student above") : "Try clearing a filter or search term."}</div>
         </div>
@@ -328,8 +333,9 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
         {(onToggle || onRemove) && (
           <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
             {onToggle && (
-              <button onClick={onToggle} style={{ background: "none", border: `1px solid ${dimmed ? T.success : T.muted}`, borderRadius: 6, padding: "4px 8px", fontSize: 13, cursor: "pointer", color: dimmed ? T.success : T.sub }}>
-                {dimmed ? "↩ Reactivate" : "✓ Complete"}
+              <button onClick={onToggle} style={{ background: "none", border: `1px solid ${dimmed ? T.success : T.muted}`, borderRadius: 6, padding: "4px 8px", fontSize: 13, cursor: "pointer", color: dimmed ? T.success : T.sub, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Icon as={dimmed ? RotateCcw : Check} size={13} color={dimmed ? T.success : T.sub} />
+                <span>{dimmed ? "Reactivate" : "Complete"}</span>
               </button>
             )}
             {onRemove && (

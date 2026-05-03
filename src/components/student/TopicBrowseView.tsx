@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { BookOpen, ChartColumn, ClipboardList, FileText, Globe, Headphones, Star, Stethoscope, Wrench, type LucideIcon } from "lucide-react";
 import { T, TOPICS, ARTICLES, STUDY_SHEETS, ALL_LANDMARK_TRIALS, CURRICULUM_DECKS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
 import { getTopicIcon } from "../../data/topicIcons";
 import { useIsMobile } from "../../utils/helpers";
 import { backBtnStyle } from "./shared";
+import { Icon } from "./Icon";
 import type { StudySheetsData } from "../../utils/studySheets";
 
 interface TopicBrowseViewProps {
@@ -26,6 +28,13 @@ const resourceGroupLabels = {
   guidelines: "Guideline",
   tools: "Tool",
 } as const;
+
+const resourceGroupIcons: Record<keyof typeof resourceGroupLabels, LucideIcon> = {
+  podcasts: Headphones,
+  websites: Globe,
+  guidelines: ClipboardList,
+  tools: Wrench,
+};
 
 export default function TopicBrowseView({ onBack, navigate, completedItems, studySheets = STUDY_SHEETS, initialTopic = null }: TopicBrowseViewProps) {
   const isMobile = useIsMobile();
@@ -79,7 +88,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                   return (
                     <button key={s.id} onClick={() => navigate("today", { type: "studySheets", week: s.week })}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ fontSize: 18, flexShrink: 0 }}>{sheet.icon}</span>
+                      <Icon as={BookOpen} size={18} color={done ? T.success : T.info} style={{ flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{sheet.title}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>Module {s.week} {done ? " \u2022 Completed" : ""}</div>
@@ -101,7 +110,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                   return (
                     <button key={d.id} onClick={() => navigate("today", { type: "resources", tab: "decks", week: d.week })}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCCA"}</span>
+                      <Icon as={ChartColumn} size={16} color={done ? T.success : T.ink2} style={{ flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{deck.name}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>Module {d.week} {done ? " \u2022 Reviewed" : ""}</div>
@@ -123,7 +132,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                   return (
                     <button key={c.id} onClick={() => navigate("today", { type: "cases", week: c.week })}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83C\uDFE5"}</span>
+                      <Icon as={Stethoscope} size={16} color={done ? T.success : T.ink2} style={{ flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{cs.title}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>Module {c.week} {"\u2022"} {cs.difficulty} {done ? " \u2022 Done" : ""}</div>
@@ -141,7 +150,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                 {content.quizWeeks.map(w => (
                   <button key={w} onClick={() => navigate("today", { type: "weeklyQuiz", week: w })}
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                    <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
+                    <Icon as={ClipboardList} size={16} color={T.ink2} style={{ flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>Module {w} Quiz</div>
                     </div>
@@ -174,7 +183,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                   return (
                     <button key={a.url} onClick={() => navigate("today", { type: "articles", week: a.week })}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCC4"}</span>
+                      <Icon as={FileText} size={16} color={done ? T.success : T.ink2} style={{ flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{article.title}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>{article.journal} ({article.year}) {done ? " \u2022 Reviewed" : ""}</div>
@@ -195,7 +204,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                   return (
                     <button key={trial.name} onClick={() => navigate("library", { type: "trialLibrary", searchTrial: trial.name })}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.warningBg, border: `1px solid ${T.warning}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
-                      <span style={{ fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</span>
+                      <Icon as={Star} size={16} color={T.warning} style={{ flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{trial.name}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>{trial.journal} ({trial.year})</div>
@@ -213,7 +222,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                 {content.resources.map(resource => (
                   <a key={resource.url} href={resource.url} target="_blank" rel="noopener noreferrer"
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, textAlign: "left", textDecoration: "none" }}>
-                    <span style={{ fontSize: 16, flexShrink: 0 }}>{resource.group === "podcasts" ? "\uD83C\uDFA7" : resource.group === "guidelines" ? "\uD83D\uDCCB" : resource.group === "tools" ? "\uD83D\uDEE0" : "\uD83C\uDF10"}</span>
+                    <Icon as={resourceGroupIcons[resource.group]} size={16} color={T.ink2} style={{ flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{resource.name}</div>
                       <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.45 }}>
