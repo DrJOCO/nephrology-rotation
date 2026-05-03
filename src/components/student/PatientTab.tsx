@@ -303,9 +303,19 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
 
 interface TopicSuggestion {
   label: string;
-  type: "studySheet" | "quiz";
+  type: "studySheet" | "quiz" | "tool";
   nav: [string, SubView];
 }
+
+const AKI_WORKFLOW_SUGGESTION_TOPICS = new Set([
+  "AKI",
+  "Post-Renal AKI",
+  "Contrast-Associated AKI",
+  "Rhabdomyolysis",
+  "AIN",
+  "Hepatorenal Syndrome",
+  "Cardiorenal Syndrome",
+]);
 
 export default function PatientTab({ patients, setPatients, navigate, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void }) {
   const isMobile = useIsMobile();
@@ -353,7 +363,12 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       const newSuggestions: TopicSuggestion[] = [];
       const seenSheets = new Set<string>();
       const seenWeeks = new Set<number>();
+      let akiWorkflowSuggested = false;
       for (const topic of form.topics) {
+        if (!akiWorkflowSuggested && AKI_WORKFLOW_SUGGESTION_TOPICS.has(topic)) {
+          newSuggestions.push({ label: "AKI Differential Tool", type: "tool", nav: ["library", { type: "akiTool" }] });
+          akiWorkflowSuggested = true;
+        }
         const mapping = TOPIC_RESOURCE_MAP[topic];
         if (!mapping) continue;
         for (const sheetId of mapping.studySheets) {
@@ -596,10 +611,10 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => { navigate(...s.nav); setShowSuggestions(false); }}
                 style={{ padding: isMobile ? "8px 12px" : "6px 12px", borderRadius: 8, fontSize: isMobile ? 12 : 11, fontWeight: 600, cursor: "pointer",
-                  background: s.type === "studySheet" ? T.card : T.ice,
-                  color: s.type === "studySheet" ? T.info : T.brand,
-                  border: `1px solid ${s.type === "studySheet" ? T.muted : T.brand}` }}>
-                {s.type === "studySheet" ? "📋" : "📝"} {s.label}
+                  background: s.type === "studySheet" ? T.card : s.type === "tool" ? T.infoBg : T.ice,
+                  color: s.type === "studySheet" || s.type === "tool" ? T.info : T.brand,
+                  border: `1px solid ${s.type === "studySheet" ? T.muted : s.type === "tool" ? T.info : T.brand}` }}>
+                {s.type === "studySheet" ? "📋" : s.type === "tool" ? "🛠" : "📝"} {s.label}
               </button>
             ))}
           </div>

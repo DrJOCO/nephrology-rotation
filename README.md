@@ -7,6 +7,7 @@ For the full project map, architecture notes, data locations, Firebase model, an
 ## What This Project Contains
 
 - Student-facing rotation app with mobile-first navigation, onboarding, quizzes, cases, study sheets, references, patient logs, bookmarks, reflections, and progress tracking.
+- Clinical reasoning tools (AKI Differential Tool) that turn structured inputs (Cr trend, UOP, exposures, UA, imaging, FENa/FEUrea) into a ranked, KDIGO-staged differential.
 - Admin panel for rotation setup, student tracking, curriculum/content editing, announcements, analytics, print reports, and admin invites.
 - Firebase Auth and Firestore integration with localStorage fallback and offline pending-sync behavior.
 - PWA/offline shell support generated during the Vite build.

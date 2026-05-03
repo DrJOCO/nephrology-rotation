@@ -55,7 +55,7 @@ Important student features:
 - Weekly curriculum modules.
 - Pre/post assessments and weekly quizzes.
 - Spaced repetition review for missed or reinforced questions.
-- Study sheets, articles, landmark trials, cases, resources, quick references, inpatient guides, outpatient clinic guides, and rotation guides.
+- Study sheets, articles, landmark trials, cases, resources, quick references, inpatient guides, outpatient clinic guides, rotation guides, and clinical reasoning tools (AKI Differential Tool).
 - Patient/consult topic logging with no-PHI guardrails.
 - Bookmarks, reflections, progress, team snapshot, and global search.
 - Offline-aware local cache and pending sync queue.
@@ -91,6 +91,7 @@ Most teaching content is static source-controlled data:
 | `src/data/rotationGuides.ts` | Rotation workflow and orientation guides. |
 | `src/data/images.ts` | Image metadata for study sheets and cases. |
 | `src/data/topicIcons.ts` | Topic-to-icon helper. |
+| `src/utils/akiTool.ts` | KDIGO staging, FENa/FEUrea formulas, and the AKI differential ranking engine. Pair with `src/components/student/AkiToolView.tsx`. |
 
 When adding content, prefer editing `src/data/` first, then update tests if the new content affects integrity checks.
 
@@ -199,6 +200,13 @@ Treat `public/decks/` as the app-shipped asset location and `decks/` as the edit
 1. Add the content template in the relevant `src/data/*Guides.ts` file.
 2. Add or update the student view if the guide requires a new route.
 3. Update any admin editor only if admins should manage that guide.
+
+### Add A New Clinical Tool
+
+1. Put pure scoring/calculation logic in `src/utils/<tool>.ts` so it stays testable without the React tree.
+2. Cover the scoring/branch logic with focused tests in `src/utils/<tool>.test.ts`.
+3. Add the view in `src/components/student/<Tool>View.tsx` and a `subView` entry in `src/types.ts`.
+4. Surface it from `GuideTab` under the **Clinical Tools** section and, where relevant, as a topic suggestion in `PatientTab`.
 
 ### Change Student Progress Logic
 

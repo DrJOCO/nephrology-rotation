@@ -1,4 +1,5 @@
 import type { QuickRef } from "../types";
+import { calculateFenaPercent, calculateFeureaPercent, interpretFenaPercent, interpretFeureaPercent } from "../utils/akiTool";
 
 export const QUICK_REFS: QuickRef[] = [
   {
@@ -13,12 +14,9 @@ export const QUICK_REFS: QuickRef[] = [
     calculate: (v) => {
       const { uNa, pNa, uCr, pCr } = v;
       if (!uNa || !pNa || !uCr || !pCr || pNa === 0 || pCr === 0 || uCr === 0) return null;
-      const fena = ((uNa * pCr) / (pNa * uCr)) * 100;
-      let interp = "";
-      if (fena < 1) interp = "< 1% → Suggests PRE-RENAL AKI (kidneys avidly retaining Na⁺)";
-      else if (fena <= 2) interp = "1-2% → Indeterminate (consider clinical context)";
-      else interp = "> 2% → Suggests INTRINSIC renal disease (ATN, AIN)";
-      return { value: fena.toFixed(2) + "%", interpretation: interp,
+      const fena = calculateFenaPercent({ urineNa: uNa, serumNa: pNa, urineCr: uCr, serumCr: pCr });
+      if (fena === null) return null;
+      return { value: fena.toFixed(2) + "%", interpretation: interpretFenaPercent(fena),
         caveat: "⚠️ Unreliable on diuretics — use FEUrea instead. Also unreliable in CKD, contrast nephropathy, myoglobinuria, and early obstruction." };
     },
   },
@@ -34,12 +32,9 @@ export const QUICK_REFS: QuickRef[] = [
     calculate: (v) => {
       const { uUrea, pUrea, uCr, pCr } = v;
       if (!uUrea || !pUrea || !uCr || !pCr || pUrea === 0 || pCr === 0 || uCr === 0) return null;
-      const fe = ((uUrea * pCr) / (pUrea * uCr)) * 100;
-      let interp = "";
-      if (fe < 35) interp = "< 35% → Suggests PRE-RENAL AKI";
-      else if (fe <= 50) interp = "35-50% → Indeterminate";
-      else interp = "> 50% → Suggests INTRINSIC renal disease (ATN)";
-      return { value: fe.toFixed(1) + "%", interpretation: interp,
+      const fe = calculateFeureaPercent({ urineUrea: uUrea, serumBun: pUrea, urineCr: uCr, serumCr: pCr });
+      if (fe === null) return null;
+      return { value: fe.toFixed(1) + "%", interpretation: interpretFeureaPercent(fe),
         caveat: "✅ Often more useful than FENa when diuretics are on board, but still interpret in clinical context rather than in isolation." };
     },
   },

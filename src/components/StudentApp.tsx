@@ -59,6 +59,7 @@ const PatientTab = lazy(() => import("./student/PatientTab"));
 const TeamTab = lazy(() => import("./student/TeamTab"));
 const ProgressTab = lazy(() => import("./student/ProgressTab"));
 const TopicBrowseView = lazy(() => import("./student/TopicBrowseView"));
+const AkiToolView = lazy(() => import("./student/AkiToolView"));
 const ClinicGuideView = lazy(() => import("./student/ClinicGuideView"));
 const ClinicGuideHistoryView = lazy(() => import("./student/ClinicGuideHistoryView"));
 const InpatientGuideView = lazy(() => import("./student/InpatientGuideView"));
@@ -1741,13 +1742,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "library" && subView?.type === "inpatientGuide" && (
           <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={() => navigate("library")} />
         )}
+        {tab === "library" && subView?.type === "akiTool" && (
+          <AkiToolView onBack={() => navigate("library")} onOpenCalculator={(id) => navigate("library", { type: "refDetail", id })} />
+        )}
         {tab === "library" && subView?.type === "rotationGuide" && (
           <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "faq" && (
           <FaqView onBack={() => navigate("library")} />
         )}
-        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
+        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}

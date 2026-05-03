@@ -56,6 +56,7 @@ export type SubView =
   | { type: "trialLibrary"; searchTrial?: string }
   | { type: "browseByTopic" }
   | { type: "topicDetail"; topic: string; source?: "studySheets" | "articles" | "browseByTopic"; week?: number }
+  | { type: "akiTool" }
   | { type: "clinicGuide"; date: string; topic?: "CKD" | "Hypertension" | "Transplant" }
   | { type: "clinicGuideHistory" }
   | { type: "inpatientGuide"; topic: string }
