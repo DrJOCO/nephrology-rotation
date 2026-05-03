@@ -510,13 +510,13 @@ export function SettingsTab({
       {showRotation && (
       <SettingsSection sectionRef={rotationRef} title="Rotation Workspace" description="Create a new rotation, reconnect to an existing one, and manage the learner roster tied to each code.">
         <div style={{ display: "grid", gap: 16 }}>
-          <div style={{ background: `linear-gradient(135deg, ${T.navyBg}, ${T.deepBg})`, borderRadius: 16, padding: 20, color: "white" }}>
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 0, padding: 20, color: T.ink }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-              <h4 style={{ fontFamily: T.serif, color: "white", fontSize: 18, margin: 0, fontWeight: 700 }}>Rotation Code</h4>
+              <h4 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: 0, fontWeight: 700, lineHeight: 1.15 }}>Rotation Code</h4>
               {rotationCode && (
                 <button
                   onClick={handleDisconnect}
-                  style={{ background: "transparent", border: "none", padding: 0, color: "#ff8a8a", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}
+                  style={{ background: "transparent", border: "none", padding: 0, color: T.brand, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}
                 >
                   Disconnect from rotation
                 </button>
@@ -524,55 +524,55 @@ export function SettingsTab({
             </div>
             {rotationCode ? (
               <div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>Share this code with students to join:</div>
-                <div style={{ fontSize: 32, fontFamily: T.mono, fontWeight: 700, letterSpacing: 4, textAlign: "center", background: "rgba(255,255,255,0.1)", borderRadius: 12, padding: "14px 0", marginBottom: 12 }}>
+                <div style={{ fontSize: 13, color: T.sub, marginBottom: 6 }}>Share this code with students to join:</div>
+                <div style={{ fontSize: 32, fontFamily: T.mono, fontWeight: 700, letterSpacing: 4, textAlign: "center", background: T.bg, border: `1px solid ${T.line}`, borderRadius: 0, padding: "14px 0", marginBottom: 12, color: T.ink }}>
                   {rotationCode}
                 </div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", textAlign: "center" }}>Students enter this code after setting their name to sync data in real time.</div>
+                <div style={{ fontSize: 13, color: T.sub, textAlign: "center", lineHeight: 1.5 }}>Students enter this code after setting their name to sync data in real time.</div>
               </div>
             ) : (
               <div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.68)", marginBottom: 12, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 13, color: T.sub, marginBottom: 12, lineHeight: 1.5 }}>
                   Create a rotation to sync student data in real time. Students will enter the generated code to join.
                 </div>
                 <div style={{ marginBottom: 10 }}>
-                  <label style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600, display: "block", marginBottom: 4 }}>Rotation Dates (optional)</label>
-                  <input value={newDates} onChange={(event) => setNewDates(event.target.value)} placeholder="e.g. Mar 1–28, 2026" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+                  <label style={{ fontSize: 13, color: T.sub, fontWeight: 600, display: "block", marginBottom: 4 }}>Rotation Dates (optional)</label>
+                  <input value={newDates} onChange={(event) => setNewDates(event.target.value)} placeholder="e.g. Mar 1–28, 2026" style={{ width: "100%", padding: "10px 12px", borderRadius: 0, border: `1px solid ${T.line}`, background: T.bg, color: T.ink, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
                   <div>
-                    <label style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600, display: "block", marginBottom: 4 }}>Location (optional)</label>
-                    <input value={newLocation} onChange={(event) => setNewLocation(event.target.value)} placeholder="e.g. Good Samaritan" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+                    <label style={{ fontSize: 13, color: T.sub, fontWeight: 600, display: "block", marginBottom: 4 }}>Location (optional)</label>
+                    <input value={newLocation} onChange={(event) => setNewLocation(event.target.value)} placeholder="e.g. Good Samaritan" style={{ width: "100%", padding: "10px 12px", borderRadius: 0, border: `1px solid ${T.line}`, background: T.bg, color: T.ink, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600, display: "block", marginBottom: 4 }}>Duration</label>
-                    <select value={settings.duration || "4"} onChange={(event) => update("duration", event.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box", appearance: "none" }}>
-                      <option value="1" style={{ color: "#000" }}>1 week</option>
-                      <option value="2" style={{ color: "#000" }}>2 weeks</option>
-                      <option value="3" style={{ color: "#000" }}>3 weeks</option>
-                      <option value="4" style={{ color: "#000" }}>4 weeks</option>
+                    <label style={{ fontSize: 13, color: T.sub, fontWeight: 600, display: "block", marginBottom: 4 }}>Duration</label>
+                    <select value={settings.duration || "4"} onChange={(event) => update("duration", event.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 0, border: `1px solid ${T.line}`, background: T.bg, color: T.ink, fontSize: 13, outline: "none", boxSizing: "border-box", appearance: "none" }}>
+                      <option value="1">1 week</option>
+                      <option value="2">2 weeks</option>
+                      <option value="3">3 weeks</option>
+                      <option value="4">4 weeks</option>
                     </select>
                   </div>
                 </div>
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontWeight: 600, display: "block", marginBottom: 4 }}>Custom Code (optional)</label>
-                  <input value={newCustomCode} onChange={(event) => setNewCustomCode(event.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, ""))} placeholder="e.g. TEST or GS-APR26" style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "white", fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: T.mono, letterSpacing: 2 }} />
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>If blank, the code is auto-generated from location and dates.</div>
+                  <label style={{ fontSize: 13, color: T.sub, fontWeight: 600, display: "block", marginBottom: 4 }}>Custom Code (optional)</label>
+                  <input value={newCustomCode} onChange={(event) => setNewCustomCode(event.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, ""))} placeholder="e.g. TEST or GS-APR26" style={{ width: "100%", padding: "10px 12px", borderRadius: 0, border: `1px solid ${T.line}`, background: T.bg, color: T.ink, fontSize: 13, outline: "none", boxSizing: "border-box", fontFamily: T.mono, letterSpacing: 2 }} />
+                  <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>If blank, the code is auto-generated from location and dates.</div>
                 </div>
-                <button onClick={handleCreateRotation} disabled={creating} style={{ width: "100%", padding: "14px 0", background: T.warning, color: T.warningInk, border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: creating ? "wait" : "pointer", opacity: creating ? 0.7 : 1, marginBottom: 16 }}>
+                <button onClick={handleCreateRotation} disabled={creating} style={{ width: "100%", padding: "14px 0", background: T.brand, color: "white", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 700, cursor: creating ? "wait" : "pointer", opacity: creating ? 0.7 : 1, marginBottom: 16 }}>
                   {creating ? "Creating..." : "Create New Rotation"}
                 </button>
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 14 }}>
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 8, fontWeight: 600 }}>Or reconnect to an existing rotation:</div>
+                <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 14 }}>
+                  <div style={{ fontSize: 13, color: T.sub, marginBottom: 8, fontWeight: 600 }}>Or reconnect to an existing rotation:</div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <input
                       value={rejoinCode}
                       onChange={(event) => { setRejoinCode(event.target.value.toUpperCase()); setRejoinError(""); }}
                       onKeyDown={(event) => { if (event.key === "Enter") void handleRejoin(); }}
                       placeholder="e.g. CMC-MAR26"
-                      style={{ flex: 1, padding: "10px 12px", borderRadius: 8, border: `1px solid ${rejoinError ? T.danger : "rgba(255,255,255,0.2)"}`, background: "rgba(255,255,255,0.1)", color: "white", fontSize: 14, fontFamily: T.mono, letterSpacing: 2, textAlign: "center", outline: "none", boxSizing: "border-box" }}
+                      style={{ flex: 1, padding: "10px 12px", borderRadius: 0, border: `1px solid ${rejoinError ? T.danger : T.line}`, background: T.bg, color: T.ink, fontSize: 14, fontFamily: T.mono, letterSpacing: 2, textAlign: "center", outline: "none", boxSizing: "border-box" }}
                     />
-                    <button onClick={() => { void handleRejoin(); }} disabled={rejoining || rejoinCode.length < 4} style={{ padding: "10px 18px", background: rejoinCode.length >= 4 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.05)", color: rejoinCode.length >= 4 ? "white" : "rgba(255,255,255,0.35)", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: rejoinCode.length >= 4 ? "pointer" : "default" }}>
+                    <button onClick={() => { void handleRejoin(); }} disabled={rejoining || rejoinCode.length < 4} style={{ padding: "10px 18px", background: rejoinCode.length >= 4 ? T.ink : T.bg, color: rejoinCode.length >= 4 ? "white" : T.muted, border: `1px solid ${rejoinCode.length >= 4 ? T.ink : T.line}`, borderRadius: 0, fontSize: 13, fontWeight: 600, cursor: rejoinCode.length >= 4 ? "pointer" : "default" }}>
                       {rejoining ? "..." : "Join"}
                     </button>
                   </div>

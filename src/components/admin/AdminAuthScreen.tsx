@@ -36,29 +36,31 @@ export function AdminAuthScreen({
   onExit?: () => void;
 }) {
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, ${T.navyBg} 0%, ${T.deepBg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
-      <div style={{ background: T.card, borderRadius: 20, padding: 36, maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.4)" }}>
-        <div style={{ width: 56, height: 56, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🔐</div>
-        <h1 style={{ color: T.navy, fontFamily: T.serif, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>
+    <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
+      <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 0, padding: 36, maxWidth: 420, width: "100%" }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>
+          — Admin
+        </div>
+        <h1 style={{ color: T.ink, fontFamily: T.serif, fontSize: 24, margin: "0 0 6px", fontWeight: 700, lineHeight: 1.15 }}>
           {authMode === "signup" ? "Create Admin Account" : "Admin Sign-In"}
         </h1>
-        <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px" }}>
+        <p style={{ color: T.sub, fontSize: 13, margin: "0 0 22px", lineHeight: 1.5 }}>
           {authMode === "signup"
             ? "Use an email that has already been invited by an existing admin."
             : "Sign in with your admin email before unlocking the panel PIN."}
         </p>
-        <div style={{ display: "flex", gap: 8, background: T.bg, borderRadius: 999, padding: 4, marginBottom: 18 }}>
+        <div style={{ display: "flex", gap: 0, marginBottom: 18, borderBottom: `1px solid ${T.line}` }}>
           <button
             type="button"
             onClick={() => setAuthMode("signin")}
-            style={{ flex: 1, padding: "9px 12px", borderRadius: 999, border: "none", background: authMode === "signin" ? T.card : "transparent", color: authMode === "signin" ? T.navy : T.sub, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 0, border: "none", background: "transparent", color: authMode === "signin" ? T.ink : T.sub, fontSize: 13, fontWeight: authMode === "signin" ? 700 : 600, cursor: "pointer", borderBottom: authMode === "signin" ? `1.5px solid ${T.brand}` : "1.5px solid transparent", marginBottom: -1 }}
           >
             Sign In
           </button>
           <button
             type="button"
             onClick={() => setAuthMode("signup")}
-            style={{ flex: 1, padding: "9px 12px", borderRadius: 999, border: "none", background: authMode === "signup" ? T.card : "transparent", color: authMode === "signup" ? T.navy : T.sub, fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            style={{ flex: 1, padding: "10px 0", borderRadius: 0, border: "none", background: "transparent", color: authMode === "signup" ? T.ink : T.sub, fontSize: 13, fontWeight: authMode === "signup" ? 700 : 600, cursor: "pointer", borderBottom: authMode === "signup" ? `1.5px solid ${T.brand}` : "1.5px solid transparent", marginBottom: -1 }}
           >
             Create Account
           </button>
@@ -75,7 +77,7 @@ export function AdminAuthScreen({
               else void onSignIn();
             }}
             placeholder="you@example.com"
-            style={{ width: "100%", padding: "12px 14px", border: `2px solid ${T.pale}`, borderRadius: 10, outline: "none", boxSizing: "border-box", fontSize: 14 }}
+            style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
           />
         </div>
         <div style={{ textAlign: "left", marginBottom: 14 }}>
@@ -93,7 +95,7 @@ export function AdminAuthScreen({
               void onSignIn();
             }}
             placeholder={authMode === "signup" ? "Create a password" : "Admin password"}
-            style={{ width: "100%", padding: "12px 14px", border: `2px solid ${T.pale}`, borderRadius: 10, outline: "none", boxSizing: "border-box", fontSize: 14 }}
+            style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
           />
         </div>
         {authMode === "signup" && (
@@ -105,7 +107,7 @@ export function AdminAuthScreen({
               onChange={(event) => setAuthPasswordConfirm(event.target.value)}
               onKeyDown={(event) => { if (event.key === "Enter" && authEmail.trim() && authPassword) void onCreateAccount(); }}
               placeholder="Repeat your password"
-              style={{ width: "100%", padding: "12px 14px", border: `2px solid ${T.pale}`, borderRadius: 10, outline: "none", boxSizing: "border-box", fontSize: 14 }}
+              style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
             />
           </div>
         )}
@@ -113,7 +115,7 @@ export function AdminAuthScreen({
         <button
           onClick={() => { if (authMode === "signup") void onCreateAccount(); else void onSignIn(); }}
           disabled={!authEmail.trim() || !authPassword || (authMode === "signup" && !authPasswordConfirm) || authSubmitting}
-          style={{ width: "100%", padding: "14px 0", background: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? T.brand : T.muted, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? "pointer" : "default", opacity: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? 1 : 0.7 }}
+          style={{ width: "100%", padding: "14px 0", background: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? T.brand : T.muted, color: "white", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? "pointer" : "default", opacity: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? 1 : 0.7 }}
         >
           {authSubmitting ? (authMode === "signup" ? "Creating Account..." : "Signing In...") : (authMode === "signup" ? "Create Admin Account" : "Sign In")}
         </button>
@@ -126,10 +128,10 @@ export function AdminAuthScreen({
               width: "100%",
               padding: "12px 0",
               marginTop: 10,
-              background: T.surface2,
-              color: T.text,
+              background: T.bg,
+              color: T.ink,
               border: `1px solid ${T.line}`,
-              borderRadius: 10,
+              borderRadius: 0,
               fontSize: 14,
               fontWeight: 700,
               cursor: authSubmitting ? "default" : "pointer",
@@ -159,12 +161,12 @@ export function AdminAuthScreen({
             Forgot password?
           </button>
         )}
-        <p style={{ color: T.muted, fontSize: 13, marginTop: 12 }}>
+        <p style={{ color: T.muted, fontSize: 13, marginTop: 12, lineHeight: 1.5 }}>
           {authMode === "signup"
             ? "Existing admins can add your email from Settings → Admin Access."
             : "If your original owner access used your Google Firebase account, try Google sign-in."}
         </p>
-        {onExit && <button onClick={onExit} style={{ marginTop: 14, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>← Back to Student App</button>}
+        {onExit && <button onClick={onExit} style={{ marginTop: 14, background: "none", border: `1px solid ${T.line}`, color: T.sub, padding: "10px 0", width: "100%", borderRadius: 0, fontSize: 13, cursor: "pointer" }}>← Back to Student App</button>}
       </div>
     </div>
   );
