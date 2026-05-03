@@ -1,7 +1,4 @@
-import {
-  ArrowRight,
-  Mail,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { CSSProperties } from "react";
 import { T } from "../../data/constants";
 import { STUDENT_AUTH_PIN_LENGTH } from "../../utils/firebase";
@@ -113,36 +110,9 @@ export default function LoginScreen({
       ? 1
       : 0;
 
-  const verificationActionLabel = needsEmailCompletion
-    ? "Complete verification"
-    : linkSent
-      ? "Resend verification link"
-      : isResetFlow
-        ? "Email me a reset link"
-        : "Send verification link";
-  const returningResetLabel = needsEmailCompletion
-    ? "Complete verification"
-    : linkSent
-      ? "Resend reset link"
-      : "Need a new PIN?";
-
-  const verificationHelperText = needsEmailCompletion
-    ? "Open the link, then come back here to finish."
-    : linkSent
-      ? "Check your inbox for the verification link."
-      : isResetFlow
-        ? "Verify your email again to set a new PIN."
-        : "Verify this email to continue.";
-
-  const verificationFallbackText = (linkSent || needsEmailCompletion)
-    ? "Don't see it within 2 minutes? Check spam, or try a personal email — hospital networks sometimes block these."
-    : "";
-
-  const showInlineVerifyNotice = isFirstTime && !trustedSessionReady && !pinSetupPending && Boolean(authNotice);
-
   const statusMessages = [
     authError ? { text: authError, bg: T.dangerBg, border: T.danger, color: T.danger } : null,
-    !showInlineVerifyNotice && authNotice ? { text: authNotice, bg: T.successBg, border: T.success, color: T.success } : null,
+    authNotice ? { text: authNotice, bg: T.successBg, border: T.success, color: T.success } : null,
     joinError ? { text: joinError, bg: T.dangerBg, border: T.danger, color: T.danger } : null,
   ].filter(Boolean) as Array<{ text: string; bg: string; border: string; color: string }>;
 
@@ -156,72 +126,68 @@ export default function LoginScreen({
 
   const inputStyle = ({
     hasError = false,
-    mono = false,
     centered = false,
     disabled = false,
   }: {
     hasError?: boolean;
-    mono?: boolean;
     centered?: boolean;
     disabled?: boolean;
   }): CSSProperties => ({
     width: "100%",
     padding: "8px 0",
-    fontSize: mono ? 16 : 14,
+    fontSize: 14,
     border: 0,
     borderBottom: `1.5px solid ${hasError ? T.danger : T.line}`,
     borderRadius: 0,
     outline: "none",
     boxSizing: "border-box",
-    fontFamily: mono ? T.mono : T.sans,
+    fontFamily: T.sans,
     textAlign: centered ? "center" : "left",
-    letterSpacing: mono ? 2.2 : 0,
+    letterSpacing: 0,
     background: "transparent",
     color: disabled ? T.muted : T.text,
     opacity: disabled ? 0.6 : 1,
   });
 
+  const monoInputStyle = (opts: { hasError?: boolean; centered?: boolean; disabled?: boolean } = {}): CSSProperties => ({
+    ...inputStyle(opts),
+    fontFamily: T.mono,
+    fontSize: 16,
+    letterSpacing: 2.2,
+  });
+
+  const ctaDisabled = !canJoin || joining;
   const primaryButtonStyle: CSSProperties = {
     width: "100%",
     border: "none",
     borderRadius: 2,
     padding: "14px 16px",
-    background: canJoin && !joining ? T.navy : T.muted,
-    color: "white",
+    background: T.ink,
+    color: T.bg,
     fontSize: 14,
     fontWeight: 600,
-    cursor: canJoin && !joining ? "pointer" : "default",
-    opacity: canJoin && !joining ? 1 : 0.68,
+    cursor: ctaDisabled ? "not-allowed" : "pointer",
+    opacity: ctaDisabled ? 0.6 : 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    transition: "opacity 0.18s ease",
   };
 
-  const secondaryButtonStyle = (enabled: boolean): CSSProperties => ({
-    width: "100%",
-    borderRadius: 2,
-    border: `1px solid ${enabled ? T.brand : T.line}`,
-    padding: "11px 14px",
-    background: enabled ? T.brand : T.grayBg,
-    color: enabled ? T.brandInk : T.muted,
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: enabled ? "pointer" : "default",
-    opacity: enabled ? 1 : 0.78,
-  });
-
-  const inlineLinkStyle: CSSProperties = {
+  const siblingAnchorStyle = (enabled: boolean): CSSProperties => ({
     background: "none",
     border: "none",
-    color: T.brand,
-    fontSize: 13,
+    color: T.muted,
+    fontSize: 11,
     fontWeight: 500,
-    cursor: "pointer",
+    fontFamily: T.mono,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    cursor: enabled ? "pointer" : "default",
     padding: 0,
-    textDecoration: "underline",
-    textUnderlineOffset: 3,
-  };
+    opacity: enabled ? 1 : 0.45,
+  });
 
   return (
     <div style={{
@@ -358,54 +324,43 @@ export default function LoginScreen({
           </div>
         </div>
 
-        {isFirstTime && !trustedSessionReady && !pinSetupPending && (
-          <div style={{
-            background: T.surface2,
-            border: `1px solid ${needsEmailCompletion ? T.warning : T.line}`,
-            borderRadius: 4,
-            padding: 14,
-            marginBottom: 16,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <Mail size={15} strokeWidth={2} color={T.brand} aria-hidden="true" />
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.navy }}>
-                Verify your email
-              </div>
-            </div>
-            <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginBottom: 12 }}>
-              {verificationHelperText}
-            </div>
-            <button
-              type="button"
-              onClick={needsEmailCompletion ? onCompleteEmailLinkSignIn : () => onSendVerificationLink("create")}
-              disabled={needsEmailCompletion ? !studentEmail.trim() || authSubmitting : !canSendCreateLink}
-              style={secondaryButtonStyle(needsEmailCompletion ? Boolean(studentEmail.trim()) && !authSubmitting : canSendCreateLink)}
-            >
-              {authSubmitting ? "Working..." : verificationActionLabel}
-            </button>
-            {showInlineVerifyNotice && (
-              <div style={{
-                marginTop: 10,
-                fontSize: 12,
-                lineHeight: 1.5,
-                color: T.success,
-                fontWeight: 500,
-              }}>
-                {authNotice}
-              </div>
-            )}
-            {verificationFallbackText && (
-              <div style={{
-                marginTop: 10,
-                fontSize: 12,
-                lineHeight: 1.55,
-                color: T.muted,
-              }}>
-                {verificationFallbackText}
-              </div>
-            )}
-          </div>
-        )}
+        {isFirstTime && !trustedSessionReady && !pinSetupPending && (() => {
+          const verifyEnabled = needsEmailCompletion
+            ? Boolean(studentEmail.trim()) && !authSubmitting
+            : canSendCreateLink;
+          return (
+            <p style={{ margin: "0 0 16px", fontSize: 13, lineHeight: 1.55, color: T.sub }}>
+              <span aria-hidden="true" style={{ color: T.brand, marginRight: 6 }}>●</span>
+              Step 1 of 3 — verify this email to continue.{" "}
+              <button
+                type="button"
+                onClick={needsEmailCompletion ? onCompleteEmailLinkSignIn : () => onSendVerificationLink("create")}
+                disabled={!verifyEnabled}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: T.brand,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  fontFamily: "inherit",
+                  cursor: verifyEnabled ? "pointer" : "not-allowed",
+                  opacity: verifyEnabled ? 1 : 0.55,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                {authSubmitting
+                  ? "Working..."
+                  : needsEmailCompletion
+                    ? "Complete verification →"
+                    : linkSent
+                      ? "Resend verification link →"
+                      : "Send verification link →"}
+              </button>
+            </p>
+          );
+        })()}
 
         {(pinSetupPending || (!trustedSessionReady && !isFirstTime)) && (
           <div style={{
@@ -422,7 +377,7 @@ export default function LoginScreen({
                 type="password"
                 inputMode="numeric"
                 pattern="[0-9]*"
-                placeholder=""
+                placeholder="····"
                 maxLength={STUDENT_AUTH_PIN_LENGTH}
                 name="rotation-pin"
                 autoComplete="one-time-code"
@@ -432,7 +387,7 @@ export default function LoginScreen({
                   if (e.key === "Enter" && canJoin) onJoinRotation();
                 }}
                 className="login-input"
-                style={inputStyle({ mono: true, centered: true })}
+                style={monoInputStyle({ centered: true })}
               />
               {pinSetupPending && (
                 <div style={{ fontSize: 12, color: T.muted, marginTop: 6, lineHeight: 1.5 }}>
@@ -448,7 +403,7 @@ export default function LoginScreen({
                   type="password"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  placeholder=""
+                  placeholder="····"
                   maxLength={STUDENT_AUTH_PIN_LENGTH}
                   name="rotation-pin-confirm"
                   autoComplete="one-time-code"
@@ -458,7 +413,7 @@ export default function LoginScreen({
                     if (e.key === "Enter" && canJoin) onJoinRotation();
                   }}
                   className="login-input"
-                  style={inputStyle({ mono: true, centered: true, hasError: Boolean(studentPinConfirm) && studentPinConfirm !== studentPin })}
+                  style={monoInputStyle({ centered: true, hasError: Boolean(studentPinConfirm) && studentPinConfirm !== studentPin })}
                 />
                 {studentPinConfirm && studentPinConfirm !== studentPin && (
                   <div style={{ fontSize: 12, color: T.danger, marginTop: 6, lineHeight: 1.5 }}>
@@ -477,7 +432,7 @@ export default function LoginScreen({
               <div
                 aria-hidden="true"
                 style={{
-                  ...inputStyle({ mono: true, centered: true, disabled: true }),
+                  ...monoInputStyle({ centered: true, disabled: true }),
                   minHeight: 36,
                   display: "flex",
                   alignItems: "center",
@@ -504,7 +459,7 @@ export default function LoginScreen({
                   if (e.key === "Enter" && canJoin) onJoinRotation();
                 }}
                 className="login-input"
-                style={inputStyle({ mono: true, centered: true, hasError: Boolean(joinError) })}
+                style={monoInputStyle({ centered: true, hasError: Boolean(joinError) })}
               />
             )}
             <div style={{ fontSize: 12, color: T.muted, marginTop: 6, lineHeight: 1.5 }}>
@@ -556,41 +511,43 @@ export default function LoginScreen({
           {!joining && <ArrowRight size={16} strokeWidth={2.1} aria-hidden="true" />}
         </button>
 
-        {!trustedSessionReady && !pinSetupPending && (
-          <div style={{ marginTop: 14, textAlign: "center" }}>
-            {isFirstTime ? (
-              <button type="button" onClick={() => onLoginModeChange("returning")} style={inlineLinkStyle}>
-                Already have a PIN? Sign in.
+        {!trustedSessionReady && !pinSetupPending && (() => {
+          const resetEnabled = needsEmailCompletion
+            ? Boolean(studentEmail.trim()) && !authSubmitting
+            : canSendResetLink;
+          const resetLabel = authSubmitting
+            ? "Working..."
+            : needsEmailCompletion && isResetFlow
+              ? "Complete verification"
+              : linkSent && isResetFlow
+                ? "Resend reset link"
+                : "Reset PIN";
+          return (
+            <div style={{
+              marginTop: 18,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+            }}>
+              <button
+                type="button"
+                onClick={() => onLoginModeChange(isFirstTime ? "returning" : "first_time")}
+                style={siblingAnchorStyle(true)}
+              >
+                {isFirstTime ? "Already have a PIN?" : "First time?"}
               </button>
-            ) : (
-              <button type="button" onClick={() => onLoginModeChange("first_time")} style={inlineLinkStyle}>
-                First time here? Set up.
+              <button
+                type="button"
+                onClick={needsEmailCompletion ? onCompleteEmailLinkSignIn : () => onSendVerificationLink("reset")}
+                disabled={!resetEnabled}
+                style={siblingAnchorStyle(resetEnabled)}
+              >
+                {resetLabel}
               </button>
-            )}
-          </div>
-        )}
-
-        {!isFirstTime && !trustedSessionReady && !pinSetupPending && (
-          <div style={{ marginTop: 10, textAlign: "center" }}>
-            <button
-              type="button"
-              onClick={needsEmailCompletion ? onCompleteEmailLinkSignIn : () => onSendVerificationLink("reset")}
-              disabled={needsEmailCompletion ? !studentEmail.trim() || authSubmitting : !canSendResetLink}
-              style={{
-                background: "none",
-                border: "none",
-                color: needsEmailCompletion ? T.warning : T.muted,
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: (needsEmailCompletion ? studentEmail.trim() && !authSubmitting : canSendResetLink) ? "pointer" : "default",
-                padding: 0,
-                opacity: (needsEmailCompletion ? studentEmail.trim() && !authSubmitting : canSendResetLink) ? 1 : 0.55,
-              }}
-            >
-              {authSubmitting ? "Working..." : returningResetLabel}
-            </button>
-          </div>
-        )}
+            </div>
+          );
+        })()}
 
         <div style={{
           marginTop: 24,
