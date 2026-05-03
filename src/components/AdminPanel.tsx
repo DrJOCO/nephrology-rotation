@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Moon, Sun } from "lucide-react";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import store from "../utils/store";
@@ -25,6 +26,7 @@ import { AnalyticsTab } from "./admin/tabs/AnalyticsTab";
 import { RotationSummaryReport } from "./admin/views/RotationSummaryReport";
 import { PrintableReport } from "./admin/views/PrintableReport";
 import { StudentDetailView } from "./admin/views/StudentDetailView";
+import { Icon } from "./student/Icon";
 import { getAdminPinValidationError } from "./admin/pinValidation";
 import { adminScopedKey, getStoredAdminRotationCode, setStoredAdminRotationCode } from "./admin/storage";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
@@ -70,6 +72,20 @@ function serializePublishSnapshot(snapshot: PublishableSharedState): string {
   return JSON.stringify(snapshot);
 }
 
+function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const sec = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (sec < 45) return "just now";
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min} min ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr} hr ago`;
+  const day = Math.round(hr / 24);
+  if (day < 7) return `${day} day${day === 1 ? "" : "s"} ago`;
+  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
 function PublishStatusBar({
   rotationCode,
   dirty,
@@ -84,41 +100,68 @@ function PublishStatusBar({
   onPublish: () => void;
 }) {
   const canPublish = Boolean(rotationCode) && dirty && !publishing;
-  const lastPublishedLabel = lastPublishedAt
-    ? new Date(lastPublishedAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
-    : null;
+  const hasRotation = Boolean(rotationCode);
+  const lastShipped = lastPublishedAt ? formatRelativeTime(lastPublishedAt) : null;
+
+  let dotColor: string;
+  let statusText: string;
+  let centerText: string;
+  let ctaLabel: string;
+
+  if (!hasRotation) {
+    dotColor = T.muted;
+    statusText = "NO ROTATION";
+    centerText = "Connect a rotation to publish to students";
+    ctaLabel = "No Rotation";
+  } else if (publishing) {
+    dotColor = T.warning;
+    statusText = "PUBLISHING";
+    centerText = "Sending changes to students…";
+    ctaLabel = "Publishing…";
+  } else if (dirty) {
+    dotColor = T.brand;
+    statusText = "UNPUBLISHED EDITS";
+    centerText = lastShipped
+      ? `Edits since last publish · last shipped ${lastShipped}`
+      : "Edits since last publish";
+    ctaLabel = "Publish to Students";
+  } else {
+    dotColor = T.success;
+    statusText = "PUBLISHED";
+    centerText = lastShipped
+      ? `Up to date · last shipped ${lastShipped}`
+      : "Up to date";
+    ctaLabel = "No Changes";
+  }
 
   return (
-    <div style={{ background: dirty ? T.warningBg : T.successBg, border: `1px solid ${dirty ? T.warning : T.success}55`, borderRadius: 14, padding: 14, marginBottom: 14, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-      <div style={{ minWidth: 240, flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span style={{ color: dirty ? T.warning : T.success, fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.3 }}>
-            {rotationCode ? (dirty ? "Unsaved changes" : "Published") : "Draft only"}
-          </span>
-          {rotationCode && <span style={{ color: T.muted, fontFamily: T.mono, fontSize: 12, letterSpacing: 0.8 }}>Code {rotationCode}</span>}
-        </div>
-        <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginTop: 3 }}>
-          {rotationCode
-            ? `Drafts are saved locally. Students ${dirty ? "will not see these changes until you publish." : "are seeing the latest published version."}${lastPublishedLabel ? ` Last published ${lastPublishedLabel}.` : ""}`
-            : "Connect or create a rotation before publishing settings or content to students."}
-        </div>
+    <div style={{ background: T.bg, border: `1px solid ${T.brand}`, borderRadius: 0, padding: "8px 10px", marginBottom: 14, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
+        <span aria-hidden style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
+        <span style={{ fontFamily: T.mono, fontSize: 12, fontWeight: 700, color: T.ink, letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+          {statusText}
+        </span>
+        <span style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, minWidth: 0 }}>
+          {centerText}
+        </span>
       </div>
       <button
         onClick={onPublish}
         disabled={!canPublish}
         style={{
-          padding: "10px 14px",
-          background: canPublish ? T.brand : T.bg,
+          padding: "8px 14px",
+          background: canPublish ? T.navy : T.bg,
           color: canPublish ? "white" : T.muted,
-          border: `1px solid ${canPublish ? T.brand : T.line}`,
-          borderRadius: 10,
+          border: `1px solid ${canPublish ? T.navy : T.line}`,
+          borderRadius: 2,
           fontSize: 13,
-          fontWeight: 800,
+          fontWeight: 600,
           cursor: canPublish ? "pointer" : "not-allowed",
           whiteSpace: "nowrap",
+          boxShadow: "none",
         }}
       >
-        {!rotationCode ? "No Live Rotation" : publishing ? "Publishing..." : dirty ? "Publish to Students" : "No Changes"}
+        {ctaLabel}
       </button>
     </div>
   );
@@ -297,11 +340,11 @@ function AdminThemeToggle() {
   };
   return (
     <button onClick={toggle} style={{
-      background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8,
+      background: "transparent", border: `1px solid ${T.line}`, borderRadius: 0,
       padding: "5px 8px", cursor: "pointer", fontSize: 14, lineHeight: 1,
-      color: "white", display: "flex", alignItems: "center",
+      color: T.ink, display: "flex", alignItems: "center",
     }} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
-      {theme === "dark" ? "☀️" : "🌙"}
+      <Icon as={theme === "dark" ? Sun : Moon} size={16} color={T.ink} />
     </button>
   );
 }
@@ -909,11 +952,11 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   }
 
   const tabs = [
-    { id: "dashboard", icon: "📊", label: "Dashboard" },
-    { id: "students", icon: "🎓", label: "Students" },
-    { id: "analytics", icon: "📈", label: "Analytics" },
-    { id: "rotation", icon: "📡", label: "Rotation" },
-    { id: "settings", icon: "⚙️", label: "Settings" },
+    { id: "dashboard", label: "Dashboard" },
+    { id: "students", label: "Students" },
+    { id: "analytics", label: "Analytics" },
+    { id: "rotation", label: "Rotation" },
+    { id: "settings", label: "Settings" },
   ];
   const showPublishBar = tab === "content" || tab === "settings";
 
