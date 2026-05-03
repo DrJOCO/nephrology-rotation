@@ -1,4 +1,4 @@
-import { CSSProperties } from "react";
+import { CSSProperties, ReactNode } from "react";
 import { T } from "../../data/constants";
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -21,6 +21,52 @@ export const inputStyle: CSSProperties = {
   background: T.surface2,
   color: T.text,
 };
+
+export function Section({ eyebrow, title, description, action, children, style }: { eyebrow?: ReactNode; title?: ReactNode; description?: ReactNode; action?: ReactNode; children?: ReactNode; style?: CSSProperties }) {
+  return (
+    <div style={{ marginBottom: 14, ...style }}>
+      {(eyebrow || title || action) && (
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", marginBottom: title || description ? 10 : 0 }}>
+          <div style={{ minWidth: 0 }}>
+            {eyebrow && (
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: title ? 4 : 0 }}>
+                {eyebrow}
+              </div>
+            )}
+            {title && (
+              <h2 style={{ color: T.navy, fontSize: 22, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.15 }}>{title}</h2>
+            )}
+            {description && (
+              <p style={{ color: T.sub, fontSize: 13, margin: "6px 0 0", lineHeight: 1.5, maxWidth: 760 }}>{description}</p>
+            )}
+          </div>
+          {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+export function HeadlineMetric({ value, unit, caption, tone = "info" }: { value: ReactNode; unit?: string; caption?: ReactNode; tone?: "success" | "warning" | "danger" | "info" }) {
+  const toneColor = {
+    success: T.success,
+    warning: T.warning,
+    danger: T.danger,
+    info: T.info,
+  }[tone];
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4, color: toneColor, fontFamily: T.serif, fontWeight: 700, lineHeight: 1 }}>
+        <span style={{ fontSize: 32 }}>{value ?? "—"}</span>
+        {unit && <span style={{ fontSize: 16, fontWeight: 600 }}>{unit}</span>}
+      </div>
+      {caption && (
+        <div style={{ color: T.muted, fontSize: 12, fontWeight: 600, marginTop: 4, textTransform: "uppercase", letterSpacing: 0.4 }}>{caption}</div>
+      )}
+    </div>
+  );
+}
 
 export function EduDisclaimer() {
   return (

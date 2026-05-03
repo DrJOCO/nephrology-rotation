@@ -13,7 +13,7 @@ import {
   type AkiRbcStatus,
   type AkiWbcStatus,
 } from "../../utils/akiTool";
-import { backBtnStyle, EduDisclaimer, inputLabel, inputStyle } from "./shared";
+import { EduDisclaimer, HeadlineMetric, inputLabel, inputStyle, Section } from "./shared";
 
 type ArrayInputKey = "selectedHistory" | "selectedContext" | "selectedNephrotoxins" | "selectedSediment";
 
@@ -164,7 +164,7 @@ const sectionTitleStyle: CSSProperties = {
   alignItems: "center",
   gap: 8,
   fontSize: 14,
-  fontWeight: 800,
+  fontWeight: 600,
   color: T.navy,
   marginBottom: 10,
 };
@@ -181,11 +181,11 @@ function ToggleChip({ selected, onClick, children }: { selected: boolean; onClic
         minHeight: 34,
         padding: "7px 10px",
         borderRadius: 8,
-        border: `1.5px solid ${selected ? T.brand : T.line}`,
-        background: selected ? T.brand : T.surface2,
-        color: selected ? T.brandInk : T.text,
+        border: `1.5px solid ${selected ? T.ink : T.line}`,
+        background: selected ? T.ink : T.surface2,
+        color: selected ? T.bg : T.text,
         fontSize: 13,
-        fontWeight: selected ? 800 : 600,
+        fontWeight: 600,
         cursor: "pointer",
         textAlign: "left",
       }}
@@ -213,7 +213,7 @@ function OptionGroupGrid({ groups, selectedIds, onToggle }: { groups: Array<{ la
     <div style={{ display: "grid", gap: 10 }}>
       {groups.map((group) => (
         <div key={group.label}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>{group.label}</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>{group.label}</div>
           <OptionGrid options={group.options} selectedIds={selectedIds} onToggle={onToggle} />
         </div>
       ))}
@@ -265,14 +265,14 @@ function NumberInput({
 
 function ResultBadge({ tone, children }: { tone: "brand" | "success" | "warning" | "danger" | "info"; children: ReactNode }) {
   const tones = {
-    brand: { bg: T.brandBg, text: T.brand, border: T.brand },
-    success: { bg: T.successBg, text: T.success, border: T.success },
-    warning: { bg: T.warningBg, text: T.warning, border: T.warning },
-    danger: { bg: T.dangerBg, text: T.danger, border: T.danger },
-    info: { bg: T.infoBg, text: T.info, border: T.info },
+    brand: { bg: T.brandBg, text: T.brand },
+    success: { bg: T.successBg, text: T.success },
+    warning: { bg: T.warningBg, text: T.warning },
+    danger: { bg: T.dangerBg, text: T.danger },
+    info: { bg: T.infoBg, text: T.info },
   }[tone];
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", border: `1px solid ${tones.border}`, background: tones.bg, color: tones.text, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 800 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", background: tones.bg, color: tones.text, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 600 }}>
       {children}
     </span>
   );
@@ -295,11 +295,20 @@ function IndexPanel({
 }) {
   return (
     <div style={{ background: T.surface2, borderRadius: 8, border: `1px solid ${T.line}`, padding: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
-        <ResultBadge tone={getTone(result.value)}>{result.label}</ResultBadge>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, auto) minmax(0, 1fr)", gap: 12, alignItems: "start" }}>
+        <HeadlineMetric
+          value={result.value !== null ? result.value.toFixed(1) : null}
+          unit={result.value !== null ? "%" : undefined}
+          caption={result.label}
+          tone={getTone(result.value)}
+        />
+        <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, fontFamily: T.serif, fontStyle: "italic" }}>
+          {result.interpretation}
+        </div>
       </div>
-      <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{result.interpretation}</div>
-      <div style={{ color: T.muted, fontSize: 12, marginTop: 6 }}>{formula}</div>
+      <div style={{ borderTop: `1px dotted ${T.line}`, marginTop: 10, paddingTop: 8, color: T.muted, fontSize: 11, fontFamily: T.mono }}>
+        {formula}
+      </div>
     </div>
   );
 }
@@ -366,41 +375,49 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
   const creatinineTone = assessment.stage.overallStage === 3 ? "danger" : assessment.stage.overallStage ? "warning" : "info";
   const showDiureticCaveat = inputs.selectedNephrotoxins.includes("diuretics") && assessment.fena.value !== null;
 
-  return (
-    <div style={{ padding: 16, paddingBottom: 140 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+  const breadcrumb = (
+    <button
+      type="button"
+      onClick={onBack}
+      style={{ background: "none", border: "none", padding: 0, color: T.muted, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, cursor: "pointer" }}
+    >
+      {"\u2190"} Tools / AKI Differential
+    </button>
+  );
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", marginBottom: 14 }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>Clinical tool</div>
-          <h2 style={{ color: T.navy, fontSize: 22, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.15 }}>AKI Differential Tool</h2>
-          <p style={{ color: T.sub, fontSize: 13, margin: "6px 0 0", lineHeight: 1.5, maxWidth: 760 }}>
-            Build a quick AKI problem representation from creatinine trend, UOP, exposures, urine findings, imaging, and urine indices.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setInputs(DEFAULT_AKI_INPUTS)}
-          title="Reset"
-          aria-label="Reset AKI tool"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 38, padding: "8px 11px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.sub, fontSize: 13, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}
-        >
-          <RotateCcw size={15} strokeWidth={2} aria-hidden="true" />
-          Reset
-        </button>
-      </div>
+  const resetAction = (
+    <button
+      type="button"
+      onClick={() => setInputs(DEFAULT_AKI_INPUTS)}
+      title="Reset"
+      aria-label="Reset AKI tool"
+      style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 38, padding: "8px 11px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.sub, fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+    >
+      <RotateCcw size={15} strokeWidth={2} aria-hidden="true" />
+      Reset
+    </button>
+  );
+
+  return (
+    <div style={{ padding: 16 }}>
+      <Section
+        eyebrow={breadcrumb}
+        title="AKI Differential Tool"
+        description="Build a quick AKI problem representation from creatinine trend, UOP, exposures, urine findings, imaging, and urine indices."
+        action={resetAction}
+      />
 
       {isMobile && (
         <section style={{ ...panelStyle, borderLeft: `4px solid ${T.info}` }}>
-          <div style={{ color: T.navy, fontWeight: 800, fontSize: 13, marginBottom: 5 }}>Live differential</div>
+          <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>Live differential</div>
           <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
-          <a href="#aki-results" style={{ display: "inline-flex", marginTop: 8, color: T.brand, fontSize: 13, fontWeight: 800, textDecoration: "none" }}>
+          <a href="#aki-results" style={{ display: "inline-flex", marginTop: 8, color: T.brand, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
             View full differential
           </a>
         </section>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 1.25fr) minmax(300px, 0.75fr)", gap: 14, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 1fr) minmax(380px, 0.95fr)", gap: 14, alignItems: "start" }}>
         <div>
           <section style={panelStyle}>
             <div style={sectionTitleStyle}><Activity size={17} strokeWidth={2} aria-hidden="true" /> Creatinine, BP, UOP</div>
@@ -487,14 +504,14 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                   <button
                     type="button"
                     onClick={() => onOpenCalculator("fena")}
-                    style={{ minHeight: 32, padding: "6px 9px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.brand, fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+                    style={{ minHeight: 32, padding: "6px 9px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.brand, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
                   >
                     Standalone FENa
                   </button>
                   <button
                     type="button"
                     onClick={() => onOpenCalculator("feurea")}
-                    style={{ minHeight: 32, padding: "6px 9px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.brand, fontSize: 12, fontWeight: 800, cursor: "pointer" }}
+                    style={{ minHeight: 32, padding: "6px 9px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.brand, fontSize: 12, fontWeight: 600, cursor: "pointer" }}
                   >
                     Standalone FEUrea
                   </button>
@@ -541,7 +558,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                 onClick={() => void copyAssessment()}
                 title="Copy assessment"
                 aria-label="Copy AKI assessment"
-                style={{ display: "inline-flex", alignItems: "center", gap: 5, minHeight: 34, padding: "7px 9px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.brand, fontSize: 13, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, minHeight: 34, padding: "7px 9px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.brand, fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}
               >
                 <Clipboard size={14} strokeWidth={2} aria-hidden="true" />
                 {copied ? "Copied" : "Copy"}
@@ -550,7 +567,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
 
             {assessment.alerts.length > 0 && (
               <div style={{ background: T.dangerBg, border: `1px solid ${T.danger}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
-                <div style={{ color: T.danger, fontWeight: 800, fontSize: 13, marginBottom: 5 }}>High-risk signals</div>
+                <div style={{ color: T.danger, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>High-risk signals</div>
                 {assessment.alerts.map((alert) => (
                   <div key={alert} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 4 }}>{alert}</div>
                 ))}
@@ -567,7 +584,9 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                   <div key={item.id} style={{ border: `1px solid ${T.line}`, borderRadius: 8, padding: 11, background: T.surface }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ color: T.navy, fontWeight: 800, fontSize: 13, lineHeight: 1.35 }}>{index + 1}. {item.title}</div>
+                        <div style={{ color: T.navy, fontSize: 13, lineHeight: 1.35 }}>
+                          <span style={{ fontWeight: 700 }}>{index + 1}.</span> <span style={{ fontWeight: 600 }}>{item.title}</span>
+                        </div>
                         <div style={{ color: T.muted, fontSize: 12, marginTop: 2 }}>{item.bucket}</div>
                       </div>
                       <DifferentialSignalBadge signal={item.signal} />
@@ -589,7 +608,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
           </section>
 
           <section style={panelStyle}>
-            <div style={{ color: T.navy, fontWeight: 800, fontSize: 13, marginBottom: 7 }}>Next checks</div>
+            <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 7 }}>Next checks</div>
             {assessment.nextSteps.map((step) => (
               <div key={step} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
             ))}
