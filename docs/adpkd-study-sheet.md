@@ -1,6 +1,6 @@
 # ADPKD Study Sheet
 
-Autosomal Dominant Polycystic Kidney Disease. Synthesized from UpToDate (epidemiology/clinical/diagnosis, treatment, extrarenal manifestations topics).
+Autosomal Dominant Polycystic Kidney Disease. Synthesized from KDIGO 2025 ADPKD guidance and point-of-care clinical references.
 
 ---
 
@@ -91,11 +91,11 @@ Diagnose if **≥10 cysts (≥5 mm) in each kidney**, especially with enlarged k
 
 ### General measures — all patients
 - **BP control** (cornerstone):
-  - Age 18–50 with eGFR >60: target **≤110/75** with ACEi or ARB (home or ambulatory BP).
-  - Others: standard CKD BP targets with ACEi/ARB first.
+  - KDIGO 2025 reserves the intensive home target **≤110/75** for selected younger adults (roughly age 18-49, CKD G1-G2, BP >130/85) who tolerate it.
+  - If BP is already 110/75 to 130/85, or the patient is older / lower eGFR / orthostatic, individualize toward standard CKD BP targets with ACEi/ARB first.
 - **Sodium** restriction: <2 g/day.
-- **High fluid intake**: >3 L/day if eGFR ≥30 and no hyponatremia risk — suppresses vasopressin/cAMP.
-- **Avoid** SGLT2 inhibitors in ADPKD *unless* needed for heart failure (may raise vasopressin; ADPKD patients excluded from pivotal trials).
+- **Fluid intake**: individualize to suppress vasopressin when safe; KDIGO frames this as liberal water intake, often at least 2-3 L/day when eGFR ≥30 and there is no hyponatremia risk. Avoid fixed blanket targets in older patients, CKD G3b-G4, or anyone prone to hyponatremia.
+- SGLT2 inhibitors and GLP-1 RAs are **not ADPKD-specific therapy** yet because pivotal CKD trials largely excluded ADPKD; use them when a standard co-indication exists, such as diabetes or heart failure.
 - Statins per usual CKD indications; smoking cessation; avoid nephrotoxins and prolonged NSAIDs.
 
 ### Tolvaptan (V2 receptor antagonist) — the only disease-modifying drug
@@ -127,7 +127,7 @@ Diagnose if **≥10 cysts (≥5 mm) in each kidney**, especially with enlarged k
   - Upcoming major elective surgery
   - High-risk occupations (pilots, etc.)
   - Chronic anticoagulation
-- **Rescreening**: every 5 years if family history of intracranial bleeding/CVA.
+- **Rescreening**: individualize after a negative screen; KDIGO 2025 suggests roughly every 5-10 years, sooner with strong family history or higher-risk features.
 - Small unruptured aneurysms → surveillance imaging per general neurovascular guidelines.
 
 ### Hepatic cysts
@@ -137,9 +137,9 @@ Diagnose if **≥10 cysts (≥5 mm) in each kidney**, especially with enlarged k
 - Cyst infection: fever + RUQ pain; lipophilic antibiotics.
 
 ### Cardiac
-- **Valvular**: mitral valve prolapse (~25%), aortic regurgitation.
+- **Valvular**: mitral valve prolapse/regurgitation and aortic regurgitation have been reported, but newer cohorts suggest MVP prevalence is far lower than older 20-30% estimates.
 - Coronary artery aneurysms (rare).
-- Asymptomatic pericardial effusions.
+- Asymptomatic pericardial effusions can occur.
 - Echo only if murmur or symptoms — not routine.
 
 ### Other
@@ -156,11 +156,11 @@ Diagnose if **≥10 cysts (≥5 mm) in each kidney**, especially with enlarged k
 - Normotensive 25-year-old with a PKD parent and new HTN → think ADPKD even before imaging.
 - Don't overinterpret a few simple cysts in a 55-year-old without family history; age-related cysts are common.
 - Heavy proteinuria is NOT typical for ADPKD — go looking for something else.
-- Hyponatremia on tolvaptan usually means under-drinking; titrate up only with adequate free-water intake.
+- Hyponatremia on tolvaptan is a red flag to reassess intake, volume status, and other causes; do not simply titrate upward without correcting the physiology and monitoring sodium.
 - New sudden severe headache in an ADPKD patient = SAH until proven otherwise.
 - Hepatic cyst symptoms track with estrogen exposure; revisit OCPs/HRT.
 - Living donor evaluation in an at-risk family member: MRI + genetic testing if imaging is equivocal.
 
 ---
 
-*Source: UpToDate (summary and recommendations from the three core ADPKD topics). Confirm medication dosing and current guidelines at point of care.*
+*Source: KDIGO 2025 ADPKD guideline plus point-of-care references. Confirm medication dosing and current guidelines at point of care.*

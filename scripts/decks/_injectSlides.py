@@ -120,8 +120,8 @@ DECK_DATA = {
         'case': {
             'vignette': "A 58-year-old Black man with T2DM × 15 yr, HTN, obesity. Labs: eGFR 38 (CKD-EPI 2021), UACR 720 mg/g, HbA1c 7.8%, K+ 4.8, HCO3 23, Hb 10.9 (ferritin 90, TSAT 18%), home BP avg 148/88. On lisinopril 40, amlodipine 10, metformin 1000 BID, atorvastatin.",
             'question': "Which pillars are missing, and what's your next 3 interventions?",
-            'answer': "Missing: SGLT2i, finerenone, GLP-1 RA. Also anemia workup needed. (1) Add dapagliflozin 10 mg, (2) add finerenone 10 mg (K+ < 5.0 ✓), (3) IV iron then consider ESA if Hb stays < 10.",
-            'teaching': "CGA classification: G3b-A3 (very high risk). DKD pillars should be on-board when eligible. Stop metformin at eGFR < 30; he's still OK at 38. BP target is SBP < 120 when measured by standardized AOBP and tolerated. Also: retinal exam annually, vaccinate (flu, COVID, pneumococcal, HBV), modality education at eGFR < 30, nephrology follow-up q3-4 months for very-high-risk.",
+            'answer': "Missing: SGLT2i, finerenone, GLP-1 RA. Also anemia workup needed. (1) Add dapagliflozin 10 mg, (2) add finerenone 10 mg if K+ remains acceptable, (3) IV iron then consider ESA if Hb stays < 10.",
+            'teaching': "CGA classification: G3b-A3 (very high risk). DKD pillars should be on-board when eligible. Stop metformin at eGFR < 30; he's still OK at 38. BP target is standardized office SBP < 120 when tolerated; routine/home readings are often managed closer to <130/80. Also: retinal exam annually, vaccinate (flu, COVID, pneumococcal, HBV), modality education at eGFR < 30, nephrology follow-up q3-4 months for very-high-risk.",
         },
     },
     'dialysis.cjs': {
@@ -149,7 +149,7 @@ DECK_DATA = {
             'vignette': "A 62-year-old man admitted to MICU with septic shock from pneumonia, on norepinephrine 0.4 µg/kg/min and vasopressin. Oliguric × 24 h, Cr rose from 1.2 to 4.6 over 72 h. K+ 6.8 (persistent despite med therapy), HCO3 14, pH 7.18, volume-overloaded with worsening oxygenation. No urgent toxin.",
             'question': "Does he meet criteria for KRT, and what modality?",
             'answer': "Yes — multiple AEIOU indications (Acidosis, Electrolytes, Overload). Start CRRT given hemodynamic instability.",
-            'teaching': "AEIOU triggers: A (pH < 7.15), E (K+ > 6.5 refractory), O (pulmonary edema limiting oxygenation). CRRT preferred over IHD because he's on high-dose pressors; CRRT's gentler solute/fluid removal avoids further hemodynamic collapse. Standard dose 20-25 mL/kg/h effluent (ATN trial — more is not better). Large-bore CVC (usually IJ) for access. Goal is to bridge to renal recovery; ~60% of AKI-KRT patients recover kidney function, so this does NOT mean lifelong dialysis.",
+            'teaching': "AEIOU triggers: A (pH < 7.15), E (life-threatening or refractory hyperkalemia, often K+ >= 6.5 or any dangerous ECG changes), O (pulmonary edema limiting oxygenation). CRRT preferred over IHD because he's on high-dose pressors; CRRT's gentler solute/fluid removal avoids further hemodynamic collapse. Standard dose 20-25 mL/kg/h effluent (ATN trial — more is not better). Large-bore CVC (usually IJ) for access. Goal is to bridge to renal recovery; ~60% of AKI-KRT patients recover kidney function, so this does NOT mean lifelong dialysis.",
         },
     },
     'gn.cjs': {
@@ -298,7 +298,7 @@ DECK_DATA = {
         'case': {
             'vignette': "A 70-year-old man with CKD (eGFR 28), DM, HTN is admitted with chest pain. Troponin positive; cardiology recommends urgent catheterization. Team calls nephrology to 'clear' him — worried about CI-AKI. BP 138/82, euvolemic by exam, UA bland.",
             'question': "What do you recommend regarding the cath? And what prophylaxis, if any?",
-            'answer': "Proceed with catheterization — the risk of NOT treating the ACS far outweighs CI-AKI risk. Pre-hydrate with isotonic IV (1 mL/kg/h × 6-12 h pre and post). Use low-osmolar contrast, minimize volume. Skip NAC and bicarbonate.",
+            'answer': "Proceed with catheterization — the risk of NOT treating the ACS far outweighs CI-AKI risk. Use indicated isotonic saline prophylaxis (rate/duration individualized; cath-lab protocols often use ~1 mL/kg/h peri-procedure if volume-tolerant). Use low-osmolar contrast, minimize volume. Skip NAC and bicarbonate.",
             'teaching': "Modern CI-AKI rates are much lower than taught historically, especially for IV contrast. Here the indication is intra-arterial (higher-risk route) in eGFR < 30 (highest-risk kidney function) — so prophylaxis is warranted. POSEIDON supports LVEDP-guided hydration in the cath lab if available. PRESERVE definitively debunked NAC and bicarbonate — neither helps vs isotonic NS. If he develops a Cr rise post-procedure: 24-48 h onset, peak 3-5 d, recovery ~7 d supports CI-AKI vs alternatives. If Cr rises 1-4 weeks after cath, think atheroemboli (livedo, eosinophilia, cholesterol clefts on biopsy).",
         },
     },
@@ -358,7 +358,7 @@ DECK_DATA = {
             'vignette': "A 45-year-old woman with T2DM × 12 yr, proliferative retinopathy (post-laser), A1c 8.4%, BP 142/88 home avg. Meds: metformin 1 g BID, glipizide 10 mg, lisinopril 20 mg, HCTZ 12.5 mg. Labs: eGFR 42, UACR 580, K+ 4.5, Hb 11.2, LDL 118 (on no statin).",
             'question': "Audit her DKD care — what are the top 4 things missing?",
             'answer': "(1) Lisinopril at SUB-maximal dose (should be 40), (2) No SGLT2i (start dapagliflozin 10 mg — eGFR qualifies), (3) No finerenone (eligible: K+ 4.5, eGFR 25-60 → start 10 mg), (4) No statin (start moderate-to-high intensity).",
-            'teaching': "Classic DKD presentation with retinopathy — diagnosis secure. All 4 pillars should be ON when eligible: ACEi/ARB max dose, SGLT2i, finerenone, GLP-1 RA. The retinopathy supports microvascular disease, but keep an eye out for atypical features. Titrate lisinopril to 40 (accept Cr rise to 30%). Start SGLT2i at eGFR ≥ 20. Finerenone 10 mg with K+ recheck in 1 month. GLP-1 RA (semaglutide 1 mg weekly per FLOW) adds kidney and CV benefit, also helps A1c and weight. Statin: diabetes age 40-75 is already an indication; CKD pushes intensity higher. BP target SBP < 120 when measured by standardized AOBP and tolerated. A1c 7-8% range given CKD.",
+            'teaching': "Classic DKD presentation with retinopathy — diagnosis secure. All 4 pillars should be ON when eligible: ACEi/ARB max dose, SGLT2i, finerenone, GLP-1 RA. The retinopathy supports microvascular disease, but keep an eye out for atypical features. Titrate lisinopril to 40 (accept Cr rise to 30%). Start SGLT2i at eGFR ≥ 20. Finerenone 10 mg with K+ recheck in 1 month if K+ remains acceptable. GLP-1 RA (semaglutide 1 mg weekly per FLOW) adds kidney and CV benefit, also helps A1c and weight. Statin: diabetes age 40-75 is already an indication; CKD pushes intensity higher. BP target is standardized office SBP < 120 when tolerated; routine/home readings are often managed closer to <130/80. A1c 7-8% range given CKD.",
         },
     },
     'pd-peritonitis.cjs': {

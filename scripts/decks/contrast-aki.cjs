@@ -166,7 +166,7 @@ async function build() {
       header: "WORKS", headerColor: PALETTE.good, body: "",
     });
     s.addText(bulletBlock([
-      "Isotonic IV hydration — NS or LR, 1–1.5 mL/kg/h for 6–12 h pre- & post-contrast",
+      "When prophylaxis is indicated: isotonic saline hydration, individualized rate/duration",
       "Low-osmolar or iso-osmolar contrast (standard now)",
       "Minimize contrast volume",
       "Hold nephrotoxins around the procedure (NSAIDs, diuretics if volume allows)",
@@ -359,7 +359,7 @@ async function build() {
       "Check Cr 48 h; seek alternatives",
       "Post-angio: think atheroemboli",
       "Group II gado safe at low eGFR",
-      "Euvolemic + eGFR > 45: often no prophylaxis",
+      "Stable eGFR ≥ 30 with IV contrast: usually no prophylaxis; individualize 30–44",
       "Always UA + UACR",
     ], { fontSize: 12, paraSpaceAfter: 7 }), {
       x: 5.4, y: 1.9, w: 4.1, h: 3.0, margin: 0, valign: "top",
@@ -378,7 +378,7 @@ async function build() {
   // Clinical case — answer
   addCaseAnswerSlide(pres, {
     topic: TOPIC, slideNumber: 11, totalSlides: TOTAL,
-    answer: "Proceed with catheterization — the risk of NOT treating the ACS far outweighs CI-AKI risk. Pre-hydrate with isotonic IV (1 mL/kg/h × 6-12 h pre and post). Use low-osmolar contrast, minimize volume. Skip NAC and bicarbonate.",
+    answer: "Proceed with catheterization — the risk of NOT treating the ACS far outweighs CI-AKI risk. Use indicated isotonic saline prophylaxis (rate/duration individualized; cath-lab protocols often use ~1 mL/kg/h peri-procedure if volume-tolerant). Use low-osmolar contrast, minimize volume. Skip NAC and bicarbonate.",
     teaching: "Modern CI-AKI rates are much lower than taught historically, especially for IV contrast. Here the indication is intra-arterial (higher-risk route) in eGFR < 30 (highest-risk kidney function) — so prophylaxis is warranted. POSEIDON supports LVEDP-guided hydration in the cath lab if available. PRESERVE definitively debunked NAC and bicarbonate — neither helps vs isotonic NS. If he develops a Cr rise post-procedure: 24-48 h onset, peak 3-5 d, recovery ~7 d supports CI-AKI vs alternatives. If Cr rises 1-4 weeks after cath, think atheroemboli (livedo, eosinophilia, cholesterol clefts on biopsy).",
   });
 

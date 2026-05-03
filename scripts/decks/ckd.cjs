@@ -235,7 +235,7 @@ async function build() {
     const s = newContentSlide(pres, {
       topic: TOPIC, slideNumber: 6, totalSlides: TOTAL,
       title: "Blood pressure in CKD",
-      subtitle: "KDIGO 2021: target SBP < 120 mmHg (automated office blood pressure (AOBP)) when tolerated.",
+      subtitle: "KDIGO 2021: standardized office SBP < 120 mmHg when tolerated; routine/home targets are individualized.",
       source: "KDIGO 2021 BP in CKD Guideline. SPRINT trial (NEJM 2015).",
     });
 
@@ -407,8 +407,8 @@ async function build() {
   // Clinical case — answer
   addCaseAnswerSlide(pres, {
     topic: TOPIC, slideNumber: 11, totalSlides: TOTAL,
-    answer: "Missing: SGLT2i, finerenone, GLP-1 RA. Also anemia workup needed. (1) Add dapagliflozin 10 mg, (2) add finerenone 10 mg (K+ < 5.0 ✓), (3) IV iron then consider ESA if Hb stays < 10.",
-    teaching: "CGA classification: G3b-A3 (very high risk). DKD pillars should be on-board when eligible. Stop metformin at eGFR < 30; he's still OK at 38. BP target is SBP < 120 when measured by standardized AOBP and tolerated. Also: retinal exam annually, vaccinate (flu, COVID, pneumococcal, HBV), modality education at eGFR < 30, nephrology follow-up q3-4 months for very-high-risk.",
+    answer: "Missing: SGLT2i, finerenone, GLP-1 RA. Also anemia workup needed. (1) Add dapagliflozin 10 mg, (2) add finerenone 10 mg if K+ remains acceptable, (3) IV iron then consider ESA if Hb stays < 10.",
+    teaching: "CGA classification: G3b-A3 (very high risk). DKD pillars should be on-board when eligible. Stop metformin at eGFR < 30; he's still OK at 38. BP target is standardized office SBP < 120 when tolerated; routine/home readings are often managed closer to <130/80. Also: retinal exam annually, vaccinate (flu, COVID, pneumococcal, HBV), modality education at eGFR < 30, nephrology follow-up q3-4 months for very-high-risk.",
   });
 
   // 11. References

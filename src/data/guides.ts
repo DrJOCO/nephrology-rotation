@@ -81,9 +81,9 @@ export const QUICK_REFS: QuickRef[] = [
       }
       if (primary.includes("Metabolic alkalosis")) {
         const exp = 0.7 * (hco3 - 24) + 40;
-        steps.push("Step 3: Expected pCO₂ = 0.7×Δ(HCO₃⁻)+40 = " + exp.toFixed(1) + " ± 2");
-        if (Math.abs(pco2 - exp) <= 2) steps.push("  → Appropriate compensation");
-        else if (pco2 > exp + 2) steps.push("  → Concurrent RESPIRATORY ACIDOSIS");
+        steps.push("Step 3: Expected pCO₂ = 0.7×Δ(HCO₃⁻)+40 = " + exp.toFixed(1) + " ± 5");
+        if (Math.abs(pco2 - exp) <= 5) steps.push("  → Appropriate compensation");
+        else if (pco2 > exp + 5) steps.push("  → Concurrent RESPIRATORY ACIDOSIS");
         else steps.push("  → Concurrent RESPIRATORY ALKALOSIS");
       }
       // Respiratory compensation
@@ -112,6 +112,7 @@ export const QUICK_REFS: QuickRef[] = [
       if (na && cl) {
         const ag = na - cl - hco3;
         steps.push("Step 4: Anion Gap = " + na + " - " + cl + " - " + hco3 + " = " + ag.toFixed(0));
+        steps.push("  → If albumin is low, correct AG upward by ~2.5 for each 1 g/dL albumin below 4.");
         if (ag > 12) {
           steps.push("  → ELEVATED AG (>12) → AG metabolic acidosis (MUDPILES)");
           const delta = ag - 12;
@@ -175,6 +176,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "Corrected Na⁺ for Hyperglycemia",
           items: [
             "Corrected Na⁺ = Measured Na⁺ + 1.6 × [(Glucose - 100) / 100]",
+            "For marked hyperglycemia (especially glucose >400), some clinicians use 2.4 instead of 1.6 (Hillier correction).",
             "Always correct before interpreting hyponatremia in DKA / HHS",
           ]},
         { heading: "If Overcorrecting",
@@ -186,7 +188,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "Key Treatment by Volume Status",
           items: [
             "Hypovolemic: Normal saline (volume restores → ADH shuts off)",
-            "Euvolemic (SIADH): Fluid restriction ± salt tabs ± tolvaptan",
+            "Euvolemic (SIADH): Fluid restriction ± salt tabs/urea; tolvaptan is for selected refractory cases with close inpatient serum Na monitoring and is not for severe symptomatic hyponatremia",
             "Hypervolemic (CHF/cirrhosis): Fluid + Na restriction, diuretics, treat underlying cause",
           ]},
       ],
@@ -228,7 +230,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "A — Acidosis",
           items: ["Severe metabolic acidosis (pH <7.1) refractory to bicarbonate therapy"] },
         { heading: "E — Electrolytes",
-          items: ["Refractory hyperkalemia (K⁺ >6.5 with ECG changes, not responding to medical Rx)", "Remember: calcium → insulin/glucose → albuterol ± bicarbonate (if acidotic) → binder/diuretic if appropriate. If K⁺ remains dangerous or the patient is oliguric/anuric → dialysis"] },
+          items: ["Life-threatening or refractory hyperkalemia (often K⁺ ≥6.5 or any dangerous ECG changes, not responding to medical Rx)", "Remember: calcium → insulin/glucose → albuterol ± bicarbonate (if acidotic) → binder/diuretic if appropriate. If K⁺ remains dangerous or the patient is oliguric/anuric → dialysis"] },
         { heading: "I — Ingestions",
           items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium (level >4, or >2.5 with symptoms)", "Salicylates (severe poisoning with altered mental status)"] },
         { heading: "O — Overload",
@@ -265,7 +267,7 @@ export const QUICK_REFS: QuickRef[] = [
           items: [
             "G1: ≥90 mL/min (normal or high)",
             "G2: 60-89 (mildly decreased)",
-            "G3a: 45-59 (mild-moderate ↓) — consider nephrology referral",
+            "G3a: 45-59 (mild-moderate ↓) — referral depends on albuminuria/risk, not GFR alone",
             "G3b: 30-44 (moderate-severe ↓)",
             "G4: 15-29 (severely ↓) — prep for RRT",
             "G5: <15 (kidney failure) — dialysis or transplant",
@@ -280,7 +282,8 @@ export const QUICK_REFS: QuickRef[] = [
           items: [
             "All stages: ACEi/ARB if proteinuric, SGLT2i if eGFR ≥20, BP control, lifestyle",
             "G3-G4: Monitor K⁺/bicarb/Ca/PO₄/PTH, adjust drug doses, avoid nephrotoxins",
-            "G4-G5: AV fistula planning (6 months ahead), transplant evaluation, PD catheter consideration",
+            "Refer based on risk: eGFR <30, ACR ≥300 mg/g, rapid sustained decline, resistant HTN, persistent hematuria, refractory electrolyte issues, hereditary disease, or high KFRE risk",
+            "G4-G5: individualized kidney failure life-plan — transplant evaluation, modality education, and vascular access/PD catheter planning based on trajectory and patient goals",
           ]},
       ],
     },
@@ -302,10 +305,10 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "When to Use What",
           items: [
             "Volume resuscitation: LR or PlasmaLyte preferred (SMART trial); severe hyperkalemia alone is not a reason to default to NS",
-            "Maintenance fluids: D5-½NS + 20 mEq KCl/L is classic maintenance",
+            "Maintenance fluids: choose tonicity and potassium patient-by-patient; avoid routine hypotonic fluid or KCl in hyponatremia, AKI/CKD, hyperkalemia, or postoperative high-ADH states",
             "Hypovolemic hyponatremia: NS (restores volume → suppresses ADH)",
             "Severe symptomatic hyponatremia: 3% saline 100 mL bolus over 10 min, repeat ×2 if needed",
-            "Hypernatremia / free water deficit: D5W or ½NS",
+            "Hypernatremia / free water deficit: enteral free water when possible; D5W or ½NS if IV is needed after stabilizing intravascular volume",
             "DKA: balanced crystalloids or NS are both reasonable initially → add dextrose-containing fluid as glucose falls",
           ]},
         { heading: "Pearls",
@@ -345,14 +348,14 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "Crystal Nephropathy",
           items: [
             "Acyclovir/Valacyclovir → Crystal precipitation in tubules at high IV doses with poor hydration. Prevent: hydrate aggressively, infuse slowly. Birefringent needle-shaped crystals on UA.",
-            "Methotrexate → Crystallizes in acidic urine. Prevent: aggressive hydration + urine alkalinization (target pH >7). Monitor levels and Cr closely.",
+            "High-dose methotrexate → Crystallizes in acidic urine. Prevent: aggressive hydration + urine alkalinization (target pH >7), leucovorin rescue, and close level/Cr monitoring; consider glucarpidase for severe delayed clearance with AKI.",
             "Sulfadiazine → Crystal deposition, especially in volume-depleted patients. Less common now but still seen with toxoplasmosis treatment in HIV/AIDS.",
           ]},
         { heading: "Other Important Nephrotoxins",
           items: [
-            "Contrast Agents → Post-contrast AKI, mainly risk when eGFR <30. Hydrate with isotonic crystalloid pre/post. PRESERVE trial proved NAC and bicarb offer no benefit over saline alone.",
+            "Contrast Agents → Post-contrast AKI, mainly risk when AKI/eGFR <30 or high-risk intra-arterial exposure. Use isotonic saline prophylaxis when indicated; routine IV-contrast hydration is often unnecessary for stable eGFR 30-59. PRESERVE proved NAC and bicarb offer no benefit over saline alone.",
             "Lithium → Nephrogenic diabetes insipidus (polyuria, polydipsia) + chronic tubulointerstitial nephritis → CKD over decades. Monitor Cr and Li levels regularly. Amiloride can help NDI.",
-            "Metformin → Does NOT cause kidney injury directly, but lactic acidosis risk ↑ when renally accumulated. Hold when eGFR <30 or acutely ill. Safe to continue if eGFR ≥30 and stable (KDIGO 2024).",
+            "Metformin → Does NOT cause kidney injury directly, but lactic acidosis risk ↑ when renally accumulated. Hold when eGFR <30, during AKI/acute illness, and around selected high-risk contrast exposures. If eGFR 30-44, reduce dose/monitor closely; FDA labeling discourages new initiation at eGFR 30-45.",
             "Tenofovir disoproxil (TDF) → Proximal tubular toxicity (Fanconi syndrome: glucosuria, phosphaturia, proteinuria, acidosis). TAF (alafenamide) form is much less nephrotoxic.",
           ]},
         { heading: "⚠️ The Nephrotoxin Checklist (Use on Every AKI Consult)",

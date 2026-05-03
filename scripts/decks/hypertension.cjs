@@ -105,7 +105,7 @@ async function build() {
     });
     s.addText([
       { text: "Targets by population: ", options: { bold: true, color: PALETTE.primary } },
-      { text: "General < 130/80 (ACC/AHA) • CKD SBP < 120 (KDIGO 2021, automated office blood pressure (AOBP)-measured) • Elderly consider tolerability • Orthostasis → aim at standing SBP too." },
+      { text: "General < 130/80 (ACC/AHA) • CKD standardized office SBP < 120 when tolerated (KDIGO 2021) • Elderly consider tolerability • Orthostasis → aim at standing SBP too." },
     ], {
       x: 0.55, y: 4.55, w: 9.0, h: 0.4,
       fontFace: FONT.body, fontSize: 10.5, color: PALETTE.charcoal, margin: 0, valign: "middle",

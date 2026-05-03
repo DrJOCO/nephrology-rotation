@@ -390,7 +390,7 @@ async function build() {
       ["STARRT-AKI",  "2020", "Accelerated KRT did not reduce 90-d mortality; 38% of standard arm avoided KRT entirely."],
       ["SMART",       "2018", "Balanced crystalloids reduced major adverse kidney events at 30 days (MAKE30) vs NS in ICU (NNT 91; NNT 29 in sepsis)."],
       ["BICAR-ICU",   "2018", "IV HCO₃⁻ for pH ≤ 7.20 reduced mortality in the AKI subgroup (NNT ~6)."],
-      ["PRESERVE",    "2018", "NAC does NOT prevent contrast AKI; isotonic saline = bicarbonate. Debunked two dogmas."],
+      ["PRESERVE",    "2018", "NAC does NOT prevent contrast AKI; bicarbonate is not superior to isotonic saline. Debunked two dogmas."],
     ];
 
     s.addTable(rows, {

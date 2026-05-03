@@ -410,7 +410,7 @@ async function build() {
     s.addText(bulletBlock([
       "Max-dose ACEi or ARB for proteinuria",
       "SGLT2i (added benefit in proteinuric CKD — DAPA-CKD, EMPA-KIDNEY)",
-      "BP target SBP < 120 (proteinuric, non-dialysis CKD)",
+      "BP target: standardized office SBP < 120 when tolerated; routine/home targets individualized",
       "Low-sodium diet (< 2 g/day)",
       "Statin for lipid management (nephrotic)",
       "Consider anticoagulation for high-risk nephrotic syndrome after bleeding-risk review",

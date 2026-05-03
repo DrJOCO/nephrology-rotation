@@ -80,12 +80,12 @@ The cardiology fellow asks for your recommendations on preventing contrast-induc
           q: "What is the most evidence-based strategy to prevent contrast-associated AKI in this patient?",
           choices: [
             "IV N-acetylcysteine (NAC) 600 mg BID starting 24 hours before the procedure",
-            "IV isotonic saline or sodium bicarbonate hydration before and after contrast",
+            "Risk-stratified IV isotonic saline hydration when prophylaxis is indicated",
             "Prophylactic hemodialysis immediately after the procedure to remove contrast",
             "Oral mannitol to promote osmotic diuresis"
           ],
           answer: 1,
-          explanation: "IV volume expansion with isotonic crystalloid (normal saline or sodium bicarbonate) is the cornerstone of contrast-associated AKI prevention. The PRESERVE trial showed no benefit of NAC over placebo and no benefit of sodium bicarbonate over normal saline. Prophylactic dialysis has not been shown to prevent contrast-induced AKI and may worsen outcomes. The key interventions are adequate hydration and minimizing contrast volume."
+          explanation: "For patients at high risk (AKI, eGFR <30, or selected high-risk intra-arterial procedures), IV volume expansion with isotonic saline is the best-supported preventive strategy. PRESERVE showed no benefit of NAC over placebo and no benefit of sodium bicarbonate over normal saline, so bicarbonate should not be treated as superior or routinely added. Prophylactic dialysis has not prevented contrast-induced AKI and may worsen outcomes. The key interventions are indicated hydration and minimizing contrast volume."
         },
         {
           q: "Which of this patient's medications should be held periprocedurally?",
@@ -649,13 +649,13 @@ His renal function has been stable over the past year. He asks about "new kidney
         {
           q: "What other interventions should be optimized for this patient's CKD management? (Select the best answer)",
           choices: [
-            "Target BP < 120/80 with additional antihypertensives",
+            "Apply a standardized-office SBP <120 target automatically to every clinic reading",
             "Add finerenone (non-steroidal MRA) for additional cardiorenal protection",
             "Restrict dietary protein to 0.6 g/kg/day",
             "Start erythropoietin-stimulating agent prophylactically"
           ],
           answer: 1,
-          explanation: "Finerenone, a non-steroidal mineralocorticoid receptor antagonist, showed significant kidney and cardiovascular benefit in the FIDELIO-DKD and FIGARO-DKD trials in patients with diabetic kidney disease already on RAAS blockade. KDIGO now recommends the combination of ACEi/ARB + SGLT2i + finerenone as optimal nephroprotective therapy in DKD. KDIGO 2021 recommends targeting systolic BP <120 mmHg when tolerated in CKD with albuminuria (based on SPRINT). Protein restriction to 0.8 g/kg/day (not 0.6) is reasonable. ESAs are for established anemia, not prophylaxis."
+          explanation: "Finerenone, a non-steroidal mineralocorticoid receptor antagonist, showed significant kidney and cardiovascular benefit in the FIDELIO-DKD and FIGARO-DKD trials in patients with diabetic kidney disease already on RAAS blockade. KDIGO-aligned DKD care layers ACEi/ARB + SGLT2i + finerenone when eligible. The SBP <120 target applies to standardized office measurement and should be individualized; routine clinic/home readings are often managed closer to <130/80. Protein restriction to 0.8 g/kg/day (not 0.6) is reasonable. ESAs are for established anemia, not prophylaxis."
         }
       ]
     },
@@ -718,7 +718,7 @@ She has not been started on an SGLT2 inhibitor, finerenone, or GLP-1 RA.`,
             "IV iron and erythropoietin",
           ],
           answer: 1,
-          explanation: "The 4 pillars of DKD therapy (2024): (1) ACEi/ARB \u2014 max dose \u2713, (2) SGLT2i \u2713, (3) Finerenone \u2014 FIDELIO-DKD showed 18% kidney risk reduction on top of ACEi/ARB, with less hyperkalemia than spironolactone, (4) GLP-1 RA (semaglutide) \u2014 FLOW trial showed 24% kidney risk reduction. Each pillar provides additive benefit. This patient should be started on finerenone (check K+ first \u2014 must be \u22644.8) and discussed for semaglutide (also helps with weight and HbA1c).",
+          explanation: "The 4 pillars of DKD therapy (2024): (1) ACEi/ARB \u2014 max dose \u2713, (2) SGLT2i \u2713, (3) Finerenone \u2014 FIDELIO-DKD showed 18% kidney risk reduction on top of ACEi/ARB, with dedicated CKD outcome data but ongoing hyperkalemia risk, (4) GLP-1 RA (semaglutide) \u2014 FLOW trial showed 24% kidney risk reduction. Each pillar provides additive benefit. This patient should be considered for finerenone after checking potassium (trial entry used K+ \u22644.8; labeling generally avoids initiation if K+ >5.0) and discussed for semaglutide (also helps with weight and HbA1c).",
         },
       ],
     }
@@ -846,12 +846,12 @@ Vitals: BP 142/88 (likely pain), HR 92, temp 37.0°C. Labs: Cr 1.0, Ca2+ 10.8 (s
           q: "What is the most appropriate initial management for this patient's acute stone episode?",
           choices: [
             "Emergent ureteroscopy for stone extraction",
-            "IV fluids, NSAIDs (ketorolac) for pain, and alpha-blocker (tamsulosin) for medical expulsive therapy",
+            "NSAIDs (ketorolac) for pain, antiemetics/normal hydration, and alpha-blocker (tamsulosin) for medical expulsive therapy",
             "Extracorporeal shock wave lithotripsy (ESWL)",
             "Nephrostomy tube placement"
           ],
           answer: 1,
-          explanation: "For a 6 mm ureteral stone at the UVJ without signs of infection, conservative management with medical expulsive therapy (MET) is first-line. This includes: (1) IV fluids for hydration, (2) NSAIDs (ketorolac) — more effective than opioids for renal colic and reduce ureteral smooth muscle spasm, (3) Tamsulosin (alpha-blocker) — relaxes ureteral smooth muscle and improves spontaneous passage rates, especially for distal ureteral stones 5-10 mm. Stones <5mm pass spontaneously 90% of the time; 5-10mm pass ~50% of the time."
+          explanation: "For a 6 mm ureteral stone at the UVJ without signs of infection, conservative management with medical expulsive therapy (MET) is first-line. This includes: (1) NSAIDs (ketorolac) if kidney function and bleeding/GI risk allow — more effective than opioids for renal colic and reduce ureteral smooth muscle spasm, (2) antiemetics and normal hydration/euvolemia, not forced IV fluids, and (3) tamsulosin — improves spontaneous passage rates, especially for distal ureteral stones 5-10 mm. Stones <5 mm pass spontaneously most of the time; 5-10 mm stones pass less reliably."
         },
         {
           q: "The elevated calcium (10.8) and PTH (78) suggest which underlying diagnosis?",

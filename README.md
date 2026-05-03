@@ -1,6 +1,17 @@
 # Nephrology Rotation Education App
 
-React + TypeScript + Vite app for nephrology rotation teaching. Students use it for onboarding, quizzes, cases, study sheets, patient-topic logging, spaced review, and cohort progress. Admins use Firebase-backed tools to manage rotations, curriculum, announcements, student progress, reports, and teaching materials.
+A React + TypeScript + Vite app for nephrology rotation teaching. Students use it for onboarding, weekly curriculum, quizzes, cases, study sheets, patient-topic logging, spaced review, team progress, and clinical reference material. Admins use Firebase-backed tools to manage rotations, curriculum, announcements, clinic guides, student progress, reports, and teaching materials.
+
+For the full project map, architecture notes, data locations, Firebase model, and handoff checklist, see [docs/PROJECT_MASTER.md](docs/PROJECT_MASTER.md).
+
+## What This Project Contains
+
+- Student-facing rotation app with mobile-first navigation, onboarding, quizzes, cases, study sheets, references, patient logs, bookmarks, reflections, and progress tracking.
+- Admin panel for rotation setup, student tracking, curriculum/content editing, announcements, analytics, print reports, and admin invites.
+- Firebase Auth and Firestore integration with localStorage fallback and offline pending-sync behavior.
+- PWA/offline shell support generated during the Vite build.
+- Teaching deck PDFs in `public/decks/`, editable PPTX files in `decks/`, and source deck-generation scripts in `scripts/decks/`.
+- Unit/content checks with Vitest, TypeScript, ESLint, and external link checking.
 
 ## Stack
 
@@ -8,16 +19,17 @@ React + TypeScript + Vite app for nephrology rotation teaching. Students use it 
 - Firebase Auth, Firestore, Firebase Hosting
 - Vitest for unit and content checks
 - ESLint for static checks
-- Vite build plugin for `sw.js` offline shell caching
+- Custom Vite build plugin that emits `sw.js` for offline shell caching
 
 ## Local Setup
 
+Install dependencies:
+
 ```bash
 npm install
-npm run dev
 ```
 
-Create a local `.env.local` with the Firebase web config values:
+Create a local `.env.local` from `.env.example`:
 
 ```bash
 VITE_FIREBASE_API_KEY=
@@ -28,7 +40,40 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 ```
 
-## Checks
+Start the local app:
+
+```bash
+npm run dev
+```
+
+Build production assets:
+
+```bash
+npm run build
+```
+
+Preview a production build:
+
+```bash
+npm run preview
+```
+
+## Project Scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server. |
+| `npm run build` | Run TypeScript checks and build `dist/`. |
+| `npm run typecheck` | Run TypeScript without emitting files. |
+| `npm run lint` | Run ESLint across the repo. |
+| `npm test` | Run Vitest once. |
+| `npm run test:watch` | Run Vitest in watch mode. |
+| `npm run check:links` | Check external content/resource links. |
+| `npm run preview` | Serve the built app locally. |
+
+`npm run check:links` reaches external websites and can fail because of network or upstream site behavior. Treat failures as items to review, not automatic proof that a source is unusable.
+
+## Recommended Pre-Deploy Checks
 
 Run these before a rotation handoff or deploy:
 
@@ -40,28 +85,60 @@ npm run build
 npm run check:links
 ```
 
-`npm run check:links` reaches external content links and can fail because of network or upstream site behavior. Treat failures as items to review, not as automatic proof that the source is unusable.
+## Key Paths
+
+| Path | Purpose |
+| --- | --- |
+| `src/App.tsx` | Top-level app shell and student/admin mode switch. |
+| `src/components/StudentApp.tsx` | Main student experience, state orchestration, auth flow, sync hooks, and view routing. |
+| `src/components/student/` | Student-facing tabs and subviews. |
+| `src/components/AdminPanel.tsx` | Main admin experience, auth flow, rotation state, and admin routing. |
+| `src/components/admin/` | Admin tabs, editors, reports, shared UI, and admin helpers. |
+| `src/data/` | Curriculum, articles, quizzes, cases, trials, guides, images, constants, and content tests. |
+| `src/utils/` | Firebase access, local/remote store, validation, search, analytics, gamification, spaced repetition, and rotation logic. |
+| `public/decks/` | PDF teaching decks shipped with the app. |
+| `decks/` | Editable PPTX deck files generated from the deck scripts. |
+| `scripts/` | Link checker and deck-generation scripts. |
+| `docs/` | Project documentation, audits, app-store notes, and the project master file. |
+| `firebase.json` | Firebase Hosting and Firestore configuration. |
+| `firestore.rules` | Firestore security rules. |
 
 ## Firebase Notes
 
 - Admin access uses Firebase Auth plus an `/admins/{uid}` document.
+- Admin invites are stored in `/adminInvites/{email}`.
 - Rotation access is scoped through rotation ownership/admin membership in Firestore rules.
+- Rotation data lives under `/rotations/{rotationCode}` with student and team subcollections.
+- Student assignment lookup lives under `/studentAssignments/{studentId}`.
 - Student sign-in uses email verification plus a PIN-backed Firebase credential.
 - Raw student login PINs should not be stored in student documents.
-- The admin PIN is a local second lock for an already signed-in admin device; it is intentionally stripped from shared rotation settings.
+- The admin PIN is a local second lock for an already signed-in admin device and is intentionally stripped from shared rotation settings.
 
-## May Run Checklist
+## Deployment
 
-- Confirm the active rotation exists and has the correct dates, location, curriculum, articles, announcements, and clinic guides.
+Firebase Hosting serves `dist/` and rewrites all routes to `index.html`.
+
+Typical deployment sequence:
+
+```bash
+npm run build
+firebase deploy
+```
+
+The repo currently includes Firebase configuration files, but deployment requires the Firebase CLI to be authenticated to the correct project.
+
+## Rotation Handoff Checklist
+
+- Confirm the active rotation exists and has the correct dates, location, duration, curriculum, articles, announcements, and clinic guides.
 - Confirm the admin account can sign in, open the target rotation, and has a local admin PIN set.
 - Confirm at least one test student can verify email, create a PIN, join the rotation, complete an item, and sync progress.
 - Review cohort visibility expectations with the attending before students join.
-- Run the check commands above and review any external link failures.
+- Run the pre-deploy checks above and review any external link failures.
 - Deploy only after `npm run build` succeeds.
 
 ## Repo Hygiene
 
 - `dist/`, `node_modules/`, local env files, Firebase cache, and temporary output are ignored.
-- Deck source scripts live in `scripts/decks/`.
-- Published deck files live in `public/decks/` when they are meant to ship with the app.
+- Deck source scripts live in `scripts/decks/`; editable generated PPTX files live in `decks/`.
+- Published deck PDFs live in `public/decks/` when they are meant to ship with the app.
 - Planning docs live in `docs/`; dated audit reports are historical snapshots, not the current release checklist.

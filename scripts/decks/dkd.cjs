@@ -40,7 +40,7 @@ async function build() {
       "Annual UACR + eGFR in all diabetics",
       "4 pillars: ACEi/ARB, SGLT2i, finerenone, GLP-1 RA",
       "A1c 7–8% individualized",
-      "SBP < 120 (AOBP)",
+      "Standardized SBP < 120 if tolerated",
       "Statin + lifestyle",
       "Transplant planning by eGFR trend",
     ], { fontSize: 12, paraSpaceAfter: 7 }), {
@@ -227,8 +227,8 @@ async function build() {
       header: "BLOOD PRESSURE", body: "",
     });
     s.addText(bulletBlock([
-      "Target SBP < 120 by AOBP (KDIGO 2021)",
-      "Home BP < 125/75 average (lower than office)",
+      "Standardized office SBP < 120 when tolerated (KDIGO 2021)",
+      "Routine clinic/home targets are individualized, often closer to <130/80",
       "First-line: ACEi/ARB (dual purpose)",
       "Add: thiazide-like if eGFR ≥ 30; loop if < 30; DHP CCB as needed",
       "Resistant: add spironolactone or finerenone",
@@ -395,7 +395,7 @@ async function build() {
   addCaseAnswerSlide(pres, {
     topic: TOPIC, slideNumber: 11, totalSlides: TOTAL,
     answer: "(1) Lisinopril at SUB-maximal dose (should be 40), (2) No SGLT2i (start dapagliflozin 10 mg — eGFR qualifies), (3) No finerenone (eligible: K+ 4.5, eGFR 25-60 → start 10 mg), (4) No statin (start moderate-to-high intensity).",
-    teaching: "Classic DKD presentation with retinopathy — diagnosis secure. All 4 pillars should be ON when eligible: ACEi/ARB max dose, SGLT2i, finerenone, GLP-1 RA. The retinopathy supports microvascular disease, but keep an eye out for atypical features. Titrate lisinopril to 40 (accept Cr rise to 30%). Start SGLT2i at eGFR ≥ 20. Finerenone 10 mg with K+ recheck in 1 month. GLP-1 RA (semaglutide 1 mg weekly per FLOW) adds kidney and CV benefit, also helps A1c and weight. Statin: diabetes age 40-75 is already an indication; CKD pushes intensity higher. BP target SBP < 120 when measured by standardized AOBP and tolerated. A1c 7-8% range given CKD.",
+    teaching: "Classic DKD presentation with retinopathy — diagnosis secure. All 4 pillars should be ON when eligible: ACEi/ARB max dose, SGLT2i, finerenone, GLP-1 RA. The retinopathy supports microvascular disease, but keep an eye out for atypical features. Titrate lisinopril to 40 (accept Cr rise to 30%). Start SGLT2i at eGFR ≥ 20. Finerenone 10 mg with K+ recheck in 1 month if K+ remains acceptable. GLP-1 RA (semaglutide 1 mg weekly per FLOW) adds kidney and CV benefit, also helps A1c and weight. Statin: diabetes age 40-75 is already an indication; CKD pushes intensity higher. BP target is standardized office SBP < 120 when tolerated; routine/home readings are often managed closer to <130/80. A1c 7-8% range given CKD.",
   });
 
   // 11. References

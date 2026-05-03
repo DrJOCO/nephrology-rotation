@@ -66,7 +66,7 @@ async function build() {
 
     const aeiou = [
       { letter: "A", label: "Acidosis", body: "pH < 7.1–7.15 refractory to bicarbonate and ventilation." },
-      { letter: "E", label: "Electrolytes", body: "K+ > 6.5 or K+ with ECG changes refractory to medical therapy." },
+      { letter: "E", label: "Electrolytes", body: "Life-threatening or refractory hyperkalemia: often K+ >= 6.5, or any dangerous ECG changes despite temporizing therapy." },
       { letter: "I", label: "Ingestion", body: "Dialyzable toxin: methanol, ethylene glycol, salicylates, lithium, metformin (metformin-associated lactic acidosis (MALA)), valproate." },
       { letter: "O", label: "Overload", body: "Refractory pulmonary edema; anuric CHF; need for space for blood products or TPN." },
       { letter: "U", label: "Uremia", body: "Pericarditis, encephalopathy, bleeding diathesis, intractable nausea or pruritus." },
@@ -398,7 +398,7 @@ async function build() {
   addCaseAnswerSlide(pres, {
     topic: TOPIC, slideNumber: 11, totalSlides: TOTAL,
     answer: "Yes — multiple AEIOU indications (Acidosis, Electrolytes, Overload). Start CRRT given hemodynamic instability.",
-    teaching: "AEIOU triggers: A (pH < 7.15), E (K+ > 6.5 refractory), O (pulmonary edema limiting oxygenation). CRRT preferred over IHD because he's on high-dose pressors; CRRT's gentler solute/fluid removal avoids further hemodynamic collapse. Standard dose 20-25 mL/kg/h effluent (ATN trial — more is not better). Large-bore CVC (usually IJ) for access. Goal is to bridge to renal recovery; ~60% of AKI-KRT patients recover kidney function, so this does NOT mean lifelong dialysis.",
+    teaching: "AEIOU triggers: A (pH < 7.15), E (life-threatening or refractory hyperkalemia, often K+ >= 6.5 or any dangerous ECG changes), O (pulmonary edema limiting oxygenation). CRRT preferred over IHD because he's on high-dose pressors; CRRT's gentler solute/fluid removal avoids further hemodynamic collapse. Standard dose 20-25 mL/kg/h effluent (ATN trial — more is not better). Large-bore CVC (usually IJ) for access. Goal is to bridge to renal recovery; ~60% of AKI-KRT patients recover kidney function, so this does NOT mean lifelong dialysis.",
   });
 
   // 11. References
