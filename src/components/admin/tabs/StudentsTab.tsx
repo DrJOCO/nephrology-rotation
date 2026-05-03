@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { T } from "../../../data/constants";
 import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone } from "../shared";
+import { Button } from "../ui/Button";
 import type { NavigateFn, ArticlesData } from "../types";
 import type { AdminStudent, AdminSubView, SharedSettings } from "../../../types";
 import { buildAdminCompetencySnapshot, buildAdminAssessmentSignal } from "../lib/student-analytics";
@@ -239,9 +240,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
               <input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} style={adminInput} />
             </div>
           </div>
-          <button onClick={addStudent} style={{ width: "100%", padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            Add Student
-          </button>
+          <Button variant="primary" block onClick={addStudent}>Add Student</Button>
         </div>
       )}
 
@@ -289,21 +288,19 @@ function StudentRow({ student: s, navigate, onToggle, onRemove, dimmed, settings
         <button onClick={() => navigate("students", { type: "studentDetail", id: String(s.id) })}
           style={{ background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{s.name}</span>
-            <span style={{ fontSize: 13, color: "white", background: T.brand, padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>{s.year}</span>
+            <span style={{ fontWeight: 700, color: T.ink, fontSize: 15 }}>{s.name}</span>
+            <span style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.6, textTransform: "uppercase" }}>{s.year}</span>
           </div>
           <div style={{ fontSize: 13, color: T.sub }}>
             {(s.patients || []).length} consults • Started {(s as AdminStudent & { startDate?: string }).startDate || new Date(s.addedDate).toLocaleDateString()}
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-            <span style={{ fontSize: 13, background: T.ice, color: T.navy, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
-              {competency.masteryPercent}% mastery
-            </span>
-            <span style={{ fontSize: 13, background: T.bg, color: T.sub, padding: "4px 9px", borderRadius: 999, fontWeight: 600 }}>
-              {competency.profileLine}
-            </span>
-            <span style={{ fontSize: 13, background: assessment?.summary ? T.dangerBg : T.bg, color: assessment?.summary ? T.danger : T.muted, padding: "4px 9px", borderRadius: 999, fontWeight: 700 }}>
-              {teachingLine}
+          <div style={{ marginTop: 8, fontFamily: T.mono, fontSize: 12, color: T.sub, letterSpacing: 0.4, lineHeight: 1.5 }}>
+            <span style={{ color: T.ink, fontWeight: 700 }}>{competency.masteryPercent}% MASTERY</span>
+            <span style={{ color: T.muted }}>  ·  </span>
+            <span>{competency.profileLine.toUpperCase()}</span>
+            <span style={{ color: T.muted }}>  ·  </span>
+            <span style={{ color: assessment?.summary ? T.brand : T.muted, fontWeight: assessment?.summary ? 700 : 400 }}>
+              {teachingLine.toUpperCase()}
             </span>
           </div>
           {/* Score bars */}
