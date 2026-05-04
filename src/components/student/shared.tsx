@@ -24,17 +24,17 @@ export const inputStyle: CSSProperties = {
 
 export function Section({ eyebrow, title, description, action, children, style }: { eyebrow?: ReactNode; title?: ReactNode; description?: ReactNode; action?: ReactNode; children?: ReactNode; style?: CSSProperties }) {
   return (
-    <section style={{ borderTop: `1px solid ${T.line}`, paddingTop: 18, marginTop: 28, marginBottom: 14, ...style }}>
+    <div style={{ marginBottom: 14, ...style }}>
       {(eyebrow || title || action) && (
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", marginBottom: title || description ? 12 : 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", marginBottom: title || description ? 10 : 0 }}>
           <div style={{ minWidth: 0 }}>
             {eyebrow && (
-              <div style={{ fontFamily: T.mono, fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0, marginBottom: title ? 6 : 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: title ? 4 : 0 }}>
                 {eyebrow}
               </div>
             )}
             {title && (
-              <h2 style={{ color: T.ink, fontSize: 22, margin: 0, fontFamily: T.serif, fontWeight: 600, lineHeight: 1.15 }}>{title}</h2>
+              <h2 style={{ color: T.navy, fontSize: 22, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.15 }}>{title}</h2>
             )}
             {description && (
               <p style={{ color: T.sub, fontSize: 13, margin: "6px 0 0", lineHeight: 1.5, maxWidth: 760 }}>{description}</p>
@@ -44,50 +44,25 @@ export function Section({ eyebrow, title, description, action, children, style }
         </div>
       )}
       {children}
-    </section>
-  );
-}
-
-export function LabRow({ label, value, unit, ref: reference, reference: referenceText, alarm }: { label: string; value: string | number; unit?: string; ref?: string; reference?: string; alarm?: boolean }) {
-  return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "1fr auto auto",
-      gap: 14,
-      alignItems: "baseline",
-      padding: "10px 0",
-      borderBottom: `1px dotted ${T.line}`,
-      fontFamily: T.mono,
-      fontSize: 13,
-    }}>
-      <span style={{ fontFamily: T.sans, fontWeight: 500, color: T.ink }}>{label}</span>
-      <span style={{ color: alarm ? T.danger : T.ink, fontWeight: 500 }}>
-        {value}
-        {unit && <span style={{ color: T.muted, fontWeight: 400 }}>{unit}</span>}
-      </span>
-      <span style={{ color: T.muted, fontSize: 11 }}>{reference ?? referenceText}</span>
     </div>
   );
 }
 
-export function HeadlineMetric({ value, unit, caption, tone = "ink", variant = "headline" }: { value: ReactNode; unit?: string; caption?: ReactNode; tone?: "success" | "warning" | "danger" | "info" | "ink"; variant?: "headline" | "compact" }) {
+export function HeadlineMetric({ value, unit, caption, tone = "info" }: { value: ReactNode; unit?: string; caption?: ReactNode; tone?: "success" | "warning" | "danger" | "info" }) {
   const toneColor = {
     success: T.success,
     warning: T.warning,
     danger: T.danger,
     info: T.info,
-    ink: T.ink,
   }[tone];
-  const isCompact = variant === "compact";
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 4, color: toneColor, fontFamily: T.serif, fontWeight: isCompact ? 700 : 600, lineHeight: 1, letterSpacing: 0 }}>
-        <span style={{ fontSize: isCompact ? 32 : 64 }}>{value ?? "—"}</span>
-        {unit && <span style={{ fontSize: isCompact ? 16 : 32, color: isCompact ? toneColor : T.muted, fontWeight: isCompact ? 600 : 500 }}>{unit}</span>}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4, color: toneColor, fontFamily: T.serif, fontWeight: 700, lineHeight: 1 }}>
+        <span style={{ fontSize: 32 }}>{value ?? "—"}</span>
+        {unit && <span style={{ fontSize: 16, fontWeight: 600 }}>{unit}</span>}
       </div>
-      {!isCompact && <div style={{ height: 1, background: T.ink, margin: "8px 0 6px", width: 48 }} />}
       {caption && (
-        <div style={{ color: T.muted, fontSize: isCompact ? 12 : 11, fontFamily: isCompact ? T.sans : T.mono, fontWeight: isCompact ? 600 : 400, marginTop: isCompact ? 4 : 0, textTransform: isCompact ? "uppercase" : undefined, letterSpacing: 0 }}>{caption}</div>
+        <div style={{ color: T.muted, fontSize: 12, fontWeight: 600, marginTop: 4, textTransform: "uppercase", letterSpacing: 0.4 }}>{caption}</div>
       )}
     </div>
   );

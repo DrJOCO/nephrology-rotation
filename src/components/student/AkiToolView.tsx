@@ -301,7 +301,6 @@ function IndexPanel({
           unit={result.value !== null ? "%" : undefined}
           caption={result.label}
           tone={getTone(result.value)}
-          variant="compact"
         />
         <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, fontFamily: T.serif, fontStyle: "italic" }}>
           {result.interpretation}
