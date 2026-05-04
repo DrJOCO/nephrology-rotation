@@ -5,6 +5,7 @@ import { useIsMobile } from "../../utils/helpers";
 import { ACHIEVEMENTS, getLevel } from "../../utils/gamification";
 import type { Gamification, Patient, QuizScore, SubView, WeeklyScores } from "../../types";
 import type { CompetencyDomainSummary, CompetencySummary } from "../../utils/competency";
+import { LabRow, Section } from "./shared";
 
 const tierStyles: Record<CompetencyDomainSummary["tier"], { bg: string; border: string; text: string }> = {
   Novice: { bg: T.grayBg, border: T.line, text: T.muted },
@@ -42,20 +43,12 @@ export default function ProgressTab({
 
   return (
     <div style={{ padding: 16 }}>
-      <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "18px 16px", marginBottom: 16 }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 6 }}>
-            {competencySummary.masteryLabel}
-          </div>
-          <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 24, fontWeight: 700 }}>
-            {competencySummary.masteryDetail}
-          </h2>
-          <p style={{ margin: "8px 0 0", fontSize: 13, color: T.sub, lineHeight: 1.6, maxWidth: 520 }}>
-            {currentWeek
-              ? `Module ${currentWeek} is measured against core study sheets, cases, and a scored quiz signal. Optional references stay available for deeper reading.`
-              : "Core objectives roll up across your active rotation work."}
-          </p>
-        </div>
+      <Section eyebrow={competencySummary.masteryLabel} title={competencySummary.masteryDetail} style={{ marginTop: 0, marginBottom: 18 }}>
+        <p style={{ margin: "0 0 16px", fontSize: 13, color: T.sub, lineHeight: 1.6, maxWidth: 520 }}>
+          {currentWeek
+            ? `Module ${currentWeek} is measured against core study sheets, cases, and a scored quiz signal. Optional references stay available for deeper reading.`
+            : "Core objectives roll up across your active rotation work."}
+        </p>
 
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginTop: 16 }}>
           {competencySummary.objectives.map((objective) => (
@@ -76,14 +69,11 @@ export default function ProgressTab({
             </div>
           ))}
         </div>
-      </section>
+      </Section>
 
-      <section style={{ marginBottom: 16 }}>
-        <div style={{ marginBottom: 12 }}>
-          <h3 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Competency map</h3>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-            Competency is based on spaced repetition, quiz performance, and case completion. Optional reference use is shown separately.
-          </div>
+      <Section eyebrow="Competency map" title="Competency map" style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
+          Competency is based on spaced repetition, quiz performance, and case completion. Optional reference use is shown separately.
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -91,7 +81,7 @@ export default function ProgressTab({
             const tierStyle = tierStyles[domain.tier];
             const expanded = expandedDomain === domain.domain;
             return (
-              <div key={domain.domain} style={{ background: T.card, borderRadius: 16, border: `1px solid ${expanded ? T.brand : T.line}`, overflow: "hidden" }}>
+              <div key={domain.domain} style={{ background: T.card, borderRadius: 8, border: `1px solid ${expanded ? T.brand : T.line}`, overflow: "hidden" }}>
                 <button
                   onClick={() => setExpandedDomain(expanded ? null : domain.domain)}
                   style={{ width: "100%", background: "none", border: "none", padding: "14px 14px", cursor: "pointer", textAlign: "left" }}
@@ -119,50 +109,33 @@ export default function ProgressTab({
 
                 {expanded && (
                   <div style={{ borderTop: `1px solid ${T.line}`, padding: "14px 14px 16px" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 12 }}>
-                      <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>SR interval</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{domain.signals.srIntervalDays}d</div>
-                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-                          {domain.signals.dueCards > 0
-                            ? `${domain.signals.dueCards} card${domain.signals.dueCards !== 1 ? "s" : ""} due now`
-                            : `${domain.signals.totalCards} card${domain.signals.totalCards !== 1 ? "s" : ""} tracked`}
-                        </div>
-                      </div>
-
-                      <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>Quiz signal</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>
-                          {domain.signals.quizAccuracy === null ? "—" : `${domain.signals.quizAccuracy}%`}
-                        </div>
-                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-                          {domain.signals.quizSampleSize > 0
-                            ? `Last ${domain.signals.quizSampleSize} question${domain.signals.quizSampleSize !== 1 ? "s" : ""}`
-                            : "No quiz signal yet"}
-                        </div>
-                      </div>
-
-                      <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>Cases logged</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>
-                          {domain.signals.casesLogged}/{domain.signals.caseTarget || 0}
-                        </div>
-                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-                          {domain.signals.caseTarget > 0 ? "Proficient target for current content set" : "No case requirement attached"}
-                        </div>
-                      </div>
-
-                      <div style={{ background: T.bg, borderRadius: 12, padding: "11px 12px", border: `1px solid ${T.line}` }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>Optional references used</div>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>
-                          {domain.signals.referencesReviewed}/{domain.signals.referenceCount || 0}
-                        </div>
-                        <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-                          {domain.signals.referenceCount > 0
-                            ? "Reviewed for extra depth and point-of-care reference"
-                            : "No optional references linked for this domain"}
-                        </div>
-                      </div>
+                    <div style={{ marginBottom: 12 }}>
+                      <LabRow
+                        label="SR interval"
+                        value={domain.signals.srIntervalDays}
+                        unit="d"
+                        reference={domain.signals.dueCards > 0
+                          ? `${domain.signals.dueCards} card${domain.signals.dueCards !== 1 ? "s" : ""} due now`
+                          : `${domain.signals.totalCards} card${domain.signals.totalCards !== 1 ? "s" : ""} tracked`}
+                      />
+                      <LabRow
+                        label="Quiz signal"
+                        value={domain.signals.quizAccuracy === null ? "—" : domain.signals.quizAccuracy}
+                        unit={domain.signals.quizAccuracy === null ? undefined : "%"}
+                        reference={domain.signals.quizSampleSize > 0
+                          ? `Last ${domain.signals.quizSampleSize} question${domain.signals.quizSampleSize !== 1 ? "s" : ""}`
+                          : "No quiz signal yet"}
+                      />
+                      <LabRow
+                        label="Cases logged"
+                        value={`${domain.signals.casesLogged}/${domain.signals.caseTarget || 0}`}
+                        reference={domain.signals.caseTarget > 0 ? "Proficient target" : "No case requirement"}
+                      />
+                      <LabRow
+                        label="Optional references"
+                        value={`${domain.signals.referencesReviewed}/${domain.signals.referenceCount || 0}`}
+                        reference={domain.signals.referenceCount > 0 ? "Reviewed for extra depth" : "No linked references"}
+                      />
                     </div>
 
                     <div style={{ background: T.ice, borderRadius: 14, padding: "12px 13px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
@@ -185,37 +158,19 @@ export default function ProgressTab({
             );
           })}
         </div>
-      </section>
+      </Section>
 
-      <section style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "16px 16px", marginBottom: 16 }}>
-        <div style={{ marginBottom: 12 }}>
-          <h3 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 17, fontWeight: 700 }}>Momentum</h3>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-            Competency tracks learning depth. Points make steady progress feel tangible.
-          </div>
+      <Section eyebrow="Momentum" title="Momentum" style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
+          Competency tracks learning depth. Points make steady progress feel tangible.
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(auto-fit, minmax(0, 1fr))", gap: 10, marginBottom: 14 }}>
-          <div style={{ background: T.bg, borderRadius: 12, padding: "12px 12px", border: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>Points</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{gamification.points}</div>
-          </div>
-          <div style={{ background: T.bg, borderRadius: 12, padding: "12px 12px", border: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>Current level</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: T.navy }}>{level.icon} {level.name}</div>
-          </div>
-          <div style={{ background: T.bg, borderRadius: 12, padding: "12px 12px", border: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>Next target</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: T.navy }}>{level.next ? level.next : "Maxed"}</div>
-            <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
-              {level.nextAt ? `${Math.max(0, level.nextAt - gamification.points)} points to go` : "Top tier reached"}
-            </div>
-          </div>
+        <div style={{ marginBottom: 14 }}>
+          <LabRow label="Points" value={gamification.points} />
+          <LabRow label="Current level" value={level.name} />
+          <LabRow label="Next target" value={level.next ? level.next : "Maxed"} reference={level.nextAt ? `${Math.max(0, level.nextAt - gamification.points)} points to go` : "Top tier reached"} />
           {gamification.achievements.length > 0 && (
-            <div style={{ background: T.bg, borderRadius: 12, padding: "12px 12px", border: `1px solid ${T.line}` }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 4 }}>Achievements</div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{gamification.achievements.length}</div>
-            </div>
+            <LabRow label="Achievements" value={gamification.achievements.length} />
           )}
         </div>
 
@@ -246,16 +201,13 @@ export default function ProgressTab({
             </div>
           </div>
         )}
-      </section>
+      </Section>
 
-      <section style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "16px 16px" }}>
-        <div style={{ marginBottom: 12 }}>
-          <h3 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 17, fontWeight: 700 }}>Consistency</h3>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>Assessment growth and day-to-day rhythm still matter right alongside the points chase.</div>
-        </div>
+      <Section eyebrow="Consistency" title="Consistency" style={{ marginBottom: 0 }}>
+        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>Assessment growth and day-to-day rhythm still matter right alongside the points chase.</div>
 
         {preScore && postScore ? (
-          <div style={{ background: T.bg, borderRadius: 14, padding: "12px 13px", border: `1px solid ${T.line}` }}>
+          <div style={{ borderTop: `1px dotted ${T.line}`, paddingTop: 12 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, marginBottom: 6 }}>Assessment growth</div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <div style={{ fontSize: 14, color: T.sub }}>Pre {Math.round((preScore.correct / preScore.total) * 100)}%</div>
@@ -293,7 +245,7 @@ export default function ProgressTab({
             )}
           </div>
         )}
-      </section>
+      </Section>
     </div>
   );
 }

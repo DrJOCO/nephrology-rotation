@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { createHash } from 'node:crypto'
 
 function offlineSupportPlugin() {
   return {
@@ -19,10 +20,15 @@ function offlineSupportPlugin() {
         ...buildAssets,
       ]));
 
+      // Cache version derived from the build output — every deploy busts old caches
+      // so returning users with a stale service worker can't load now-deleted chunks.
+      const buildId = createHash('sha256').update(precacheUrls.join('|')).digest('hex').slice(0, 10);
+
       const source = `
-const SHELL_CACHE = 'neph-shell-v1';
-const RUNTIME_CACHE = 'neph-runtime-v1';
-const FONT_CACHE = 'neph-fonts-v1';
+const BUILD_ID = '${buildId}';
+const SHELL_CACHE = 'neph-shell-' + BUILD_ID;
+const RUNTIME_CACHE = 'neph-runtime-' + BUILD_ID;
+const FONT_CACHE = 'neph-fonts-' + BUILD_ID;
 const PRECACHE_URLS = ${JSON.stringify(precacheUrls)};
 
 self.addEventListener('install', (event) => {
