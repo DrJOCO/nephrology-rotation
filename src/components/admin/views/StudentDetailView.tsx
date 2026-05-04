@@ -405,20 +405,20 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                 <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); }}
                   style={{ flex: 1, padding: "8px 0", background: scoreType === t ? T.ink : T.bg, color: scoreType === t ? T.bg : T.sub,
                     border: `1px solid ${scoreType === t ? T.ink : T.line}`, borderRadius: 2, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
-                  {t === "weekly" ? "Weekly" : t + "-Test"}
+                  {t === "weekly" ? "Module" : t + "-Test"}
                 </button>
               ))}
             </div>
           </div>
           {scoreType === "weekly" && (
             <div style={{ marginBottom: 10 }}>
-              <label style={adminLabel}>Week #</label>
+              <label style={adminLabel}>Module #</label>
               <div style={{ display: "flex", gap: 6 }}>
                 {[1,2,3,4].map(w => (
                   <button key={w} onClick={() => setScoreWeek(w)}
                     style={{ flex: 1, padding: "8px 0", background: scoreWeek === w ? T.brand : T.bg, color: scoreWeek === w ? "white" : T.sub,
                       border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                    Wk {w}
+                    Mod {w}
                   </button>
                 ))}
               </div>
@@ -597,8 +597,8 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
         />
       </div>
 
-      {/* Weekly Scores */}
-      <h3 style={detailSectionHeadingStyle}>Weekly Quizzes</h3>
+      {/* Module Scores */}
+      <h3 style={detailSectionHeadingStyle}>Module Quizzes</h3>
       {[1,2,3,4].map(w => {
         const ws = wkScores[w] || [];
         const best = ws.length > 0 ? Math.max(...ws.map(x => Math.round((x.correct/x.total)*100))) : null;

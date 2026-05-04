@@ -275,7 +275,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       type: "take_quiz",
       priority: 2,
       icon: "📝",
-      label: `Take Week ${w} Quiz: ${WEEK_TOPIC_MAP[w]?.label}`,
+      label: `Take Module ${w} Quiz: ${WEEK_TOPIC_MAP[w]?.label}`,
       detail: `${(WEEKLY_QUIZZES[w] || []).length} questions — establish your baseline`,
       nav: ["today", { type: "weeklyQuiz", week: w }],
     });
@@ -289,7 +289,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       type: "study_sheet",
       priority: 3,
       icon: "📋",
-      label: `Review Week ${weakWeek.week} Study Sheets`,
+      label: `Review Module ${weakWeek.week} Study Sheets`,
       detail: `${weekSheetGap.done}/${weekSheetGap.total} completed — covers ${WEEK_TOPIC_MAP[weakWeek.week]?.label}`,
       nav: ["today", { type: "studySheets", week: weakWeek.week }],
     });
@@ -302,7 +302,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       type: "teaching_deck",
       priority: 4,
       icon: "\uD83D\uDCCA",
-      label: `Review Week ${weakWeek.week} Teaching Decks`,
+      label: `Review Module ${weakWeek.week} Teaching Decks`,
       detail: `${weekDeckGap.done}/${weekDeckGap.total} reviewed — use these as the attending-level walkthrough`,
       nav: ["today", { type: "resources", tab: "decks", week: weakWeek.week }],
     });
@@ -315,7 +315,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       type: "clinical_case",
       priority: 5,
       icon: "🏥",
-      label: `Try Week ${weakWeek.week} Clinical Cases`,
+      label: `Try Module ${weakWeek.week} Clinical Cases`,
       detail: `${weekCaseGap.done}/${weekCaseGap.total} completed — apply knowledge to real scenarios`,
       nav: ["today", { type: "cases", week: weakWeek.week }],
     });
@@ -328,7 +328,7 @@ export function getRecommendations(state: RecommendationState): Recommendations 
       type: "retake_quiz",
       priority: 6,
       icon: "🔁",
-      label: `Retake Week ${w} Quiz (${weekScores[w]}%)`,
+      label: `Retake Module ${w} Quiz (${weekScores[w]}%)`,
       detail: `Target: 80%+ — review study sheet first for best results`,
       nav: ["today", { type: "weeklyQuiz", week: w }],
     });

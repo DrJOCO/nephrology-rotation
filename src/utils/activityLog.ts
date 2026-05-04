@@ -54,13 +54,13 @@ export function describeStudentNavigation(
     case "weeklyQuiz":
       return {
         type: "quiz_start",
-        label: `Started Week ${subView.week} Quiz`,
+        label: `Started Module ${subView.week} Quiz`,
         detail: formatCount((WEEKLY_QUIZZES[subView.week] || []).length, "question"),
       };
     case "reviewMissed":
       return {
         type: "review_missed",
-        label: `Started Week ${subView.week} Review`,
+        label: `Started Module ${subView.week} Review`,
         detail: "Missed questions",
       };
     case "preQuiz":
@@ -78,19 +78,19 @@ export function describeStudentNavigation(
     case "articles":
       return {
         type: "resource_open",
-        label: `Opened Week ${subView.week} Articles`,
+        label: `Opened Module ${subView.week} Articles`,
         detail: formatCount((articlesByWeek[subView.week] || []).length, "article"),
       };
     case "studySheets":
       return {
         type: "resource_open",
-        label: `Opened Week ${subView.week} Study Sheets`,
+        label: `Opened Module ${subView.week} Study Sheets`,
         detail: formatCount((STUDY_SHEETS[subView.week] || []).length, "sheet"),
       };
     case "cases":
       return {
         type: "resource_open",
-        label: `Opened Week ${subView.week} Cases`,
+        label: `Opened Module ${subView.week} Cases`,
         detail: formatCount((WEEKLY_CASES[subView.week] || []).length, "case"),
       };
     case "resources":
@@ -100,7 +100,7 @@ export function describeStudentNavigation(
           : CURRICULUM_DECKS.length;
         return {
           type: "resource_open",
-          label: subView.week ? `Opened Week ${subView.week} Teaching Decks` : "Opened Teaching Decks",
+          label: subView.week ? `Opened Module ${subView.week} Teaching Decks` : "Opened Teaching Decks",
           detail: formatCount(deckCount, "deck"),
         };
       }

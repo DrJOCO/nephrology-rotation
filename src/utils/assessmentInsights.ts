@@ -118,14 +118,14 @@ export function buildAssessmentSummary({
       status,
       missedTopics: uniqueTopics(stats[week].missedTopics),
       action: {
-        label: `Open Week ${week} teaching`,
+        label: `Open Module ${week} teaching`,
         meta: `Study sheets, teaching decks, cases, and quiz review for ${meta.shortLabel.toLowerCase()}`,
         tab: "today",
         subView: { type: "studySheets", week },
       },
       practiceAction: {
-        label: `Practice Week ${week}`,
-        meta: `Retake the Week ${week} quiz`,
+        label: `Practice Module ${week}`,
+        meta: `Retake the Module ${week} quiz`,
         tab: "today",
         subView: { type: "weeklyQuiz", week },
       },
@@ -150,7 +150,7 @@ export function buildAssessmentSummary({
       : `Start with ${recommendedArea.shortLabel}`;
   const detailLine = recommendedArea.missedTopics.length > 0
     ? `Missed concepts: ${recommendedArea.missedTopics.join(", ")}`
-    : `Use Week ${recommendedArea.week} teaching and practice to sharpen this area.`;
+    : `Use Module ${recommendedArea.week} teaching and practice to sharpen this area.`;
 
   return {
     mode,

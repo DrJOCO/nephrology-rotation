@@ -699,7 +699,7 @@ export function SettingsTab({
       )}
 
       {showOtherSections && (
-      <SettingsSection sectionRef={contentRef} sectionId="settings-content" title="Curriculum & Content" description="Edit the weekly curriculum, articles, announcements, and clinic guides students see. You only need this between rotations.">
+      <SettingsSection sectionRef={contentRef} sectionId="settings-content" title="Curriculum & Content" description="Edit the module curriculum, articles, announcements, and clinic guides students see. You only need this between rotations.">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
           <button
             type="button"

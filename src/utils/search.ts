@@ -204,7 +204,7 @@ export function searchAll(
         results.articles.push({
           label: article.title,
           kind: "Article",
-          tag: `${article.topic} · Week ${week}`,
+          tag: `${article.topic} · Module ${week}`,
           score,
           nav: ["today", { type: "articles", week }],
         });
@@ -280,7 +280,7 @@ export function searchAll(
           results.pearls.push({
             label: callout.pearl,
             kind: "Pearl",
-            tag: `${sheet.title} · Week ${week}`,
+            tag: `${sheet.title} · Module ${week}`,
             score: pearlScore,
             nav: ["today", { type: "studySheets", week }],
           });

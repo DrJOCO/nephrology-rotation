@@ -199,7 +199,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
               { label: "MS4", value: ms4Students.length, tone: T.success, bg: T.successBg },
               { label: "Both assessments", value: historicalAssessmentsComplete, tone: T.danger, bg: T.dangerBg },
               { label: "Avg core completion", value: formatMetric(overallCoreCompletion), tone: T.navy, bg: T.bg },
-              { label: "Avg best weekly quiz", value: formatMetric(overallQuizBest), tone: T.navy, bg: T.bg },
+              { label: "Avg best module quiz", value: formatMetric(overallQuizBest), tone: T.navy, bg: T.bg },
               { label: "Avg quiz attempts", value: overallQuizAttempts === null ? "—" : `${overallQuizAttempts}`, tone: T.navy, bg: T.bg },
               { label: "Avg optional refs", value: overallOptionalRefs === null ? "—" : `${overallOptionalRefs}`, tone: T.navy, bg: T.bg },
               { label: "Avg consults logged", value: overallPatientsLogged === null ? "—" : `${overallPatientsLogged}`, tone: T.navy, bg: T.bg },
@@ -266,7 +266,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
               <thead>
                 <tr>
-                  {["Block", "Dates / site", "Learners", "Year mix", "Avg pre", "Avg post", "Growth", "Best weekly", "Core completion"].map((label) => (
+                  {["Block", "Dates / site", "Learners", "Year mix", "Avg pre", "Avg post", "Growth", "Best module", "Core completion"].map((label) => (
                     <th key={label} style={{ textAlign: "left", fontSize: 12, color: T.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, padding: "0 0 10px" }}>
                       {label}
                     </th>

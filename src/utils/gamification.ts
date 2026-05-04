@@ -178,7 +178,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     check: (s) => uniqueTopics(s) >= 15 },
   { id: "quiz_starter", icon: "📝", title: "Quiz Taker", desc: "Completed your first quiz",
     check: (s) => totalQuizzes(s) >= 1 },
-  { id: "all_quizzes", icon: "🎓", title: "Knowledge Seeker", desc: "Completed all 4 weekly quizzes",
+  { id: "all_quizzes", icon: "🎓", title: "Knowledge Seeker", desc: "Completed all 4 module quizzes",
     check: (s) => weeksWithQuizzes(s) === 4 },
   { id: "quiz_ace", icon: "💯", title: "Quiz Ace", desc: "Scored 100% on any quiz",
     check: (s) => hasPerfectQuiz(s) },

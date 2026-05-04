@@ -17,8 +17,8 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides, study
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ width: 48, height: 48, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>📚</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Weekly Curriculum</div>
-            <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Edit week titles, subtitles, and topics</div>
+            <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Module Curriculum</div>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Edit module titles, subtitles, and topics</div>
           </div>
           <span style={{ color: T.muted, fontSize: 16 }}>›</span>
         </div>
