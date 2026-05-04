@@ -381,7 +381,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
                 </ResultBadge>
               )}
               {assessment.effectiveOsm.osmolarGap !== null && Math.abs(assessment.effectiveOsm.osmolarGap) > 10 && (
-                <ResultBadge tone="warning">Osmolar gap {assessment.effectiveOsm.osmolarGap.toFixed(0)}</ResultBadge>
+                <ResultBadge tone="warning">Osmolar gap {assessment.effectiveOsm.osmolarGap.toFixed(0)} — unmeasured osmole?</ResultBadge>
               )}
             </div>
             <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginBottom: 12, fontFamily: T.serif, fontStyle: "italic" }}>
@@ -441,6 +441,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
             <div style={sectionTitleStyle}><Microscope size={17} strokeWidth={2} aria-hidden="true" /> Renal Function &amp; Urine</div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
               <NumberInput label="Serum Cr" value={inputs.serumCr} placeholder="mg/dL" onChange={(value) => updateField("serumCr", value)} />
+              <NumberInput label="BUN" value={inputs.serumBun} placeholder="mg/dL" step="1" onChange={(value) => updateField("serumBun", value)} />
               <NumberInput label="Urine osm" value={inputs.urineOsm} placeholder="mOsm/kg" step="1" onChange={(value) => updateField("urineOsm", value)} />
               <NumberInput label="Urine Na" value={inputs.urineNa} placeholder="mEq/L" step="1" onChange={(value) => updateField("urineNa", value)} />
               <NumberInput label="Urine K" value={inputs.urineK} placeholder="mEq/L" step="1" onChange={(value) => updateField("urineK", value)} />

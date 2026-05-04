@@ -188,11 +188,13 @@ export function calculateQuantitative(inputs: GnToolInputs): GnQuantitative {
 
   const crDelta = baselineCr !== null && currentCr !== null ? currentCr - baselineCr : null;
   const crRatio = baselineCr !== null && currentCr !== null && baselineCr > 0 ? currentCr / baselineCr : null;
-  // Tempo "acute" or "subacute" with Cr ratio ≥2 over weeks fits an RPGN trajectory.
+  // Tempo "acute" or "subacute" with Cr ratio ≥2 fits an RPGN trajectory.
+  // Treat "unknown" tempo as in-window — a student who forgot to chart tempo should
+  // still see the RPGN alert when the trajectory itself is screaming.
   const rpgnTrajectory =
     crRatio !== null &&
     crRatio >= 2 &&
-    (inputs.tempo === "acute" || inputs.tempo === "subacute");
+    inputs.tempo !== "chronic";
 
   return {
     proteinGramsPerDay,
@@ -382,13 +384,22 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
     (inputs.rbc === "many" && (inputs.protein === "two_plus" || inputs.protein === "three_plus" || inputs.protein === "nephrotic"));
 
   const builders: Record<string, GnDifferentialItem> = {};
+  // The most specific title wins. Entries get the title from the highest-scoring
+  // contribution so far — so a generic "Membranous nephropathy" gets upgraded to
+  // "Membranous nephropathy (primary, anti-PLA2R+)" when the more specific clause fires.
   const ensure = (id: string, title: string, bucket: string, next: string[]) => {
-    builders[id] ??= { id, title, bucket, score: 0, signal: "Consider", supports: [], next };
-    return builders[id];
+    builders[id] ??= { id, title, bucket, score: 0, signal: "Consider", supports: [], next, _titleScore: 0 } as GnDifferentialItem & { _titleScore: number };
+    return builders[id] as GnDifferentialItem & { _titleScore: number };
   };
   const add = (id: string, title: string, bucket: string, points: number, support: string, next: string[]) => {
     const item = ensure(id, title, bucket, next);
     item.score += points;
+    if (points > item._titleScore) {
+      item.title = title;
+      item.bucket = bucket;
+      item._titleScore = points;
+    }
+    if (next.length > 0 && item.next.length === 0) item.next = next;
     addUnique(item.supports, support);
   };
 
@@ -640,7 +651,10 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   const differentials = Object.values(builders)
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .map((item) => ({ ...item, signal: signalFromScore(item.score) }))
+    .map((item) => {
+      const { _titleScore: _ignored, ...rest } = item as GnDifferentialItem & { _titleScore: number };
+      return { ...rest, signal: signalFromScore(item.score) };
+    })
     .slice(0, 7);
 
   // ── Alerts ────────────────────────────────────────────────────────
@@ -657,7 +671,9 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   if (has(positive, "anca_pr3") || has(positive, "anca_mpo")) {
     alerts.push("ANCA positive: organ-threatening AAV needs prompt induction (steroids + rituximab or cyclophosphamide). Consider PLEX in the PEXIVAS-defined high-risk subgroups.");
   }
-  if (quantitative.proteinTier === "nephrotic_range") {
+  // Gate VTE alert on quantified proteinuria — a 4+ dipstick alone shouldn't drive
+  // anticoagulation counseling without a UPCR or 24h collection to back it up.
+  if (quantitative.proteinTier === "nephrotic_range" && quantitative.proteinSource !== null) {
     alerts.push("Nephrotic-range proteinuria: counsel on VTE risk (especially MN with albumin <2.5), infection risk, and dyslipidemia; consider prophylactic anticoagulation per nephrotic-VTE risk score.");
   }
   if (cLowLow && !has(positive, "ana") && !has(sentNegative, "ana")) {

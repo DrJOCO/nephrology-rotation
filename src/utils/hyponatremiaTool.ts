@@ -21,6 +21,7 @@ export interface HyponatremiaInputs {
   selectedVolumeClues: string[];
   // Renal function
   serumCr: string;
+  serumBun: string;
   knownCkd: boolean;
   // Urine
   urineOsm: string;
@@ -50,9 +51,10 @@ export interface CorrectedSodiumResult {
 }
 
 export interface EffectiveOsmResult {
-  value: number | null;
+  value: number | null;             // effective (tonic) osm = 2Na + glucose/18
+  totalCalculated: number | null;   // total osm = 2Na + glucose/18 + BUN/2.8
   measured: number | null;
-  osmolarGap: number | null;
+  osmolarGap: number | null;        // measured − totalCalculated (real osm gap; needs BUN)
   classification: "hypotonic" | "isotonic" | "hypertonic" | "indeterminate";
   note: string;
 }
@@ -120,6 +122,7 @@ export const DEFAULT_HYPO_INPUTS: HyponatremiaInputs = {
   volumeStatus: "unknown",
   selectedVolumeClues: [],
   serumCr: "",
+  serumBun: "",
   knownCkd: false,
   urineOsm: "",
   urineNa: "",
@@ -160,7 +163,7 @@ function addUnique<T>(arr: T[], item: T): void {
 
 function fmt(value: number | null, digits = 1): string {
   if (value === null || !Number.isFinite(value)) return "";
-  return value.toFixed(digits).replace(/\.0+$/, "");
+  return value.toFixed(digits).replace(/\.?0+$/, "");
 }
 
 function signalFromScore(score: number): HyponatremiaDifferentialItem["signal"] {
@@ -188,12 +191,16 @@ export function calculateEffectiveOsmolality(inputs: HyponatremiaInputs): Effect
   const na = parsePositive(inputs.serumNa);
   const glucose = parsePositive(inputs.serumGlucose);
   const measured = parsePositive(inputs.measuredOsm);
+  const bun = parsePositive(inputs.serumBun);
   if (na === null) {
-    return { value: null, measured, osmolarGap: null, classification: "indeterminate", note: "Enter serum Na to estimate effective osmolality." };
+    return { value: null, totalCalculated: null, measured, osmolarGap: null, classification: "indeterminate", note: "Enter serum Na to estimate effective osmolality." };
   }
+  // Effective (tonic) osmolality excludes urea — drives water movement across membranes.
   const calculated = 2 * na + (glucose ?? 100) / 18;
-  let osmolarGap: number | null = null;
-  if (measured !== null) osmolarGap = measured - calculated;
+  // Total calculated osm includes urea — used for the standard osmolar gap (toxic alcohols, mannitol, paraprotein).
+  // Without BUN entered we can't compute a meaningful osm gap; leave it null rather than overstating it.
+  const totalCalculated = bun !== null ? calculated + bun / 2.8 : null;
+  const osmolarGap = measured !== null && totalCalculated !== null ? measured - totalCalculated : null;
   let classification: EffectiveOsmResult["classification"] = "indeterminate";
   let note = "";
   if (measured !== null) {
@@ -214,7 +221,7 @@ export function calculateEffectiveOsmolality(inputs: HyponatremiaInputs): Effect
     classification = "hypotonic";
     note = "No measured osm; without hyperglycemia or other ineffective osmoles, hypotonic is most likely.";
   }
-  return { value: calculated, measured, osmolarGap, classification, note };
+  return { value: calculated, totalCalculated, measured, osmolarGap, classification, note };
 }
 
 export function calculateFractionalExcretionUricAcid(inputs: HyponatremiaInputs): FractionalExcretionUricAcidResult {
@@ -337,17 +344,25 @@ export function buildHyponatremiaAssessment(inputs: HyponatremiaInputs): Hyponat
 
   // Tonicity gating
   const isLikelyHypotonic = effectiveOsm.classification === "hypotonic" || effectiveOsm.classification === "indeterminate";
-  const isHypertonic = effectiveOsm.classification === "hypertonic" || (correctedNa.glucose !== null && correctedNa.glucose > 250 && (parsePositive(inputs.measuredOsm) ?? 0) > 295);
+  const isHypertonic = effectiveOsm.classification === "hypertonic";
   const isLikelyPseudo = hasAny(inputs.selectedTonicityFlags, ["lipemic", "plasma_dyscrasia", "jaundice"]);
 
-  const builders: Record<string, HyponatremiaDifferentialItem> = {};
+  const builders: Record<string, HyponatremiaDifferentialItem & { _titleScore: number }> = {};
+  // Most-specific-title-wins so a clinician-picked "Hypervolemic hyponatremia" doesn't
+  // shadow a stronger "Hyponatremia of heart failure" entry, and vice-versa.
   const ensure = (id: string, title: string, bucket: string, next: string[]) => {
-    builders[id] ??= { id, title, bucket, score: 0, signal: "Consider", supports: [], next };
+    builders[id] ??= { id, title, bucket, score: 0, signal: "Consider", supports: [], next, _titleScore: 0 };
     return builders[id];
   };
   const add = (id: string, title: string, bucket: string, points: number, support: string, next: string[]) => {
     const item = ensure(id, title, bucket, next);
     item.score += points;
+    if (points > item._titleScore) {
+      item.title = title;
+      item.bucket = bucket;
+      item._titleScore = points;
+    }
+    if (next.length > 0 && item.next.length === 0) item.next = next;
     addUnique(item.supports, support);
   };
 
@@ -449,15 +464,18 @@ export function buildHyponatremiaAssessment(inputs: HyponatremiaInputs): Hyponat
     // Euvolemic — SIAD core
     const siadFromDrug = hasAny(inputs.selectedDrugs, ["ssri_snri", "carbamazepine", "mdma", "ddavp", "antipsychotic", "antiepileptic", "cyclophosphamide"]);
     const siadFromContext = hasAny(inputs.selectedHistory, ["malignancy_lung", "malignancy_other", "pulmonary_disease", "cns_event", "post_op", "pain_nausea", "hiv"]);
+    // Canonical SIAD next-steps. Pass on every SIAD `add()` so a drug-only / context-only / FEUA-only
+    // first-write doesn't leave the differential card without actionable guidance.
+    const siadNext = [
+      "Diagnosis of exclusion — also rule out hypothyroidism and cortisol deficiency; consider FEUA (>10–12% supports SIAD).",
+      "Treat with fluid restriction first; salt tablets ± loop, vaptans, or urea if persistent. AVOID isotonic saline alone in true SIAD with concentrated urine.",
+    ];
     if (uOsm !== null && uOsm > 100 && uNa !== null && uNa >= 30 && (inputs.volumeStatus === "euvolemic" || inputs.volumeStatus === "unknown")) {
-      add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 5, `UOsm ${fmt(uOsm, 0)} >100 + UNa ${fmt(uNa, 0)} ≥30 with apparent euvolemia is the classic SIAD pattern.`, [
-        "Diagnosis of exclusion — also rule out hypothyroidism and cortisol deficiency; consider FEUA (>10–12% supports SIAD).",
-        "Treat with fluid restriction first; salt tablets ± loop, vaptans, or urea if persistent. AVOID isotonic saline alone in true SIAD with concentrated urine.",
-      ]);
+      add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 5, `UOsm ${fmt(uOsm, 0)} >100 + UNa ${fmt(uNa, 0)} ≥30 with apparent euvolemia is the classic SIAD pattern.`, siadNext);
     }
-    if (siadFromDrug) add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 3, "SIAD-associated medication exposure (SSRI/SNRI, carbamazepine, MDMA, dDAVP, antiepileptic, antipsychotic, cyclophosphamide).", []);
-    if (siadFromContext) add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 3, "SIAD context selected (lung/other malignancy, pulmonary disease, CNS event, post-op, pain/nausea, HIV).", []);
-    if (feUricAcid.value !== null && feUricAcid.value > 12) add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 1, `${feUricAcid.label} >12% supports SIAD.`, []);
+    if (siadFromDrug) add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 3, "SIAD-associated medication exposure (SSRI/SNRI, carbamazepine, MDMA, dDAVP, antiepileptic, antipsychotic, cyclophosphamide).", siadNext);
+    if (siadFromContext) add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 3, "SIAD context selected (lung/other malignancy, pulmonary disease, CNS event, post-op, pain/nausea, HIV).", siadNext);
+    if (feUricAcid.value !== null && feUricAcid.value > 12) add("siad", "SIAD (syndrome of inappropriate antidiuresis)", "Euvolemic", 1, `${feUricAcid.label} >12% supports SIAD.`, siadNext);
 
     // Hypothyroidism
     if (has(inputs.selectedHistory, "hypothyroid")) {
@@ -503,22 +521,44 @@ export function buildHyponatremiaAssessment(inputs: HyponatremiaInputs): Hyponat
       ]);
     }
 
-    // Volume status alone — give weight when explicitly chosen
-    if (inputs.volumeStatus === "hypovolemic") add("hypovol_extrarenal", "Hypovolemic hyponatremia", "Hypovolemic", 1, "Clinician-assessed hypovolemia.", []);
-    if (inputs.volumeStatus === "hypervolemic") add("hf", "Hypervolemic hyponatremia", "Hypervolemic / low EAV", 1, "Clinician-assessed hypervolemia.", []);
+    // Volume status alone — give weight when explicitly chosen.
+    // Pass real next-step guidance: when these fire as the *first* write for the entry
+    // (e.g., the student picked hypovolemic with no GI/bleeding clues), `ensure`'s
+    // first-write-wins would otherwise leave the differential card with no actions.
+    if (inputs.volumeStatus === "hypovolemic") add("hypovol_extrarenal", "Hypovolemic hyponatremia", "Hypovolemic", 1, "Clinician-assessed hypovolemia.", [
+      "Isotonic saline is both diagnostic and therapeutic — watch for autocorrection once volume is restored; consider proactive dDAVP if Na <120.",
+      "Expect UNa <20 with intact kidneys; UNa ≥30 in a hypovolemic patient points to renal salt loss (diuretic, salt-wasting, AI).",
+    ]);
+    if (inputs.volumeStatus === "hypervolemic") add("hf", "Hypervolemic hyponatremia", "Hypervolemic / low EAV", 1, "Clinician-assessed hypervolemia.", [
+      "Free water restriction first; loop diuresis; treat the underlying low-EAV state (HF, cirrhosis, nephrotic).",
+      "UNa is typically <20 from sodium avidity despite total-body volume excess.",
+    ]);
 
-    // K/HCO3 patterns
+    // K/HCO3 patterns. Pass populated `next` so a K-pattern hit that creates the entry cold
+    // (no thiazide selected, no GI losses ticked, no AI in history) still surfaces guidance.
     if (sK !== null && sHCO3 !== null) {
-      if (sK < 3.5 && sHCO3 > 26) add("thiazide", "Diuretic/vomiting pattern", "Drug or GI", 1, "Hypokalemia + metabolic alkalosis fits diuretic use or vomiting.", []);
-      if (sK < 3.5 && sHCO3 < 22) add("hypovol_extrarenal", "Diarrhea / laxative pattern", "Hypovolemic", 1, "Hypokalemia + non-anion-gap acidosis fits diarrhea or laxatives.", []);
-      if (sK > 5 && sHCO3 < 22) add("adrenal_insufficiency", "Primary adrenal insufficiency pattern", "Hypovolemic / euvolemic", 2, "Hyperkalemia + non-anion-gap acidosis fits primary AI.", []);
+      if (sK < 3.5 && sHCO3 > 26) add("thiazide", "Diuretic/vomiting pattern", "Drug or GI", 1, "Hypokalemia + metabolic alkalosis fits diuretic use or vomiting.", [
+        "Replete K first — raising K alone raises Na and helps the alkalosis resolve.",
+        "Identify driver: thiazide (stop it; watch for water diuresis), vomiting (treat emesis, replete volume); guard against overcorrection once water excretion returns.",
+      ]);
+      if (sK < 3.5 && sHCO3 < 22) add("hypovol_extrarenal", "Diarrhea / laxative pattern", "Hypovolemic", 1, "Hypokalemia + non-anion-gap acidosis fits diarrhea or laxatives.", [
+        "Replete K and volume; isotonic saline is diagnostic + therapeutic — watch for autocorrection once volume is restored.",
+        "Look for laxative misuse if no overt GI losses; check stool studies if persistent.",
+      ]);
+      if (sK > 5 && sHCO3 < 22) add("adrenal_insufficiency", "Primary adrenal insufficiency pattern", "Hypovolemic / euvolemic", 2, "Hyperkalemia + non-anion-gap acidosis fits primary AI.", [
+        "Cosyntropin stim test, AM cortisol/ACTH; do not delay empiric glucocorticoid replacement when clinically suspected.",
+        "Primary AI = hypovolemic with hyperK; secondary AI (pituitary) = euvolemic without hyperK.",
+      ]);
     }
   }
 
   const differentials = Object.values(builders)
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .map((item) => ({ ...item, signal: signalFromScore(item.score) }))
+    .map((item) => {
+      const { _titleScore: _ignored, ...rest } = item;
+      return { ...rest, signal: signalFromScore(item.score) };
+    })
     .slice(0, 7);
 
   // ── Alerts ──────────────────────────────────────────────────────────────

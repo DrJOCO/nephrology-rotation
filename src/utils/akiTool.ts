@@ -397,14 +397,20 @@ export function buildAkiAssessment(inputs: AkiToolInputs): AkiAssessmentResult {
   const vascularRisk = hasAny(inputs.selectedHistory, ["vascular_disease", "dm2", "htn", "known_ckd"]);
   const myelomaRisk = has(inputs.selectedHistory, "mgus_myeloma") || has(inputs.selectedContext, "myeloma_clues");
 
-  const builders: Record<string, AkiDifferentialItem> = {};
+  const builders: Record<string, AkiDifferentialItem & { _titleScore: number }> = {};
   const ensure = (id: string, title: string, bucket: string, next: string[]) => {
-    builders[id] ??= { id, title, bucket, score: 0, signal: "Consider", supports: [], next };
+    builders[id] ??= { id, title, bucket, score: 0, signal: "Consider", supports: [], next, _titleScore: 0 };
     return builders[id];
   };
   const add = (id: string, title: string, bucket: string, points: number, support: string, next: string[]) => {
     const item = ensure(id, title, bucket, next);
     item.score += points;
+    if (points > item._titleScore) {
+      item.title = title;
+      item.bucket = bucket;
+      item._titleScore = points;
+    }
+    if (next.length > 0 && item.next.length === 0) item.next = next;
     addUnique(item.supports, support);
   };
 
@@ -511,7 +517,10 @@ export function buildAkiAssessment(inputs: AkiToolInputs): AkiAssessmentResult {
   const differentials = Object.values(builders)
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
-    .map((item) => ({ ...item, signal: signalFromScore(item.score) }))
+    .map((item) => {
+      const { _titleScore: _ignored, ...rest } = item;
+      return { ...rest, signal: signalFromScore(item.score) };
+    })
     .slice(0, 7);
 
   const alerts: string[] = [];
