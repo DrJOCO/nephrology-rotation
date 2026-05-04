@@ -60,6 +60,7 @@ const TeamTab = lazy(() => import("./student/TeamTab"));
 const ProgressTab = lazy(() => import("./student/ProgressTab"));
 const TopicBrowseView = lazy(() => import("./student/TopicBrowseView"));
 const AkiToolView = lazy(() => import("./student/AkiToolView"));
+const HyponatremiaToolView = lazy(() => import("./student/HyponatremiaToolView"));
 const ClinicGuideView = lazy(() => import("./student/ClinicGuideView"));
 const ClinicGuideHistoryView = lazy(() => import("./student/ClinicGuideHistoryView"));
 const InpatientGuideView = lazy(() => import("./student/InpatientGuideView"));
@@ -1462,8 +1463,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           studentYear={studentYear}
           studentEmail={studentEmail}
           rotationCode={rotationCode}
-          competencyLine={competencySummary.profileLine}
-          streakDays={gamification.streaks?.currentDays ?? 0}
           onUpdateStudentName={handleUpdateStudentName}
           onUpdateStudentYear={handleUpdateStudentYear}
           onShowTutorial={() => { setProfileOpen(false); setShowOnboarding(true); }}
@@ -1746,13 +1745,16 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         {tab === "library" && subView?.type === "akiTool" && (
           <AkiToolView onBack={() => navigate("library")} onOpenCalculator={(id) => navigate("library", { type: "refDetail", id })} />
         )}
+        {tab === "library" && subView?.type === "hyponatremiaTool" && (
+          <HyponatremiaToolView onBack={() => navigate("library")} />
+        )}
         {tab === "library" && subView?.type === "rotationGuide" && (
           <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView?.type === "faq" && (
           <FaqView onBack={() => navigate("library")} />
         )}
-        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
+        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}
@@ -1825,10 +1827,9 @@ function LibraryHub({
 // signal, theme toggle, sign out. ESC to close. Click backdrop to close.
 // ─────────────────────────────────────────────────────────────────────────
 function ProfileSheet({
-  studentName, studentYear, studentEmail, rotationCode, competencyLine, streakDays, onUpdateStudentName, onUpdateStudentYear, onShowTutorial, onEndSession, onClose,
+  studentName, studentYear, studentEmail, rotationCode, onUpdateStudentName, onUpdateStudentYear, onShowTutorial, onEndSession, onClose,
 }: {
-  studentName: string; studentYear: string; studentEmail: string; rotationCode: string | null; competencyLine: string;
-  streakDays: number;
+  studentName: string; studentYear: string; studentEmail: string; rotationCode: string | null;
   onUpdateStudentName: (nextName: string) => Promise<void>;
   onUpdateStudentYear: (nextYear: string) => Promise<void>;
   onShowTutorial?: () => void;
@@ -2058,29 +2059,6 @@ function ProfileSheet({
             </span>
           )}
         </div>
-
-        {/* Competency + streak */}
-        {(competencyLine || streakDays > 0) && (
-          <div style={{ paddingBottom: 12, borderBottom: `1px solid ${T.line}` }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Learning Signal</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {competencyLine && (
-                <div>
-                  <div style={{ fontSize: 13, color: T.ink2, marginBottom: 2 }}>Top competency</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, letterSpacing: 0.1 }}>{competencyLine}</div>
-                </div>
-              )}
-              {streakDays > 0 && (
-                <div>
-                  <div style={{ fontSize: 13, color: T.ink2, marginBottom: 2 }}>Streak</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 16, fontWeight: 700, color: T.ink, fontFamily: T.mono }}>
-                    <Flame size={16} strokeWidth={2} aria-hidden="true" /> {streakDays}d
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Theme */}
         <div>

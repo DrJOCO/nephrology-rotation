@@ -119,18 +119,32 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
         <p style={{ color: T.sub, fontSize: 13, margin: "0 0 10px", lineHeight: 1.4 }}>
           Fast structured reasoning tools for common inpatient consults.
         </p>
-        <button onClick={() => navigate("library", { type: "akiTool" })}
-          style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
-            background: T.card, borderRadius: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.info}`, cursor: "pointer", textAlign: "left" }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Calculator size={18} strokeWidth={1.75} color={T.info} aria-hidden="true" />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>AKI Differential Tool</div>
-            <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Cr trend, UOP, BP, exposures, UA, imaging, FENa/FEUrea, and ranked etiologies</div>
-          </div>
-          <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
-        </button>
+        <div style={{ display: "grid", gap: 8 }}>
+          <button onClick={() => navigate("library", { type: "akiTool" })}
+            style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
+              background: T.card, borderRadius: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.info}`, cursor: "pointer", textAlign: "left" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Calculator size={18} strokeWidth={1.75} color={T.info} aria-hidden="true" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>AKI Differential Tool</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Cr trend, UOP, BP, exposures, UA, imaging, FENa/FEUrea, and ranked etiologies</div>
+            </div>
+            <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
+          </button>
+          <button onClick={() => navigate("library", { type: "hyponatremiaTool" })}
+            style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
+              background: T.card, borderRadius: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.info}`, cursor: "pointer", textAlign: "left" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Calculator size={18} strokeWidth={1.75} color={T.info} aria-hidden="true" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Hyponatremia Tool</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Tonicity \u2192 impaired water excretion \u2192 volume status; correction caps, ODS risk, Adrogue\u2013Madias</div>
+            </div>
+            <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
+          </button>
+        </div>
       </div>
 
       <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinical Guides</h2>

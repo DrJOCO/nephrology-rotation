@@ -1,16 +1,46 @@
 import { describe, expect, it } from "vitest";
-import { buildAkiAssessment, calculateAkiStage, calculateFena, calculateFeurea, DEFAULT_AKI_INPUTS } from "./akiTool";
+import { buildAkiAssessment, calculateAkiStage, calculateFena, calculateFeurea, DEFAULT_AKI_INPUTS, deriveUopFrom24h } from "./akiTool";
 
 describe("AKI tool calculations", () => {
   it("stages creatinine rise using KDIGO-style thresholds", () => {
-    expect(calculateAkiStage({ baselineCr: "1.0", currentCr: "1.4", uop: "not_recorded" }).overallStage).toBe(1);
-    expect(calculateAkiStage({ baselineCr: "1.0", currentCr: "2.1", uop: "not_recorded" }).overallStage).toBe(2);
-    expect(calculateAkiStage({ baselineCr: "1.0", currentCr: "3.2", uop: "not_recorded" }).overallStage).toBe(3);
+    expect(calculateAkiStage({ baselineCr: "1.0", currentCr: "1.4", uop: "not_recorded", uop24hVolumeMl: "", weightKg: "", krtInitiated: false }).overallStage).toBe(1);
+    expect(calculateAkiStage({ baselineCr: "1.0", currentCr: "2.1", uop: "not_recorded", uop24hVolumeMl: "", weightKg: "", krtInitiated: false }).overallStage).toBe(2);
+    expect(calculateAkiStage({ baselineCr: "1.0", currentCr: "3.2", uop: "not_recorded", uop24hVolumeMl: "", weightKg: "", krtInitiated: false }).overallStage).toBe(3);
   });
 
   it("uses urine output stage when it is more severe than creatinine stage", () => {
-    const stage = calculateAkiStage({ baselineCr: "1.0", currentCr: "1.2", uop: "anuria" });
+    const stage = calculateAkiStage({ baselineCr: "1.0", currentCr: "1.2", uop: "anuria", uop24hVolumeMl: "", weightKg: "", krtInitiated: false });
     expect(stage.creatinineStage).toBe(0);
+    expect(stage.uopStage).toBe(3);
+    expect(stage.overallStage).toBe(3);
+  });
+
+  it("forces overall stage 3 when KRT has been initiated, regardless of Cr/UOP", () => {
+    const stage = calculateAkiStage({ baselineCr: "1.0", currentCr: "1.2", uop: "normal", uop24hVolumeMl: "", weightKg: "", krtInitiated: true });
+    expect(stage.overallStage).toBe(3);
+    expect(stage.reasons.some((r) => /Kidney replacement therapy/i.test(r))).toBe(true);
+  });
+
+  it("recognizes stage 3 by absolute SCr ≥4 when AKI definition is met by either delta or ratio", () => {
+    const stage = calculateAkiStage({ baselineCr: "2.5", currentCr: "4.0", uop: "not_recorded", uop24hVolumeMl: "", weightKg: "", krtInitiated: false });
+    expect(stage.overallStage).toBe(3);
+  });
+
+  it("derives mL/kg/hr from 24-h UOP volume + weight and stages it accordingly", () => {
+    // 700 mL / 70 kg / 24 h = 0.417 mL/kg/hr → stage 2 (<0.5 but ≥0.3 over a full 24 h window)
+    const oliguric = deriveUopFrom24h("700", "70");
+    expect(oliguric.ratePerKgPerHr).toBeCloseTo(700 / 70 / 24, 3);
+    expect(oliguric.stage).toBe(2);
+    const veryLow = deriveUopFrom24h("400", "80");
+    expect(veryLow.stage).toBe(3);
+    const anuric = deriveUopFrom24h("0", "70");
+    expect(anuric.stage).toBe(3);
+    const normal = deriveUopFrom24h("1500", "70");
+    expect(normal.stage).toBe(0);
+  });
+
+  it("uses derived UOP rate to drive the overall AKI stage when categorical is not recorded", () => {
+    const stage = calculateAkiStage({ baselineCr: "1.0", currentCr: "1.2", uop: "not_recorded", uop24hVolumeMl: "400", weightKg: "80", krtInitiated: false });
     expect(stage.uopStage).toBe(3);
     expect(stage.overallStage).toBe(3);
   });
@@ -161,7 +191,7 @@ describe("AKI tool calculations", () => {
   });
 
   it("ignores negative numeric inputs in stage calculations", () => {
-    const stage = calculateAkiStage({ baselineCr: "-1", currentCr: "2", uop: "not_recorded" });
+    const stage = calculateAkiStage({ baselineCr: "-1", currentCr: "2", uop: "not_recorded", uop24hVolumeMl: "", weightKg: "", krtInitiated: false });
     expect(stage.baseline).toBeNull();
     expect(stage.creatinineStage).toBeNull();
   });

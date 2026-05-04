@@ -11,6 +11,9 @@ export interface AkiToolInputs {
   bpMinMap: string;
   bpPattern: AkiBpPattern;
   uop: AkiUopStatus;
+  uop24hVolumeMl: string;
+  weightKg: string;
+  krtInitiated: boolean;
   selectedHistory: string[];
   selectedContext: string[];
   selectedNephrotoxins: string[];
@@ -75,6 +78,9 @@ export const DEFAULT_AKI_INPUTS: AkiToolInputs = {
   bpMinMap: "",
   bpPattern: "not_recorded",
   uop: "not_recorded",
+  uop24hVolumeMl: "",
+  weightKg: "",
+  krtInitiated: false,
   selectedHistory: [],
   selectedContext: [],
   selectedNephrotoxins: [],
@@ -157,6 +163,36 @@ function uopLabel(status: AkiUopStatus): string {
   return labels[status];
 }
 
+export interface DerivedUopResult {
+  ratePerKgPerHr: number | null;
+  totalMl: number | null;
+  weightKg: number | null;
+  stage: number | null;
+  label: string;
+}
+
+// When the user enters a 24-hour UOP volume + weight, derive mL/kg/hr and KDIGO stage.
+// 24-hour collection is already at-or-above the ≥12 h sustained-low threshold (Stage 2)
+// and the ≥24 h sustained-very-low threshold (Stage 3), so categorical mapping simplifies.
+export function deriveUopFrom24h(uop24hMl: string, weightKgStr: string): DerivedUopResult {
+  const total = parseNonNegativeNumber(uop24hMl);
+  const weight = parsePositiveNumber(weightKgStr);
+  if (total === null || weight === null) {
+    return { ratePerKgPerHr: null, totalMl: total, weightKg: weight, stage: null, label: "Enter 24-hour UOP volume and weight to derive rate." };
+  }
+  const rate = total / weight / 24;
+  let stage = 0;
+  if (total === 0) stage = 3;
+  else if (rate < 0.3) stage = 3;
+  else if (rate < 0.5) stage = 2;
+  const rateStr = rate.toFixed(2).replace(/\.?0+$/, "");
+  let label = `UOP ${total.toFixed(0)} mL / 24 h ≈ ${rateStr} mL/kg/hr`;
+  if (stage === 3) label += total === 0 ? " (anuria)" : " — meets KDIGO stage 3 UOP";
+  else if (stage === 2) label += " — meets KDIGO stage 2 UOP";
+  else label += " — at or above KDIGO threshold";
+  return { ratePerKgPerHr: rate, totalMl: total, weightKg: weight, stage, label };
+}
+
 function signalFromScore(score: number): AkiDifferentialItem["signal"] {
   if (score >= 7) return "High";
   if (score >= 4) return "Moderate";
@@ -210,7 +246,7 @@ export function interpretFeureaPercent(value: number): string {
   return "Borderline FEUrea is nondiagnostic.";
 }
 
-export function calculateAkiStage(inputs: Pick<AkiToolInputs, "baselineCr" | "currentCr" | "uop">): AkiStageResult {
+export function calculateAkiStage(inputs: Pick<AkiToolInputs, "baselineCr" | "currentCr" | "uop" | "uop24hVolumeMl" | "weightKg" | "krtInitiated">): AkiStageResult {
   const baseline = parsePositiveNumber(inputs.baselineCr);
   const current = parsePositiveNumber(inputs.currentCr);
   const reasons: string[] = [];
@@ -221,8 +257,9 @@ export function calculateAkiStage(inputs: Pick<AkiToolInputs, "baselineCr" | "cu
   if (baseline !== null && current !== null) {
     delta = current - baseline;
     ratio = current / baseline;
+    const meetsAkiDefinition = delta >= 0.3 || ratio >= 1.5;
     creatinineStage = 0;
-    if (delta >= 0.3 || ratio >= 1.5) {
+    if (meetsAkiDefinition) {
       creatinineStage = 1;
       reasons.push("Creatinine rise meets at least KDIGO stage 1 if timing criteria fit.");
     }
@@ -230,18 +267,28 @@ export function calculateAkiStage(inputs: Pick<AkiToolInputs, "baselineCr" | "cu
       creatinineStage = 2;
       reasons.push("Creatinine is at least 2x baseline.");
     }
-    if (ratio >= 3 || (current >= 4 && delta >= 0.3)) {
+    if (ratio >= 3 || (current >= 4 && meetsAkiDefinition)) {
       creatinineStage = 3;
       reasons.push("Creatinine meets a stage 3 creatinine signal.");
     }
   }
 
-  const urineStage = uopStage(inputs.uop);
-  if (urineStage !== null && urineStage > 0) {
+  const categoricalUopStage = uopStage(inputs.uop);
+  const derivedUop = deriveUopFrom24h(inputs.uop24hVolumeMl, inputs.weightKg);
+  // When a 24-h volume + weight are entered, the derived rate is the higher-resolution signal.
+  const urineStage = derivedUop.stage !== null ? derivedUop.stage : categoricalUopStage;
+  if (derivedUop.stage !== null) {
+    reasons.push(`${derivedUop.label}.`);
+  } else if (categoricalUopStage !== null && categoricalUopStage > 0) {
     reasons.push(`${uopLabel(inputs.uop)}.`);
   }
 
-  const availableStages = [creatinineStage, urineStage].filter((stage): stage is number => stage !== null);
+  const krtStage = inputs.krtInitiated ? 3 : null;
+  if (krtStage !== null) {
+    reasons.push("Kidney replacement therapy initiated — KDIGO classifies AKI as stage 3.");
+  }
+
+  const availableStages = [creatinineStage, urineStage, krtStage].filter((stage): stage is number => stage !== null);
   const overallStage = availableStages.length ? Math.max(...availableStages) : null;
   let label = "Enter baseline/current Cr and UOP to stage.";
   if (overallStage === 0) label = "No KDIGO AKI signal from entered Cr/UOP.";
@@ -340,7 +387,9 @@ export function buildAkiAssessment(inputs: AkiToolInputs): AkiAssessmentResult {
   const fenaHigh = fena.value !== null && fena.value > 2;
   const feureaLow = feurea.value !== null && feurea.value < 35;
   const feureaHigh = feurea.value !== null && feurea.value > 50;
-  const anyOliguria = ["low_6_12", "low_12", "very_low_24", "anuria"].includes(inputs.uop);
+  const derivedUop = deriveUopFrom24h(inputs.uop24hVolumeMl, inputs.weightKg);
+  const uopDescription = derivedUop.stage !== null ? derivedUop.label : uopLabel(inputs.uop);
+  const anyOliguria = ["low_6_12", "low_12", "very_low_24", "anuria"].includes(inputs.uop) || (derivedUop.stage !== null && derivedUop.stage > 0);
   const knownCkd = has(inputs.selectedHistory, "known_ckd");
   const transplantHistory = has(inputs.selectedHistory, "transplant");
   const diabeticHypertensiveRisk = hasAny(inputs.selectedHistory, ["dm2", "htn"]);
@@ -376,7 +425,7 @@ export function buildAkiAssessment(inputs: AkiToolInputs): AkiAssessmentResult {
   if (muddyCasts) add("atn", "Ischemic or nephrotoxic tubular injury / ATN", "Intrinsic tubular", 4, "Muddy brown/granular casts strongly support tubular injury.", atnNext);
   if (fenaHigh) add("atn", "Ischemic or nephrotoxic tubular injury / ATN", "Intrinsic tubular", 2, fena.label, atnNext);
   if (feureaHigh) add("atn", "Ischemic or nephrotoxic tubular injury / ATN", "Intrinsic tubular", 2, feurea.label, atnNext);
-  if (anyOliguria) add("atn", "Ischemic or nephrotoxic tubular injury / ATN", "Intrinsic tubular", 1, uopLabel(inputs.uop), atnNext);
+  if (anyOliguria) add("atn", "Ischemic or nephrotoxic tubular injury / ATN", "Intrinsic tubular", 1, uopDescription, atnNext);
 
   const medNext = ["Reconcile home and inpatient medications by start date.", "Hold, substitute, or renally dose nephrotoxins when the clinical plan allows."];
   if (has(inputs.selectedNephrotoxins, "nsaid")) add("med_hemodynamic", "Medication-related hemodynamic AKI", "Exposure", 3, "NSAID exposure can reduce afferent arteriolar tone.", medNext);
@@ -490,7 +539,7 @@ export function buildAkiAssessment(inputs: AkiToolInputs): AkiAssessmentResult {
   const crLine = stage.baseline !== null && stage.current !== null
     ? `Cr ${formatNumber(stage.baseline)} -> ${formatNumber(stage.current)}`
     : "Cr trend incomplete";
-  const summary = `${crLine}; ${stage.label}; ${uopLabel(inputs.uop)}. Leading differential: ${leading}.`;
+  const summary = `${crLine}; ${stage.label}; ${uopDescription}. Leading differential: ${leading}.`;
 
   return { stage, fena, feurea, differentials, alerts, nextSteps: nextSteps.slice(0, 7), summary };
 }

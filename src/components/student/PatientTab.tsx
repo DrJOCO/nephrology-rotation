@@ -317,6 +317,10 @@ const AKI_WORKFLOW_SUGGESTION_TOPICS = new Set([
   "Cardiorenal Syndrome",
 ]);
 
+const HYPONATREMIA_WORKFLOW_SUGGESTION_TOPICS = new Set([
+  "Hyponatremia",
+]);
+
 export default function PatientTab({ patients, setPatients, navigate, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
@@ -364,10 +368,15 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       const seenSheets = new Set<string>();
       const seenWeeks = new Set<number>();
       let akiWorkflowSuggested = false;
+      let hyponatremiaWorkflowSuggested = false;
       for (const topic of form.topics) {
         if (!akiWorkflowSuggested && AKI_WORKFLOW_SUGGESTION_TOPICS.has(topic)) {
           newSuggestions.push({ label: "AKI Differential Tool", type: "tool", nav: ["library", { type: "akiTool" }] });
           akiWorkflowSuggested = true;
+        }
+        if (!hyponatremiaWorkflowSuggested && HYPONATREMIA_WORKFLOW_SUGGESTION_TOPICS.has(topic)) {
+          newSuggestions.push({ label: "Hyponatremia Tool", type: "tool", nav: ["library", { type: "hyponatremiaTool" }] });
+          hyponatremiaWorkflowSuggested = true;
         }
         const mapping = TOPIC_RESOURCE_MAP[topic];
         if (!mapping) continue;

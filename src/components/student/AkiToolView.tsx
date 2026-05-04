@@ -439,9 +439,35 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
               <label style={inputLabel}>BP pattern</label>
               <SegmentedGroup options={BP_OPTIONS} value={inputs.bpPattern} onChange={(value) => updateField("bpPattern", value)} />
             </div>
-            <div>
-              <label style={inputLabel}>Urine output</label>
+            <div style={{ marginBottom: 12 }}>
+              <label style={inputLabel}>Urine output category (use when no 24-h total)</label>
               <SegmentedGroup options={UOP_OPTIONS} value={inputs.uop} onChange={(value) => updateField("uop", value)} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr", gap: 10, marginBottom: 8 }}>
+              <NumberInput label="UOP over 24 h (mL)" value={inputs.uop24hVolumeMl} placeholder="e.g. 480" step="1" onChange={(value) => updateField("uop24hVolumeMl", value)} />
+              <NumberInput label="Weight (kg)" value={inputs.weightKg} placeholder="e.g. 70" step="1" onChange={(value) => updateField("weightKg", value)} />
+            </div>
+            {(() => {
+              const total = Number(inputs.uop24hVolumeMl);
+              const wt = Number(inputs.weightKg);
+              if (!Number.isFinite(total) || !Number.isFinite(wt) || wt <= 0 || inputs.uop24hVolumeMl === "" || inputs.weightKg === "") return null;
+              const rate = total / wt / 24;
+              const tone = rate < 0.3 || total === 0 ? "danger" : rate < 0.5 ? "warning" : "success";
+              return (
+                <div style={{ marginBottom: 12 }}>
+                  <ResultBadge tone={tone}>
+                    {total.toFixed(0)} mL / 24 h ≈ {rate.toFixed(2)} mL/kg/hr
+                  </ResultBadge>
+                </div>
+              );
+            })()}
+            <div>
+              <ToggleChip selected={inputs.krtInitiated} onClick={() => updateField("krtInitiated", !inputs.krtInitiated)}>
+                KRT / dialysis already initiated for this AKI
+              </ToggleChip>
+              <div style={{ color: T.muted, fontSize: 12, marginTop: 6, lineHeight: 1.5 }}>
+                Per KDIGO, initiation of kidney replacement therapy classifies AKI as stage 3 regardless of Cr or UOP.
+              </div>
             </div>
           </section>
 

@@ -701,6 +701,23 @@ export default function HomeTab({
                     <Check size={13} strokeWidth={2.4} aria-hidden="true" /> Done
                   </button>
                 </div>
+                {active.guides.length > 0 && (
+                  <div style={{ marginBottom: (active.sheets.length > 0 || active.trials.length > 0 || active.tools.length > 0) ? 12 : 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>Consult guides</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {active.guides.map(guide => (
+                        <button
+                          key={guide.id}
+                          onClick={() => navigate(guide.nav[0], guide.nav[1] as SubView)}
+                          style={{ background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left", color: T.brand, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "flex-start", gap: 6 }}
+                        >
+                          <ArrowRight size={13} strokeWidth={2} aria-hidden="true" style={{ marginTop: 4, flexShrink: 0 }} />
+                          <span><span style={{ fontWeight: 700 }}>{guide.label}</span> <span style={{ color: T.sub, fontWeight: 400 }}>— {guide.subtitle}</span></span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {active.sheets.length > 0 && (
                   <div style={{ marginBottom: active.trials.length > 0 ? 12 : 0 }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>Study sheets</div>
@@ -718,7 +735,7 @@ export default function HomeTab({
                   </div>
                 )}
                 {active.trials.length > 0 && (
-                  <div>
+                  <div style={{ marginBottom: active.tools.length > 0 ? 12 : 0 }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>Landmark trials</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       {active.trials.map(t => (
@@ -729,6 +746,23 @@ export default function HomeTab({
                         >
                           <ArrowRight size={13} strokeWidth={2} aria-hidden="true" style={{ marginTop: 4, flexShrink: 0 }} />
                           <span><span style={{ fontWeight: 700 }}>{t.name}</span> <span style={{ color: T.sub, fontWeight: 400 }}>— {t.takeaway}</span></span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {active.tools.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>Clinical tools</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {active.tools.map(tool => (
+                        <button
+                          key={tool.id}
+                          onClick={() => navigate(tool.nav[0], tool.nav[1] as SubView)}
+                          style={{ background: "none", border: "none", padding: "6px 0", cursor: "pointer", textAlign: "left", color: T.brand, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "flex-start", gap: 6 }}
+                        >
+                          <ArrowRight size={13} strokeWidth={2} aria-hidden="true" style={{ marginTop: 4, flexShrink: 0 }} />
+                          <span><span style={{ fontWeight: 700 }}>{tool.label}</span> <span style={{ color: T.sub, fontWeight: 400 }}>— {tool.description}</span></span>
                         </button>
                       ))}
                     </div>

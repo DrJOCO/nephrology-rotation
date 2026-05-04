@@ -10,6 +10,7 @@ import { getTopicContent } from "./topicMapping";
 import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { ALL_LANDMARK_TRIALS } from "../data/trials";
+import { INPATIENT_GUIDES, type InpatientGuideTopic } from "../data/inpatientGuides";
 import type { TopicRecommendation } from "../types";
 
 interface PatientInput {
@@ -259,6 +260,83 @@ export interface PatientSuggestedTopicGroup {
   reason: string;
   sheets: Array<{ id: string; title: string; week: number }>;
   trials: Array<{ name: string; week: number; takeaway: string }>;
+  tools: Array<{ id: string; label: string; description: string; nav: [string, Record<string, unknown>] }>;
+  guides: Array<{ id: InpatientGuideTopic; label: string; subtitle: string; nav: [string, Record<string, unknown>] }>;
+}
+
+// Patient/consult topic strings → inpatient consult guide topic IDs.
+// Multiple consult topics can map to the same guide (e.g. all AKI flavors → AKI guide).
+const TOPIC_TO_INPATIENT_GUIDE: Record<string, InpatientGuideTopic[]> = {
+  "AKI": ["AKI"],
+  "Post-Renal AKI": ["AKI"],
+  "Contrast-Associated AKI": ["Contrast AKI", "AKI"],
+  "Rhabdomyolysis": ["Rhabdo", "AKI"],
+  "AIN": ["AKI"],
+  "Hepatorenal Syndrome": ["HRS"],
+  "Cardiorenal Syndrome": ["Cardiorenal"],
+  "Hyponatremia": ["Hyponatremia"],
+  "Hyperkalemia": ["Hyperkalemia"],
+  "Dialysis": ["Dialysis"],
+  "GN": ["GN"],
+  "Glomerulonephritis": ["GN"],
+  "DKD": ["DKD"],
+  "Diabetic Kidney Disease": ["DKD"],
+  "PD Peritonitis": ["PD Peritonitis"],
+};
+
+function getGuidesForTopic(topic: string): PatientSuggestedTopicGroup["guides"] {
+  const guideIds = TOPIC_TO_INPATIENT_GUIDE[topic];
+  if (!guideIds) return [];
+  const seen = new Set<InpatientGuideTopic>();
+  const guides: PatientSuggestedTopicGroup["guides"] = [];
+  for (const id of guideIds) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    const template = INPATIENT_GUIDES[id];
+    if (!template) continue;
+    guides.push({
+      id,
+      label: template.title,
+      subtitle: template.subtitle,
+      nav: ["library", { type: "inpatientGuide", topic: id }],
+    });
+  }
+  return guides;
+}
+
+const AKI_TOOL_TOPICS = new Set([
+  "AKI",
+  "Post-Renal AKI",
+  "Contrast-Associated AKI",
+  "Rhabdomyolysis",
+  "AIN",
+  "Hepatorenal Syndrome",
+  "Cardiorenal Syndrome",
+]);
+
+const HYPONATREMIA_TOOL_TOPICS = new Set([
+  "Hyponatremia",
+]);
+
+function getToolsForTopic(topic: string): PatientSuggestedTopicGroup["tools"] {
+  const tools: PatientSuggestedTopicGroup["tools"] = [];
+  if (AKI_TOOL_TOPICS.has(topic)) {
+    tools.push({
+      id: "akiTool",
+      label: "AKI Differential Tool",
+      description: "Stage AKI, build a ranked differential from exposures + UA + imaging, with FENa/FEUrea.",
+      nav: ["library", { type: "akiTool" }],
+    });
+  }
+  if (HYPONATREMIA_TOOL_TOPICS.has(topic)) {
+    tools.push({
+      id: "hyponatremiaTool",
+      label: "Hyponatremia Tool",
+      description: "Tonicity → impaired water excretion → volume status, with correction caps and ODS risk.",
+      nav: ["library", { type: "hyponatremiaTool" }],
+    });
+  }
+  return tools;
 }
 
 export function getPatientSuggestedTopicGroups(
@@ -291,8 +369,11 @@ export function getPatientSuggestedTopicGroups(
       if (trial) trials.push({ name: trial.name, week: trial.week, takeaway: trial.takeaway });
     }
 
-    if (sheets.length === 0 && trials.length === 0) continue;
-    groups.push({ topic: rec.topic, reason: rec.reason, sheets, trials });
+    const tools = getToolsForTopic(rec.topic);
+    const guides = getGuidesForTopic(rec.topic);
+
+    if (sheets.length === 0 && trials.length === 0 && tools.length === 0 && guides.length === 0) continue;
+    groups.push({ topic: rec.topic, reason: rec.reason, sheets, trials, tools, guides });
   }
 
   return groups.slice(0, 5);
