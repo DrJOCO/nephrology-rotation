@@ -70,7 +70,7 @@ export function AdminShell({
         <div style={{ background: T.bg, borderBottom: `1.5px solid ${T.ink}`, padding: `calc(12px + env(safe-area-inset-top, 0px)) 16px 12px`, position: "sticky", top: 0, zIndex: 100 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, position: "relative" }}>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 2 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, color: T.warning, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 2 }}>
                 — Attending
               </div>
               <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -155,7 +155,7 @@ export function AdminShell({
       <div style={{ display: "grid", gridTemplateColumns: "260px minmax(0, 1fr)", minHeight: "100vh" }}>
         <aside style={{ background: T.bg, color: T.ink, padding: "28px 18px 18px", position: "sticky", top: 0, height: "100vh", boxSizing: "border-box", borderRight: `1px solid ${T.line}`, display: "flex", flexDirection: "column" }}>
           <div style={{ marginBottom: 28 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, color: T.warning, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 6 }}>
               — Attending
             </div>
             <div style={{ marginBottom: 10 }}>
@@ -222,7 +222,7 @@ export function AdminShell({
 
         <main style={{ minWidth: 0 }}>
           <div style={{ position: "sticky", top: 0, zIndex: 90, background: T.bg, borderBottom: `1.5px solid ${T.ink}`, padding: "20px 28px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+            <div style={{ maxWidth: 960, margin: "0 auto", display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>
                   — Workspace
@@ -232,7 +232,7 @@ export function AdminShell({
               </div>
             </div>
           </div>
-          <div className="tab-content-enter" key={contentKey} style={{ padding: "24px 28px 32px" }}>
+          <div className="tab-content-enter" key={contentKey} style={{ maxWidth: 960, margin: "0 auto", padding: "24px 28px 32px" }}>
             {children}
           </div>
         </main>
