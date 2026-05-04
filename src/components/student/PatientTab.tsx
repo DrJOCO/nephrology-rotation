@@ -321,6 +321,26 @@ const HYPONATREMIA_WORKFLOW_SUGGESTION_TOPICS = new Set([
   "Hyponatremia",
 ]);
 
+const GN_WORKFLOW_SUGGESTION_TOPICS = new Set([
+  "GN",
+  "Glomerulonephritis",
+  "Nephrotic Syndrome",
+  "Lupus Nephritis",
+  "IgA Nephropathy",
+  "ANCA Vasculitis",
+  "Membranous Nephropathy",
+  "FSGS",
+  "Minimal Change Disease",
+  "Anti-GBM Disease",
+  "Post-Infectious GN",
+  "Cryoglobulinemic GN",
+  "C3 Glomerulopathy",
+  "MPGN",
+  "HIVAN",
+  "Proteinuria",
+  "Kidney Biopsy",
+]);
+
 export default function PatientTab({ patients, setPatients, navigate, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
@@ -369,6 +389,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       const seenWeeks = new Set<number>();
       let akiWorkflowSuggested = false;
       let hyponatremiaWorkflowSuggested = false;
+      let gnWorkflowSuggested = false;
       for (const topic of form.topics) {
         if (!akiWorkflowSuggested && AKI_WORKFLOW_SUGGESTION_TOPICS.has(topic)) {
           newSuggestions.push({ label: "AKI Differential Tool", type: "tool", nav: ["library", { type: "akiTool" }] });
@@ -377,6 +398,10 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
         if (!hyponatremiaWorkflowSuggested && HYPONATREMIA_WORKFLOW_SUGGESTION_TOPICS.has(topic)) {
           newSuggestions.push({ label: "Hyponatremia Tool", type: "tool", nav: ["library", { type: "hyponatremiaTool" }] });
           hyponatremiaWorkflowSuggested = true;
+        }
+        if (!gnWorkflowSuggested && GN_WORKFLOW_SUGGESTION_TOPICS.has(topic)) {
+          newSuggestions.push({ label: "Glomerular Disease Tool", type: "tool", nav: ["library", { type: "gnTool" }] });
+          gnWorkflowSuggested = true;
         }
         const mapping = TOPIC_RESOURCE_MAP[topic];
         if (!mapping) continue;

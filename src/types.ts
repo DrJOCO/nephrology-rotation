@@ -58,6 +58,7 @@ export type SubView =
   | { type: "topicDetail"; topic: string; source?: "studySheets" | "articles" | "browseByTopic"; week?: number }
   | { type: "akiTool" }
   | { type: "hyponatremiaTool" }
+  | { type: "gnTool" }
   | { type: "clinicGuide"; date: string; topic?: "CKD" | "Hypertension" | "Transplant" }
   | { type: "clinicGuideHistory" }
   | { type: "inpatientGuide"; topic: string }

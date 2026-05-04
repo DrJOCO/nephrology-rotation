@@ -144,6 +144,18 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
           </button>
+          <button onClick={() => navigate("library", { type: "gnTool" })}
+            style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
+              background: T.card, borderRadius: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.info}`, cursor: "pointer", textAlign: "left" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Calculator size={18} strokeWidth={1.75} color={T.info} aria-hidden="true" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Glomerular Disease Tool</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Syndrome \u00D7 complement \u2192 ranked GN differential, what positive serologies mean, and which to send next</div>
+            </div>
+            <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
+          </button>
         </div>
       </div>
 

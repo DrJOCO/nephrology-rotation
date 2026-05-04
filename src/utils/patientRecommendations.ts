@@ -318,6 +318,26 @@ const HYPONATREMIA_TOOL_TOPICS = new Set([
   "Hyponatremia",
 ]);
 
+const GN_TOOL_TOPICS = new Set([
+  "GN",
+  "Glomerulonephritis",
+  "Nephrotic Syndrome",
+  "Lupus Nephritis",
+  "IgA Nephropathy",
+  "ANCA Vasculitis",
+  "Membranous Nephropathy",
+  "FSGS",
+  "Minimal Change Disease",
+  "Anti-GBM Disease",
+  "Post-Infectious GN",
+  "Cryoglobulinemic GN",
+  "C3 Glomerulopathy",
+  "MPGN",
+  "HIVAN",
+  "Proteinuria",
+  "Kidney Biopsy",
+]);
+
 function getToolsForTopic(topic: string): PatientSuggestedTopicGroup["tools"] {
   const tools: PatientSuggestedTopicGroup["tools"] = [];
   if (AKI_TOOL_TOPICS.has(topic)) {
@@ -334,6 +354,14 @@ function getToolsForTopic(topic: string): PatientSuggestedTopicGroup["tools"] {
       label: "Hyponatremia Tool",
       description: "Tonicity → impaired water excretion → volume status, with correction caps and ODS risk.",
       nav: ["library", { type: "hyponatremiaTool" }],
+    });
+  }
+  if (GN_TOOL_TOPICS.has(topic)) {
+    tools.push({
+      id: "gnTool",
+      label: "Glomerular Disease Tool",
+      description: "Syndrome × complement → ranked GN differential with what positive serologies mean and which to send next.",
+      nav: ["library", { type: "gnTool" }],
     });
   }
   return tools;

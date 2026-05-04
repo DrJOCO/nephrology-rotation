@@ -166,10 +166,6 @@ export default function ProgressTab({
       </Section>
 
       <Section eyebrow="Momentum" title="Momentum" style={{ marginBottom: 18 }}>
-        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
-          Competency tracks learning depth. Points make steady progress feel tangible.
-        </div>
-
         <div style={{ marginBottom: 14 }}>
           <LabRow label="Points" value={gamification.points} />
           <LabRow label="Current level" value={level.name} />
