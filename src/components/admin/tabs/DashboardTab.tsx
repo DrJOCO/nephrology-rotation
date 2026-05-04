@@ -73,10 +73,10 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
       {activeStudents.length > 0 && (
         <Section eyebrow="Attention queue" title="What needs you first.">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, padding: "16px 0", borderTop: `1.5px solid ${T.ink}`, borderBottom: `1px solid ${T.line}`, marginBottom: 14 }}>
-            <HeadlineMetric value={missingPre.length} caption="Missing pre" tone={missingPre.length > 0 ? "danger" : "success"} />
-            <HeadlineMetric value={missingPost.length} caption="Missing post" tone={missingPost.length > 0 ? "warning" : "success"} />
-            <HeadlineMetric value={duplicateNameGroups.length} caption="Duplicate roster" tone={duplicateNameGroups.length > 0 ? "warning" : "success"} />
-            <HeadlineMetric value={activeStudents.length} caption="Active" tone="info" />
+            <HeadlineMetric value={missingPre.length} caption="Missing pre" tone={missingPre.length > 0 ? "danger" : "success"} variant="compact" />
+            <HeadlineMetric value={missingPost.length} caption="Missing post" tone={missingPost.length > 0 ? "warning" : "success"} variant="compact" />
+            <HeadlineMetric value={duplicateNameGroups.length} caption="Duplicate roster" tone={duplicateNameGroups.length > 0 ? "warning" : "success"} variant="compact" />
+            <HeadlineMetric value={activeStudents.length} caption="Active" tone="info" variant="compact" />
           </div>
 
           {attentionItems.length > 0 ? (

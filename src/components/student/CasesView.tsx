@@ -3,7 +3,7 @@ import { T } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
 import type { CompletedItems, Bookmarks } from "../../types";
-import { EduDisclaimer } from "./shared";
+import { EduDisclaimer, HeadlineMetric, Section } from "./shared";
 
 const caseImgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 12, border: `1px solid ${T.line}` };
 const caseCaptionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 };
@@ -64,7 +64,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
           ← Back to Cases
         </button>
 
-        <div style={{ background: T.card, borderRadius: 16, padding: 20, border: `1px solid ${T.line}`, marginBottom: 16 }}>
+        <div style={{ background: T.card, borderRadius: 8, padding: 20, border: `1px solid ${T.line}`, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <span style={{ fontSize: 28 }}>🏥</span>
             <div>
@@ -101,16 +101,16 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
     const pct = Math.round((score / questions.length) * 100);
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ background: T.card, borderRadius: 16, padding: 24, border: `1px solid ${T.line}`, textAlign: "center", marginBottom: 16 }}>
-          <div style={{ fontSize: 48, marginBottom: 8 }}>{pct >= 80 ? "🎉" : pct >= 60 ? "👍" : "📚"}</div>
-          <h2 style={{ color: T.navy, fontSize: 22, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Case Complete</h2>
-          <div style={{ fontSize: 14, color: T.sub, marginBottom: 16 }}>{caseData.title}</div>
-          <div style={{ fontSize: 48, fontWeight: 700, color: pct >= 80 ? T.success : pct >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>
-            {pct}%
+        <Section eyebrow={`Case complete · ${caseData.title}`} style={{ marginBottom: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 24, alignItems: "end" }}>
+            <HeadlineMetric value={pct} unit="%" caption={`${score} / ${questions.length} correct`} />
+            {pct >= 80 && (
+              <p style={{ fontFamily: T.serif, fontSize: 17, fontStyle: "italic", color: T.ink2, margin: 0, lineHeight: 1.45 }}>
+                A strong signal for this domain — review missed items below before moving on.
+              </p>
+            )}
           </div>
-          <div style={{ fontSize: 14, color: T.sub, marginTop: 4 }}>{score}/{questions.length} correct</div>
-          {pct >= 80 && <div style={{ marginTop: 10, fontSize: 13, color: T.success, fontWeight: 600 }}>Strong signal for this domain.</div>}
-        </div>
+        </Section>
 
         {/* Review answers */}
         <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 12px", fontFamily: T.serif, fontWeight: 700 }}>Review</h3>
