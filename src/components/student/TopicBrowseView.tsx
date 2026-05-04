@@ -59,7 +59,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
         </p>
 
         {hasCoreContent && (
-          <div style={{ background: T.card, borderRadius: 8, border: `1px solid ${T.line}`, padding: "14px 14px 10px", marginBottom: 16 }}>
+          <div style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px 10px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
               <span style={{ background: T.successBg, color: T.success, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                 Core for this topic
@@ -154,7 +154,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
         )}
 
         {hasOptionalDepth && (
-          <div style={{ background: T.card, borderRadius: 8, border: `1px solid ${T.line}`, padding: "14px 14px 10px", marginBottom: 16 }}>
+          <div style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px 10px", marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
               <span style={{ background: T.infoBg, color: T.info, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                 Optional depth
