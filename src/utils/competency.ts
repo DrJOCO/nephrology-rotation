@@ -1,7 +1,7 @@
 import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { PRE_QUIZ, POST_QUIZ, getQuestionByKey } from "../data/quizzes";
-import type { CompletedItems, QuizQuestion, QuizScore, SrQueue, SubView, WeeklyScores } from "../types";
+import type { CompletedItems, Patient, QuizQuestion, QuizScore, SrQueue, SubView, WeeklyScores } from "../types";
 
 export type CompetencyDomain = "AKI" | "CKD" | "Dialysis" | "Electrolytes" | "Transplant" | "Glomerular";
 export type CompetencyTier = "Novice" | "Developing" | "Proficient";
@@ -27,6 +27,7 @@ export interface CompetencyDomainSummary {
     totalCards: number;
     casesLogged: number;
     caseTarget: number;
+    consultsLogged: number;
     quizAccuracy: number | null;
     quizSampleSize: number;
     referencesReviewed: number;
@@ -64,6 +65,24 @@ interface CompetencyInput {
   currentWeek?: number | null;
   totalWeeks?: number;
   articlesByWeek?: typeof ARTICLES;
+  patients?: Patient[];
+}
+
+function patientTopics(patient: Patient): string[] {
+  if (patient.topics && patient.topics.length > 0) return patient.topics;
+  return patient.topic ? [patient.topic] : [];
+}
+
+function consultsPerDomain(patients: Patient[] | undefined): Record<CompetencyDomain, number> {
+  const counts: Record<CompetencyDomain, number> = {
+    AKI: 0, CKD: 0, Dialysis: 0, Electrolytes: 0, Transplant: 0, Glomerular: 0,
+  };
+  if (!patients || patients.length === 0) return counts;
+  for (const p of patients) {
+    const domains = uniqueDomains(patientTopics(p).map((topic) => mapTopicToDomain(topic)));
+    domains.forEach((domain) => { counts[domain] += 1; });
+  }
+  return counts;
 }
 
 interface DomainDefinition {
@@ -360,7 +379,9 @@ export function buildCompetencySummary({
   currentWeek = null,
   totalWeeks = 4,
   articlesByWeek = ARTICLES,
+  patients = [],
 }: CompetencyInput): CompetencySummary {
+  const consultCounts = consultsPerDomain(patients);
   const articlesByDomain: Record<CompetencyDomain, IndexedArticle[]> = {
     AKI: [],
     CKD: [],
@@ -394,6 +415,7 @@ export function buildCompetencySummary({
 
     const readArticles = articlesByDomain[domain].filter((article) => completedItems.articles?.[article.url]);
     const solvedCases = CASES_BY_DOMAIN[domain].filter((item) => completedItems.cases?.[item.id]);
+    const consultCount = consultCounts[domain];
     const recentQuizWindow = questionEvents[domain].slice(0, 10);
     const quizAccuracy = recentQuizWindow.length > 0
       ? Math.round((recentQuizWindow.filter((event) => event.correct).length / recentQuizWindow.length) * 100)
@@ -497,6 +519,7 @@ export function buildCompetencySummary({
         totalCards: srItems.length,
         casesLogged: solvedCases.length,
         caseTarget: proficientCaseTarget,
+        consultsLogged: consultCount,
         quizAccuracy,
         quizSampleSize: recentQuizWindow.length,
         referencesReviewed: readArticles.length,

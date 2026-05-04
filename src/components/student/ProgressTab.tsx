@@ -132,6 +132,11 @@ export default function ProgressTab({
                         reference={domain.signals.caseTarget > 0 ? "Proficient target" : "No case requirement"}
                       />
                       <LabRow
+                        label="Consults logged"
+                        value={domain.signals.consultsLogged}
+                        reference={domain.signals.consultsLogged > 0 ? "From your patient list" : "No consults yet"}
+                      />
+                      <LabRow
                         label="Optional references"
                         value={`${domain.signals.referencesReviewed}/${domain.signals.referenceCount || 0}`}
                         reference={domain.signals.referenceCount > 0 ? "Reviewed for extra depth" : "No linked references"}

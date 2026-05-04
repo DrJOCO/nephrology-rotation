@@ -1249,7 +1249,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     currentWeek,
     totalWeeks,
     articlesByWeek: articles,
-  }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles]);
+    patients,
+  }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles, patients]);
   const installPromptVariant = useMemo(() => {
     if (typeof window === "undefined" || !nameSet || installPromptDismissed || !joinedAt) return null;
     const joinedMs = new Date(joinedAt).getTime();
@@ -1904,12 +1905,10 @@ function ProfileSheet({
         style={{
           background: T.surface, borderLeft: `1px solid ${T.line}`,
           width: "min(340px, 100%)", height: "100%",
-          padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px))",
-          display: "flex", flexDirection: "column", gap: 14,
-          overflowY: "auto",
+          display: "flex", flexDirection: "column",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 8px", borderBottom: `1px solid ${T.line}`, flexShrink: 0 }}>
           <h2 id="profile-sheet-title" style={{ margin: 0, fontFamily: T.serif, fontSize: 20, fontWeight: 600, color: T.ink, letterSpacing: -0.2 }}>Profile</h2>
           <button
             onClick={onClose} aria-label="Close profile"
@@ -1919,8 +1918,10 @@ function ProfileSheet({
           </button>
         </div>
 
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "12px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+
         {/* Name + rotation code */}
-        <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
+        <div style={{ paddingBottom: 12, borderBottom: `1px solid ${T.line}` }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Student</div>
           <div style={{ fontSize: 16, fontWeight: 600, color: T.ink, marginBottom: 8 }}>{studentName || "—"}</div>
           <div style={{ fontSize: 13, color: T.ink2, lineHeight: 1.5, marginBottom: 12 }}>
@@ -2060,7 +2061,7 @@ function ProfileSheet({
 
         {/* Competency + streak */}
         {(competencyLine || streakDays > 0) && (
-          <div style={{ paddingBottom: 14, borderBottom: `1px solid ${T.line}` }}>
+          <div style={{ paddingBottom: 12, borderBottom: `1px solid ${T.line}` }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Learning Signal</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {competencyLine && (
@@ -2087,14 +2088,16 @@ function ProfileSheet({
           <ThemeToggle variant="sheet" />
         </div>
 
-        {/* Show tutorial */}
-        {onShowTutorial && (
-          <div style={{ paddingTop: 12, borderTop: `1px solid ${T.line}` }}>
+        </div>
+
+        {/* Pinned footer — Tutorial + Sign out always visible */}
+        <div style={{ flexShrink: 0, padding: "12px 20px calc(16px + env(safe-area-inset-bottom, 0px))", borderTop: `1px solid ${T.line}`, display: "flex", flexDirection: "column", gap: 8, background: T.surface }}>
+          {onShowTutorial && (
             <button
               onClick={onShowTutorial}
               style={{
-                width: "100%", minHeight: 44, padding: "12px 16px",
-                background: "transparent", border: `1px solid ${T.line}`, borderRadius: 12,
+                width: "100%", minHeight: 40, padding: "10px 16px",
+                background: "transparent", border: `1px solid ${T.line}`, borderRadius: 10,
                 color: T.ink, fontSize: 14, fontWeight: 600,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 cursor: "pointer",
@@ -2102,16 +2105,12 @@ function ProfileSheet({
             >
               Show tutorial
             </button>
-          </div>
-        )}
-
-        {/* Sign out — sits right below Tutorial */}
-        <div style={{ paddingTop: 12 }}>
+          )}
           <button
             onClick={() => { onClose(); onEndSession(); }}
             style={{
-              width: "100%", minHeight: 44, padding: "12px 16px",
-              background: "transparent", border: `1px solid ${T.line}`, borderRadius: 12,
+              width: "100%", minHeight: 40, padding: "10px 16px",
+              background: "transparent", border: `1px solid ${T.line}`, borderRadius: 10,
               color: T.ink, fontSize: 14, fontWeight: 600,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               cursor: "pointer",
