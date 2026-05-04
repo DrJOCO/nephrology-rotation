@@ -412,13 +412,13 @@ Urine ketones: positive`,
         {
           q: "Calculate the delta-delta ratio. What does it tell you about this patient's acid-base status?",
           choices: [
-            "Delta-delta = 1.0 — pure AGMA",
+            "Delta-delta ≈ 1.0–2.0 — pure AGMA (with caveat below)",
             "Delta-delta > 2.0 — concurrent metabolic alkalosis",
             "Delta-delta < 1.0 — concurrent non-anion gap metabolic acidosis (NAGMA)",
             "Cannot be calculated without baseline bicarbonate"
           ],
           answer: 0,
-          explanation: "Delta AG = corrected AG - 12 = 32 - 12 = 20. Delta HCO3 = 24 - 9 = 15. Delta-delta = 20/15 = 1.33. Using uncorrected AG: 17/15 = 1.13. Both values fall in the 1-2 range, indicating a pure AGMA by the numbers. However, the clinical picture (alcoholism with vomiting) suggests a concurrent metabolic alkalosis from vomiting may be masking an even lower HCO3 — the delta-delta would be >2 if the 'true' HCO3 were lower. Always integrate the math with clinical context."
+          explanation: "Delta AG = corrected AG - 12 = 32 - 12 = 20. Delta HCO3 = 24 - 9 = 15. Delta-delta = 20/15 = 1.33. Using uncorrected AG: 17/15 = 1.13. Both values fall in the 1-2 range, indicating a pure AGMA by the numbers. However, the clinical picture (alcoholism with vomiting) should make you consider a concurrent metabolic alkalosis from vomiting that may be masking an even lower HCO3 — the delta-delta would be >2 if the 'true' HCO3 were lower. Always integrate the math with clinical context."
         },
         {
           q: "What is the osmolal gap, and what does it suggest?",

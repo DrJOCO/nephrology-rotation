@@ -164,7 +164,7 @@ export const QUICK_REFS: QuickRef[] = [
           items: [
             "Target: 4-6 mEq/L rise in 24h (relieves symptoms, avoids ODS)",
             "Hard cap: ≤8 mEq/L in any 24h period — even if target not reached, do not exceed this",
-            "High-risk for ODS (Na ≤105, alcoholism, malnutrition, liver disease, hypokalemia): stay toward the low end (4-6 mEq/L)",
+            "High-risk for ODS (initial Na ≤120, alcoholism, malnutrition, advanced liver disease, hypokalemia, hypophosphatemia): stay toward the low end (4-6 mEq/L); risk is severe at Na ≤105",
             "Symptomatic (seizure/herniation): repeated 100-150 mL boluses of 3% saline over 10 min (up to 3 doses) to drive the initial 4-6 mEq/L rise — not a slow hourly drip",
             "OVERCORRECTION → Osmotic Demyelination Syndrome (ODS): devastating, often irreversible",
           ]},
@@ -227,7 +227,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "E — Electrolytes",
           items: ["Life-threatening or refractory hyperkalemia (often K⁺ ≥6.5 or any dangerous ECG changes, not responding to medical Rx)", "Remember: calcium → insulin/glucose → albuterol ± bicarbonate (if acidotic) → binder/diuretic if appropriate. If K⁺ remains dangerous or the patient is oliguric/anuric → dialysis"] },
         { heading: "I — Ingestions",
-          items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium (level >4, or >2.5 with symptoms)", "Salicylates (severe poisoning with altered mental status)"] },
+          items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium per EXTRIP: HD recommended at level >5.0, or >4.0 with kidney impairment, or any level with seizures/coma/life-threatening dysrhythmia (Decker, CJASN 2015)", "Salicylates (severe poisoning with altered mental status)"] },
         { heading: "O — Overload",
           items: ["Volume overload refractory to diuretics (e.g., flash pulmonary edema in anuric patient)"] },
         { heading: "U — Uremia",

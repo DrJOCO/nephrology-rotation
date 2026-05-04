@@ -101,7 +101,7 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
           "eGFR and creatinine trend",
           "Albuminuria / proteinuria trend",
           "Potassium",
-          "Bicarbonate — review the trend; KDIGO 2024 advises considering treatment to prevent clinically important acidosis, with serum bicarbonate <18 mmol/L in adults as a practical threshold where treatment should be considered",
+          "Bicarbonate — review the trend; KDIGO 2024 suggests oral alkali therapy to maintain serum bicarbonate ≥22 mmol/L in CKD patients with persistent metabolic acidosis (recent RCTs such as BiCARB and UBI tempered the strength of recommendation, but ≥22 remains the target threshold)",
           "Sodium",
           "Hemoglobin / iron studies when relevant",
           "Calcium / phosphorus / PTH / vitamin D when relevant",
