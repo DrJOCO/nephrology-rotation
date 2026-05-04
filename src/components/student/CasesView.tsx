@@ -81,7 +81,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         </div>
 
         {done && (
-          <div style={{ background: T.successBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.success, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.success}` }}>
+          <div style={{ background: T.successBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.success, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.line}` }}>
             <span style={{ fontSize: 16 }}>✓</span>
             <span>Previously completed: {done.score}/{done.total} correct ({Math.round((done.score / done.total) * 100)}%)</span>
           </div>

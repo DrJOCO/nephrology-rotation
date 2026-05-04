@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import store from "../../utils/store";
-import { backBtnStyle } from "./shared";
+import { backBtnStyle, HeadlineMetric, Section } from "./shared";
 import type { QuizQuestion, QuizScore, QuizAnswer } from "../../types";
 
 interface SavedQuizProgress {
@@ -128,43 +128,39 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
   if (finished) {
     const pct = Math.round((correctCount / quizLen) * 100);
     const missed = answers.filter(a => !a.correct);
+    const tone: "success" | "warning" | "danger" = pct >= 80 ? "success" : pct >= 60 ? "warning" : "danger";
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ background: T.card, borderRadius: 16, padding: 28, textAlign: "center", border: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 48, marginBottom: 8 }}>{pct >= 80 ? "\uD83C\uDF89" : pct >= 60 ? "\uD83D\uDC4D" : "\uD83D\uDCD6"}</div>
-          <h2 style={{ color: T.navy, fontFamily: T.serif, margin: "0 0 8px", fontSize: 22, fontWeight: 700 }}>{title} Complete</h2>
-          <div style={{ fontSize: 40, fontWeight: 700, color: pct >= 80 ? T.success : pct >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>
-            {correctCount}/{quizLen}
-          </div>
-          <div style={{ color: T.sub, fontSize: 14, marginBottom: 20 }}>{pct}% correct</div>
+        <Section eyebrow={`${title} complete`} style={{ marginBottom: 18 }}>
+          <HeadlineMetric value={pct} unit="%" caption={`${correctCount} / ${quizLen} correct`} tone={tone} />
+        </Section>
 
-          {/* Missed questions review */}
-          {missed.length > 0 && (
-            <div style={{ textAlign: "left", marginTop: 16 }}>
-              <div style={{ fontWeight: 700, color: T.text, fontSize: 14, marginBottom: 10, fontFamily: T.serif }}>
-                Review Missed Questions ({missed.length}):
-              </div>
-              {missed.map((a, i) => (
-                <div key={i} style={{ background: T.dangerBg, borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: `3px solid ${T.danger}` }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 8, lineHeight: 1.4 }}>{questions[a.qIdx].q}</div>
-                  <div style={{ fontSize: 13, color: T.danger, marginBottom: 4 }}>
-                    {"\u2717"} Your answer: {questions[a.qIdx].choices[a.chosen]}
-                  </div>
-                  <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6 }}>
-                    {"\u2713"} Correct: {questions[a.qIdx].choices[questions[a.qIdx].answer]}
-                  </div>
-                  <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, background: T.card, borderRadius: 6, padding: 10 }}>
-                    {questions[a.qIdx].explanation}
-                  </div>
-                </div>
-              ))}
+        {/* Missed questions review */}
+        {missed.length > 0 && (
+          <div style={{ textAlign: "left", marginTop: 16 }}>
+            <div style={{ fontWeight: 700, color: T.text, fontSize: 14, marginBottom: 10, fontFamily: T.serif }}>
+              Review Missed Questions ({missed.length}):
             </div>
-          )}
+            {missed.map((a, i) => (
+              <div key={i} style={{ background: T.dangerBg, borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: `3px solid ${T.danger}` }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 8, lineHeight: 1.4 }}>{questions[a.qIdx].q}</div>
+                <div style={{ fontSize: 13, color: T.danger, marginBottom: 4 }}>
+                  {"\u2717"} Your answer: {questions[a.qIdx].choices[a.chosen]}
+                </div>
+                <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6 }}>
+                  {"\u2713"} Correct: {questions[a.qIdx].choices[questions[a.qIdx].answer]}
+                </div>
+                <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, background: T.card, borderRadius: 6, padding: 10 }}>
+                  {questions[a.qIdx].explanation}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-          <button onClick={onBack} style={{ marginTop: 20, padding: "14px 40px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
-            Done
-          </button>
-        </div>
+        <button onClick={onBack} style={{ marginTop: 20, padding: "14px 40px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+          Done
+        </button>
       </div>
     );
   }

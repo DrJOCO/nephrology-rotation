@@ -754,7 +754,7 @@ export default function HomeTab({
           return (
             <section style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, padding: "14px 14px", marginBottom: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 999, background: allDone ? T.success : T.brandBg, color: allDone ? T.successInk : T.brand, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 999, background: allDone ? T.success : T.infoBg, color: allDone ? T.successInk : T.info, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
                   {allDone ? "✓" : remaining}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -790,7 +790,7 @@ export default function HomeTab({
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
-                <div style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+                <div style={{ background: T.infoBg, color: T.info, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
                   {startChecklistDone}/{startChecklist.length} done
                 </div>
               </div>

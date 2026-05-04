@@ -332,7 +332,7 @@ export default function GlobalSearchOverlay({
                       {highlightText(item.label, query)}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 7 }}>
-                      <span style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
+                      <span style={{ background: T.infoBg, color: T.info, borderRadius: 999, padding: "4px 8px", fontSize: 13, fontWeight: 700 }}>
                         {item.kind}
                       </span>
                       <span style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>

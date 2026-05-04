@@ -117,7 +117,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
                 <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
                 {suggested.map(t => (
                   <button key={t} type="button" onClick={() => onEditToggleTopic(t)}
-                    style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.brandBg, color: T.brand, border: `1px dashed ${T.brand}` }}>
+                    style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.infoBg, color: T.info, border: `1px dashed ${T.info}` }}>
                     + {t}
                   </button>
                 ))}
@@ -541,7 +541,7 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
                   <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
                   {suggested.map(t => (
                     <button key={t} type="button" onClick={() => toggleTopic(t)}
-                      style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.brandBg, color: T.brand, border: `1px dashed ${T.brand}` }}>
+                      style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.infoBg, color: T.info, border: `1px dashed ${T.info}` }}>
                       + {t}
                     </button>
                   ))}

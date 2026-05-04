@@ -158,7 +158,7 @@ export default function AssessmentResultsView({
             Focus: {summary.recommendedArea.shortLabel}
           </span>
           {summary.strongestAreas[0] && (
-            <span style={{ background: T.brandBg, color: T.brand, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+            <span style={{ background: T.infoBg, color: T.info, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
               Strongest: {summary.strongestAreas[0].shortLabel}
             </span>
           )}

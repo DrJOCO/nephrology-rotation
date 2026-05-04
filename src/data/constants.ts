@@ -1,5 +1,20 @@
 import type { CSSProperties } from "react";
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Color rules (PR 3 — state-color discipline)
+//
+//  T.brand    → primary actions, focus ring, brand wordmark. Nothing else.
+//  T.danger   → destructive confirms, lab values out of range. Nothing else.
+//  T.success  → "completed" / "passing" state ONLY when also showing a checkmark.
+//  T.warning  → pending / attention (admin badges, sync warnings).
+//  T.info     → neutral metadata (counts, score chips, "in progress").
+//  T.ink2     → most icons, most secondary text. Default for chrome.
+//
+//  Rationale: brand red was being used for primary CTAs *and* passing scores
+//  *and* section accents — by the time a real "danger" appeared, red had lost
+//  its meaning. Reserve each state color for one job.
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const T = {
   // Core palette — CSS custom properties for dark mode support
   navy: "var(--c-navy)", deep: "var(--c-deep)", med: "var(--c-med)",
