@@ -5,7 +5,7 @@ import { useIsMobile } from "../../utils/helpers";
 import { ACHIEVEMENTS, getLevel } from "../../utils/gamification";
 import type { Gamification, Patient, QuizScore, SubView, WeeklyScores } from "../../types";
 import type { CompetencyDomainSummary, CompetencySummary } from "../../utils/competency";
-import { LabRow, Section } from "./shared";
+import { Button, InfoBar, LabRow, Section } from "./shared";
 
 const tierStyles: Record<CompetencyDomainSummary["tier"], { bg: string; border: string; text: string }> = {
   Novice: { bg: T.grayBg, border: T.line, text: T.muted },
@@ -143,20 +143,22 @@ export default function ProgressTab({
                       />
                     </div>
 
-                    <div style={{ background: T.ice, borderRadius: 14, padding: "12px 13px", display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4 }}>Recommended next action</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{domain.action.label}</div>
-                        <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 4 }}>{domain.action.detail}</div>
-                      </div>
-                      <button
-                        onClick={() => navigate(domain.action.tab, domain.action.subView)}
-                        style={{ background: T.brand, color: T.brandInk, border: "none", borderRadius: 12, padding: "11px 13px", cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
-                      >
-                        Open
-                        <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
-                      </button>
-                    </div>
+                    <InfoBar
+                      label="Recommended next action"
+                      title={domain.action.label}
+                      tone="brand"
+                      action={(
+                        <Button
+                          size="sm"
+                          onClick={() => navigate(domain.action.tab, domain.action.subView)}
+                        >
+                          Open
+                          <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
+                        </Button>
+                      )}
+                    >
+                      {domain.action.detail}
+                    </InfoBar>
                   </div>
                 )}
               </div>

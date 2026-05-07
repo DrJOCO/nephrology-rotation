@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Activity, AlertTriangle, Calculator, Check, Clipboard, Droplet, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
+import { Activity, AlertTriangle, Calculator, Clipboard, Droplet, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import {
@@ -13,7 +13,7 @@ import {
   type GnToolInputs,
   type GnUaGrade,
 } from "../../utils/gnTool";
-import { EduDisclaimer, inputLabel, inputStyle, Section } from "./shared";
+import { Chip, EduDisclaimer, inputLabel, inputStyle, Section } from "./shared";
 
 type ArrayInputKey = "selectedPositive" | "selectedSentNegative" | "selectedHistory";
 
@@ -174,40 +174,13 @@ const sectionTitleStyle: CSSProperties = {
   marginBottom: 10,
 };
 
-function ToggleChip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        minHeight: 34,
-        padding: "7px 10px",
-        borderRadius: 8,
-        border: `1.5px solid ${selected ? T.ink : T.line}`,
-        background: selected ? T.ink : T.surface2,
-        color: selected ? T.bg : T.text,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        textAlign: "left",
-      }}
-    >
-      {selected && <Check size={13} strokeWidth={2.5} aria-hidden="true" />}
-      <span>{children}</span>
-    </button>
-  );
-}
-
 function OptionGrid({ options, selectedIds, onToggle }: { options: Option[]; selectedIds: string[]; onToggle: (id: string) => void }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
       {options.map((option) => (
-        <ToggleChip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
+        <Chip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
           {option.label}
-        </ToggleChip>
+        </Chip>
       ))}
     </div>
   );
@@ -230,9 +203,9 @@ function SegmentedGroup<TVal extends string>({ options, value, onChange }: { opt
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
       {options.map((option) => (
-        <ToggleChip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
+        <Chip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
           {option.label}
-        </ToggleChip>
+        </Chip>
       ))}
     </div>
   );

@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Activity, Calculator, Check, Clipboard, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
+import { Activity, Calculator, Clipboard, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import {
@@ -13,7 +13,7 @@ import {
   type AkiRbcStatus,
   type AkiWbcStatus,
 } from "../../utils/akiTool";
-import { EduDisclaimer, HeadlineMetric, inputLabel, inputStyle, Section } from "./shared";
+import { Chip, EduDisclaimer, HeadlineMetric, inputLabel, inputStyle, Section } from "./shared";
 
 type ArrayInputKey = "selectedHistory" | "selectedContext" | "selectedNephrotoxins" | "selectedSediment";
 
@@ -169,40 +169,13 @@ const sectionTitleStyle: CSSProperties = {
   marginBottom: 10,
 };
 
-function ToggleChip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        minHeight: 34,
-        padding: "7px 10px",
-        borderRadius: 8,
-        border: `1.5px solid ${selected ? T.ink : T.line}`,
-        background: selected ? T.ink : T.surface2,
-        color: selected ? T.bg : T.text,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        textAlign: "left",
-      }}
-    >
-      {selected && <Check size={13} strokeWidth={2.5} aria-hidden="true" />}
-      <span>{children}</span>
-    </button>
-  );
-}
-
 function OptionGrid({ options, selectedIds, onToggle }: { options: Option[]; selectedIds: string[]; onToggle: (id: string) => void }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
       {options.map((option) => (
-        <ToggleChip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
+        <Chip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
           {option.label}
-        </ToggleChip>
+        </Chip>
       ))}
     </div>
   );
@@ -225,9 +198,9 @@ function SegmentedGroup<T extends string>({ options, value, onChange }: { option
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
       {options.map((option) => (
-        <ToggleChip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
+        <Chip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
           {option.label}
-        </ToggleChip>
+        </Chip>
       ))}
     </div>
   );
@@ -462,9 +435,9 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
               );
             })()}
             <div>
-              <ToggleChip selected={inputs.krtInitiated} onClick={() => updateField("krtInitiated", !inputs.krtInitiated)}>
+              <Chip selected={inputs.krtInitiated} onClick={() => updateField("krtInitiated", !inputs.krtInitiated)}>
                 KRT / dialysis already initiated for this AKI
-              </ToggleChip>
+              </Chip>
               <div style={{ color: T.muted, fontSize: 12, marginTop: 6, lineHeight: 1.5 }}>
                 Per KDIGO, initiation of kidney replacement therapy classifies AKI as stage 3 regardless of Cr or UOP.
               </div>

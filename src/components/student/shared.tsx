@@ -310,6 +310,7 @@ export function GuideShell({
   teachingTitle = "Teaching Points",
   discussionQuestions = [],
   discussionTitle = "Discussion Questions",
+  afterSections,
   footer,
   style,
 }: {
@@ -328,6 +329,7 @@ export function GuideShell({
   teachingTitle?: ReactNode;
   discussionQuestions?: ReactNode[];
   discussionTitle?: ReactNode;
+  afterSections?: ReactNode;
   footer?: ReactNode;
   style?: CSSProperties;
 }) {
@@ -383,6 +385,7 @@ export function GuideShell({
         );
       })}
 
+      {afterSections}
       <NumberedGuideList title={teachingTitle} items={teachingPoints} />
       <NumberedGuideList title={discussionTitle} items={discussionQuestions} />
       {footer}
