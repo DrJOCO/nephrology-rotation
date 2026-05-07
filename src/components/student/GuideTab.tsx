@@ -140,7 +140,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Hyponatremia Tool</div>
-              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Tonicity \u2192 impaired water excretion \u2192 volume status; correction caps, ODS risk, Adrogue\u2013Madias</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Tonicity → impaired water excretion → volume status; correction caps, ODS risk, Adrogué–Madias</div>
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
           </button>
@@ -152,7 +152,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Glomerular Disease Tool</div>
-              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Syndrome \u00D7 complement \u2192 ranked GN differential, what positive serologies mean, and which to send next</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Syndrome × complement → ranked GN differential, what positive serologies mean, and which to send next</div>
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
           </button>

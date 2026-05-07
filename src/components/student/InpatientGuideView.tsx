@@ -86,18 +86,6 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
         {bulletList(guide.beforeRounds, T.success)}
       </div>
 
-      {/* 30-second summary */}
-      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 10, border: `1px solid ${T.brand}40` }}>
-        <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 6 }}>The 30-Second Consult Summary</div>
-        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.7, fontStyle: "italic" }}>{guide.thirtySecondSummary}</div>
-      </div>
-
-      {/* How to present */}
-      <div style={{ background: T.card, borderRadius: 12, padding: 16, marginBottom: 14, border: `1px solid ${T.brand}40` }}>
-        <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 6 }}>How to Present This Consult</div>
-        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.7, fontStyle: "italic" }}>{guide.howToPresent}</div>
-      </div>
-
       {/* Accordion sections */}
       {accordion("differential", "Top Differential Buckets", guide.topDifferentialBuckets, T.brand)}
       {accordion("redFlags", "Red Flags / Call Urgently", guide.redFlags, T.danger)}

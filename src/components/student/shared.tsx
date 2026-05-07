@@ -1,4 +1,5 @@
-import { CSSProperties, ReactNode } from "react";
+import { Check } from "lucide-react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { T } from "../../data/constants";
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -21,6 +22,373 @@ export const inputStyle: CSSProperties = {
   background: T.surface2,
   color: T.text,
 };
+
+type EditorialTone = "neutral" | "ink" | "brand" | "success" | "warning" | "danger" | "info";
+
+function toneColor(tone: EditorialTone): string {
+  return {
+    neutral: T.ink2,
+    ink: T.ink,
+    brand: T.brand,
+    success: T.success,
+    warning: T.warning,
+    danger: T.danger,
+    info: T.info,
+  }[tone];
+}
+
+function toneBg(tone: EditorialTone): string {
+  return {
+    neutral: T.surface2,
+    ink: T.surface2,
+    brand: T.brandBg,
+    success: T.successBg,
+    warning: T.warningBg,
+    danger: T.dangerBg,
+    info: T.infoBg,
+  }[tone];
+}
+
+function solidToneInk(tone: EditorialTone): string {
+  return {
+    neutral: T.ink,
+    ink: T.bg,
+    brand: T.brandInk,
+    success: T.successInk,
+    warning: T.warningInk,
+    danger: T.dangerInk,
+    info: T.infoInk,
+  }[tone];
+}
+
+export function SectionTitle({
+  eyebrow,
+  title,
+  description,
+  action,
+  level = 2,
+  compact = false,
+  style,
+}: {
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
+  action?: ReactNode;
+  level?: 2 | 3;
+  compact?: boolean;
+  style?: CSSProperties;
+}) {
+  const Heading = (level === 2 ? "h2" : "h3") as "h2" | "h3";
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: compact ? 10 : 14, ...style }}>
+      <div style={{ minWidth: 0 }}>
+        {eyebrow && (
+          <div style={{ fontFamily: T.mono, fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0, marginBottom: 6 }}>
+            {eyebrow}
+          </div>
+        )}
+        <Heading style={{ color: T.ink, fontSize: level === 2 ? (compact ? 20 : 22) : 15, margin: 0, fontFamily: T.serif, fontWeight: level === 2 ? 600 : 700, lineHeight: 1.15 }}>
+          {title}
+        </Heading>
+        {description && (
+          <p style={{ color: T.ink2, fontSize: 13, margin: "6px 0 0", lineHeight: 1.5, maxWidth: 760 }}>
+            {description}
+          </p>
+        )}
+      </div>
+      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+    </div>
+  );
+}
+
+export function Button({
+  children,
+  tone = "brand",
+  variant = "solid",
+  size = "md",
+  style,
+  type = "button",
+  ...buttonProps
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  tone?: Extract<EditorialTone, "neutral" | "ink" | "brand" | "success" | "warning" | "danger" | "info">;
+  variant?: "solid" | "outline" | "ghost";
+  size?: "sm" | "md";
+}) {
+  const color = toneColor(tone);
+  const solid = variant === "solid";
+  const outline = variant === "outline";
+  return (
+    <button
+      type={type}
+      style={{
+        minHeight: size === "sm" ? 34 : 40,
+        padding: size === "sm" ? "7px 10px" : "10px 13px",
+        borderRadius: 8,
+        border: outline ? `1px solid ${color}` : "1px solid transparent",
+        background: solid ? color : "transparent",
+        color: solid ? solidToneInk(tone) : color,
+        cursor: buttonProps.disabled ? "not-allowed" : "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        fontSize: size === "sm" ? 13 : 14,
+        fontWeight: 700,
+        fontFamily: T.sans,
+        opacity: buttonProps.disabled ? 0.55 : 1,
+        ...style,
+      }}
+      {...buttonProps}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function InfoBar({
+  label,
+  title,
+  children,
+  action,
+  tone = "info",
+  style,
+}: {
+  label?: ReactNode;
+  title?: ReactNode;
+  children?: ReactNode;
+  action?: ReactNode;
+  tone?: Exclude<EditorialTone, "ink">;
+  style?: CSSProperties;
+}) {
+  const color = toneColor(tone);
+  return (
+    <div style={{ background: toneBg(tone), borderRadius: 8, padding: "12px 13px", borderLeft: `4px solid ${color}`, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", ...style }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        {label && (
+          <div style={{ fontSize: 12, fontWeight: 700, color, marginBottom: title || children ? 4 : 0, fontFamily: T.mono, textTransform: "uppercase", letterSpacing: 0 }}>
+            {label}
+          </div>
+        )}
+        {title && <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>{title}</div>}
+        {children && <div style={{ fontSize: 13, color: T.ink2, lineHeight: 1.5, marginTop: title ? 4 : 0 }}>{children}</div>}
+      </div>
+      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+    </div>
+  );
+}
+
+export function Chip({
+  children,
+  selected = false,
+  onClick,
+  tone = "ink",
+  showCheck = true,
+  style,
+}: {
+  children: ReactNode;
+  selected?: boolean;
+  onClick?: () => void;
+  tone?: Extract<EditorialTone, "ink" | "brand" | "success" | "warning" | "danger" | "info">;
+  showCheck?: boolean;
+  style?: CSSProperties;
+}) {
+  const color = toneColor(tone);
+  const chipStyle: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    minHeight: 34,
+    padding: "7px 10px",
+    borderRadius: 8,
+    border: `1.5px solid ${selected ? color : T.line}`,
+    background: selected ? color : T.surface2,
+    color: selected ? solidToneInk(tone) : T.text,
+    fontSize: 13,
+    fontWeight: 600,
+    fontFamily: T.sans,
+    textAlign: "left",
+    ...style,
+  };
+  const content = (
+    <>
+      {selected && showCheck && <Check size={13} strokeWidth={2.5} aria-hidden="true" />}
+      <span>{children}</span>
+    </>
+  );
+
+  if (!onClick) {
+    return <span style={chipStyle}>{content}</span>;
+  }
+
+  return (
+    <button type="button" onClick={onClick} aria-pressed={selected} style={{ cursor: "pointer", ...chipStyle }}>
+      {content}
+    </button>
+  );
+}
+
+export function ToolShell({
+  title,
+  description,
+  eyebrow,
+  onBack,
+  backLabel = "Tools",
+  action,
+  info,
+  children,
+  footer,
+  style,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  eyebrow?: ReactNode;
+  onBack?: () => void;
+  backLabel?: ReactNode;
+  action?: ReactNode;
+  info?: ReactNode;
+  children?: ReactNode;
+  footer?: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div style={{ padding: 16, ...style }}>
+      {onBack && <button onClick={onBack} style={backBtnStyle}>{"\u2190"} {backLabel}</button>}
+      <SectionTitle eyebrow={eyebrow} title={title} description={description} action={action} />
+      {info && <div style={{ marginBottom: 14 }}>{info}</div>}
+      {children}
+      {footer}
+    </div>
+  );
+}
+
+export interface GuideShellSection {
+  id?: string | number;
+  heading: ReactNode;
+  items: ReactNode[];
+  tone?: Exclude<EditorialTone, "neutral" | "ink">;
+  countLabel?: ReactNode;
+  renderItem?: (item: ReactNode, index: number) => ReactNode;
+}
+
+function GuideBullet({ children, color }: { children: ReactNode; color: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+      <span style={{ color, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
+      <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word" }}>{children}</div>
+    </div>
+  );
+}
+
+function NumberedGuideList({ title, items }: { title: ReactNode; items: ReactNode[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <SectionTitle title={title} level={3} compact />
+      {items.map((item, i) => (
+        <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, background: T.card, borderRadius: 8, padding: "12px 14px", border: `1px solid ${T.line}` }}>
+          <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{i + 1}.</span>
+          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{item}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function GuideShell({
+  title,
+  subtitle,
+  icon,
+  meta,
+  onBack,
+  backLabel = "Back",
+  headerAction,
+  children,
+  sections = [],
+  openSection,
+  onToggleSection,
+  teachingPoints = [],
+  teachingTitle = "Teaching Points",
+  discussionQuestions = [],
+  discussionTitle = "Discussion Questions",
+  footer,
+  style,
+}: {
+  title: ReactNode;
+  subtitle?: ReactNode;
+  icon?: ReactNode;
+  meta?: ReactNode;
+  onBack?: () => void;
+  backLabel?: ReactNode;
+  headerAction?: ReactNode;
+  children?: ReactNode;
+  sections?: GuideShellSection[];
+  openSection?: string | number | null;
+  onToggleSection?: (sectionId: string | number) => void;
+  teachingPoints?: ReactNode[];
+  teachingTitle?: ReactNode;
+  discussionQuestions?: ReactNode[];
+  discussionTitle?: ReactNode;
+  footer?: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div style={{ padding: 16, ...style }}>
+      {onBack && <button onClick={onBack} style={backBtnStyle}>{"\u2190"} {backLabel}</button>}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: meta ? 10 : 14 }}>
+        {icon && (
+          <div style={{ width: 52, height: 52, borderRadius: 8, background: T.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>
+            {icon}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 style={{ color: T.ink, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.2 }}>{title}</h2>
+          {subtitle && <div style={{ fontSize: 13, color: T.ink2, marginTop: 2 }}>{subtitle}</div>}
+        </div>
+        {headerAction && <div style={{ flexShrink: 0 }}>{headerAction}</div>}
+      </div>
+
+      {meta && <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>{meta}</div>}
+      {children}
+
+      {sections.map((section, index) => {
+        const sectionId = section.id ?? index;
+        const isOpen = openSection === sectionId;
+        const color = toneColor(section.tone ?? "brand");
+        return (
+          <div key={sectionId} style={{ marginBottom: 10, background: T.card, borderRadius: 8, overflow: "hidden", border: `1px solid ${isOpen ? color : T.line}`, transition: "border 0.2s" }}>
+            <button
+              type="button"
+              onClick={() => onToggleSection?.(sectionId)}
+              style={{ width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: onToggleSection ? "pointer" : "default", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>{section.heading}</div>
+                <div style={{ fontSize: 13, color: T.muted, marginTop: 1 }}>{section.countLabel ?? `${section.items.length} ${section.items.length === 1 ? "item" : "items"}`}</div>
+              </div>
+              {onToggleSection && <span style={{ color: T.muted, fontSize: 14, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>}
+            </button>
+
+            {(isOpen || !onToggleSection) && (
+              <div style={{ padding: "0 16px 16px" }}>
+                <div style={{ height: 1, background: T.line, marginBottom: 12 }} />
+                {section.items.map((item, itemIndex) => (
+                  <div key={itemIndex}>
+                    {section.renderItem ? section.renderItem(item, itemIndex) : <GuideBullet color={color}>{item}</GuideBullet>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      <NumberedGuideList title={teachingTitle} items={teachingPoints} />
+      <NumberedGuideList title={discussionTitle} items={discussionQuestions} />
+      {footer}
+    </div>
+  );
+}
 
 export function Section({ eyebrow, title, description, action, children, style }: { eyebrow?: ReactNode; title?: ReactNode; description?: ReactNode; action?: ReactNode; children?: ReactNode; style?: CSSProperties }) {
   return (
