@@ -237,7 +237,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Rotation Workflow</div>
         <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
-          Use these for service logistics: pre-rounding, presenting, writing notes, and daily follow-up.
+          Use these for the new-consult workup, presentation, and daily follow-up.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
           {ROTATION_GUIDE_IDS.map(id => {

@@ -11,7 +11,7 @@ interface Props {
 const isTemplate = (item: string) => item.startsWith("\"") && item.endsWith("\"");
 
 export default function RotationGuideView({ guideId, onBack }: Props) {
-  const [openSection, setOpenSection] = useState(0);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set());
   const guide = ROTATION_GUIDES[guideId];
 
   if (!guide) {
@@ -28,13 +28,27 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
       <GuideBody>
         <InfoBar label="Why This Matters" tone="brand">{guide.whyItMatters}</InfoBar>
         <InfoBar label="Teaching Pearl" tone="warning">{guide.teachingPearl}</InfoBar>
-        {guide.sections.map((section, si) => (
-          <GuideAccordion key={section.heading} title={section.heading} count={`${section.items.length} ${section.items.length === 1 ? "item" : "items"}`} open={openSection === si} onToggle={() => setOpenSection(openSection === si ? -1 : si)}>
-            <GuideList>
-              {section.items.map((item, ii) => <GuideItem key={`${ii}-${item}`} template={isTemplate(item)}>{item}</GuideItem>)}
-            </GuideList>
-          </GuideAccordion>
-        ))}
+        {guide.sections.map((section) => {
+          const isOpen = !collapsedSections.has(section.heading);
+          return (
+            <GuideAccordion
+              key={section.heading}
+              title={section.heading}
+              count={`${section.items.length} ${section.items.length === 1 ? "item" : "items"}`}
+              open={isOpen}
+              onToggle={() => setCollapsedSections((prev) => {
+                const next = new Set(prev);
+                if (next.has(section.heading)) next.delete(section.heading);
+                else next.add(section.heading);
+                return next;
+              })}
+            >
+              <GuideList>
+                {section.items.map((item, ii) => <GuideItem key={`${ii}-${item}`} template={isTemplate(item)}>{item}</GuideItem>)}
+              </GuideList>
+            </GuideAccordion>
+          );
+        })}
         <InfoBar label="Common Mistakes" tone="danger">
           <GuideList>{guide.commonMistakes.map((item, i) => <GuideItem key={`${i}-${item}`} tone="danger">{item}</GuideItem>)}</GuideList>
         </InfoBar>

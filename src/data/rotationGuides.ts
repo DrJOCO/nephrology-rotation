@@ -1,10 +1,9 @@
-// Rotation workflow guides: service logistics, presentations, notes, and follow-up.
-// Topic-specific clinical prep belongs in inpatient consult guides and weekly study sheets.
+// Rotation workflow guides: new-consult workup, presentation, and daily follow-up.
+// Topic-specific clinical details belong in inpatient consult guides and quick references.
 
 export type RotationGuideId =
-  | "howToPresentConsult"
-  | "preRoundingChecklist"
-  | "assessmentPlanWriting"
+  | "initialConsultWorkup"
+  | "initialConsultPresentation"
   | "consultFollowUp";
 
 export interface RotationGuideTemplate {
@@ -20,189 +19,178 @@ export interface RotationGuideTemplate {
 }
 
 export const ROTATION_GUIDE_IDS: RotationGuideId[] = [
-  "howToPresentConsult",
-  "preRoundingChecklist",
-  "assessmentPlanWriting",
+  "initialConsultWorkup",
+  "initialConsultPresentation",
   "consultFollowUp",
 ];
 
 export const ROTATION_GUIDES: Record<RotationGuideId, RotationGuideTemplate> = {
-  howToPresentConsult: {
-    id: "howToPresentConsult",
-    icon: "\uD83C\uDFA4",
-    title: "How to Present a Nephrology Consult",
-    subtitle: "A simple format for sounding organized on rounds",
+  initialConsultWorkup: {
+    id: "initialConsultWorkup",
+    icon: "\uD83D\uDD0D",
+    title: "Initial Consult: Workup",
+    subtitle: "What to gather before you see a new nephrology consult",
     whyItMatters:
-      "Students often know facts but do not know how to package them. A good nephrology presentation is brief, trend-based, and centered on the consult question.",
+      "The best consult presentations start before the bedside. A careful nephrology workup gives you the kidney trajectory, the likely physiology, and the urgent decisions before you start talking.",
     teachingPearl:
-      "Do not present isolated numbers. Present trajectory, physiology, and the decision point.",
+      "Do not anchor on today's creatinine alone. Find the baseline, the trend, the urine, the hemodynamics, and the exposures.",
     sections: [
       {
-        heading: "Before Presenting, Gather This",
+        heading: "Before You See the Patient - Kidney & Lab Data",
         items: [
-          "Consult question",
-          "Baseline kidney function if available",
-          "Current creatinine and trend",
-          "Urine output",
-          "BP / hemodynamics",
-          "Current IV fluids / diuretics / pressors",
-          "UA and urine microscopy if relevant",
-          "Major electrolytes",
-          "Imaging if relevant",
-          "Whether dialysis is being considered",
-          "What changed overnight",
+          "Consult question: why was nephrology called, and what decision does the team need?",
+          "Baseline creatinine/eGFR from prior records, outside labs, dialysis records, or clinic notes.",
+          "Current creatinine trend: baseline -> admission -> peak -> current, with timing.",
+          "Urine output: last shift, last 24 hours, Foley status, and whether oliguria is real.",
+          "BP and hemodynamics: hypotension, shock, pressors, sepsis, bleeding, heart failure, or cirrhosis physiology.",
+          "Electrolytes and acid-base: potassium, sodium, bicarbonate, chloride, calcium, phosphorus, magnesium, anion gap.",
+          "UA and urine studies: dipstick, microscopy, urine Na/Cr/urea/osm, protein quantification if relevant.",
+          "Imaging: renal ultrasound/CT, obstruction clues, kidney size, hydronephrosis, and recent iodinated contrast exposure.",
         ],
       },
       {
-        heading: "30-Second Consult Format",
+        heading: "Before You See the Patient - Patient History",
         items: [
-          "\"This is a __-year-old with __ who was consulted for __. Baseline kidney function is __, current creatinine is __, urine output is __, and the main issue appears to be __. Urgent concerns are __, and the main question today is __.\"",
+          "Outpatient nephrologist, known CKD stage, prior AKI episodes, proteinuria/hematuria history, and prior biopsy if any.",
+          "MAR review for nephrotoxins: NSAIDs, ACEi/ARB, diuretics, contrast, aminoglycosides, vancomycin, amphotericin, PPIs, chemotherapy, calcineurin inhibitors. Open Quick Reference -> Nephrotoxic Drugs if you need a checklist.",
+          "PMH, PSH, home medications, allergies, and family history relevant to kidney disease.",
+          "NSAID history: prescription, OTC ibuprofen/naproxen, combination pain products, and duration.",
+          "Volume history: poor intake, vomiting/diarrhea, bleeding, diuretics, edema, dyspnea, weight change, IV fluids, or resuscitation.",
+          "Recent infections, antibiotics, fevers, rashes, procedures, hospitalizations, and immune triggers.",
         ],
       },
       {
-        heading: "Full Consult Presentation Format",
+        heading: "For Dialysis Patients, Also Gather",
         items: [
-          "1. Why we were consulted",
-          "2. Baseline kidney status",
-          "3. Current trajectory",
-          "4. Urine output and hemodynamics",
-          "5. Relevant urine / lab / imaging data",
-          "6. Differential buckets",
-          "7. Urgent problems",
-          "8. What you think needs to happen today",
+          "Dialysis clinic and outpatient nephrologist.",
+          "Modality and vintage: HD, PD, home HD, CRRT history, and how long they have been dialysis-dependent.",
+          "Access exam prep: AVF/AVG location, tunneled catheter site, PD catheter site, and reported access problems.",
+          "Estimated dry weight, usual ultrafiltration, interdialytic weight gain, and inpatient weight trend.",
+          "Last dialysis session: date, duration, UF, complications, and whether the treatment was completed.",
+          "Recent dialysis issues: hypotension, cramps, hyperkalemia, missed treatments, infection, access alarms, or clotting.",
+          "Residual urine output and whether they still use diuretics.",
+        ],
+      },
+      {
+        heading: "The Focused Nephrology Exam",
+        items: [
+          "Vitals: BP trend, MAP, fever, HR, oxygen requirement, and orthostatics if relevant.",
+          "JVD: flat, normal, elevated, or difficult to assess.",
+          "Lungs: crackles, wheeze, work of breathing, and oxygen device.",
+          "Heart: rhythm, murmurs, rubs, and perfusion.",
+          "Abdomen: distension, tenderness, ascites, transplant kidney tenderness, bladder distension.",
+          "Edema: location, severity, symmetry, sacral edema, and interval change.",
+          "Skin/neuro: rash, livedo, purpura, asterixis, confusion, myoclonus, or uremic findings.",
+          "Foley: present or absent, urine color, sediment, clots, and whether the tubing/bag supports recorded UOP.",
+          "AVF/AVG: location, thrill, bruit, aneurysm, edema, erythema, bleeding, or cannulation issues.",
+          "Tunneled HD catheter: site, dressing, erythema, drainage, tenderness, and line position concerns.",
+          "PD catheter: exit site, tunnel tenderness, drainage, cuff extrusion, and abdominal tenderness.",
+          "Volume synthesis: hypovolemic, euvolemic, overloaded, or mixed/uncertain based on the whole exam.",
+        ],
+      },
+      {
+        heading: "How to Read the UA and Urine Lytes",
+        items: [
+          "Specific gravity: concentrated urine supports avid water retention; very dilute urine may suggest impaired concentrating or excess water intake.",
+          "pH: alkaline urine can fit distal RTA, urease-producing infection, or old specimen; acidic urine is expected in many metabolic acidoses.",
+          "Dipstick blood: heme-positive with few/no RBCs suggests myoglobin or hemoglobin; heme-positive with RBCs suggests true hematuria.",
+          "Dipstick protein: albumin-heavy signal; quantify with UPCR/UACR when proteinuria matters.",
+          "RBC casts: nephritic/glomerular injury until proven otherwise; cross-check the Urine Cast Guide and Urine Sediment Atlas.",
+          "Muddy brown granular casts: classic ATN clue, especially with ischemia, sepsis, contrast, pigment, or nephrotoxins.",
+          "WBC casts: pyelonephritis, AIN, lupus nephritis, transplant rejection; match against symptoms and drug exposures.",
+          "Urine eosinophils: can support AIN but are neither sensitive nor specific; do not overcall them alone.",
+          "Hyaline casts: can be seen with low-flow/pre-renal states, diuretics, exercise, or concentrated urine.",
+          "Crystals: think medications, tumor lysis, stones, ethylene glycol, uric acid, or acyclovir depending on shape and context.",
+          "Urine sodium: low values can support sodium avidity, but interpret with diuretics, CKD, ATN evolution, and volume context.",
+          "FENa: useful in selected oliguric AKI; <1% often supports pre-renal physiology and >2% supports ATN, but it is unreliable on diuretics.",
+          "FEUrea: often preferred when diuretics are on board; use the FEUrea calculator and still interpret in clinical context.",
+          "Urine osmolality: high suggests ADH is active; low suggests dilute urine and helps with hyponatremia/water handling.",
+          "Cross-reference calculators: Quick Reference -> FENa Calculator and FEUrea Calculator.",
+          "Cross-reference microscopy: Quick Reference -> Urine Cast Guide and Urine Sediment Atlas.",
         ],
       },
       {
         heading: "Use the Topic Guides for the Clinical Details",
         items: [
           "Open Inpatient Consult Guides for AKI, hyperkalemia, hyponatremia, dialysis, GN, HRS, contrast AKI, rhabdo, cardiorenal syndrome, DKD, or PD peritonitis.",
-          "Use this rotation guide for the structure; use the consult guide for the disease-specific content.",
+          "Use this workup guide to gather the raw material, then use Initial Consult: Presentation to turn it into a clean verbal consult.",
         ],
       },
     ],
     commonMistakes: [
-      "Starting with a long PMH instead of the consult question",
-      "Not knowing baseline kidney function",
-      "Not mentioning urine output",
-      "Not saying what changed",
-      "Listing labs without interpretation",
-      "Giving a diagnosis without discussing urgency",
+      "Skipping baseline creatinine and accidentally calling chronic CKD an acute change.",
+      "Missing the MAR/nephrotoxin review, especially NSAIDs, contrast, antibiotics, PPIs, ACEi/ARB, and diuretics.",
+      "Calculating or quoting FENa after diuretics without saying it may be unreliable.",
+      "Not reading the sediment yourself, or not asking what microscopy actually showed.",
+      "Accepting I/O totals without checking Foley status, urine color, or whether the patient is making unmeasured urine.",
+      "Forgetting access and last-treatment details in dialysis patients.",
     ],
     teachingPoints: [
-      "Start with the consult question.",
-      "Say the trend early.",
-      "End with the decision point.",
+      "Baseline, trend, urine output, and hemodynamics are the spine of the consult.",
+      "The urine sediment can move the differential faster than another copied lab list.",
+      "Medication exposure is part of the kidney exam.",
     ],
   },
 
-  preRoundingChecklist: {
-    id: "preRoundingChecklist",
-    icon: "\u2705",
-    title: "Pre-Rounding Checklist",
-    subtitle: "What to look up before rounds so your presentation is useful",
+  initialConsultPresentation: {
+    id: "initialConsultPresentation",
+    icon: "\uD83C\uDFA4",
+    title: "Initial Consult: Presentation",
+    subtitle: "How to present a new nephrology consult clearly",
     whyItMatters:
-      "Nephrology pre-rounding is data-heavy. Missing one key piece like urine output, dialysis timing, or sodium trend can weaken the whole assessment.",
-    teachingPearl: "Before rounds, know what changed overnight.",
-    sections: [
-      {
-        heading: "Universal Pre-Rounding Checklist",
-        items: [
-          "Overnight events",
-          "Vitals and oxygen requirement",
-          "I/Os and urine output",
-          "Weight",
-          "Creatinine / BUN",
-          "Potassium / bicarbonate / sodium / phosphorus",
-          "CBC if relevant",
-          "IV fluids / diuretics / pressors",
-          "New imaging",
-          "Microbiology / cultures if relevant",
-          "Procedures planned or done",
-          "What the primary team is worried about",
-        ],
-      },
-      {
-        heading: "Daily Rounds Questions",
-        items: [
-          "What changed overnight?",
-          "Is the kidney issue improving, worsening, or unchanged?",
-          "Is there an urgent electrolyte, acid-base, volume, or dialysis issue?",
-          "What decision does the team need from nephrology today?",
-          "Which study sheet or inpatient consult guide matches this patient's issue?",
-        ],
-      },
-      {
-        heading: "When to Open an Inpatient Consult Guide",
-        items: [
-          "Use AKI for creatinine rise, oliguria, ATN/prerenal/obstruction framing, or dialysis-indication questions.",
-          "Use Hyperkalemia or Hyponatremia for electrolyte emergencies and monitoring.",
-          "Use Dialysis for chronic HD patients, missed treatments, access status, or urgent dialysis planning.",
-          "Use GN when urine sediment, hematuria/proteinuria, or biopsy discussion is central.",
-        ],
-      },
-    ],
-    commonMistakes: [
-      "Not checking I/Os",
-      "Not checking trends",
-      "Not knowing whether the consult question has changed",
-      "Not knowing whether the patient got dialysis overnight",
-    ],
-    teachingPoints: [
-      "Trends matter more than single values.",
-      "Overnight interventions change interpretation.",
-      "Your goal is to answer: what is different today?",
-    ],
-  },
-
-  assessmentPlanWriting: {
-    id: "assessmentPlanWriting",
-    icon: "\u270D\uFE0F",
-    title: "How to Write the Assessment and Plan",
-    subtitle: "Turn data into a concise, useful nephrology note",
-    whyItMatters:
-      "Students often list data but do not synthesize it. The assessment should explain what the kidney problem is, why you think that, and what needs to happen next.",
+      "A strong presentation is not a data dump. It tells the team why nephrology was called, what the kidney problem is doing, what physiology explains it, and what has to happen today.",
     teachingPearl:
-      "A good nephrology A/P states the problem, the trajectory, the leading mechanism, urgent complications, and the plan for today.",
+      "Lead with the consult question, then give the kidney trajectory and the decision point.",
     sections: [
       {
-        heading: "General Formula",
+        heading: "30-Second Consult Format",
         items: [
-          "1. Name the problem",
-          "2. Give the trajectory",
-          "3. Give the leading mechanism / differential",
-          "4. State urgent complications",
-          "5. State what you recommend next",
+          "\"This is a __-year-old with __ who was consulted for __. Baseline kidney function is __, creatinine has moved from __ to __, urine output is __, and the key physiology appears to be __. Urgent concerns are __, and today nephrology needs to decide __.\"",
         ],
       },
       {
-        heading: "Actionable Plan Checklist",
+        heading: "Full Consult Presentation Format",
         items: [
-          "Monitoring: which labs, how often, and what threshold matters",
-          "Medications: hold, start, continue, or dose-adjust with a reason",
-          "Volume: fluids, diuretics, ultrafiltration, or observation",
-          "Electrolytes / acid-base: treatment and reassessment plan",
-          "Dialysis: indication present or absent, and what would change that",
-          "Follow-up: what you need before tomorrow's rounds",
+          "1. One-liner: age, key comorbidities, hospital context, and consult question.",
+          "2. HPI: timeline of the kidney problem, symptoms, triggers, exposures, and what changed.",
+          "3. PMH and meds: kidney history, dialysis/transplant status, nephrotoxins, home meds, allergies, and relevant family history.",
+          "4. Physical exam: focused nephrology exam with volume, lungs, edema, neuro/uremia, Foley, and dialysis access if present.",
+          "5. Objective data: baseline Cr, current Cr trend, UOP, electrolytes, UA/sediment, urine lytes, imaging, and dialysis details.",
+          "6. Assessment: most likely physiology or differential buckets, with the evidence for and against each.",
+          "7. Urgent issues: dialysis indications, severe K/acid-base/Na problems, pulmonary edema, obstruction, GN/RPGN, or access infection.",
+          "8. Plan: what should happen today, what to monitor, what to stop/start, and what would change the plan.",
         ],
       },
       {
-        heading: "Good A/P Language",
+        heading: "How to Present the A/P",
         items: [
-          "\"AKI with creatinine rising from __ to __, likely due to __ based on __. Urine output is __. No current indication / current indication for dialysis because __. Recommend __.\"",
-          "\"Hyperkalemia due to __ with/without ECG changes. Temporizing measures include __. Definitive K removal plan is __.\"",
-          "\"ESRD on chronic HD, last dialyzed __ via __. Current issue is __. Plan for inpatient dialysis __ and monitor __.\"",
+          "1. Name the problem and trajectory: AKI/CKD/electrolyte issue, baseline, peak, current, and urine output.",
+          "2. State the leading mechanism or differential buckets, tied to evidence.",
+          "3. Say whether there is an urgent complication or dialysis indication right now.",
+          "4. Give the plan by action category: diagnostics, medications, volume, electrolytes/acid-base, dialysis, and monitoring.",
+          "5. End with the threshold that would change management before tomorrow.",
+        ],
+      },
+      {
+        heading: "Example A/P Phrases",
+        items: [
+          "\"AKI with creatinine rising from __ to __ from a baseline of __, with urine output __. Leading concern is __ based on __. No current indication for dialysis / dialysis is indicated because __. Today recommend __.\"",
+          "\"Hyperkalemia to __ due to __, with ECG __ and kidney function __. Temporize with __, remove potassium with __, stop contributors __, and recheck K at __.\"",
+          "\"ESRD on HD via __, usually dialyzes __ at __, last HD __ with __ UF. Current issue is __. Plan inpatient HD __, access monitoring __, and medication adjustments __.\"",
         ],
       },
     ],
     commonMistakes: [
-      "Copying the HPI into the assessment",
-      "Not stating the trend",
-      "Not saying whether the issue is urgent",
-      "Giving vague plans like monitor labs",
+      "Starting with a long past medical history before saying why nephrology was consulted.",
+      "Listing every lab instead of selecting the kidney-relevant trend.",
+      "Giving an assessment without explaining the evidence behind it.",
+      "Ending without a clear today-plan or contingency threshold.",
+      "Reading a written note word-for-word instead of presenting a verbal synthesis.",
     ],
     teachingPoints: [
-      "The assessment is your clinical argument.",
-      "The plan should be specific enough to be actionable.",
+      "A good consult presentation is brief, trend-based, and decision-oriented.",
+      "Use the A/P to show your reasoning, not just your recommendations.",
+      "If you are unsure, name the uncertainty and say what data would resolve it.",
     ],
   },
 
@@ -216,17 +204,43 @@ export const ROTATION_GUIDES: Record<RotationGuideId, RotationGuideTemplate> = {
     teachingPearl: "Each follow-up note should answer: what changed since yesterday?",
     sections: [
       {
-        heading: "Daily Update Checklist",
+        heading: "First Time Seeing This Patient?",
+        items: [
+          "If this is a new consult, start with Initial Consult: Workup before seeing the patient.",
+          "Use Initial Consult: Presentation when you are ready to package the story for rounds.",
+          "Once nephrology is already following, use this guide for daily updates instead of repeating the full initial consult.",
+        ],
+      },
+      {
+        heading: "Pre-Rounding Daily Checklist",
         items: [
           "Overnight events",
-          "Creatinine trend",
-          "Urine output trend",
-          "Sodium / potassium / bicarbonate trend",
-          "Volume response",
-          "Dialysis performed or not",
-          "Whether the differential changed",
-          "Whether the main question has been answered",
-          "Whether new urgent issues appeared",
+          "Vitals and oxygen requirement",
+          "I/Os and urine output",
+          "Weight",
+          "Creatinine / BUN trend",
+          "Potassium / bicarbonate / sodium / phosphorus",
+          "CBC if relevant",
+          "Medication changes: nephrotoxins, renally cleared meds, diuretics, binders, bicarbonate, anticoagulation.",
+          "IV fluids / diuretics / pressors and response.",
+          "New imaging",
+          "Microbiology / cultures if relevant",
+          "Procedures planned or done",
+          "Dialysis performed or planned: timing, access, UF, complications, and next session.",
+          "Volume exam updates: lungs, JVD, edema, weights, and oxygen trend.",
+          "New symptoms or exam changes: dyspnea, chest pain, confusion, cramps, nausea, rash, pain at access/catheter.",
+          "What the primary team is worried about today",
+          "Your one-sentence update: better, worse, unchanged, or new problem.",
+        ],
+      },
+      {
+        heading: "Daily Rounds Questions",
+        items: [
+          "What changed overnight?",
+          "Is the kidney issue improving, worsening, or unchanged?",
+          "Is there an urgent electrolyte, acid-base, volume, or dialysis issue?",
+          "What decision does the team need from nephrology today?",
+          "Which study sheet, inpatient consult guide, or tool matches this patient's active issue?",
         ],
       },
       {
