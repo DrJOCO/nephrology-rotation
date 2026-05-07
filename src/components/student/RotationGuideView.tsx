@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { T } from "../../data/constants";
 import { ROTATION_GUIDES, type RotationGuideId } from "../../data/rotationGuides";
-import { backBtnStyle, EduDisclaimer, GuideShell, InfoBar } from "./shared";
+import { BackButton, EduDisclaimer, GuideShell, InfoBar } from "./shared";
 
 interface Props {
   guideId: RotationGuideId;
@@ -24,7 +24,7 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
   if (!guide) {
     return (
       <div style={{ padding: 16 }}>
-        <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+        <BackButton onClick={onBack} />
         <div style={{ color: T.sub, textAlign: "center", padding: 32 }}>Guide not found.</div>
       </div>
     );
@@ -64,7 +64,7 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
       teachingPoints={guide.teachingPoints}
       footer={(
         <>
-          <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 8, marginBottom: 0 }}>{"\u2190"} Back</button>
+          <BackButton onClick={onBack} style={{ marginTop: 8, marginBottom: 0 }} />
           <EduDisclaimer />
         </>
       )}

@@ -1,6 +1,6 @@
 import { T } from "../../data/constants";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTemplates, type ClinicGuideTopic } from "../../data/clinicGuides";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import type { ClinicGuideRecord } from "../../types";
 
 interface Props {
@@ -24,7 +24,7 @@ export default function ClinicGuideHistoryView({ guides, clinicGuideTemplates, o
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
 
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guide History</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.4 }}>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T, RESOURCES } from "../../data/constants";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 
 export default function FaqView({ onBack }) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -8,7 +8,7 @@ export default function FaqView({ onBack }) {
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Rotation FAQ</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Common questions for your nephrology rotation</p>
 
@@ -31,7 +31,7 @@ export default function FaqView({ onBack }) {
         );
       })}
 
-      {faqs.length > 3 && <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 20, marginBottom: 0 }}>{"\u2190"} Back</button>}
+      {faqs.length > 3 && <BackButton onClick={onBack} style={{ marginTop: 20, marginBottom: 0 }} />}
     </div>
   );
 }

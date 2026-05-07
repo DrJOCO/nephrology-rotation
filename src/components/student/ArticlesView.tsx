@@ -1,5 +1,5 @@
 import { T, WEEKLY, labelChip } from "../../data/constants";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import { getTopicContent } from "../../utils/topicMapping";
 
 const typePrefix = (type: string) => {
@@ -15,7 +15,7 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.infoBg, color: T.info, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Optional depth
       </div>
@@ -89,7 +89,7 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
           </div>
         );
       })}
-      {arts.length > 2 && <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 16, marginBottom: 0 }}>{"\u2190"} Back</button>}
+      {arts.length > 2 && <BackButton onClick={onBack} style={{ marginTop: 16, marginBottom: 0 }} />}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { INPATIENT_GUIDES, INPATIENT_GUIDE_TOPICS } from "../../data/inpatientGu
 import { ROTATION_GUIDES, ROTATION_GUIDE_IDS } from "../../data/rotationGuides";
 import { getCurrentOrNextFriday } from "../../utils/clinicRotation";
 import { useIsMobile } from "../../utils/helpers";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import type { ClinicGuideRecord } from "../../types";
 
 const GUIDE_THEME_COLOR_MAP: Record<string, string> = {
@@ -37,7 +37,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>← Back</button>
+      <BackButton onClick={onBack} />
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <div style={{ width: 48, height: 48, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
@@ -99,7 +99,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
           </div>
         );
       })}
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 16, marginBottom: 0 }}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} style={{ marginTop: 16, marginBottom: 0 }} />
     </div>
   );
 }

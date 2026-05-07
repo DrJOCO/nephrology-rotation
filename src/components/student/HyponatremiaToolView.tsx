@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Activity, AlertTriangle, Calculator, Clipboard, Droplet, History, Microscope, Pill, RotateCcw, Scale } from "lucide-react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
@@ -10,7 +10,7 @@ import {
   type HypoSymptomSeverity,
   type HypoVolumeStatus,
 } from "../../utils/hyponatremiaTool";
-import { Chip, EduDisclaimer, HeadlineMetric, inputLabel, inputStyle, Section } from "./shared";
+import { Chip, EduDisclaimer, HeadlineMetric, inputLabel, inputStyle, Panel, Section } from "./shared";
 
 type ArrayInputKey = "selectedTonicityFlags" | "selectedVolumeClues" | "selectedHistory" | "selectedDrugs" | "selectedOdsRisk";
 
@@ -117,24 +117,6 @@ const ODS_RISK_OPTIONS: Option[] = [
   { id: "hypoK", label: "Hypokalemia (K <3)" },
   { id: "hypoP", label: "Hypophosphatemia" },
 ];
-
-const panelStyle: CSSProperties = {
-  background: T.card,
-  border: `1px solid ${T.line}`,
-  borderRadius: 8,
-  padding: 14,
-  marginBottom: 12,
-};
-
-const sectionTitleStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  fontSize: 14,
-  fontWeight: 600,
-  color: T.navy,
-  marginBottom: 10,
-};
 
 function OptionGrid({ options, selectedIds, onToggle }: { options: Option[]; selectedIds: string[]; onToggle: (id: string) => void }) {
   return (
@@ -318,20 +300,18 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
       />
 
       {isMobile && (
-        <section style={{ ...panelStyle, borderLeft: `4px solid ${T.info}` }}>
-          <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>Live differential</div>
+        <Panel title="Live differential" style={{ borderLeft: `4px solid ${T.info}` }}>
           <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
           <a href="#hypona-results" style={{ display: "inline-flex", marginTop: 8, color: T.brand, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
             View full differential
           </a>
-        </section>
+        </Panel>
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 1fr) minmax(380px, 0.95fr)", gap: 14, alignItems: "start" }}>
         <div>
           {/* Sodium / tonicity */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Droplet size={17} strokeWidth={2} aria-hidden="true" /> Sodium &amp; Tonicity</div>
+          <Panel icon={Droplet} title="Sodium & Tonicity">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
               <NumberInput label="Serum Na" value={inputs.serumNa} placeholder="125" step="1" onChange={(value) => updateField("serumNa", value)} />
               <NumberInput label="Glucose" value={inputs.serumGlucose} placeholder="100" step="1" onChange={(value) => updateField("serumGlucose", value)} />
@@ -366,11 +346,10 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
               selectedIds={inputs.selectedTonicityFlags}
               onToggle={(id) => toggleArray("selectedTonicityFlags", id)}
             />
-          </section>
+          </Panel>
 
           {/* Acuity / symptoms */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><AlertTriangle size={17} strokeWidth={2} aria-hidden="true" /> Acuity &amp; Symptoms</div>
+          <Panel icon={AlertTriangle} title="Acuity & Symptoms">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
               <div>
                 <label style={inputLabel}>Duration</label>
@@ -384,34 +363,30 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
             <div style={{ marginTop: 12, color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
               UpToDate: severe symptoms (seizure, obtundation, coma, respiratory arrest) or known intracranial pathology → 100 mL bolus 3% saline, may repeat ×2 (300 mL total) over 30 min.
             </div>
-          </section>
+          </Panel>
 
           {/* Volume status */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Scale size={17} strokeWidth={2} aria-hidden="true" /> Volume Status</div>
+          <Panel icon={Scale} title="Volume Status">
             <div style={{ marginBottom: 12 }}>
               <label style={inputLabel}>Clinician assessment</label>
               <SegmentedGroup options={VOLUME_OPTIONS} value={inputs.volumeStatus} onChange={(value) => updateField("volumeStatus", value)} />
             </div>
             <label style={inputLabel}>Exam clues</label>
             <OptionGrid options={VOLUME_CLUE_OPTIONS} selectedIds={inputs.selectedVolumeClues} onToggle={(id) => toggleArray("selectedVolumeClues", id)} />
-          </section>
+          </Panel>
 
           {/* History / context */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><History size={17} strokeWidth={2} aria-hidden="true" /> History &amp; Context</div>
+          <Panel icon={History} title="History & Context">
             <OptionGrid options={HISTORY_OPTIONS} selectedIds={inputs.selectedHistory} onToggle={(id) => toggleArray("selectedHistory", id)} />
-          </section>
+          </Panel>
 
           {/* Drugs */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Pill size={17} strokeWidth={2} aria-hidden="true" /> Medications</div>
+          <Panel icon={Pill} title="Medications">
             <OptionGroupGrid groups={DRUG_GROUPS} selectedIds={inputs.selectedDrugs} onToggle={(id) => toggleArray("selectedDrugs", id)} />
-          </section>
+          </Panel>
 
           {/* Renal / urine */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Microscope size={17} strokeWidth={2} aria-hidden="true" /> Renal Function &amp; Urine</div>
+          <Panel icon={Microscope} title="Renal Function & Urine">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
               <NumberInput label="Serum Cr" value={inputs.serumCr} placeholder="mg/dL" onChange={(value) => updateField("serumCr", value)} />
               <NumberInput label="BUN" value={inputs.serumBun} placeholder="mg/dL" step="1" onChange={(value) => updateField("serumBun", value)} />
@@ -442,11 +417,10 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
               <div style={{ color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>{assessment.feUricAcid.interpretation}</div>
               <div style={{ color: T.sub, fontSize: 12.5, lineHeight: 1.5, marginTop: 4 }}>{assessment.estimatedDailySolute.note}</div>
             </div>
-          </section>
+          </Panel>
 
           {/* K / HCO3 */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Activity size={17} strokeWidth={2} aria-hidden="true" /> K / HCO3 Patterns</div>
+          <Panel icon={Activity} title="K / HCO3 Patterns">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(2, minmax(0, 1fr))", gap: 10, marginBottom: 8 }}>
               <NumberInput label="Serum K" value={inputs.serumK} placeholder="mEq/L" onChange={(value) => updateField("serumK", value)} />
               <NumberInput label="Serum HCO3" value={inputs.serumBicarb} placeholder="mEq/L" step="1" onChange={(value) => updateField("serumBicarb", value)} />
@@ -454,26 +428,23 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
             <div style={{ color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
               ↓K + ↑HCO3 → diuretic / vomiting · ↓K + ↓HCO3 → diarrhea · ↑K + ↓HCO3 → primary AI.
             </div>
-          </section>
+          </Panel>
 
           {/* ODS risk */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><AlertTriangle size={17} strokeWidth={2} aria-hidden="true" /> ODS Risk Modifiers</div>
+          <Panel icon={AlertTriangle} title="ODS Risk Modifiers">
             <OptionGrid options={ODS_RISK_OPTIONS} selectedIds={inputs.selectedOdsRisk} onToggle={(id) => toggleArray("selectedOdsRisk", id)} />
             <div style={{ marginTop: 10, color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
               UpToDate high-risk groups: Na ≤105, hypoK, alcohol use disorder, malnutrition, advanced liver disease, hypophosphatemia. Cap at 8 mEq/L per 24 h.
             </div>
-          </section>
+          </Panel>
         </div>
 
         {/* Right column — results */}
         <aside id="hypona-results" style={{ position: isMobile ? "static" : "sticky", top: 70 }}>
-          <section style={{ ...panelStyle, marginBottom: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", marginBottom: 10 }}>
-              <div>
-                <div style={sectionTitleStyle}><Calculator size={17} strokeWidth={2} aria-hidden="true" /> Generated Differential</div>
-                <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
-              </div>
+          <Panel
+            icon={Calculator}
+            title="Generated Differential"
+            action={(
               <button
                 type="button"
                 onClick={() => void copyAssessment()}
@@ -484,7 +455,9 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
                 <Clipboard size={14} strokeWidth={2} aria-hidden="true" />
                 {copied ? "Copied" : "Copy"}
               </button>
-            </div>
+            )}
+          >
+            <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>{assessment.summary}</div>
 
             {assessment.alerts.length > 0 && (
               <div style={{ background: T.dangerBg, border: `1px solid ${T.danger}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
@@ -528,11 +501,10 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
                 ))}
               </div>
             )}
-          </section>
+          </Panel>
 
           {/* Correction planner */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Calculator size={17} strokeWidth={2} aria-hidden="true" /> Correction Planner</div>
+          <Panel icon={Calculator} title="Correction Planner">
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, auto) minmax(0, 1fr)", gap: 12, alignItems: "start", marginBottom: 10 }}>
               <HeadlineMetric
                 value={`${assessment.correctionTarget.perDayCap}`}
@@ -579,17 +551,16 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
                 ΔNa/L = (fluidNa + fluidK − serumNa) / (TBW + 1); TBW ≈ weight × 0.6.
               </div>
             </div>
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 7 }}>Next checks</div>
+          <Panel title="Next checks">
             {assessment.nextSteps.map((step) => (
               <div key={step} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
             ))}
             <div style={{ color: T.muted, fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>
               Algorithm follows UpToDate "Diagnostic evaluation of adults with hyponatremia" and "Overview of the treatment of hyponatremia in adults". Reasoning aid, not a diagnosis.
             </div>
-          </section>
+          </Panel>
         </aside>
       </div>
 

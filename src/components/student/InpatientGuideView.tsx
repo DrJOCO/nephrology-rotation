@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { T } from "../../data/constants";
 import { INPATIENT_GUIDES, INPATIENT_GUIDE_FOOTER, type InpatientGuideTopic } from "../../data/inpatientGuides";
-import { backBtnStyle, GuideShell, InfoBar } from "./shared";
+import { BackButton, GuideShell, InfoBar } from "./shared";
 
 interface Props {
   topic: InpatientGuideTopic;
@@ -24,7 +24,7 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
   if (!guide) {
     return (
       <div style={{ padding: 16 }}>
-        <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+        <BackButton onClick={onBack} />
         <div style={{ color: T.sub, textAlign: "center", padding: 32 }}>Guide not found.</div>
       </div>
     );
@@ -50,7 +50,7 @@ export default function InpatientGuideView({ topic, onBack }: Props) {
           <div style={{ textAlign: "center", padding: "12px 0 8px", fontSize: 13, color: T.muted, fontStyle: "italic", lineHeight: 1.4 }}>
             {INPATIENT_GUIDE_FOOTER}
           </div>
-          <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 8, marginBottom: 0 }}>{"\u2190"} Back</button>
+          <BackButton onClick={onBack} style={{ marginTop: 8, marginBottom: 0 }} />
         </>
       )}
     >

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { T } from "../../data/constants";
 import { QUICK_REFS } from "../../data/guides";
 import { useIsMobile } from "../../utils/helpers";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import type { QuickRefCalculator, QuickRefReference, QuickRefAtlas, CalcResult } from "../../types";
 
 // ─── Calculator Component ──────────────────────────────────────
@@ -182,7 +182,7 @@ export default function RefDetailView({ refId, onBack }: { refId: string; onBack
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>← Back</button>
+      <BackButton onClick={onBack} />
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <div style={{ fontSize: 36 }}>{ref.icon}</div>
         <div>
@@ -197,7 +197,7 @@ export default function RefDetailView({ refId, onBack }: { refId: string; onBack
       </div>
 
       {ref.type === "calculator" ? <CalculatorView refData={ref} /> : ref.type === "atlas" ? <AtlasView refData={ref} /> : <ReferenceCardView refData={ref} />}
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 20, marginBottom: 0 }}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} style={{ marginTop: 20, marginBottom: 0 }} />
     </div>
   );
 }

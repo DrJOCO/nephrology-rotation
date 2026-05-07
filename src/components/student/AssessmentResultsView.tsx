@@ -4,7 +4,7 @@ import { T } from "../../data/constants";
 import { POST_QUIZ, PRE_QUIZ } from "../../data/quizzes";
 import type { QuizScore, SubView } from "../../types";
 import { buildAssessmentSummary, type AssessmentMode } from "../../utils/assessmentInsights";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 
 interface AssessmentResultsViewProps {
   mode: AssessmentMode;
@@ -111,7 +111,7 @@ export default function AssessmentResultsView({
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={() => navigate("today")} style={backBtnStyle}>Back to Today</button>
+      <BackButton onClick={() => navigate("today")} label="Back to Today" />
 
       <div
         style={{

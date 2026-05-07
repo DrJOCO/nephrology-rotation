@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Activity, Calculator, Clipboard, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
@@ -13,7 +13,7 @@ import {
   type AkiRbcStatus,
   type AkiWbcStatus,
 } from "../../utils/akiTool";
-import { Chip, EduDisclaimer, HeadlineMetric, inputLabel, inputStyle, Section } from "./shared";
+import { Chip, EduDisclaimer, HeadlineMetric, inputLabel, inputStyle, Panel, Section } from "./shared";
 
 type ArrayInputKey = "selectedHistory" | "selectedContext" | "selectedNephrotoxins" | "selectedSediment";
 
@@ -150,24 +150,6 @@ const IMAGING_OPTIONS: Option[] = [
   { id: "small_echogenic", label: "Small echogenic kidneys" },
   { id: "single_kidney", label: "Solitary kidney" },
 ];
-
-const panelStyle: CSSProperties = {
-  background: T.card,
-  border: `1px solid ${T.line}`,
-  borderRadius: 8,
-  padding: 14,
-  marginBottom: 12,
-};
-
-const sectionTitleStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  fontSize: 14,
-  fontWeight: 600,
-  color: T.navy,
-  marginBottom: 10,
-};
 
 function OptionGrid({ options, selectedIds, onToggle }: { options: Option[]; selectedIds: string[]; onToggle: (id: string) => void }) {
   return (
@@ -382,19 +364,17 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
       />
 
       {isMobile && (
-        <section style={{ ...panelStyle, borderLeft: `4px solid ${T.info}` }}>
-          <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>Live differential</div>
+        <Panel title="Live differential" style={{ borderLeft: `4px solid ${T.info}` }}>
           <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
           <a href="#aki-results" style={{ display: "inline-flex", marginTop: 8, color: T.brand, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
             View full differential
           </a>
-        </section>
+        </Panel>
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 1fr) minmax(380px, 0.95fr)", gap: 14, alignItems: "start" }}>
         <div>
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Activity size={17} strokeWidth={2} aria-hidden="true" /> Creatinine, BP, UOP</div>
+          <Panel icon={Activity} title="Creatinine, BP, UOP">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 12 }}>
               <NumberInput label="Baseline Cr" value={inputs.baselineCr} placeholder="e.g. 1.0" onChange={(value) => updateField("baselineCr", value)} />
               <NumberInput label="Current Cr" value={inputs.currentCr} placeholder="e.g. 2.4" onChange={(value) => updateField("currentCr", value)} />
@@ -442,28 +422,24 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                 Per KDIGO, initiation of kidney replacement therapy classifies AKI as stage 3 regardless of Cr or UOP.
               </div>
             </div>
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><History size={17} strokeWidth={2} aria-hidden="true" /> Kidney History / Risk</div>
+          <Panel icon={History} title="Kidney History / Risk">
             <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.45, marginBottom: 10 }}>
               These modify risk and chronicity. DM2/HTN/CKD make AKI more likely and recovery less predictable, but usually are not the acute etiology by themselves.
             </div>
             <OptionGrid options={HISTORY_OPTIONS} selectedIds={inputs.selectedHistory} onToggle={(id) => toggleArray("selectedHistory", id)} />
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Clipboard size={17} strokeWidth={2} aria-hidden="true" /> Admission Context</div>
+          <Panel icon={Clipboard} title="Admission Context">
             <OptionGrid options={CONTEXT_OPTIONS} selectedIds={inputs.selectedContext} onToggle={(id) => toggleArray("selectedContext", id)} />
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Pill size={17} strokeWidth={2} aria-hidden="true" /> Nephrotoxins / Exposures</div>
+          <Panel icon={Pill} title="Nephrotoxins / Exposures">
             <OptionGroupGrid groups={NEPHROTOXIN_GROUPS} selectedIds={inputs.selectedNephrotoxins} onToggle={(id) => toggleArray("selectedNephrotoxins", id)} />
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Microscope size={17} strokeWidth={2} aria-hidden="true" /> Urine Findings</div>
+          <Panel icon={Microscope} title="Urine Findings">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={inputLabel}>Protein</label>
@@ -484,22 +460,16 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
             </div>
             <label style={inputLabel}>Sediment clues</label>
             <OptionGrid options={SEDIMENT_OPTIONS} selectedIds={inputs.selectedSediment} onToggle={(id) => toggleArray("selectedSediment", id)} />
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><ScanSearch size={17} strokeWidth={2} aria-hidden="true" /> Renal Imaging</div>
+          <Panel icon={ScanSearch} title="Renal Imaging">
             <OptionGrid options={IMAGING_OPTIONS} selectedIds={inputs.selectedImaging} onToggle={toggleImaging} />
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", marginBottom: 10 }}>
-              <div>
-                <div style={{ ...sectionTitleStyle, marginBottom: 4 }}><Calculator size={17} strokeWidth={2} aria-hidden="true" /> Urine Electrolytes</div>
-                <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.45 }}>
-                  These use the same formula helpers as the Quick Reference calculators, then feed the AKI differential.
-                </div>
-              </div>
-              {onOpenCalculator && (
+          <Panel
+            icon={Calculator}
+            title="Urine Electrolytes"
+            action={onOpenCalculator && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end", flexShrink: 0 }}>
                   <button
                     type="button"
@@ -516,7 +486,10 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                     Standalone FEUrea
                   </button>
                 </div>
-              )}
+            )}
+          >
+            <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.45, marginBottom: 10 }}>
+              These use the same formula helpers as the Quick Reference calculators, then feed the AKI differential.
             </div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
               <NumberInput label="Serum Na" value={inputs.serumNa} placeholder="140" onChange={(value) => updateField("serumNa", value)} />
@@ -543,16 +516,14 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                 Diuretics selected: FENa is often confounded. FEUrea can help, but it still needs clinical context.
               </div>
             )}
-          </section>
+          </Panel>
         </div>
 
         <aside id="aki-results" style={{ position: isMobile ? "static" : "sticky", top: 70 }}>
-          <section style={{ ...panelStyle, marginBottom: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", marginBottom: 10 }}>
-              <div>
-                <div style={sectionTitleStyle}><Calculator size={17} strokeWidth={2} aria-hidden="true" /> Generated Differential</div>
-                <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
-              </div>
+          <Panel
+            icon={Calculator}
+            title="Generated Differential"
+            action={(
               <button
                 type="button"
                 onClick={() => void copyAssessment()}
@@ -563,7 +534,9 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                 <Clipboard size={14} strokeWidth={2} aria-hidden="true" />
                 {copied ? "Copied" : "Copy"}
               </button>
-            </div>
+            )}
+          >
+            <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>{assessment.summary}</div>
 
             {assessment.alerts.length > 0 && (
               <div style={{ background: T.dangerBg, border: `1px solid ${T.danger}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
@@ -605,17 +578,16 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                 ))}
               </div>
             )}
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 7 }}>Next checks</div>
+          <Panel title="Next checks">
             {assessment.nextSteps.map((step) => (
               <div key={step} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
             ))}
             <div style={{ color: T.muted, fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>
               Uses KDIGO-style creatinine/UOP staging signals and standard FENa/FEUrea formulas. This is a reasoning aid, not a diagnosis.
             </div>
-          </section>
+          </Panel>
         </aside>
       </div>
 

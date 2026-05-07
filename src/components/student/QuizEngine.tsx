@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import store from "../../utils/store";
-import { backBtnStyle, HeadlineMetric, Section } from "./shared";
+import { HeadlineMetric, Section } from "./shared";
 import type { QuizQuestion, QuizScore, QuizAnswer } from "../../types";
 
 interface SavedQuizProgress {

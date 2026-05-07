@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { T } from "../../data/constants";
 
@@ -7,6 +7,10 @@ import { T } from "../../data/constants";
 // ═══════════════════════════════════════════════════════════════════════
 
 export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1px solid ${T.line}`, color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "9px 12px", fontWeight: 700, minHeight: 40, borderRadius: 8, boxShadow: "none", zIndex: 99 };
+
+export function BackButton({ onClick, label = "Back", style }: { onClick: () => void; label?: ReactNode; style?: CSSProperties }) {
+  return <button onClick={onClick} style={{ ...backBtnStyle, ...style }}>← {label}</button>;
+}
 
 export const inputLabel: CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 
@@ -22,6 +26,37 @@ export const inputStyle: CSSProperties = {
   background: T.surface2,
   color: T.text,
 };
+
+export function Panel({
+  icon: Icon,
+  title,
+  action,
+  children,
+  style,
+}: {
+  icon?: LucideIcon;
+  title?: ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <section style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, padding: 14, marginBottom: 12, ...style }}>
+      {(Icon || title || action) && (
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+          {(Icon || title) && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.ink, fontWeight: 600, fontSize: 14, fontFamily: T.serif }}>
+              {Icon && <Icon size={17} strokeWidth={2} aria-hidden="true" />}
+              {title}
+            </div>
+          )}
+          {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
 
 type EditorialTone = "neutral" | "ink" | "brand" | "success" | "warning" | "danger" | "info";
 
@@ -252,7 +287,7 @@ export function ToolShell({
 }) {
   return (
     <div style={{ padding: 16, ...style }}>
-      {onBack && <button onClick={onBack} style={backBtnStyle}>{"\u2190"} {backLabel}</button>}
+      {onBack && <BackButton onClick={onBack} label={backLabel} />}
       <SectionTitle eyebrow={eyebrow} title={title} description={description} action={action} />
       {info && <div style={{ marginBottom: 14 }}>{info}</div>}
       {children}
@@ -335,7 +370,7 @@ export function GuideShell({
 }) {
   return (
     <div style={{ padding: 16, ...style }}>
-      {onBack && <button onClick={onBack} style={backBtnStyle}>{"\u2190"} {backLabel}</button>}
+      {onBack && <BackButton onClick={onBack} label={backLabel} />}
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: meta ? 10 : 14 }}>
         {icon && (
