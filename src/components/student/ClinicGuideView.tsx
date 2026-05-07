@@ -15,6 +15,20 @@ function formatFriday(dateStr: string): string {
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 }
 
+function displaySections(guide: ClinicGuideTemplates[ClinicGuideTopic]) {
+  if (guide.beforePresenting.length === 0) return guide.sections;
+  const [firstSection, ...rest] = guide.sections;
+  if (!firstSection) return [{ heading: "Clinic Prep & Patient Questions", items: guide.beforePresenting }];
+
+  return [
+    {
+      heading: "Clinic Prep & Patient Questions",
+      items: [...guide.beforePresenting, ...firstSection.items],
+    },
+    ...rest,
+  ];
+}
+
 export default function ClinicGuideView({ date, topic, isOverride, clinicGuideTemplates, onBack }: Props) {
   const [openSection, setOpenSection] = useState(0);
   const guide = clinicGuideTemplates[topic as ClinicGuideTopic] || CLINIC_GUIDES[topic as ClinicGuideTopic];
@@ -33,11 +47,7 @@ export default function ClinicGuideView({ date, topic, isOverride, clinicGuideTe
       <GuideBody>
         <InfoBar label="Why This Matters" tone="brand">{guide.whyItMatters}</InfoBar>
         <InfoBar label="Teaching Pearl" tone="warning">{guide.teachingPearl}</InfoBar>
-        <InfoBar label="Before Presenting, Gather This" tone="success">
-          <GuideList>{guide.beforePresenting.map((item, i) => <GuideItem key={`${i}-${item}`} tone="success">{item}</GuideItem>)}</GuideList>
-        </InfoBar>
-        <InfoBar label="How to Present This Patient" tone="neutral"><div style={{ lineHeight: 1.7, fontStyle: "italic" }}>{guide.howToPresent}</div></InfoBar>
-        {guide.sections.map((section, si) => (
+        {displaySections(guide).map((section, si) => (
           <GuideAccordion key={section.heading} title={section.heading} count={`${section.items.length} ${section.items.length === 1 ? "item" : "items"}`} open={openSection === si} onToggle={() => setOpenSection(openSection === si ? -1 : si)}>
             <GuideList>{section.items.map((item, i) => <GuideItem key={`${i}-${item}`}>{item}</GuideItem>)}</GuideList>
           </GuideAccordion>
@@ -46,7 +56,6 @@ export default function ClinicGuideView({ date, topic, isOverride, clinicGuideTe
           <GuideList>{guide.commonMistakes.map((item, i) => <GuideItem key={`${i}-${item}`} tone="danger">{item}</GuideItem>)}</GuideList>
         </InfoBar>
         <GuideNumberedList title="Teaching Points">{guide.teachingPoints.map((item, i) => <GuideNumberedItem key={`${i}-${item}`} index={i + 1}>{item}</GuideNumberedItem>)}</GuideNumberedList>
-        <GuideNumberedList title="Discussion Questions">{guide.discussionQuestions.map((item, i) => <GuideNumberedItem key={`${i}-${item}`} index={i + 1}>{item}</GuideNumberedItem>)}</GuideNumberedList>
         <InfoBar label="Guideline Basis" tone="neutral">
           <GuideList>{guide.guidelineBasis.map((item, i) => <GuideItem key={`${i}-${item}`} tone="neutral">{item}</GuideItem>)}</GuideList>
         </InfoBar>

@@ -42,96 +42,61 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPearl:
       "Dialysis is not started because of eGFR alone. Dialysis initiation is driven by symptoms, refractory complications, and inability to maintain volume, electrolyte, acid-base, or nutritional stability — not a single threshold number.",
 
-    beforePresenting: [
-      "Baseline creatinine / eGFR",
-      "Current creatinine / eGFR",
-      "Trend over time",
-      "Albuminuria or proteinuria trend",
-      "Blood pressure trend",
-      "Weight trend",
-      "Potassium and bicarbonate trend",
-      "Calcium, phosphorus, PTH, vitamin D if relevant",
-      "Hemoglobin and iron studies if relevant",
-      "Current renoprotective meds",
-      "Whether modality education, access planning, and transplant referral have happened",
-    ],
+    beforePresenting: [],
 
-    howToPresent:
-      "\"This is a patient with CKD stage __, likely due to __, with creatinine/eGFR trend from __ to __ over __ and albuminuria of __. Main issues today are progression risk, BP control, volume status, electrolytes/acidosis, anemia and CKD-MBD, and dialysis or transplant planning. They do/do not have symptoms concerning for uremia. Current kidney-protective therapies include __.\"",
+    howToPresent: "",
 
     sections: [
       {
-        heading: "Must-Ask History",
+        heading: "Clinic Prep & Patient Questions",
         items: [
-          "Energy / fatigue",
-          "Appetite, nausea, vomiting, weight loss",
-          "Edema, dyspnea, orthopnea",
-          "Urinary changes",
-          "Home BP if available",
-          "Medication adherence",
-          "NSAID exposure / nephrotoxins",
-          "Whether dialysis education or transplant discussion has happened",
-        ],
-      },
-      {
-        heading: "Ask If Relevant",
-        items: [
-          "Pruritus",
-          "Sleep disturbance / restless legs",
-          "Cognitive change",
-          "Muscle cramps",
-          "Recent PICC / IV use in potential access arm",
+          "Kidney trajectory: baseline and current creatinine/eGFR with timing.",
+          "Albuminuria/proteinuria category and whether it is changing.",
+          "BP and weight pattern since the last visit.",
+          "CKD complication labs: potassium, bicarbonate, calcium/phosphorus/PTH/vitamin D, hemoglobin/iron when relevant.",
+          "Disease-modifying therapy status: ACEi/ARB, SGLT2 inhibitor, finerenone when appropriate, and dose limits.",
+          "Advanced CKD planning status: modality education, access preservation/planning, and transplant referral.",
+          "Uremic symptoms: fatigue, appetite change, nausea/vomiting, weight loss, sleep disturbance, pruritus, cognitive change, restless legs, cramps.",
+          "Volume symptoms: edema, dyspnea, orthopnea, reduced exercise tolerance.",
+          "Home BP pattern and medication adherence.",
+          "NSAIDs, contrast exposure, supplements, or other nephrotoxins since the last visit.",
+          "For advanced CKD: what the patient understands about dialysis, transplant, and access planning.",
         ],
       },
       {
         heading: "Exam Focus",
         items: [
-          "BP",
-          "Volume exam",
-          "Edema",
-          "Pulmonary findings",
-          "Pallor / excoriations",
-          "Asterixis or mental status changes if advanced disease",
-          "AVF/AVG exam if present",
+          "BP measurement quality and whether repeat BP is needed.",
+          "Volume exam: JVD, lung findings, edema, weight change.",
+          "Pallor, excoriations, asterixis, or mental status change in advanced disease.",
+          "AVF/AVG exam if present.",
         ],
       },
       {
-        heading: "Labs / Data to Review",
+        heading: "Synthesis for the Visit",
         items: [
-          "eGFR and creatinine trend",
-          "Albuminuria / proteinuria trend",
-          "Potassium",
-          "Bicarbonate — review the trend; KDIGO 2024 suggests oral alkali therapy to maintain serum bicarbonate ≥22 mmol/L in CKD patients with persistent metabolic acidosis (recent RCTs such as BiCARB and UBI tempered the strength of recommendation, but ≥22 remains the target threshold)",
-          "Sodium",
-          "Hemoglobin / iron studies when relevant",
-          "Calcium / phosphorus / PTH / vitamin D when relevant",
-          "Medication list and dose appropriateness",
-          "SGLT2 inhibitor status — KDIGO 2024 recommends initiating at eGFR ≥20 mL/min/1.73 m² in appropriate patients and continuing below that if tolerated until kidney replacement therapy begins",
+          "Is kidney function stable, slowly progressive, or changing faster than expected?",
+          "Which active problem drives today's plan: BP, volume, proteinuria, potassium, acidosis, anemia, CKD-MBD, symptoms, or KRT planning?",
+          "Is kidney-protective therapy optimized and tolerated?",
+          "If eGFR is low, are symptoms or refractory complications pushing planning forward?",
         ],
       },
     ],
 
     commonMistakes: [
-      "Presenting only today's creatinine without the trend",
-      "Not mentioning albuminuria",
       "Not asking about symptoms of uremia",
-      "Not reviewing kidney-protective meds",
-      "Treating eGFR as the dialysis trigger",
-      "Forgetting access / transplant planning in advanced CKD",
+      "Waiting until a crisis to start modality, transplant, or access conversations",
+      "Missing access-preservation problems, especially recent PICC or midline placement",
+      "Listing CKD complications without saying which one changes today's plan",
     ],
 
     teachingPoints: [
-      "Always present the trend, not the isolated value.",
-      "Advanced CKD visits should include complication review and preparation, not just lab review.",
-      "SGLT2 and RAAS-based therapy are part of disease-modifying treatment in appropriate patients.",
+      "Classify CKD by cause, GFR category, and albuminuria category.",
+      "KDIGO 2024 supports SGLT2 inhibitor initiation at eGFR >=20 mL/min/1.73 m2 in appropriate patients, with continuation below that if tolerated until kidney replacement therapy begins.",
+      "Persistent metabolic acidosis in CKD is generally treated with oral alkali to maintain serum bicarbonate around >=22 mmol/L.",
     ],
 
-    discussionQuestions: [
-      "A patient with CKD stage 4 (eGFR 18, stable) has no uremic symptoms but is losing weight and has declining albumin. How would you approach dialysis planning for this patient?",
-      "A patient is referred with CKD stage 5 (eGFR 10) and has a PICC line in the left arm from a recent hospitalization. What concerns does this raise, and how would you counsel the patient going forward?",
-      "A diabetic CKD patient is on max ACEi and an SGLT2i. CONFIDENCE (NEJM 2025) showed simultaneous initiation of finerenone and empagliflozin produced additive UACR reduction. Would you start finerenone at the same visit as the SGLT2i, or stagger them?",
-      "A CKD patient asks if allopurinol will protect their kidneys. CKD-FIX (NEJM 2020) and PERL showed it does not slow eGFR decline despite a 35% urate drop. How do you counsel them, and when does urate-lowering still belong in the plan?",
-    ],
+    discussionQuestions: [],
 
     guidelineBasis: [
       "KDIGO 2024 Clinical Practice Guideline for CKD Evaluation and Management",
@@ -157,37 +122,42 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPearl:
       "A drug level is useful only in context. The regimen, time from transplant, baseline graft function, adherence, interacting drugs, and whether the level was a true trough matter as much as the number itself.",
 
-    beforePresenting: [
-      "Transplant date",
-      "Donor type if known",
-      "Baseline creatinine",
-      "Current creatinine trend",
-      "Immunosuppression regimen and doses",
-      "Timing of last tacrolimus/cyclosporine dose",
-      "Whether the level was a true trough",
-      "Proteinuria",
-      "BK / CMV data if available",
-      "Recent infections or admissions",
-      "New medications",
-      "BP trend",
-    ],
+    beforePresenting: [],
 
-    howToPresent:
-      "\"This is a kidney transplant recipient __ months/years post-transplant, on __ immunosuppression. Baseline creatinine is __ and current trend is __. Tacrolimus/cyclosporine level was __ and was/was not drawn as a true trough. Main issues today are graft stability, adherence, infection surveillance, medication toxicity, BP/proteinuria, and malignancy screening.\"",
+    howToPresent: "",
 
     sections: [
       {
-        heading: "Must-Ask History",
+        heading: "Clinic Prep & Patient Questions",
         items: [
-          "Missed doses",
-          "Exact timing of last CNI dose",
-          "Infectious symptoms",
-          "GI symptoms",
-          "New medications or supplements",
-          "Tremor / headache / neuro symptoms",
-          "Urinary symptoms",
-          "Graft pain",
-          "New skin lesions",
+          "Transplant context: date, donor type if known, and baseline graft function.",
+          "Current graft status: creatinine pattern, proteinuria, and BP.",
+          "Immunosuppression regimen, doses, and most recent drug level with draw timing.",
+          "Surveillance data: BK/CMV and other center-specific monitoring.",
+          "Interval events: infections, admissions, procedures, and new medications.",
+          "Missed or late immunosuppression doses since the last visit.",
+          "Exact timing of the last CNI dose relative to the lab draw.",
+          "Infectious, urinary, GI, or graft-pain symptoms.",
+          "New prescription meds, OTCs, supplements, or interacting drugs.",
+          "Tremor, headache, or other neurotoxicity symptoms.",
+          "New skin lesions or nonhealing wounds.",
+        ],
+      },
+      {
+        heading: "Immunosuppression Reference",
+        items: [
+          "Use these as reference ranges only: trough goals are transplant-center and regimen specific, and dose changes should be confirmed with the transplant team.",
+          "Tacrolimus adult kidney/kidney-pancreas trough reference: less than 1 month 9-12 ng/mL, 1-3 months 8-10, 3-12 months 6-8, and greater than 12 months 5-7.",
+          "Cyclosporine adult kidney/kidney-pancreas C0 trough reference: less than 1 month 300-350 ng/mL, 1-2 months 250-300, 3-6 months 150-250, 7-12 months 125-200, and greater than 12 months 75-125.",
+          "Cyclosporine C2 targets may be used by some centers instead: less than 1 month 1300 ng/mL, 1-2 months 1100, 3-6 months 800-900, 7-12 months 700, and greater than 12 months 450-600.",
+          "Tacrolimus side effects to ask/check: tremor, headache, insomnia, diarrhea/nausea, hypertension, hyperglycemia, nephrotoxicity, cytopenias, infection/CMV, and rash or alopecia.",
+          "Cyclosporine side effects to ask/check: nephrotoxicity, hypertension, tremor/headache, hirsutism, gingival hyperplasia, hyperlipidemia, edema, hepatotoxicity, GI upset, cytopenias, infection, and skin/wound infections.",
+          "Mycophenolate/mycophenolic acid: diarrhea, nausea/vomiting, abdominal pain, edema, leukopenia/anemia, infection/CMV or UTI, and pregnancy or teratogenicity counseling.",
+          "Prednisone: hyperglycemia, weight gain or increased appetite, hypertension/edema, mood or sleep changes, acne/skin thinning, impaired wound healing, peptic ulcer symptoms, osteoporosis/fracture risk, cataracts/glaucoma, and infection risk.",
+          "mTOR inhibitors such as sirolimus or everolimus: edema, hypertension, hyperlipidemia, mouth ulcers, diarrhea/GI upset, rash, cytopenias, proteinuria, impaired wound healing, pneumonitis symptoms, and infection risk.",
+          "Azathioprine: leukopenia/pancytopenia, infection, nausea/vomiting, diarrhea, oral ulcers, hepatotoxicity, pancreatitis symptoms, and TPMT/NUDT15 or local-protocol safety review before escalation.",
+          "Belatacept: anemia, diarrhea/constipation, UTI, edema, hypertension, fever, cough, nausea/vomiting, headache, hyperkalemia or hypokalemia, leukopenia, and PTLD/PML or serious infection warning symptoms.",
+          "Common prophylaxis meds: valganciclovir can cause leukopenia/neutropenia, anemia, thrombocytopenia, and GI upset and needs renal dosing; TMP-SMX can cause rash, GI upset, hyperkalemia, creatinine rise, cytopenias, and severe sulfa reactions.",
         ],
       },
       {
@@ -201,42 +171,38 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
         ],
       },
       {
-        heading: "Labs / Data to Review",
+        heading: "Synthesis for the Visit",
         items: [
-          "Creatinine trend",
-          "Proteinuria",
-          "Drug level and timing validity",
-          "CBC / metabolic profile",
-          "BK / CMV per center practice",
-          "Glucose / lipids as relevant",
+          "Is graft function stable, and if not, what are the likely buckets: rejection, CNI toxicity, volume/hemodynamics, obstruction, infection, or recurrent disease?",
+          "Can the drug level be interpreted as a true trough?",
+          "Are infections, malignancy risk, metabolic complications, or adherence issues changing management today?",
+          "Which next data point would change the plan: repeat labs, urine studies, ultrasound, viral PCR, DSA, or biopsy discussion?",
         ],
       },
     ],
 
     commonMistakes: [
-      "Reacting to one tacrolimus level without checking timing",
-      "Not asking about adherence",
-      "Ignoring interacting medications",
-      "Not presenting baseline graft function",
-      "Not mentioning proteinuria",
+      "Adjusting immunosuppression without knowing the target range for that regimen and time from transplant",
+      "Reacting to a drug level before confirming whether it was a true trough and what goal the transplant center is using",
+      "Avoiding adherence questions because they feel uncomfortable",
+      "Missing interacting medications",
       "Treating center-specific protocols as universal rules",
     ],
 
     teachingPoints: [
-      "Always state whether the trough was real.",
-      "Immunosuppression targets are center-specific.",
-      "New creatinine rise can reflect rejection, drug toxicity, volume issues, obstruction, or infection.",
+      "Immunosuppression targets are center-specific and depend on time from transplant and regimen.",
+      "Diarrhea can raise tacrolimus levels and can also reflect infection or medication toxicity.",
+      "A new creatinine rise after transplant is a problem representation, not a diagnosis.",
     ],
 
-    discussionQuestions: [
-      "A patient 8 months post-transplant has a rising creatinine (1.4 → 1.8 over 2 months) with a tacrolimus trough of 11 ng/mL. What is your differential diagnosis, and how would you approach this?",
-      "A transplant recipient reports persistent diarrhea for 3 weeks. Their mycophenolate dose is at the standard level. How would you evaluate and manage this — and when would you consider a dose change vs further workup?",
-    ],
+    discussionQuestions: [],
 
     guidelineBasis: [
+      "BC Transplant Medication Guidelines for Solid Organ Transplants (AMB.03.007, revised February 2026)",
       "KDIGO 2009 Clinical Practice Guideline for the Care of the Kidney Transplant Recipient",
       "SYMPHONY Trial (NEJM 2007) — low-dose tacrolimus-based regimens",
       "BENEFIT Trial (AJT 2016) — belatacept vs cyclosporine long-term outcomes",
+      "DailyMed prescribing information for belatacept, everolimus, and sulfamethoxazole/trimethoprim",
     ],
   },
 
@@ -255,34 +221,23 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPearl:
       "Do not escalate therapy from one office reading if you do not know the home BP pattern.",
 
-    beforePresenting: [
-      "Home BP log",
-      "Office BP today",
-      "BP technique quality",
-      "Current meds and doses",
-      "Adherence",
-      "Side effects",
-      "Orthostatic symptoms",
-      "Potassium / creatinine",
-      "Albuminuria / CKD status",
-      "Contributors: NSAIDs, stimulants, alcohol, OSA clues",
-    ],
+    beforePresenting: [],
 
-    howToPresent:
-      "\"This is a patient with hypertension on __ medications. Home BPs average __ and office BP today is __. Technique and adherence are __. They do/do not have orthostatic symptoms. Main questions are whether BP is truly uncontrolled, whether pseudoresistance is present, whether CKD or proteinuria affects medication choice, and whether secondary causes need workup.\"",
+    howToPresent: "",
 
     sections: [
       {
-        heading: "Must-Ask History",
+        heading: "Clinic Prep & Patient Questions",
         items: [
-          "Home BPs",
-          "How BP is measured (technique)",
-          "Adherence",
-          "Side effects",
-          "Orthostasis / falls",
-          "NSAIDs / OTCs / stimulants",
-          "Alcohol",
-          "Snoring / apnea symptoms if resistant",
+          "BP evidence: home log, office BP, and whether measurements are standardized.",
+          "Medication regimen with doses, fill/adherence clues, and side effects.",
+          "Safety labs: potassium, creatinine/eGFR, sodium, bicarbonate when relevant.",
+          "CKD/proteinuria status because it changes medication priorities.",
+          "Contributors to apparent resistance: NSAIDs, stimulants, alcohol, high sodium intake, and OSA clues.",
+          "How the patient measures BP at home: cuff size, rest period, position, timing, and whether values are written down.",
+          "Missed doses, cost barriers, side effects, and orthostasis/falls.",
+          "Dietary sodium, alcohol, NSAIDs/OTCs/stimulants, and sleep apnea symptoms.",
+          "Secondary-cause clues when the story fits: young onset, abrupt worsening, hypokalemia, episodic symptoms, kidney bruits, or resistant HTN.",
         ],
       },
       {
@@ -296,40 +251,30 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
         ],
       },
       {
-        heading: "Labs / Data to Review",
+        heading: "Synthesis for the Visit",
         items: [
-          "Creatinine / eGFR",
-          "Potassium",
-          "Sodium",
-          "Bicarbonate",
-          "Albuminuria",
-          "Secondary workup only if clinically indicated",
+          "Is BP truly uncontrolled, or is this white-coat effect, poor technique, nonadherence, or undertreatment?",
+          "Is the regimen at effective doses and built around the patient's CKD/proteinuria status?",
+          "Is this resistant hypertension, and if so, is spironolactone or another add-on safe with the current kidney function and potassium?",
+          "Does the history justify targeted secondary workup?",
         ],
       },
     ],
 
     commonMistakes: [
-      "Escalating based on office BP alone",
-      "Not checking home technique",
-      "Not checking adherence",
-      "Not checking orthostatic symptoms",
+      "Treating medication side effects as nonadherence without asking what happened",
+      "Treating apparent resistance before confirming measurement quality and adherence",
       "Ordering shotgun secondary HTN workups",
-      "Forgetting CKD/proteinuria affects drug choice",
+      "Ignoring orthostatic symptoms in older or frail patients",
     ],
 
     teachingPoints: [
-      "Home BP data matter more than office readings.",
       "For most adults, a practical treatment goal is under 130/80 mmHg; in CKD, KDIGO supports standardized office SBP under 120 mmHg for many non-dialysis patients when tolerated.",
-      "Resistant HTN starts with confirming adherence, dose adequacy, and measurement validity.",
+      "Resistant HTN requires three appropriately dosed agents, usually including a diuretic, before adding more complexity.",
+      "Primary aldosteronism is common enough to consider when hypertension is resistant or paired with hypokalemia.",
     ],
 
-    discussionQuestions: [
-      "A patient is on lisinopril 40 mg, amlodipine 10 mg, and chlorthalidone 25 mg, but home BPs average 155/95. What is your systematic approach to evaluating and managing this patient's resistant hypertension?",
-      "A 28-year-old woman is referred for new-onset hypertension with BPs around 160/100 and a potassium of 3.2 mEq/L. What secondary causes would you consider, and how would you prioritize your workup?",
-      "A 72-year-old with diffuse atherosclerosis has resistant HTN and is found on imaging to have 80% stenosis of the right renal artery. CORAL (NEJM 2014) showed stenting did not reduce CV/renal events vs medical therapy alone — what are the few remaining indications where you would still consider intervention?",
-      "After PATHWAY-2 spironolactone, what is the role of newer agents in resistant HTN? Aprocitentan (PRECISION, Lancet 2022) is FDA-approved (Tryvio) and lowered BP and proteinuria; baxdrostat (BaxHTN/Bax24, 2025) cut 24h ambulatory SBP ~14 mmHg in resistant HTN. Where would each fit?",
-      "AMBER (Lancet 2019): patiromer kept 86% of CKD patients (eGFR 25–45) on spironolactone vs 66% on placebo. How does that change your approach to MRA tolerance in resistant HTN with advanced CKD?",
-    ],
+    discussionQuestions: [],
 
     guidelineBasis: [
       "ACC/AHA 2025 Guideline for High Blood Pressure in Adults",
