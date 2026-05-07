@@ -13,7 +13,7 @@ describe("describeStudentNavigation", () => {
   it("describes quiz starts and content opens", () => {
     expect(describeStudentNavigation({ type: "weeklyQuiz", week: 1 })).toMatchObject({
       type: "quiz_start",
-      label: "Started Week 1 Quiz",
+      label: "Started Module 1 Quiz",
     });
 
     expect(describeStudentNavigation({ type: "guideDetail", id: "firstday" })).toMatchObject({

@@ -17,7 +17,7 @@ const bulletList = (items: string[], color: string) =>
   ));
 
 export default function RotationGuideView({ guideId, onBack }: Props) {
-  const [openSection, setOpenSection] = useState(0);
+  const [closedSections, setClosedSections] = useState<Set<number>>(() => new Set());
   const guide = ROTATION_GUIDES[guideId];
 
   if (!guide) {
@@ -56,12 +56,18 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.teachingPearl}</div>
       </div>
 
-      {/* Main sections — accordion */}
+      {/* Main sections — accordion (all open by default, click to collapse) */}
       {guide.sections.map((section, si) => {
-        const isOpen = openSection === si;
+        const isOpen = !closedSections.has(si);
+        const toggle = () => setClosedSections(prev => {
+          const next = new Set(prev);
+          if (next.has(si)) next.delete(si);
+          else next.add(si);
+          return next;
+        });
         return (
           <div key={si} style={{ marginBottom: 10, background: T.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${isOpen ? T.brand + "60" : T.line}`, transition: "border 0.2s" }}>
-            <button onClick={() => setOpenSection(isOpen ? -1 : si)}
+            <button onClick={toggle}
               style={{ width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{section.heading}</div>
