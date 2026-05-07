@@ -1,21 +1,14 @@
 import { useState } from "react";
-import { T } from "../../data/constants";
 import { ROTATION_GUIDES, type RotationGuideId } from "../../data/rotationGuides";
-import { BackButton, EduDisclaimer, GuideShell, InfoBar } from "./shared";
+import { InfoBar } from "./shared";
+import { GuideAccordion, GuideBody, GuideHeader, GuideItem, GuideList, GuideNumberedItem, GuideNumberedList, GuideShell } from "./GuideShell";
 
 interface Props {
   guideId: RotationGuideId;
   onBack: () => void;
 }
 
-function BulletList({ items, color }: { items: string[]; color: string }) {
-  return items.map((item, i) => (
-    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
-      <span style={{ color, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
-      <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word" }}>{item}</div>
-    </div>
-  ));
-}
+const isTemplate = (item: string) => item.startsWith("\"") && item.endsWith("\"");
 
 export default function RotationGuideView({ guideId, onBack }: Props) {
   const [openSection, setOpenSection] = useState(0);
@@ -23,58 +16,32 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
 
   if (!guide) {
     return (
-      <div style={{ padding: 16 }}>
-        <BackButton onClick={onBack} />
-        <div style={{ color: T.sub, textAlign: "center", padding: 32 }}>Guide not found.</div>
-      </div>
+      <GuideShell onBack={onBack}>
+        <GuideBody><InfoBar tone="neutral">Guide not found.</InfoBar></GuideBody>
+      </GuideShell>
     );
   }
 
   return (
-    <GuideShell
-      title={guide.title}
-      subtitle={guide.subtitle}
-      icon={guide.icon}
-      onBack={onBack}
-      sections={guide.sections.map((section, si) => ({
-        id: si,
-        heading: section.heading,
-        items: section.items,
-        renderItem: (item) => {
-          const text = String(item);
-          const isTemplate = text.startsWith("\"") && text.endsWith("\"");
-          if (isTemplate) {
-            return <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word", fontStyle: "italic", background: T.grayBg, borderRadius: 8, padding: "10px 12px", width: "100%" }}>{text}</div>;
-          }
-          return (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-              <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
-              <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word" }}>{text}</div>
-            </div>
-          );
-        },
-      }))}
-      openSection={openSection}
-      onToggleSection={(sectionId) => setOpenSection(openSection === sectionId ? -1 : Number(sectionId))}
-      afterSections={(
-        <InfoBar label="Common Mistakes" tone="danger" style={{ marginTop: 6, marginBottom: 14 }}>
-          <BulletList items={guide.commonMistakes} color={T.danger} />
+    <GuideShell onBack={onBack}>
+      <GuideHeader eyebrow="Rotation" icon={guide.icon} title={guide.title} description={guide.subtitle} />
+      <GuideBody>
+        <InfoBar label="Why This Matters" tone="brand">{guide.whyItMatters}</InfoBar>
+        <InfoBar label="Teaching Pearl" tone="warning">{guide.teachingPearl}</InfoBar>
+        {guide.sections.map((section, si) => (
+          <GuideAccordion key={section.heading} title={section.heading} count={`${section.items.length} ${section.items.length === 1 ? "item" : "items"}`} open={openSection === si} onToggle={() => setOpenSection(openSection === si ? -1 : si)}>
+            <GuideList>
+              {section.items.map((item, ii) => <GuideItem key={`${ii}-${item}`} template={isTemplate(item)}>{item}</GuideItem>)}
+            </GuideList>
+          </GuideAccordion>
+        ))}
+        <InfoBar label="Common Mistakes" tone="danger">
+          <GuideList>{guide.commonMistakes.map((item, i) => <GuideItem key={`${i}-${item}`} tone="danger">{item}</GuideItem>)}</GuideList>
         </InfoBar>
-      )}
-      teachingPoints={guide.teachingPoints}
-      footer={(
-        <>
-          <BackButton onClick={onBack} style={{ marginTop: 8, marginBottom: 0 }} />
-          <EduDisclaimer />
-        </>
-      )}
-    >
-      <InfoBar label="Why This Matters" tone="brand" style={{ marginBottom: 14 }}>
-        {guide.whyItMatters}
-      </InfoBar>
-      <InfoBar label="Teaching Pearl" tone="warning" style={{ marginBottom: 14 }}>
-        {guide.teachingPearl}
-      </InfoBar>
+        <GuideNumberedList title="Teaching Points">
+          {guide.teachingPoints.map((item, i) => <GuideNumberedItem key={`${i}-${item}`} index={i + 1}>{item}</GuideNumberedItem>)}
+        </GuideNumberedList>
+      </GuideBody>
     </GuideShell>
   );
 }
