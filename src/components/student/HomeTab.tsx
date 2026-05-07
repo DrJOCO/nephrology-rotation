@@ -126,7 +126,7 @@ function getPearlIndex(date: Date): number {
 
 function PearlToast({ tip, onDismiss }: { tip: string; onDismiss: () => void }) {
   return (
-    <section style={{ background: T.ice, borderRadius: 18, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
+    <section style={{ background: T.ice, borderRadius: 8, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Sparkles size={16} strokeWidth={1.75} color={T.brand} aria-hidden="true" />

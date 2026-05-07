@@ -82,7 +82,6 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
         {done && (
           <div style={{ background: T.successBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.success, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.line}` }}>
-            <span style={{ fontSize: 16 }}>✓</span>
             <span>Previously completed: {done.score}/{done.total} correct ({Math.round((done.score / done.total) * 100)}%)</span>
           </div>
         )}
@@ -281,7 +280,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
               <div style={{ position: "absolute", top: 14, right: 48, display: "flex", alignItems: "center", gap: 6 }}>
                 {done && (
                   <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
-                    ✓ {done.score}/{done.total}
+                    {done.score}/{done.total}
                   </span>
                 )}
               </div>
