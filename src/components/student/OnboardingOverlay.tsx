@@ -41,15 +41,15 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.overlay, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}>
-      <div style={{ background: T.card, borderRadius: 8, maxWidth: 392, width: "100%", padding: "24px 22px 22px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", animation: "fadeIn 0.3s ease", border: `1px solid ${T.line}` }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.overlay, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: T.card, borderRadius: 2, maxWidth: 392, width: "100%", padding: "24px 22px 22px", animation: "fadeIn 0.3s ease", border: `1.5px solid ${T.ink}` }}>
         <div style={{ fontFamily: T.mono, color: T.muted, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0, marginBottom: 12 }}>
           Step {step + 1} of {ONBOARDING_STEPS.length}
         </div>
 
-        <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>
+        <div style={{ display: "flex", gap: 7, marginBottom: 18 }}>
           {ONBOARDING_STEPS.map((_, i) => (
-            <div key={i} style={{ flex: 1, height: 3, borderRadius: 0, background: i <= step ? T.ink : T.line, transition: "background 0.3s" }} />
+            <div key={i} style={{ width: 7, height: 7, borderRadius: 0, border: `1px solid ${i <= step ? T.ink : T.line}`, background: i <= step ? T.ink : "transparent", transition: "background 0.3s, border 0.3s" }} />
           ))}
         </div>
 
