@@ -1,11 +1,11 @@
 // Friday Outpatient Nephrology Clinic Guides — pre-authored teaching content
 //
-// Each clinic week includes three outpatient learning tracks:
-// CKD → Hypertension → Transplant.
+// Each clinic week includes five outpatient learning tracks:
+// CKD → DKD → Lupus Nephritis → Hypertension → Transplant.
 // Content is guideline-based, educational, and not patient-specific.
 // Guideline sources are listed in each guide's guidelineBasis field.
 
-export const CLINIC_GUIDE_TOPICS = ["CKD", "Hypertension", "Transplant"] as const;
+export const CLINIC_GUIDE_TOPICS = ["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"] as const;
 export type ClinicGuideTopic = (typeof CLINIC_GUIDE_TOPICS)[number];
 
 export interface ClinicGuideTemplate {
@@ -104,6 +104,222 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
       "IDEAL Trial (NEJM 2010) — timing of dialysis initiation",
       "CONFIDENCE (NEJM 2025) — simultaneous finerenone + empagliflozin in DKD",
       "CKD-FIX (NEJM 2020) — allopurinol does NOT slow CKD progression",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  DIABETIC KIDNEY DISEASE CLINIC GUIDE
+  // ═══════════════════════════════════════════════════════════════════
+  DKD: {
+    topic: "DKD",
+    icon: "🩸",
+    title: "Diabetic Kidney Disease Clinic",
+    subtitle: "Diagnosis confidence, albuminuria risk, and layered kidney-protective therapy",
+
+    whyItMatters:
+      "Diabetic kidney disease visits are not just diabetes follow-up. The clinic task is to confirm the DKD pattern, recognize features that suggest another kidney disease, quantify kidney and cardiovascular risk, and layer therapies that slow progression while monitoring safety.",
+
+    teachingPearl:
+      "Do not call every kidney problem in a diabetic patient DKD. Long diabetes duration, albuminuria progression, bland sediment, and retinopathy support DKD; active sediment, abrupt nephrotic syndrome, or rapid eGFR loss should make you pause.",
+
+    beforePresenting: [],
+
+    howToPresent: "",
+
+    sections: [
+      {
+        heading: "Clinic Prep & Patient Questions",
+        items: [
+          "Diabetes context: type, duration, A1c pattern, hypoglycemia history, and current diabetes medications.",
+          "Kidney risk data: eGFR/creatinine trend, UACR trend, urine sediment, and prior kidney imaging if available.",
+          "Microvascular clues: retinopathy status, neuropathy, foot ulcers, and prior amputations or infections.",
+          "Cardiovascular context: ASCVD, heart failure, stroke, PAD, smoking, and lipid therapy.",
+          "BP evidence: home BP, office BP quality, orthostatic symptoms, and current antihypertensive doses.",
+          "Current kidney-protective therapy: ACEi/ARB dose, SGLT2 inhibitor status, finerenone status, GLP-1 RA or incretin therapy, and reason any pillar is missing.",
+          "Safety labs and limits: potassium, bicarbonate, volume status, eGFR thresholds, and recent AKI/dehydration/contrast exposure.",
+          "SGLT2 inhibitor counseling: genital infections, volume symptoms, peri-procedure or sick-day holds, and euglycemic DKA warning symptoms.",
+          "Finerenone/MRA counseling: hyperkalemia risk, potassium diet/supplements, NSAIDs, TMP-SMX, and planned lab follow-up.",
+          "Diet and behavior: sodium intake, protein pattern, weight goals, activity, tobacco, and barriers to medication access.",
+        ],
+      },
+      {
+        heading: "DKD vs Something Else",
+        items: [
+          "Typical DKD pattern: long-standing diabetes, progressive albuminuria, bland sediment, diabetic retinopathy, and gradual eGFR decline.",
+          "Atypical features: active urine sediment, RBC casts, abrupt creatinine rise, rapidly progressive eGFR loss, sudden nephrotic syndrome, systemic symptoms, low complement, monoclonal-protein clues, or no retinopathy when the story otherwise seems diabetic.",
+          "Type 1 diabetes clue: proteinuria within the first 5 years or absent retinopathy should raise suspicion for non-diabetic kidney disease.",
+          "If the pattern is atypical, define what result would change management before recommending biopsy or serologic workup.",
+        ],
+      },
+      {
+        heading: "The 4 Pillars of DKD Therapy",
+        items: [
+          "Pillar 1 - ACEi or ARB: use the maximally tolerated single-agent RAAS blocker when albuminuria and hypertension are present; avoid dual ACEi/ARB therapy.",
+          "Pillar 2 - SGLT2 inhibitor: for most T2D + CKD patients with eGFR >=20 mL/min/1.73 m2, use for kidney and heart protection rather than glucose lowering alone; expect a small early eGFR dip.",
+          "Pillar 3 - Finerenone: consider for T2D with persistent albuminuria despite ACEi/ARB when eGFR and potassium allow; check potassium at baseline, about 1 month after initiation or dose change, and periodically thereafter.",
+          "Pillar 4 - GLP-1 RA or incretin-based therapy: consider when additional glycemic, weight, cardiovascular, or kidney-risk reduction is needed, especially if obesity or ASCVD risk is prominent.",
+          "BP and volume: align target with measurement technique and tolerance; treat edema and sodium excess before simply adding more BP agents.",
+          "Medication safety: dose-adjust metformin and other diabetes drugs for eGFR, avoid NSAIDs, and revisit sick-day holds for ACEi/ARB, SGLT2i, diuretics, and metformin.",
+        ],
+      },
+      {
+        heading: "Exam Focus",
+        items: [
+          "BP measurement quality, repeat BP, and orthostatics when symptoms or autonomic neuropathy are possible.",
+          "Volume exam: JVD, lung findings, edema, and weight trend.",
+          "Peripheral vascular and foot check when wounds, PAD, neuropathy, or infection risk is part of the story.",
+          "Skin and injection sites when relevant to diabetes medication use or infection.",
+        ],
+      },
+      {
+        heading: "Synthesis for the Visit",
+        items: [
+          "Is this classic DKD, DKD plus superimposed AKI, or a diabetic patient with another kidney disease?",
+          "What are the GFR and albuminuria categories, and is the trajectory stable or worsening?",
+          "Which kidney-protective pillar is missing, contraindicated, unaffordable, or limited by side effects?",
+          "What safety monitoring is required after today's medication change?",
+        ],
+      },
+    ],
+
+    commonMistakes: [
+      "Assuming diabetes explains the kidney disease without checking sediment, tempo, and retinopathy status",
+      "Presenting creatinine without UACR or albuminuria category",
+      "Treating SGLT2 inhibitors as glucose drugs instead of kidney and heart protection",
+      "Adding finerenone without a potassium plan",
+      "Using dual RAAS blockade because albuminuria is severe",
+    ],
+
+    teachingPoints: [
+      "DKD risk is staged by both eGFR and albuminuria; UACR is not optional data.",
+      "Students should know the 4 pillars of DKD therapy: RAAS blockade, SGLT2 inhibitor, finerenone when eligible, and GLP-1 RA or incretin therapy when clinically appropriate.",
+      "An early SGLT2 inhibitor eGFR dip is expected; volume depletion, AKI symptoms, or a large decline need reassessment.",
+      "Atypical features should trigger a diagnostic pause, not automatic escalation of DKD therapy.",
+    ],
+
+    discussionQuestions: [],
+
+    guidelineBasis: [
+      "ADA Standards of Care in Diabetes 2026, Section 11: Chronic Kidney Disease and Risk Management",
+      "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD",
+      "KDIGO 2024 Clinical Practice Guideline for CKD Evaluation and Management",
+      "CREDENCE, DAPA-CKD, and EMPA-KIDNEY — SGLT2 inhibitor kidney outcome evidence",
+      "FIDELIO-DKD, FIGARO-DKD, and FIDELITY — finerenone kidney and cardiovascular outcomes",
+      "FLOW — semaglutide kidney outcomes in T2D with CKD",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  LUPUS NEPHRITIS CLINIC GUIDE
+  // ═══════════════════════════════════════════════════════════════════
+  "Lupus Nephritis": {
+    topic: "Lupus Nephritis",
+    icon: "🦋",
+    title: "Lupus Nephritis Clinic",
+    subtitle: "Flare detection, biopsy context, response tracking, and immunosuppression safety",
+
+    whyItMatters:
+      "Lupus nephritis clinic visits protect kidney function by detecting relapse early, tracking proteinuria response, coordinating nephrology-rheumatology treatment, and reducing infection, steroid, reproductive, and medication-toxicity harms.",
+
+    teachingPearl:
+      "Proteinuria is the vital sign of lupus nephritis follow-up. Always pair it with creatinine/eGFR, urine sediment, complements, anti-dsDNA, medication adherence, and the biopsy class or suspected flare context.",
+
+    beforePresenting: [],
+
+    howToPresent: "",
+
+    sections: [
+      {
+        heading: "Clinic Prep & Patient Questions",
+        items: [
+          "LN context: SLE history, prior kidney biopsy class/activity/chronicity, baseline creatinine/eGFR, baseline proteinuria, and prior flares.",
+          "Current kidney activity: UPCR or UACR trend, creatinine/eGFR trend, urinalysis with sediment, hematuria/casts, serum albumin, edema, and BP.",
+          "Serologic activity: complement C3/C4 and anti-dsDNA trend; check at clinic visits but avoid over-ordering more often than monthly.",
+          "Current regimen and adherence: hydroxychloroquine, glucocorticoid dose/taper, MPAA/MMF dose, cyclophosphamide history, belimumab, voclosporin/tacrolimus/cyclosporine, rituximab/other biologics, and missed doses.",
+          "Treatment phase: new diagnosis, induction/active flare, partial response, complete response, maintenance, taper, refractory disease, pregnancy planning, or ESKD/transplant planning.",
+          "Toxicity screen: infections, leukopenia, GI intolerance, tremor, hypertension, hyperkalemia, AKI, alopecia, mood/sleep changes, hyperglycemia, weight gain, bone risk, eye screening for HCQ, and malignancy/vaccine status.",
+          "Reproductive safety: pregnancy intention, contraception, teratogenic medications such as mycophenolate or cyclophosphamide, fertility preservation when cyclophosphamide is being considered, and antiphospholipid syndrome history.",
+          "Thrombosis risk: severe proteinuria, low serum albumin, antiphospholipid antibodies or prior clot, estrogen exposure, smoking, and immobility.",
+          "Supportive kidney care: RAAS inhibitor use when proteinuria is present, BP control, sodium intake, statin/ASCVD risk, bone protection, PJP or other prophylaxis when indicated, and infection-risk counseling.",
+        ],
+      },
+      {
+        heading: "When to Think Biopsy",
+        items: [
+          "Suspected new LN: SLE with proteinuria greater than 0.5 g/g and/or otherwise unexplained impaired kidney function should prompt kidney-biopsy discussion unless contraindicated.",
+          "Suspected flare after treated LN: rising proteinuria, hematuria, active sediment, or worsening kidney function may need repeat biopsy because flare, chronic scarring, TMA, drug toxicity, and another kidney disease can look similar.",
+          "Poor response: ongoing or worsening proteinuria, hematuria, or kidney dysfunction after at least 6 months of appropriate therapy is a reason to revisit biopsy and adherence before labeling refractory disease.",
+          "Do not manage class III/IV, class V, and chronic inactive scarring as if they are the same disease; the biopsy class and activity/chronicity drive treatment intensity.",
+        ],
+      },
+      {
+        heading: "Treatment Reference",
+        items: [
+          "All LN: use hydroxychloroquine unless contraindicated, adjust doses for kidney function, and coordinate nephrology-rheumatology care.",
+          "Glucocorticoids: modern guidance favors IV methylprednisolone pulses for active disease followed by lower-dose oral prednisone with taper toward <=5 mg/day by about 6 months when clinically feasible.",
+          "Active class III/IV +/- V: current ACR guidance favors triple immunosuppression: glucocorticoids plus either MPAA + belimumab, MPAA + CNI, or low-dose Euro-Lupus cyclophosphamide + belimumab.",
+          "Pure class V with proteinuria >=1 g/g: ACR favors glucocorticoids + MPAA + CNI; lower proteinuria may be treated less aggressively depending on risk and systemic disease.",
+          "KDIGO initial options for active class III/IV include glucocorticoids plus MPAA, low-dose IV cyclophosphamide, belimumab add-on regimens, or MPAA + CNI when kidney function is not severely impaired.",
+          "Response goal: complete renal response generally means proteinuria around <=0.5 g/day or UPCR <=0.5 g/g with stable or improved kidney function by roughly 6-12 months; partial response trajectory matters before changing therapy.",
+          "Duration: after complete response, total immunosuppressive therapy is usually continued for at least 3-5 years before cautious tapering.",
+        ],
+      },
+      {
+        heading: "Monitoring Checklist",
+        items: [
+          "If complete response has not been achieved: quantify proteinuria at least every 3 months.",
+          "If sustained complete response: quantify proteinuria every 3-6 months.",
+          "At clinic visits: creatinine/eGFR, potassium, CBC, liver tests when relevant, complements, anti-dsDNA, urine microscopy, BP, weight, and medication-specific levels or safety labs.",
+          "For MPAA/MMF: watch leukopenia, infection, GI intolerance, and pregnancy risk.",
+          "For CNI/voclosporin/tacrolimus/cyclosporine: watch BP, creatinine rise, hyperkalemia, tremor/neurotoxicity, drug interactions, and nephrotoxicity.",
+          "For cyclophosphamide: watch cytopenias, infection, infertility risk, hemorrhagic cystitis, malignancy risk, and need for fertility/pregnancy counseling.",
+          "For belimumab or anti-CD20 therapy: watch infection risk, vaccine timing, infusion/injection reactions, mood symptoms when relevant, and immunoglobulin/B-cell monitoring per local practice.",
+        ],
+      },
+      {
+        heading: "Exam Focus",
+        items: [
+          "BP measurement quality and repeat BP if elevated.",
+          "Volume exam: JVD, lungs, edema, weight change, ascites if severe nephrotic syndrome.",
+          "SLE activity clues: rash, oral ulcers, synovitis, serositis symptoms, neurologic symptoms, and fever or infection signs.",
+          "Medication toxicity clues: bruising/cytopenia signs, steroid features, tremor, wounds, and infection.",
+        ],
+      },
+      {
+        heading: "Synthesis for the Visit",
+        items: [
+          "Is this active inflammatory LN, chronic damage, medication toxicity, infection, TMA/APS, or another kidney disease?",
+          "Is the patient improving, partially responding, relapsing, or refractory based on proteinuria, eGFR, sediment, and serologies?",
+          "What is the current treatment phase, and what is the next safety lab or response milestone?",
+          "What counseling is needed today: adherence, infection prevention, vaccines, bone protection, reproductive safety, thrombosis risk, or biopsy planning?",
+        ],
+      },
+    ],
+
+    commonMistakes: [
+      "Calling a creatinine rise LN flare without checking sediment, proteinuria, adherence, infection, CNI toxicity, and chronicity",
+      "Following complements and anti-dsDNA without quantifying proteinuria",
+      "Forgetting the biopsy class and activity/chronicity score when discussing treatment intensity",
+      "Letting patients remain on high-dose steroids without a taper and toxicity-prevention plan",
+      "Missing pregnancy and contraception counseling for mycophenolate or cyclophosphamide",
+    ],
+
+    teachingPoints: [
+      "A proteinuria threshold above 0.5 g/g in SLE is a biopsy trigger, not just a lab abnormality to watch indefinitely.",
+      "LN response is judged over months, but worsening kidney function or active sediment should accelerate reassessment.",
+      "Modern LN therapy often uses combination therapy to improve response while reducing cumulative steroid exposure.",
+      "Hydroxychloroquine, supportive kidney care, vaccine planning, and reproductive counseling are core parts of LN management, not extras.",
+    ],
+
+    discussionQuestions: [],
+
+    guidelineBasis: [
+      "American College of Rheumatology 2024 Guideline Summary for the Screening, Treatment, and Management of Lupus Nephritis",
+      "KDIGO 2024 Clinical Practice Guideline for the Management of Lupus Nephritis",
+      "BLISS-LN (NEJM 2020) — belimumab add-on therapy in active lupus nephritis",
+      "AURORA 1 (Lancet 2021) — voclosporin add-on therapy in active lupus nephritis",
+      "Euro-Lupus Nephritis Trial — low-dose cyclophosphamide regimen",
+      "ALMS — mycophenolate vs cyclophosphamide induction and maintenance evidence",
     ],
   },
 

@@ -202,9 +202,9 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Clinic Guides</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
-              CKD, Hypertension, and Transplant outpatient prep.
+              CKD, diabetic kidney disease, lupus nephritis, hypertension, and transplant outpatient prep.
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(190px, 1fr))", gap: 8 }}>
               {CLINIC_GUIDE_TOPICS.map((topic) => {
                 const template = clinicGuideTemplates[topic as ClinicGuideTopic] || CLINIC_GUIDES[topic as ClinicGuideTopic];
                 const record = (clinicGuides || []).find(g => g.date === dateStr && g.topic === topic);

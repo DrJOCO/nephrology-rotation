@@ -17,9 +17,9 @@ afterEach(() => {
 });
 
 describe("clinic topic set", () => {
-  it("returns all three outpatient clinic tracks every week", () => {
-    expect(getClinicTopicsForDate(new Date("2026-01-09T00:00:00"))).toEqual(["CKD", "Hypertension", "Transplant"]);
-    expect(getClinicTopicsForDate(new Date("2030-06-15T00:00:00"))).toEqual(["CKD", "Hypertension", "Transplant"]);
+  it("returns all outpatient clinic tracks every week", () => {
+    expect(getClinicTopicsForDate(new Date("2026-01-09T00:00:00"))).toEqual(["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"]);
+    expect(getClinicTopicsForDate(new Date("2030-06-15T00:00:00"))).toEqual(["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"]);
   });
 
   it("keeps CKD as the backward-compatible primary clinic topic", () => {
@@ -55,13 +55,13 @@ describe("getCurrentOrNextFriday", () => {
 });
 
 describe("ensureCurrentClinicGuide", () => {
-  it("creates all three clinic guides when none exist for this Friday", () => {
+  it("creates all clinic guides when none exist for this Friday", () => {
     vi.setSystemTime(new Date("2026-03-12T10:00:00"));
     const { guides, newGuide, newGuides } = ensureCurrentClinicGuide([]);
     expect(newGuide).not.toBeNull();
     expect(newGuide!.date).toBe("2026-03-13");
-    expect(newGuides.map((guide) => guide.topic)).toEqual(["CKD", "Hypertension", "Transplant"]);
-    expect(guides).toHaveLength(3);
+    expect(newGuides.map((guide) => guide.topic)).toEqual(["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"]);
+    expect(guides).toHaveLength(5);
     expect(guides.every((guide) => guide.isOverride === false)).toBe(true);
   });
 
@@ -71,13 +71,13 @@ describe("ensureCurrentClinicGuide", () => {
       { id: "clinic-2026-03-13-CKD", date: "2026-03-13", topic: "CKD", generatedAt: "2026-03-10", isOverride: false },
     ];
     const { guides, newGuides } = ensureCurrentClinicGuide(existing);
-    expect(newGuides.map((guide) => guide.topic)).toEqual(["Hypertension", "Transplant"]);
-    expect(guides.map((guide) => guide.topic)).toEqual(["CKD", "Hypertension", "Transplant"]);
+    expect(newGuides.map((guide) => guide.topic)).toEqual(["DKD", "Lupus Nephritis", "Hypertension", "Transplant"]);
+    expect(guides.map((guide) => guide.topic)).toEqual(["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"]);
   });
 
-  it("skips creation when all three guides already exist", () => {
+  it("skips creation when all clinic guides already exist", () => {
     vi.setSystemTime(new Date("2026-03-12T10:00:00"));
-    const existing: ClinicGuideRecord[] = ["CKD", "Hypertension", "Transplant"].map((topic) => ({
+    const existing: ClinicGuideRecord[] = ["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"].map((topic) => ({
       id: `clinic-2026-03-13-${topic}`,
       date: "2026-03-13",
       topic: topic as ClinicGuideRecord["topic"],
@@ -87,7 +87,7 @@ describe("ensureCurrentClinicGuide", () => {
     const { guides, newGuide, newGuides } = ensureCurrentClinicGuide(existing);
     expect(newGuide).toBeNull();
     expect(newGuides).toEqual([]);
-    expect(guides).toHaveLength(3);
+    expect(guides).toHaveLength(5);
   });
 
   it("preserves existing guides from other dates", () => {
@@ -96,7 +96,7 @@ describe("ensureCurrentClinicGuide", () => {
       { id: "clinic-2026-03-06-Transplant", date: "2026-03-06", topic: "Transplant", generatedAt: "2026-03-05", isOverride: false },
     ];
     const { guides } = ensureCurrentClinicGuide(existing);
-    expect(guides).toHaveLength(4);
+    expect(guides).toHaveLength(6);
     expect(guides[0].date).toBe("2026-03-06");
   });
 });
@@ -123,12 +123,12 @@ describe("overrideClinicGuide", () => {
 });
 
 describe("regenerateClinicGuide", () => {
-  it("resets a Friday to the standard three clinic topic records", () => {
+  it("resets a Friday to the standard clinic topic records", () => {
     const existing: ClinicGuideRecord[] = [
       { id: "clinic-2026-01-09-Hypertension", date: "2026-01-09", topic: "Hypertension", generatedAt: "2026-01-08", isOverride: true },
     ];
     const result = regenerateClinicGuide(existing, "2026-01-09");
-    expect(result.map((guide) => guide.topic)).toEqual(["CKD", "Hypertension", "Transplant"]);
+    expect(result.map((guide) => guide.topic)).toEqual(["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"]);
     expect(result.every((guide) => guide.isOverride === false)).toBe(true);
   });
 
@@ -139,6 +139,6 @@ describe("regenerateClinicGuide", () => {
     ];
     const result = regenerateClinicGuide(existing, "2026-01-16");
     expect(result.filter((guide) => guide.date === "2026-01-09")).toHaveLength(1);
-    expect(result.filter((guide) => guide.date === "2026-01-16")).toHaveLength(3);
+    expect(result.filter((guide) => guide.date === "2026-01-16")).toHaveLength(5);
   });
 });

@@ -1,9 +1,9 @@
 // Clinic guide scheduling logic — pure functions, no side effects.
 //
-// Each outpatient clinic week includes the same three learning tracks:
-// CKD -> Hypertension -> Transplant. Older app versions generated only one
-// Friday topic, so the helpers below preserve compatibility while ensuring
-// all three records exist going forward.
+// Each outpatient clinic week includes the same five learning tracks:
+// CKD -> DKD -> Lupus Nephritis -> Hypertension -> Transplant. Older app versions generated only
+// one Friday topic, so the helpers below preserve compatibility while ensuring
+// all current records exist going forward.
 
 import { CLINIC_GUIDE_TOPICS, type ClinicGuideTopic } from "../data/clinicGuides";
 import type { ClinicGuideRecord } from "../types";
@@ -67,7 +67,7 @@ function buildRecord(date: string, topic: ClinicGuideTopic, isOverride = false):
 }
 
 /**
- * Ensure ClinicGuideRecords exist for all three guides for the current/next
+ * Ensure ClinicGuideRecords exist for all clinic guides for the current/next
  * Friday. Returns the updated array plus the first newly created record for
  * backward compatibility with older callers.
  */
@@ -114,7 +114,7 @@ export function overrideClinicGuide(
 }
 
 /**
- * Regenerate all clinic guide records for a Friday back to the standard three
+ * Regenerate all clinic guide records for a Friday back to the standard
  * topic set, removing any old single-topic or override-only representation for
  * that date.
  */

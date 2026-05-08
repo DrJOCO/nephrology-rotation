@@ -59,7 +59,7 @@ export type SubView =
   | { type: "akiTool" }
   | { type: "hyponatremiaTool" }
   | { type: "gnTool" }
-  | { type: "clinicGuide"; date: string; topic?: "CKD" | "Hypertension" | "Transplant" }
+  | { type: "clinicGuide"; date: string; topic?: "CKD" | "DKD" | "Lupus Nephritis" | "Hypertension" | "Transplant" }
   | { type: "clinicGuideHistory" }
   | { type: "inpatientGuide"; topic: string }
   | { type: "rotationGuide"; guideId: string }

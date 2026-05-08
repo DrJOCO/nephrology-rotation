@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { T, RESOURCES } from "../../data/constants";
 import { BackButton } from "./shared";
 import type { CompletedItems } from "../../types";
+import { scrollWindowToTop } from "../../utils/helpers";
 
 type ResourceTabId = "podcasts" | "websites" | "guidelines" | "decks" | "tools";
 type ResourceItem = (typeof RESOURCES)[ResourceTabId][number];
@@ -29,6 +30,15 @@ function getCurbsidersAppleSearchUrl(name: string) {
 
 export default function ResourcesView({ onBack, initialTab = "podcasts", focusWeek, completedItems, onToggleDeckComplete }: ResourcesViewProps) {
   const [activeTab, setActiveTab] = useState<ResourceTabId>(initialTab);
+  useEffect(() => {
+    scrollWindowToTop();
+  }, [activeTab]);
+
+  const openResourceTab = (nextTab: ResourceTabId) => {
+    setActiveTab(nextTab);
+    scrollWindowToTop();
+  };
+
   const tabList: Array<{ id: ResourceTabId; label: string; data: typeof RESOURCES[ResourceTabId] }> = [
     { id: "podcasts", label: "\uD83C\uDFA7 Podcasts", data: RESOURCES.podcasts },
     { id: "websites", label: "\uD83C\uDF10 Websites", data: RESOURCES.websites },
@@ -120,7 +130,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
       {/* Tab bar — wraps to second row instead of clipping at narrow widths. */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
         {tabList.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
+          <button key={t.id} onClick={() => openResourceTab(t.id)}
             style={{ padding: "8px 14px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
               ...(activeTab === t.id ? activeTabStyle : inactiveTabStyle) }}>
             {t.label}

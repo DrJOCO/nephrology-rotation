@@ -28,7 +28,7 @@ export default function ClinicGuideHistoryView({ guides, clinicGuideTemplates, o
 
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guide History</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.4 }}>
-        Past outpatient clinic teaching guides for CKD, hypertension, and transplant
+        Past outpatient clinic teaching guides for CKD, diabetic kidney disease, lupus nephritis, hypertension, and transplant
       </p>
 
       {sorted.length === 0 ? (

@@ -363,7 +363,7 @@ function buildHeroCard({
   const weekday = now.getDay();
   const clinicAction: NavAction = {
     label: "Open clinic guides",
-    meta: `CKD, HTN, Transplant · ${friday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+    meta: `CKD, DKD, LN, HTN, Transplant · ${friday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
     tab: "library",
   };
   const patientsAction: NavAction = {
@@ -411,7 +411,7 @@ function buildHeroCard({
     return {
       eyebrow: "Next up",
       title: weekday === 5 ? "Clinic day" : "Clinic prep",
-      body: "Use the CKD, hypertension, and transplant clinic guides as separate outpatient teaching tracks, then tighten one more core module item before clinic.",
+      body: "Use the CKD, DKD, lupus nephritis, hypertension, and transplant clinic guides as separate outpatient teaching tracks, then tighten one more core module item before clinic.",
       tone: "clinic",
       badge: friday.toLocaleDateString("en-US", { weekday: "short" }),
       actions: roundsSecondaryAction ? [clinicAction, roundsSecondaryAction] : [clinicAction],
