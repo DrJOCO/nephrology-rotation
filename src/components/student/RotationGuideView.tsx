@@ -1,128 +1,61 @@
 import { useState } from "react";
-import { T } from "../../data/constants";
 import { ROTATION_GUIDES, type RotationGuideId } from "../../data/rotationGuides";
-import { backBtnStyle, EduDisclaimer } from "./shared";
+import { InfoBar } from "./shared";
+import { GuideAccordion, GuideBody, GuideHeader, GuideItem, GuideList, GuideNumberedItem, GuideNumberedList, GuideShell } from "./GuideShell";
 
 interface Props {
   guideId: RotationGuideId;
   onBack: () => void;
 }
 
-const bulletList = (items: string[], color: string) =>
-  items.map((item, i) => (
-    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 6 }}>
-      <span style={{ color, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
-      <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word" }}>{item}</div>
-    </div>
-  ));
+const isTemplate = (item: string) => item.startsWith("\"") && item.endsWith("\"");
 
 export default function RotationGuideView({ guideId, onBack }: Props) {
-  const [closedSections, setClosedSections] = useState<Set<number>>(() => new Set());
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set());
   const guide = ROTATION_GUIDES[guideId];
 
   if (!guide) {
     return (
-      <div style={{ padding: 16 }}>
-        <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
-        <div style={{ color: T.sub, textAlign: "center", padding: 32 }}>Guide not found.</div>
-      </div>
+      <GuideShell onBack={onBack}>
+        <GuideBody><InfoBar tone="neutral">Guide not found.</InfoBar></GuideBody>
+      </GuideShell>
     );
   }
 
   return (
-    <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
-
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, flexShrink: 0 }}>
-          {guide.icon}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.2 }}>{guide.title}</h2>
-          <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{guide.subtitle}</div>
-        </div>
-      </div>
-
-      {/* Why it matters */}
-      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.brand}` }}>
-        <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, marginBottom: 4 }}>Why This Matters</div>
-        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.whyItMatters}</div>
-      </div>
-
-      {/* Teaching pearl */}
-      <div style={{ background: T.warningBg, borderRadius: 12, padding: 16, marginBottom: 14, borderLeft: `4px solid ${T.warning}` }}>
-        <div style={{ fontWeight: 700, color: T.warning, fontSize: 13, marginBottom: 4 }}>Teaching Pearl</div>
-        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>{guide.teachingPearl}</div>
-      </div>
-
-      {/* Main sections — accordion (all open by default, click to collapse) */}
-      {guide.sections.map((section, si) => {
-        const isOpen = !closedSections.has(si);
-        const toggle = () => setClosedSections(prev => {
-          const next = new Set(prev);
-          if (next.has(si)) next.delete(si);
-          else next.add(si);
-          return next;
-        });
-        return (
-          <div key={si} style={{ marginBottom: 10, background: T.card, borderRadius: 14, overflow: "hidden", border: `1px solid ${isOpen ? T.brand + "60" : T.line}`, transition: "border 0.2s" }}>
-            <button onClick={toggle}
-              style={{ width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{section.heading}</div>
-                <div style={{ fontSize: 13, color: T.muted, marginTop: 1 }}>{section.items.length} {section.items.length === 1 ? "item" : "items"}</div>
-              </div>
-              <span style={{ color: T.muted, fontSize: 14, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
-            </button>
-
-            {isOpen && (
-              <div style={{ padding: "0 16px 16px" }}>
-                <div style={{ height: 1, background: T.line, marginBottom: 12 }} />
-                {section.items.map((item, ii) => {
-                  const isTemplate = item.startsWith("\"") && item.endsWith("\"");
-                  return (
-                    <div key={ii} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-                      {!isTemplate && (
-                        <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
-                      )}
-                      <div style={{
-                        fontSize: 13,
-                        color: T.text,
-                        lineHeight: 1.5,
-                        wordBreak: "break-word",
-                        ...(isTemplate ? { fontStyle: "italic", background: T.grayBg, borderRadius: 8, padding: "10px 12px", width: "100%" } : {}),
-                      }}>
-                        {item}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-      })}
-
-      {/* Common mistakes */}
-      <div style={{ background: T.dangerBg, borderRadius: 12, padding: 16, marginTop: 6, marginBottom: 14, borderLeft: `4px solid ${T.danger}` }}>
-        <div style={{ fontWeight: 700, color: T.danger, fontSize: 13, marginBottom: 8 }}>Common Mistakes</div>
-        {bulletList(guide.commonMistakes, T.danger)}
-      </div>
-
-      {/* Teaching points */}
-      <div style={{ marginBottom: 14 }}>
-        <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Teaching Points</h3>
-        {guide.teachingPoints.map((pt, i) => (
-          <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, background: T.card, borderRadius: 12, padding: "12px 14px", border: `1px solid ${T.line}` }}>
-            <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{i + 1}.</span>
-            <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{pt}</div>
-          </div>
-        ))}
-      </div>
-
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 8, marginBottom: 0 }}>{"\u2190"} Back</button>
-      <EduDisclaimer />
-    </div>
+    <GuideShell onBack={onBack}>
+      <GuideHeader eyebrow="Rotation" icon={guide.icon} title={guide.title} description={guide.subtitle} />
+      <GuideBody>
+        <InfoBar label="Why This Matters" tone="brand">{guide.whyItMatters}</InfoBar>
+        <InfoBar label="Teaching Pearl" tone="warning">{guide.teachingPearl}</InfoBar>
+        {guide.sections.map((section) => {
+          const isOpen = !collapsedSections.has(section.heading);
+          return (
+            <GuideAccordion
+              key={section.heading}
+              title={section.heading}
+              count={`${section.items.length} ${section.items.length === 1 ? "item" : "items"}`}
+              open={isOpen}
+              onToggle={() => setCollapsedSections((prev) => {
+                const next = new Set(prev);
+                if (next.has(section.heading)) next.delete(section.heading);
+                else next.add(section.heading);
+                return next;
+              })}
+            >
+              <GuideList>
+                {section.items.map((item, ii) => <GuideItem key={`${ii}-${item}`} template={isTemplate(item)}>{item}</GuideItem>)}
+              </GuideList>
+            </GuideAccordion>
+          );
+        })}
+        <InfoBar label="Common Mistakes" tone="danger">
+          <GuideList>{guide.commonMistakes.map((item, i) => <GuideItem key={`${i}-${item}`} tone="danger">{item}</GuideItem>)}</GuideList>
+        </InfoBar>
+        <GuideNumberedList title="Teaching Points">
+          {guide.teachingPoints.map((item, i) => <GuideNumberedItem key={`${i}-${item}`} index={i + 1}>{item}</GuideNumberedItem>)}
+        </GuideNumberedList>
+      </GuideBody>
+    </GuideShell>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { T, ABBREVIATIONS } from "../../data/constants";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 
 export default function AbbreviationsView({ onBack }) {
   const [search, setSearch] = useState("");
@@ -11,7 +11,7 @@ export default function AbbreviationsView({ onBack }) {
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Nephrology Abbreviations</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 12px" }}>{ABBREVIATIONS.length} terms you'll encounter on rotation</p>
 
@@ -44,7 +44,7 @@ export default function AbbreviationsView({ onBack }) {
           </div>
         </div>
       )}
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 20, marginBottom: 0 }}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 20, marginBottom: 0 }} />
     </div>
   );
 }

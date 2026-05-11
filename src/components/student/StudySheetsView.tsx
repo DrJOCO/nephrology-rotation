@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, CSSProperties } from "react";
 import { T, WEEKLY, STUDY_SHEETS, ALL_LANDMARK_TRIALS } from "../../data/constants";
-import { backBtnStyle, EduDisclaimer } from "./shared";
+import { BackButton, EduDisclaimer } from "./shared";
 import { getStudySheetHero, getStudySheetSectionImage } from "../../data/images";
 import { getTopicContent } from "../../utils/topicMapping";
 import type { StudySheetsData } from "../../utils/studySheets";
@@ -41,7 +41,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Core for this module
       </div>
@@ -168,7 +168,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
           </div>
         );
       })}
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 16, marginBottom: 0 }}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16, marginBottom: 0 }} />
       <EduDisclaimer />
     </div>
   );

@@ -4,7 +4,7 @@ import { WEEKLY_CASES } from "../../data/cases";
 import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
 import { getTopicIcon } from "../../data/topicIcons";
 import { useIsMobile } from "../../utils/helpers";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import type { StudySheetsData } from "../../utils/studySheets";
 
 interface TopicBrowseViewProps {
@@ -43,13 +43,9 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
     return (
       <div style={{ padding: 16 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <button onClick={() => (initialTopic ? onBack() : setSelectedTopic(null))} style={backBtnStyle}>
-            {"\u2190"} {initialTopic ? "Back" : "All Topics"}
-          </button>
+          <BackButton onClick={() => (initialTopic ? onBack() : setSelectedTopic(null))} label={initialTopic ? "Back" : "All Topics"} />
           {initialTopic && (
-            <button onClick={() => setSelectedTopic(null)} style={{ ...backBtnStyle, color: T.navy, borderColor: T.line }}>
-              Browse All Topics
-            </button>
+            <BackButton onClick={() => setSelectedTopic(null)} label="Browse All Topics" placement="inline" style={{ color: T.navy, borderColor: T.line, marginTop: 0 }} />
           )}
         </div>
         <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>{selectedTopic}</h2>
@@ -279,7 +275,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
       <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>Browse by Topic</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Explore resources by nephrology topic, independent of module schedule</p>
 

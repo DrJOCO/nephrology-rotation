@@ -257,6 +257,22 @@ export function useOnline(): boolean {
   return online;
 }
 
+export function scrollWindowToTop(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  const reset = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+
+  reset();
+  window.requestAnimationFrame(() => {
+    reset();
+    window.requestAnimationFrame(reset);
+  });
+}
+
 export function useIsMobile(maxWidth = 480): boolean {
   const getMatches = () => {
     if (typeof window === "undefined") return false;

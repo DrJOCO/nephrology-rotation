@@ -106,6 +106,7 @@ export function ClinicGuidesEditor({
   const friday = getCurrentOrNextFriday(new Date());
   const dateStr = friday.toISOString().split("T")[0];
   const fridayLabel = friday.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const clinicTopicCount = CLINIC_GUIDE_TOPICS.length;
   const [selectedTopic, setSelectedTopic] = useState<ClinicGuideTopic>("CKD");
   const selectedTemplate = clinicGuideTemplates[selectedTopic] || CLINIC_GUIDES[selectedTopic];
   const savedDraft = templateToDraft(selectedTemplate);
@@ -192,7 +193,7 @@ export function ClinicGuidesEditor({
 
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guides</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.4 }}>
-        Edit the CKD, Hypertension, and Transplant guide content students read, then manage dated records for the current guide set.
+        Edit the CKD, DKD, Lupus Nephritis, Hypertension, and Transplant guide content students read, then manage dated records for the current guide set.
       </p>
 
       {/* Guide content editor */}
@@ -288,7 +289,7 @@ export function ClinicGuidesEditor({
         <div style={{ fontSize: 13, fontWeight: 700, color: T.success, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 8 }}>This Friday's Guide Set</div>
         <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, marginBottom: 4 }}>{fridayLabel}</div>
         <div style={{ color: currentComplete ? T.success : T.sub, fontSize: 13, marginBottom: 10 }}>
-          {currentComplete ? "All three guide records are ready." : `Missing records: ${missingTopics.join(", ")}`}
+          {currentComplete ? `All ${clinicTopicCount} guide records are ready.` : `Missing records: ${missingTopics.join(", ")}`}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
           {currentRecords.map(({ topic, template, record }) => (

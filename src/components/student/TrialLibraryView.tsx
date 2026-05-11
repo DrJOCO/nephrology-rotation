@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { T, ALL_LANDMARK_TRIALS } from "../../data/constants";
 import { CategoryGroupedTrials } from "./TrialCard";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 
 export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, initialSearch }: { onBack: () => void; bookmarks: any; onToggleBookmark: (name: string) => void; initialSearch?: string }) {
   const [searchQ, setSearchQ] = useState(initialSearch || "");
@@ -17,7 +17,7 @@ export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, 
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
         <div style={{ width: 44, height: 44, borderRadius: 12, background: T.warningBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{"\uD83D\uDCDA"}</div>
         <div>
@@ -35,7 +35,7 @@ export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, 
         <div style={{ fontSize: 13, color: T.sub, marginBottom: 12 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
       )}
       <CategoryGroupedTrials trials={filtered} bookmarks={bookmarks} onToggleBookmark={onToggleBookmark} />
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 16, marginBottom: 0 }}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16, marginBottom: 0 }} />
     </div>
   );
 }

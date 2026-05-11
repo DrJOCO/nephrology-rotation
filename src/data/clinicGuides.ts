@@ -1,11 +1,11 @@
 // Friday Outpatient Nephrology Clinic Guides — pre-authored teaching content
 //
-// Each clinic week includes three outpatient learning tracks:
-// CKD → Hypertension → Transplant.
+// Each clinic week includes five outpatient learning tracks:
+// CKD → DKD → Lupus Nephritis → Hypertension → Transplant.
 // Content is guideline-based, educational, and not patient-specific.
 // Guideline sources are listed in each guide's guidelineBasis field.
 
-export const CLINIC_GUIDE_TOPICS = ["CKD", "Hypertension", "Transplant"] as const;
+export const CLINIC_GUIDE_TOPICS = ["CKD", "DKD", "Lupus Nephritis", "Hypertension", "Transplant"] as const;
 export type ClinicGuideTopic = (typeof CLINIC_GUIDE_TOPICS)[number];
 
 export interface ClinicGuideTemplate {
@@ -42,96 +42,61 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPearl:
       "Dialysis is not started because of eGFR alone. Dialysis initiation is driven by symptoms, refractory complications, and inability to maintain volume, electrolyte, acid-base, or nutritional stability — not a single threshold number.",
 
-    beforePresenting: [
-      "Baseline creatinine / eGFR",
-      "Current creatinine / eGFR",
-      "Trend over time",
-      "Albuminuria or proteinuria trend",
-      "Blood pressure trend",
-      "Weight trend",
-      "Potassium and bicarbonate trend",
-      "Calcium, phosphorus, PTH, vitamin D if relevant",
-      "Hemoglobin and iron studies if relevant",
-      "Current renoprotective meds",
-      "Whether modality education, access planning, and transplant referral have happened",
-    ],
+    beforePresenting: [],
 
-    howToPresent:
-      "\"This is a patient with CKD stage __, likely due to __, with creatinine/eGFR trend from __ to __ over __ and albuminuria of __. Main issues today are progression risk, BP control, volume status, electrolytes/acidosis, anemia and CKD-MBD, and dialysis or transplant planning. They do/do not have symptoms concerning for uremia. Current kidney-protective therapies include __.\"",
+    howToPresent: "",
 
     sections: [
       {
-        heading: "Must-Ask History",
+        heading: "Clinic Prep & Patient Questions",
         items: [
-          "Energy / fatigue",
-          "Appetite, nausea, vomiting, weight loss",
-          "Edema, dyspnea, orthopnea",
-          "Urinary changes",
-          "Home BP if available",
-          "Medication adherence",
-          "NSAID exposure / nephrotoxins",
-          "Whether dialysis education or transplant discussion has happened",
-        ],
-      },
-      {
-        heading: "Ask If Relevant",
-        items: [
-          "Pruritus",
-          "Sleep disturbance / restless legs",
-          "Cognitive change",
-          "Muscle cramps",
-          "Recent PICC / IV use in potential access arm",
+          "Kidney trajectory: baseline and current creatinine/eGFR with timing.",
+          "Albuminuria/proteinuria category and whether it is changing.",
+          "BP and weight pattern since the last visit.",
+          "CKD complication labs: potassium, bicarbonate, calcium/phosphorus/PTH/vitamin D, hemoglobin/iron when relevant.",
+          "Disease-modifying therapy status: ACEi/ARB, SGLT2 inhibitor, finerenone when appropriate, and dose limits.",
+          "Advanced CKD planning status: modality education, access preservation/planning, and transplant referral.",
+          "Uremic symptoms: fatigue, appetite change, nausea/vomiting, weight loss, sleep disturbance, pruritus, cognitive change, restless legs, cramps.",
+          "Volume symptoms: edema, dyspnea, orthopnea, reduced exercise tolerance.",
+          "Home BP pattern and medication adherence.",
+          "NSAIDs, contrast exposure, supplements, or other nephrotoxins since the last visit.",
+          "For advanced CKD: what the patient understands about dialysis, transplant, and access planning.",
         ],
       },
       {
         heading: "Exam Focus",
         items: [
-          "BP",
-          "Volume exam",
-          "Edema",
-          "Pulmonary findings",
-          "Pallor / excoriations",
-          "Asterixis or mental status changes if advanced disease",
-          "AVF/AVG exam if present",
+          "BP measurement quality and whether repeat BP is needed.",
+          "Volume exam: JVD, lung findings, edema, weight change.",
+          "Pallor, excoriations, asterixis, or mental status change in advanced disease.",
+          "AVF/AVG exam if present.",
         ],
       },
       {
-        heading: "Labs / Data to Review",
+        heading: "Synthesis for the Visit",
         items: [
-          "eGFR and creatinine trend",
-          "Albuminuria / proteinuria trend",
-          "Potassium",
-          "Bicarbonate — review the trend; KDIGO 2024 suggests oral alkali therapy to maintain serum bicarbonate ≥22 mmol/L in CKD patients with persistent metabolic acidosis (recent RCTs such as BiCARB and UBI tempered the strength of recommendation, but ≥22 remains the target threshold)",
-          "Sodium",
-          "Hemoglobin / iron studies when relevant",
-          "Calcium / phosphorus / PTH / vitamin D when relevant",
-          "Medication list and dose appropriateness",
-          "SGLT2 inhibitor status — KDIGO 2024 recommends initiating at eGFR ≥20 mL/min/1.73 m² in appropriate patients and continuing below that if tolerated until kidney replacement therapy begins",
+          "Is kidney function stable, slowly progressive, or changing faster than expected?",
+          "Which active problem drives today's plan: BP, volume, proteinuria, potassium, acidosis, anemia, CKD-MBD, symptoms, or KRT planning?",
+          "Is kidney-protective therapy optimized and tolerated?",
+          "If eGFR is low, are symptoms or refractory complications pushing planning forward?",
         ],
       },
     ],
 
     commonMistakes: [
-      "Presenting only today's creatinine without the trend",
-      "Not mentioning albuminuria",
       "Not asking about symptoms of uremia",
-      "Not reviewing kidney-protective meds",
-      "Treating eGFR as the dialysis trigger",
-      "Forgetting access / transplant planning in advanced CKD",
+      "Waiting until a crisis to start modality, transplant, or access conversations",
+      "Missing access-preservation problems, especially recent PICC or midline placement",
+      "Listing CKD complications without saying which one changes today's plan",
     ],
 
     teachingPoints: [
-      "Always present the trend, not the isolated value.",
-      "Advanced CKD visits should include complication review and preparation, not just lab review.",
-      "SGLT2 and RAAS-based therapy are part of disease-modifying treatment in appropriate patients.",
+      "Classify CKD by cause, GFR category, and albuminuria category.",
+      "KDIGO 2024 supports SGLT2 inhibitor initiation at eGFR >=20 mL/min/1.73 m2 in appropriate patients, with continuation below that if tolerated until kidney replacement therapy begins.",
+      "Persistent metabolic acidosis in CKD is generally treated with oral alkali to maintain serum bicarbonate around >=22 mmol/L.",
     ],
 
-    discussionQuestions: [
-      "A patient with CKD stage 4 (eGFR 18, stable) has no uremic symptoms but is losing weight and has declining albumin. How would you approach dialysis planning for this patient?",
-      "A patient is referred with CKD stage 5 (eGFR 10) and has a PICC line in the left arm from a recent hospitalization. What concerns does this raise, and how would you counsel the patient going forward?",
-      "A diabetic CKD patient is on max ACEi and an SGLT2i. CONFIDENCE (NEJM 2025) showed simultaneous initiation of finerenone and empagliflozin produced additive UACR reduction. Would you start finerenone at the same visit as the SGLT2i, or stagger them?",
-      "A CKD patient asks if allopurinol will protect their kidneys. CKD-FIX (NEJM 2020) and PERL showed it does not slow eGFR decline despite a 35% urate drop. How do you counsel them, and when does urate-lowering still belong in the plan?",
-    ],
+    discussionQuestions: [],
 
     guidelineBasis: [
       "KDIGO 2024 Clinical Practice Guideline for CKD Evaluation and Management",
@@ -139,6 +104,222 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
       "IDEAL Trial (NEJM 2010) — timing of dialysis initiation",
       "CONFIDENCE (NEJM 2025) — simultaneous finerenone + empagliflozin in DKD",
       "CKD-FIX (NEJM 2020) — allopurinol does NOT slow CKD progression",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  DIABETIC KIDNEY DISEASE CLINIC GUIDE
+  // ═══════════════════════════════════════════════════════════════════
+  DKD: {
+    topic: "DKD",
+    icon: "🩸",
+    title: "Diabetic Kidney Disease Clinic",
+    subtitle: "Diagnosis confidence, albuminuria risk, and layered kidney-protective therapy",
+
+    whyItMatters:
+      "Diabetic kidney disease visits are not just diabetes follow-up. The clinic task is to confirm the DKD pattern, recognize features that suggest another kidney disease, quantify kidney and cardiovascular risk, and layer therapies that slow progression while monitoring safety.",
+
+    teachingPearl:
+      "Do not call every kidney problem in a diabetic patient DKD. Long diabetes duration, albuminuria progression, bland sediment, and retinopathy support DKD; active sediment, abrupt nephrotic syndrome, or rapid eGFR loss should make you pause.",
+
+    beforePresenting: [],
+
+    howToPresent: "",
+
+    sections: [
+      {
+        heading: "Clinic Prep & Patient Questions",
+        items: [
+          "Diabetes context: type, duration, A1c pattern, hypoglycemia history, and current diabetes medications.",
+          "Kidney risk data: eGFR/creatinine trend, UACR trend, urine sediment, and prior kidney imaging if available.",
+          "Microvascular clues: retinopathy status, neuropathy, foot ulcers, and prior amputations or infections.",
+          "Cardiovascular context: ASCVD, heart failure, stroke, PAD, smoking, and lipid therapy.",
+          "BP evidence: home BP, office BP quality, orthostatic symptoms, and current antihypertensive doses.",
+          "Current kidney-protective therapy: ACEi/ARB dose, SGLT2 inhibitor status, finerenone status, GLP-1 RA or incretin therapy, and reason any pillar is missing.",
+          "Safety labs and limits: potassium, bicarbonate, volume status, eGFR thresholds, and recent AKI/dehydration/contrast exposure.",
+          "SGLT2 inhibitor counseling: genital infections, volume symptoms, peri-procedure or sick-day holds, and euglycemic DKA warning symptoms.",
+          "Finerenone/MRA counseling: hyperkalemia risk, potassium diet/supplements, NSAIDs, TMP-SMX, and planned lab follow-up.",
+          "Diet and behavior: sodium intake, protein pattern, weight goals, activity, tobacco, and barriers to medication access.",
+        ],
+      },
+      {
+        heading: "DKD vs Something Else",
+        items: [
+          "Typical DKD pattern: long-standing diabetes, progressive albuminuria, bland sediment, diabetic retinopathy, and gradual eGFR decline.",
+          "Atypical features: active urine sediment, RBC casts, abrupt creatinine rise, rapidly progressive eGFR loss, sudden nephrotic syndrome, systemic symptoms, low complement, monoclonal-protein clues, or no retinopathy when the story otherwise seems diabetic.",
+          "Type 1 diabetes clue: proteinuria within the first 5 years or absent retinopathy should raise suspicion for non-diabetic kidney disease.",
+          "If the pattern is atypical, define what result would change management before recommending biopsy or serologic workup.",
+        ],
+      },
+      {
+        heading: "The 4 Pillars of DKD Therapy",
+        items: [
+          "Pillar 1 - ACEi or ARB: use the maximally tolerated single-agent RAAS blocker when albuminuria and hypertension are present; avoid dual ACEi/ARB therapy.",
+          "Pillar 2 - SGLT2 inhibitor: for most T2D + CKD patients with eGFR >=20 mL/min/1.73 m2, use for kidney and heart protection rather than glucose lowering alone; expect a small early eGFR dip.",
+          "Pillar 3 - Finerenone: consider for T2D with persistent albuminuria despite ACEi/ARB when eGFR and potassium allow; check potassium at baseline, about 1 month after initiation or dose change, and periodically thereafter.",
+          "Pillar 4 - GLP-1 RA or incretin-based therapy: consider when additional glycemic, weight, cardiovascular, or kidney-risk reduction is needed, especially if obesity or ASCVD risk is prominent.",
+          "BP and volume: align target with measurement technique and tolerance; treat edema and sodium excess before simply adding more BP agents.",
+          "Medication safety: dose-adjust metformin and other diabetes drugs for eGFR, avoid NSAIDs, and revisit sick-day holds for ACEi/ARB, SGLT2i, diuretics, and metformin.",
+        ],
+      },
+      {
+        heading: "Exam Focus",
+        items: [
+          "BP measurement quality, repeat BP, and orthostatics when symptoms or autonomic neuropathy are possible.",
+          "Volume exam: JVD, lung findings, edema, and weight trend.",
+          "Peripheral vascular and foot check when wounds, PAD, neuropathy, or infection risk is part of the story.",
+          "Skin and injection sites when relevant to diabetes medication use or infection.",
+        ],
+      },
+      {
+        heading: "Synthesis for the Visit",
+        items: [
+          "Is this classic DKD, DKD plus superimposed AKI, or a diabetic patient with another kidney disease?",
+          "What are the GFR and albuminuria categories, and is the trajectory stable or worsening?",
+          "Which kidney-protective pillar is missing, contraindicated, unaffordable, or limited by side effects?",
+          "What safety monitoring is required after today's medication change?",
+        ],
+      },
+    ],
+
+    commonMistakes: [
+      "Assuming diabetes explains the kidney disease without checking sediment, tempo, and retinopathy status",
+      "Presenting creatinine without UACR or albuminuria category",
+      "Treating SGLT2 inhibitors as glucose drugs instead of kidney and heart protection",
+      "Adding finerenone without a potassium plan",
+      "Using dual RAAS blockade because albuminuria is severe",
+    ],
+
+    teachingPoints: [
+      "DKD risk is staged by both eGFR and albuminuria; UACR is not optional data.",
+      "Students should know the 4 pillars of DKD therapy: RAAS blockade, SGLT2 inhibitor, finerenone when eligible, and GLP-1 RA or incretin therapy when clinically appropriate.",
+      "An early SGLT2 inhibitor eGFR dip is expected; volume depletion, AKI symptoms, or a large decline need reassessment.",
+      "Atypical features should trigger a diagnostic pause, not automatic escalation of DKD therapy.",
+    ],
+
+    discussionQuestions: [],
+
+    guidelineBasis: [
+      "ADA Standards of Care in Diabetes 2026, Section 11: Chronic Kidney Disease and Risk Management",
+      "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in CKD",
+      "KDIGO 2024 Clinical Practice Guideline for CKD Evaluation and Management",
+      "CREDENCE, DAPA-CKD, and EMPA-KIDNEY — SGLT2 inhibitor kidney outcome evidence",
+      "FIDELIO-DKD, FIGARO-DKD, and FIDELITY — finerenone kidney and cardiovascular outcomes",
+      "FLOW — semaglutide kidney outcomes in T2D with CKD",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  LUPUS NEPHRITIS CLINIC GUIDE
+  // ═══════════════════════════════════════════════════════════════════
+  "Lupus Nephritis": {
+    topic: "Lupus Nephritis",
+    icon: "🦋",
+    title: "Lupus Nephritis Clinic",
+    subtitle: "Flare detection, biopsy context, response tracking, and immunosuppression safety",
+
+    whyItMatters:
+      "Lupus nephritis clinic visits protect kidney function by detecting relapse early, tracking proteinuria response, coordinating nephrology-rheumatology treatment, and reducing infection, steroid, reproductive, and medication-toxicity harms.",
+
+    teachingPearl:
+      "Proteinuria is the vital sign of lupus nephritis follow-up. Always pair it with creatinine/eGFR, urine sediment, complements, anti-dsDNA, medication adherence, and the biopsy class or suspected flare context.",
+
+    beforePresenting: [],
+
+    howToPresent: "",
+
+    sections: [
+      {
+        heading: "Clinic Prep & Patient Questions",
+        items: [
+          "LN context: SLE history, prior kidney biopsy class/activity/chronicity, baseline creatinine/eGFR, baseline proteinuria, and prior flares.",
+          "Current kidney activity: UPCR or UACR trend, creatinine/eGFR trend, urinalysis with sediment, hematuria/casts, serum albumin, edema, and BP.",
+          "Serologic activity: complement C3/C4 and anti-dsDNA trend; check at clinic visits but avoid over-ordering more often than monthly.",
+          "Current regimen and adherence: hydroxychloroquine, glucocorticoid dose/taper, MPAA/MMF dose, cyclophosphamide history, belimumab, voclosporin/tacrolimus/cyclosporine, rituximab/other biologics, and missed doses.",
+          "Treatment phase: new diagnosis, induction/active flare, partial response, complete response, maintenance, taper, refractory disease, pregnancy planning, or ESKD/transplant planning.",
+          "Toxicity screen: infections, leukopenia, GI intolerance, tremor, hypertension, hyperkalemia, AKI, alopecia, mood/sleep changes, hyperglycemia, weight gain, bone risk, eye screening for HCQ, and malignancy/vaccine status.",
+          "Reproductive safety: pregnancy intention, contraception, teratogenic medications such as mycophenolate or cyclophosphamide, fertility preservation when cyclophosphamide is being considered, and antiphospholipid syndrome history.",
+          "Thrombosis risk: severe proteinuria, low serum albumin, antiphospholipid antibodies or prior clot, estrogen exposure, smoking, and immobility.",
+          "Supportive kidney care: RAAS inhibitor use when proteinuria is present, BP control, sodium intake, statin/ASCVD risk, bone protection, PJP or other prophylaxis when indicated, and infection-risk counseling.",
+        ],
+      },
+      {
+        heading: "When to Think Biopsy",
+        items: [
+          "Suspected new LN: SLE with proteinuria greater than 0.5 g/g and/or otherwise unexplained impaired kidney function should prompt kidney-biopsy discussion unless contraindicated.",
+          "Suspected flare after treated LN: rising proteinuria, hematuria, active sediment, or worsening kidney function may need repeat biopsy because flare, chronic scarring, TMA, drug toxicity, and another kidney disease can look similar.",
+          "Poor response: ongoing or worsening proteinuria, hematuria, or kidney dysfunction after at least 6 months of appropriate therapy is a reason to revisit biopsy and adherence before labeling refractory disease.",
+          "Do not manage class III/IV, class V, and chronic inactive scarring as if they are the same disease; the biopsy class and activity/chronicity drive treatment intensity.",
+        ],
+      },
+      {
+        heading: "Treatment Reference",
+        items: [
+          "All LN: use hydroxychloroquine unless contraindicated, adjust doses for kidney function, and coordinate nephrology-rheumatology care.",
+          "Glucocorticoids: modern guidance favors IV methylprednisolone pulses for active disease followed by lower-dose oral prednisone with taper toward <=5 mg/day by about 6 months when clinically feasible.",
+          "Active class III/IV +/- V: current ACR guidance favors triple immunosuppression: glucocorticoids plus either MPAA + belimumab, MPAA + CNI, or low-dose Euro-Lupus cyclophosphamide + belimumab.",
+          "Pure class V with proteinuria >=1 g/g: ACR favors glucocorticoids + MPAA + CNI; lower proteinuria may be treated less aggressively depending on risk and systemic disease.",
+          "KDIGO initial options for active class III/IV include glucocorticoids plus MPAA, low-dose IV cyclophosphamide, belimumab add-on regimens, or MPAA + CNI when kidney function is not severely impaired.",
+          "Response goal: complete renal response generally means proteinuria around <=0.5 g/day or UPCR <=0.5 g/g with stable or improved kidney function by roughly 6-12 months; partial response trajectory matters before changing therapy.",
+          "Duration: after complete response, total immunosuppressive therapy is usually continued for at least 3-5 years before cautious tapering.",
+        ],
+      },
+      {
+        heading: "Monitoring Checklist",
+        items: [
+          "If complete response has not been achieved: quantify proteinuria at least every 3 months.",
+          "If sustained complete response: quantify proteinuria every 3-6 months.",
+          "At clinic visits: creatinine/eGFR, potassium, CBC, liver tests when relevant, complements, anti-dsDNA, urine microscopy, BP, weight, and medication-specific levels or safety labs.",
+          "For MPAA/MMF: watch leukopenia, infection, GI intolerance, and pregnancy risk.",
+          "For CNI/voclosporin/tacrolimus/cyclosporine: watch BP, creatinine rise, hyperkalemia, tremor/neurotoxicity, drug interactions, and nephrotoxicity.",
+          "For cyclophosphamide: watch cytopenias, infection, infertility risk, hemorrhagic cystitis, malignancy risk, and need for fertility/pregnancy counseling.",
+          "For belimumab or anti-CD20 therapy: watch infection risk, vaccine timing, infusion/injection reactions, mood symptoms when relevant, and immunoglobulin/B-cell monitoring per local practice.",
+        ],
+      },
+      {
+        heading: "Exam Focus",
+        items: [
+          "BP measurement quality and repeat BP if elevated.",
+          "Volume exam: JVD, lungs, edema, weight change, ascites if severe nephrotic syndrome.",
+          "SLE activity clues: rash, oral ulcers, synovitis, serositis symptoms, neurologic symptoms, and fever or infection signs.",
+          "Medication toxicity clues: bruising/cytopenia signs, steroid features, tremor, wounds, and infection.",
+        ],
+      },
+      {
+        heading: "Synthesis for the Visit",
+        items: [
+          "Is this active inflammatory LN, chronic damage, medication toxicity, infection, TMA/APS, or another kidney disease?",
+          "Is the patient improving, partially responding, relapsing, or refractory based on proteinuria, eGFR, sediment, and serologies?",
+          "What is the current treatment phase, and what is the next safety lab or response milestone?",
+          "What counseling is needed today: adherence, infection prevention, vaccines, bone protection, reproductive safety, thrombosis risk, or biopsy planning?",
+        ],
+      },
+    ],
+
+    commonMistakes: [
+      "Calling a creatinine rise LN flare without checking sediment, proteinuria, adherence, infection, CNI toxicity, and chronicity",
+      "Following complements and anti-dsDNA without quantifying proteinuria",
+      "Forgetting the biopsy class and activity/chronicity score when discussing treatment intensity",
+      "Letting patients remain on high-dose steroids without a taper and toxicity-prevention plan",
+      "Missing pregnancy and contraception counseling for mycophenolate or cyclophosphamide",
+    ],
+
+    teachingPoints: [
+      "A proteinuria threshold above 0.5 g/g in SLE is a biopsy trigger, not just a lab abnormality to watch indefinitely.",
+      "LN response is judged over months, but worsening kidney function or active sediment should accelerate reassessment.",
+      "Modern LN therapy often uses combination therapy to improve response while reducing cumulative steroid exposure.",
+      "Hydroxychloroquine, supportive kidney care, vaccine planning, and reproductive counseling are core parts of LN management, not extras.",
+    ],
+
+    discussionQuestions: [],
+
+    guidelineBasis: [
+      "American College of Rheumatology 2024 Guideline Summary for the Screening, Treatment, and Management of Lupus Nephritis",
+      "KDIGO 2024 Clinical Practice Guideline for the Management of Lupus Nephritis",
+      "BLISS-LN (NEJM 2020) — belimumab add-on therapy in active lupus nephritis",
+      "AURORA 1 (Lancet 2021) — voclosporin add-on therapy in active lupus nephritis",
+      "Euro-Lupus Nephritis Trial — low-dose cyclophosphamide regimen",
+      "ALMS — mycophenolate vs cyclophosphamide induction and maintenance evidence",
     ],
   },
 
@@ -157,37 +338,42 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPearl:
       "A drug level is useful only in context. The regimen, time from transplant, baseline graft function, adherence, interacting drugs, and whether the level was a true trough matter as much as the number itself.",
 
-    beforePresenting: [
-      "Transplant date",
-      "Donor type if known",
-      "Baseline creatinine",
-      "Current creatinine trend",
-      "Immunosuppression regimen and doses",
-      "Timing of last tacrolimus/cyclosporine dose",
-      "Whether the level was a true trough",
-      "Proteinuria",
-      "BK / CMV data if available",
-      "Recent infections or admissions",
-      "New medications",
-      "BP trend",
-    ],
+    beforePresenting: [],
 
-    howToPresent:
-      "\"This is a kidney transplant recipient __ months/years post-transplant, on __ immunosuppression. Baseline creatinine is __ and current trend is __. Tacrolimus/cyclosporine level was __ and was/was not drawn as a true trough. Main issues today are graft stability, adherence, infection surveillance, medication toxicity, BP/proteinuria, and malignancy screening.\"",
+    howToPresent: "",
 
     sections: [
       {
-        heading: "Must-Ask History",
+        heading: "Clinic Prep & Patient Questions",
         items: [
-          "Missed doses",
-          "Exact timing of last CNI dose",
-          "Infectious symptoms",
-          "GI symptoms",
-          "New medications or supplements",
-          "Tremor / headache / neuro symptoms",
-          "Urinary symptoms",
-          "Graft pain",
-          "New skin lesions",
+          "Transplant context: date, donor type if known, and baseline graft function.",
+          "Current graft status: creatinine pattern, proteinuria, and BP.",
+          "Immunosuppression regimen, doses, and most recent drug level with draw timing.",
+          "Surveillance data: BK/CMV and other center-specific monitoring.",
+          "Interval events: infections, admissions, procedures, and new medications.",
+          "Missed or late immunosuppression doses since the last visit.",
+          "Exact timing of the last CNI dose relative to the lab draw.",
+          "Infectious, urinary, GI, or graft-pain symptoms.",
+          "New prescription meds, OTCs, supplements, or interacting drugs.",
+          "Tremor, headache, or other neurotoxicity symptoms.",
+          "New skin lesions or nonhealing wounds.",
+        ],
+      },
+      {
+        heading: "Immunosuppression Reference",
+        items: [
+          "Use these as reference ranges only: trough goals are transplant-center and regimen specific, and dose changes should be confirmed with the transplant team.",
+          "Tacrolimus adult kidney/kidney-pancreas trough reference: less than 1 month 9-12 ng/mL, 1-3 months 8-10, 3-12 months 6-8, and greater than 12 months 5-7.",
+          "Cyclosporine adult kidney/kidney-pancreas C0 trough reference: less than 1 month 300-350 ng/mL, 1-2 months 250-300, 3-6 months 150-250, 7-12 months 125-200, and greater than 12 months 75-125.",
+          "Cyclosporine C2 targets may be used by some centers instead: less than 1 month 1300 ng/mL, 1-2 months 1100, 3-6 months 800-900, 7-12 months 700, and greater than 12 months 450-600.",
+          "Tacrolimus side effects to ask/check: tremor, headache, insomnia, diarrhea/nausea, hypertension, hyperglycemia, nephrotoxicity, cytopenias, infection/CMV, and rash or alopecia.",
+          "Cyclosporine side effects to ask/check: nephrotoxicity, hypertension, tremor/headache, hirsutism, gingival hyperplasia, hyperlipidemia, edema, hepatotoxicity, GI upset, cytopenias, infection, and skin/wound infections.",
+          "Mycophenolate/mycophenolic acid: diarrhea, nausea/vomiting, abdominal pain, edema, leukopenia/anemia, infection/CMV or UTI, and pregnancy or teratogenicity counseling.",
+          "Prednisone: hyperglycemia, weight gain or increased appetite, hypertension/edema, mood or sleep changes, acne/skin thinning, impaired wound healing, peptic ulcer symptoms, osteoporosis/fracture risk, cataracts/glaucoma, and infection risk.",
+          "mTOR inhibitors such as sirolimus or everolimus: edema, hypertension, hyperlipidemia, mouth ulcers, diarrhea/GI upset, rash, cytopenias, proteinuria, impaired wound healing, pneumonitis symptoms, and infection risk.",
+          "Azathioprine: leukopenia/pancytopenia, infection, nausea/vomiting, diarrhea, oral ulcers, hepatotoxicity, pancreatitis symptoms, and TPMT/NUDT15 or local-protocol safety review before escalation.",
+          "Belatacept: anemia, diarrhea/constipation, UTI, edema, hypertension, fever, cough, nausea/vomiting, headache, hyperkalemia or hypokalemia, leukopenia, and PTLD/PML or serious infection warning symptoms.",
+          "Common prophylaxis meds: valganciclovir can cause leukopenia/neutropenia, anemia, thrombocytopenia, and GI upset and needs renal dosing; TMP-SMX can cause rash, GI upset, hyperkalemia, creatinine rise, cytopenias, and severe sulfa reactions.",
         ],
       },
       {
@@ -201,42 +387,38 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
         ],
       },
       {
-        heading: "Labs / Data to Review",
+        heading: "Synthesis for the Visit",
         items: [
-          "Creatinine trend",
-          "Proteinuria",
-          "Drug level and timing validity",
-          "CBC / metabolic profile",
-          "BK / CMV per center practice",
-          "Glucose / lipids as relevant",
+          "Is graft function stable, and if not, what are the likely buckets: rejection, CNI toxicity, volume/hemodynamics, obstruction, infection, or recurrent disease?",
+          "Can the drug level be interpreted as a true trough?",
+          "Are infections, malignancy risk, metabolic complications, or adherence issues changing management today?",
+          "Which next data point would change the plan: repeat labs, urine studies, ultrasound, viral PCR, DSA, or biopsy discussion?",
         ],
       },
     ],
 
     commonMistakes: [
-      "Reacting to one tacrolimus level without checking timing",
-      "Not asking about adherence",
-      "Ignoring interacting medications",
-      "Not presenting baseline graft function",
-      "Not mentioning proteinuria",
+      "Adjusting immunosuppression without knowing the target range for that regimen and time from transplant",
+      "Reacting to a drug level before confirming whether it was a true trough and what goal the transplant center is using",
+      "Avoiding adherence questions because they feel uncomfortable",
+      "Missing interacting medications",
       "Treating center-specific protocols as universal rules",
     ],
 
     teachingPoints: [
-      "Always state whether the trough was real.",
-      "Immunosuppression targets are center-specific.",
-      "New creatinine rise can reflect rejection, drug toxicity, volume issues, obstruction, or infection.",
+      "Immunosuppression targets are center-specific and depend on time from transplant and regimen.",
+      "Diarrhea can raise tacrolimus levels and can also reflect infection or medication toxicity.",
+      "A new creatinine rise after transplant is a problem representation, not a diagnosis.",
     ],
 
-    discussionQuestions: [
-      "A patient 8 months post-transplant has a rising creatinine (1.4 → 1.8 over 2 months) with a tacrolimus trough of 11 ng/mL. What is your differential diagnosis, and how would you approach this?",
-      "A transplant recipient reports persistent diarrhea for 3 weeks. Their mycophenolate dose is at the standard level. How would you evaluate and manage this — and when would you consider a dose change vs further workup?",
-    ],
+    discussionQuestions: [],
 
     guidelineBasis: [
+      "BC Transplant Medication Guidelines for Solid Organ Transplants (AMB.03.007, revised February 2026)",
       "KDIGO 2009 Clinical Practice Guideline for the Care of the Kidney Transplant Recipient",
       "SYMPHONY Trial (NEJM 2007) — low-dose tacrolimus-based regimens",
       "BENEFIT Trial (AJT 2016) — belatacept vs cyclosporine long-term outcomes",
+      "DailyMed prescribing information for belatacept, everolimus, and sulfamethoxazole/trimethoprim",
     ],
   },
 
@@ -255,34 +437,23 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPearl:
       "Do not escalate therapy from one office reading if you do not know the home BP pattern.",
 
-    beforePresenting: [
-      "Home BP log",
-      "Office BP today",
-      "BP technique quality",
-      "Current meds and doses",
-      "Adherence",
-      "Side effects",
-      "Orthostatic symptoms",
-      "Potassium / creatinine",
-      "Albuminuria / CKD status",
-      "Contributors: NSAIDs, stimulants, alcohol, OSA clues",
-    ],
+    beforePresenting: [],
 
-    howToPresent:
-      "\"This is a patient with hypertension on __ medications. Home BPs average __ and office BP today is __. Technique and adherence are __. They do/do not have orthostatic symptoms. Main questions are whether BP is truly uncontrolled, whether pseudoresistance is present, whether CKD or proteinuria affects medication choice, and whether secondary causes need workup.\"",
+    howToPresent: "",
 
     sections: [
       {
-        heading: "Must-Ask History",
+        heading: "Clinic Prep & Patient Questions",
         items: [
-          "Home BPs",
-          "How BP is measured (technique)",
-          "Adherence",
-          "Side effects",
-          "Orthostasis / falls",
-          "NSAIDs / OTCs / stimulants",
-          "Alcohol",
-          "Snoring / apnea symptoms if resistant",
+          "BP evidence: home log, office BP, and whether measurements are standardized.",
+          "Medication regimen with doses, fill/adherence clues, and side effects.",
+          "Safety labs: potassium, creatinine/eGFR, sodium, bicarbonate when relevant.",
+          "CKD/proteinuria status because it changes medication priorities.",
+          "Contributors to apparent resistance: NSAIDs, stimulants, alcohol, high sodium intake, and OSA clues.",
+          "How the patient measures BP at home: cuff size, rest period, position, timing, and whether values are written down.",
+          "Missed doses, cost barriers, side effects, and orthostasis/falls.",
+          "Dietary sodium, alcohol, NSAIDs/OTCs/stimulants, and sleep apnea symptoms.",
+          "Secondary-cause clues when the story fits: young onset, abrupt worsening, hypokalemia, episodic symptoms, kidney bruits, or resistant HTN.",
         ],
       },
       {
@@ -296,40 +467,30 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
         ],
       },
       {
-        heading: "Labs / Data to Review",
+        heading: "Synthesis for the Visit",
         items: [
-          "Creatinine / eGFR",
-          "Potassium",
-          "Sodium",
-          "Bicarbonate",
-          "Albuminuria",
-          "Secondary workup only if clinically indicated",
+          "Is BP truly uncontrolled, or is this white-coat effect, poor technique, nonadherence, or undertreatment?",
+          "Is the regimen at effective doses and built around the patient's CKD/proteinuria status?",
+          "Is this resistant hypertension, and if so, is spironolactone or another add-on safe with the current kidney function and potassium?",
+          "Does the history justify targeted secondary workup?",
         ],
       },
     ],
 
     commonMistakes: [
-      "Escalating based on office BP alone",
-      "Not checking home technique",
-      "Not checking adherence",
-      "Not checking orthostatic symptoms",
+      "Treating medication side effects as nonadherence without asking what happened",
+      "Treating apparent resistance before confirming measurement quality and adherence",
       "Ordering shotgun secondary HTN workups",
-      "Forgetting CKD/proteinuria affects drug choice",
+      "Ignoring orthostatic symptoms in older or frail patients",
     ],
 
     teachingPoints: [
-      "Home BP data matter more than office readings.",
       "For most adults, a practical treatment goal is under 130/80 mmHg; in CKD, KDIGO supports standardized office SBP under 120 mmHg for many non-dialysis patients when tolerated.",
-      "Resistant HTN starts with confirming adherence, dose adequacy, and measurement validity.",
+      "Resistant HTN requires three appropriately dosed agents, usually including a diuretic, before adding more complexity.",
+      "Primary aldosteronism is common enough to consider when hypertension is resistant or paired with hypokalemia.",
     ],
 
-    discussionQuestions: [
-      "A patient is on lisinopril 40 mg, amlodipine 10 mg, and chlorthalidone 25 mg, but home BPs average 155/95. What is your systematic approach to evaluating and managing this patient's resistant hypertension?",
-      "A 28-year-old woman is referred for new-onset hypertension with BPs around 160/100 and a potassium of 3.2 mEq/L. What secondary causes would you consider, and how would you prioritize your workup?",
-      "A 72-year-old with diffuse atherosclerosis has resistant HTN and is found on imaging to have 80% stenosis of the right renal artery. CORAL (NEJM 2014) showed stenting did not reduce CV/renal events vs medical therapy alone — what are the few remaining indications where you would still consider intervention?",
-      "After PATHWAY-2 spironolactone, what is the role of newer agents in resistant HTN? Aprocitentan (PRECISION, Lancet 2022) is FDA-approved (Tryvio) and lowered BP and proteinuria; baxdrostat (BaxHTN/Bax24, 2025) cut 24h ambulatory SBP ~14 mmHg in resistant HTN. Where would each fit?",
-      "AMBER (Lancet 2019): patiromer kept 86% of CKD patients (eGFR 25–45) on spironolactone vs 66% on placebo. How does that change your approach to MRA tolerance in resistant HTN with advanced CKD?",
-    ],
+    discussionQuestions: [],
 
     guidelineBasis: [
       "ACC/AHA 2025 Guideline for High Blood Pressure in Adults",

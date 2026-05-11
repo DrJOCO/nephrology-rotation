@@ -7,7 +7,7 @@ import { INPATIENT_GUIDES, INPATIENT_GUIDE_TOPICS } from "../../data/inpatientGu
 import { ROTATION_GUIDES, ROTATION_GUIDE_IDS } from "../../data/rotationGuides";
 import { getCurrentOrNextFriday } from "../../utils/clinicRotation";
 import { useIsMobile } from "../../utils/helpers";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import type { ClinicGuideRecord } from "../../types";
 
 const GUIDE_THEME_COLOR_MAP: Record<string, string> = {
@@ -37,7 +37,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>← Back</button>
+      <BackButton onClick={onBack} />
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
         <div style={{ width: 48, height: 48, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
@@ -99,7 +99,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
           </div>
         );
       })}
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 16, marginBottom: 0 }}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16, marginBottom: 0 }} />
     </div>
   );
 }
@@ -140,7 +140,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Hyponatremia Tool</div>
-              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Tonicity \u2192 impaired water excretion \u2192 volume status; correction caps, ODS risk, Adrogue\u2013Madias</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Tonicity → impaired water excretion → volume status; correction caps, ODS risk, Adrogué–Madias</div>
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
           </button>
@@ -152,7 +152,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Glomerular Disease Tool</div>
-              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Syndrome \u00D7 complement \u2192 ranked GN differential, what positive serologies mean, and which to send next</div>
+              <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Syndrome × complement → ranked GN differential, what positive serologies mean, and which to send next</div>
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
           </button>
@@ -202,9 +202,9 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Clinic Guides</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
-              CKD, Hypertension, and Transplant outpatient prep.
+              CKD, diabetic kidney disease, lupus nephritis, hypertension, and transplant outpatient prep.
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(190px, 1fr))", gap: 8 }}>
               {CLINIC_GUIDE_TOPICS.map((topic) => {
                 const template = clinicGuideTemplates[topic as ClinicGuideTopic] || CLINIC_GUIDES[topic as ClinicGuideTopic];
                 const record = (clinicGuides || []).find(g => g.date === dateStr && g.topic === topic);

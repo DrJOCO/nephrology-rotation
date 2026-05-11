@@ -16,9 +16,18 @@ import type { CSSProperties } from "react";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const T = {
-  // Core palette — CSS custom properties for dark mode support
-  navy: "var(--c-navy)", deep: "var(--c-deep)", med: "var(--c-med)",
-  ice: "var(--c-ice)", pale: "var(--c-pale)",
+  // Deprecated palette aliases. Keep these as exact editorial aliases until
+  // the migration pass replaces old call sites with semantic names.
+  /** @deprecated Use T.ink instead. */
+  navy: "var(--c-text)",
+  /** @deprecated Use T.ink2 instead. */
+  deep: "var(--c-sub)",
+  /** @deprecated Use T.brand instead. */
+  med: "var(--c-brand)",
+  /** @deprecated Use T.surface2 instead. */
+  ice: "var(--c-ice)",
+  /** @deprecated Use T.surface2 instead. */
+  pale: "var(--c-ice)",
   dark: "var(--c-dark)",
   text: "var(--c-text)", sub: "var(--c-sub)", muted: "var(--c-muted)", line: "var(--c-line)",
   bg: "var(--c-bg)", card: "var(--c-card)",

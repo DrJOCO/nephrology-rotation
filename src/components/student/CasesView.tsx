@@ -61,7 +61,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
     return (
       <div style={{ padding: 16 }}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
-          ← Back to Cases
+          {"\u2190"} Back to Cases
         </button>
 
         <div style={{ background: T.card, borderRadius: 8, padding: 20, border: `1px solid ${T.line}`, marginBottom: 16 }}>
@@ -82,7 +82,6 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
         {done && (
           <div style={{ background: T.successBg, borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 13, color: T.success, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${T.line}` }}>
-            <span style={{ fontSize: 16 }}>✓</span>
             <span>Previously completed: {done.score}/{done.total} correct ({Math.round((done.score / done.total) * 100)}%)</span>
           </div>
         )}
@@ -159,7 +158,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <button onClick={() => { if (currentQ === 0 && answers.length === 0) { setPhase("read"); } }}
           style={{ background: "none", border: "none", color: currentQ === 0 && answers.length === 0 ? T.brand : "transparent", fontSize: 14, cursor: currentQ === 0 ? "pointer" : "default", padding: 0, fontWeight: 600, pointerEvents: currentQ === 0 && answers.length === 0 ? "auto" : "none" }}>
-          ← Back
+          {"\u2190"} Back
         </button>
         <div style={{ fontSize: 13, fontWeight: 600, color: T.sub }}>
           Question {currentQ + 1} of {questions.length}
@@ -261,7 +260,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
-        ← Back
+        {"\u2190"} Back
       </button>
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Core for this module
@@ -281,7 +280,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
               <div style={{ position: "absolute", top: 14, right: 48, display: "flex", alignItems: "center", gap: 6 }}>
                 {done && (
                   <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, padding: "3px 10px", borderRadius: 6, textTransform: "uppercase" }}>
-                    ✓ {done.score}/{done.total}
+                    {done.score}/{done.total}
                   </span>
                 )}
               </div>

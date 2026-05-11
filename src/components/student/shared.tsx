@@ -1,11 +1,44 @@
-import { CSSProperties, ReactNode } from "react";
+import { Check, type LucideIcon } from "lucide-react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { T } from "../../data/constants";
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Shared styles used across multiple student components
 // ═══════════════════════════════════════════════════════════════════════
 
-export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1.5px solid ${T.line}`, color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "10px 16px", fontWeight: 600, minHeight: 44, borderRadius: 22, boxShadow: "0 2px 12px rgba(0,0,0,0.12)", zIndex: 99 };
+export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1px solid ${T.line}`, color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "9px 12px", fontWeight: 700, minHeight: 40, borderRadius: 8, boxShadow: "none", zIndex: 99 };
+
+export const inlineBackBtnStyle: CSSProperties = {
+  position: "static",
+  background: T.card,
+  border: `1.5px solid ${T.line}`,
+  color: T.brand,
+  fontSize: 14,
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "10px 16px",
+  fontWeight: 600,
+  minHeight: 44,
+  borderRadius: 22,
+  marginTop: 8,
+};
+
+export function BackButton({
+  onClick,
+  label = "Back",
+  placement = "floating",
+  style,
+}: {
+  onClick: () => void;
+  label?: ReactNode;
+  placement?: "floating" | "inline";
+  style?: CSSProperties;
+}) {
+  const base = placement === "floating" ? backBtnStyle : inlineBackBtnStyle;
+  return <button onClick={onClick} style={{ ...base, ...style }}>{"\u2190"} {label}</button>;
+}
 
 export const inputLabel: CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
 
@@ -21,6 +54,287 @@ export const inputStyle: CSSProperties = {
   background: T.surface2,
   color: T.text,
 };
+
+type PanelTone = "info" | "warning" | "danger";
+
+const TONE_COLOR: Record<PanelTone, string> = {
+  info: T.info,
+  warning: T.warning,
+  danger: T.danger,
+};
+
+export function Panel({
+  icon: Icon,
+  title,
+  action,
+  tone,
+  children,
+  style,
+}: {
+  icon?: LucideIcon;
+  title?: ReactNode;
+  action?: ReactNode;
+  tone?: PanelTone;
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  const accent = tone ? { borderLeft: `4px solid ${TONE_COLOR[tone]}` } : null;
+  const hasHeader = Icon || title || action;
+  return (
+    <section style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, padding: 14, marginBottom: 12, ...accent, ...style }}>
+      {hasHeader && (
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+          {(Icon || title) && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.ink, fontWeight: 600, fontSize: 14, fontFamily: T.serif, minWidth: 0 }}>
+              {Icon && <Icon size={17} strokeWidth={2} aria-hidden="true" />}
+              {title}
+            </div>
+          )}
+          {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
+type EditorialTone = "neutral" | "ink" | "brand" | "success" | "warning" | "danger" | "info";
+
+function toneColor(tone: EditorialTone): string {
+  return {
+    neutral: T.ink2,
+    ink: T.ink,
+    brand: T.brand,
+    success: T.success,
+    warning: T.warning,
+    danger: T.danger,
+    info: T.info,
+  }[tone];
+}
+
+function toneBg(tone: EditorialTone): string {
+  return {
+    neutral: T.surface2,
+    ink: T.surface2,
+    brand: T.brandBg,
+    success: T.successBg,
+    warning: T.warningBg,
+    danger: T.dangerBg,
+    info: T.infoBg,
+  }[tone];
+}
+
+function solidToneInk(tone: EditorialTone): string {
+  return {
+    neutral: T.ink,
+    ink: T.bg,
+    brand: T.brandInk,
+    success: T.successInk,
+    warning: T.warningInk,
+    danger: T.dangerInk,
+    info: T.infoInk,
+  }[tone];
+}
+
+export function SectionTitle({
+  eyebrow,
+  title,
+  description,
+  action,
+  level = 2,
+  compact = false,
+  style,
+}: {
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
+  action?: ReactNode;
+  level?: 2 | 3;
+  compact?: boolean;
+  style?: CSSProperties;
+}) {
+  const Heading = (level === 2 ? "h2" : "h3") as "h2" | "h3";
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: compact ? 10 : 14, ...style }}>
+      <div style={{ minWidth: 0 }}>
+        {eyebrow && (
+          <div style={{ fontFamily: T.mono, fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0, marginBottom: 6 }}>
+            {eyebrow}
+          </div>
+        )}
+        <Heading style={{ color: T.ink, fontSize: level === 2 ? (compact ? 20 : 22) : 15, margin: 0, fontFamily: T.serif, fontWeight: level === 2 ? 600 : 700, lineHeight: 1.15 }}>
+          {title}
+        </Heading>
+        {description && (
+          <p style={{ color: T.ink2, fontSize: 13, margin: "6px 0 0", lineHeight: 1.5, maxWidth: 760 }}>
+            {description}
+          </p>
+        )}
+      </div>
+      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+    </div>
+  );
+}
+
+export function Button({
+  children,
+  tone = "brand",
+  variant = "solid",
+  size = "md",
+  style,
+  type = "button",
+  ...buttonProps
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  tone?: Extract<EditorialTone, "neutral" | "ink" | "brand" | "success" | "warning" | "danger" | "info">;
+  variant?: "solid" | "outline" | "ghost";
+  size?: "sm" | "md";
+}) {
+  const color = toneColor(tone);
+  const solid = variant === "solid";
+  const outline = variant === "outline";
+  return (
+    <button
+      type={type}
+      style={{
+        minHeight: size === "sm" ? 34 : 40,
+        padding: size === "sm" ? "7px 10px" : "10px 13px",
+        borderRadius: 8,
+        border: outline ? `1px solid ${color}` : "1px solid transparent",
+        background: solid ? color : "transparent",
+        color: solid ? solidToneInk(tone) : color,
+        cursor: buttonProps.disabled ? "not-allowed" : "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        fontSize: size === "sm" ? 13 : 14,
+        fontWeight: 700,
+        fontFamily: T.sans,
+        opacity: buttonProps.disabled ? 0.55 : 1,
+        ...style,
+      }}
+      {...buttonProps}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function InfoBar({
+  label,
+  title,
+  children,
+  action,
+  tone = "info",
+  style,
+}: {
+  label?: ReactNode;
+  title?: ReactNode;
+  children?: ReactNode;
+  action?: ReactNode;
+  tone?: Exclude<EditorialTone, "ink">;
+  style?: CSSProperties;
+}) {
+  const color = toneColor(tone);
+  return (
+    <div style={{ background: toneBg(tone), borderRadius: 8, padding: "12px 13px", borderLeft: `4px solid ${color}`, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap", ...style }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        {label && (
+          <div style={{ fontSize: 12, fontWeight: 700, color, marginBottom: title || children ? 4 : 0, fontFamily: T.mono, textTransform: "uppercase", letterSpacing: 0 }}>
+            {label}
+          </div>
+        )}
+        {title && <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>{title}</div>}
+        {children && <div style={{ fontSize: 13, color: T.ink2, lineHeight: 1.5, marginTop: title ? 4 : 0 }}>{children}</div>}
+      </div>
+      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+    </div>
+  );
+}
+
+export function Chip({
+  children,
+  selected = false,
+  onClick,
+  tone = "ink",
+  showCheck = true,
+  style,
+}: {
+  children: ReactNode;
+  selected?: boolean;
+  onClick?: () => void;
+  tone?: Extract<EditorialTone, "ink" | "brand" | "success" | "warning" | "danger" | "info">;
+  showCheck?: boolean;
+  style?: CSSProperties;
+}) {
+  const color = toneColor(tone);
+  const chipStyle: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    minHeight: 34,
+    padding: "7px 10px",
+    borderRadius: 8,
+    border: `1.5px solid ${selected ? color : T.line}`,
+    background: selected ? color : T.surface2,
+    color: selected ? solidToneInk(tone) : T.text,
+    fontSize: 13,
+    fontWeight: 600,
+    fontFamily: T.sans,
+    textAlign: "left",
+    ...style,
+  };
+  const content = (
+    <>
+      {selected && showCheck && <Check size={13} strokeWidth={2.5} aria-hidden="true" />}
+      <span>{children}</span>
+    </>
+  );
+
+  if (!onClick) {
+    return <span style={chipStyle}>{content}</span>;
+  }
+
+  return (
+    <button type="button" onClick={onClick} aria-pressed={selected} style={{ cursor: "pointer", ...chipStyle }}>
+      {content}
+    </button>
+  );
+}
+
+export function ToolShell({
+  title,
+  description,
+  eyebrow,
+  onBack,
+  backLabel = "Tools",
+  action,
+  info,
+  children,
+  footer,
+  style,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  eyebrow?: ReactNode;
+  onBack?: () => void;
+  backLabel?: ReactNode;
+  action?: ReactNode;
+  info?: ReactNode;
+  children?: ReactNode;
+  footer?: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div style={{ padding: 16, ...style }}>
+      {onBack && <BackButton onClick={onBack} label={backLabel} />}
+      <SectionTitle eyebrow={eyebrow} title={title} description={description} action={action} />
+      {info && <div style={{ marginBottom: 14 }}>{info}</div>}
+      {children}
+      {footer}
+    </div>
+  );
+}
 
 export function Section({ eyebrow, title, description, action, children, style }: { eyebrow?: ReactNode; title?: ReactNode; description?: ReactNode; action?: ReactNode; children?: ReactNode; style?: CSSProperties }) {
   return (

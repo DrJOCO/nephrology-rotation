@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { T, RESOURCES } from "../../data/constants";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import type { CompletedItems } from "../../types";
+import { scrollWindowToTop } from "../../utils/helpers";
 
 type ResourceTabId = "podcasts" | "websites" | "guidelines" | "decks" | "tools";
 type ResourceItem = (typeof RESOURCES)[ResourceTabId][number];
@@ -29,6 +30,15 @@ function getCurbsidersAppleSearchUrl(name: string) {
 
 export default function ResourcesView({ onBack, initialTab = "podcasts", focusWeek, completedItems, onToggleDeckComplete }: ResourcesViewProps) {
   const [activeTab, setActiveTab] = useState<ResourceTabId>(initialTab);
+  useEffect(() => {
+    scrollWindowToTop();
+  }, [activeTab]);
+
+  const openResourceTab = (nextTab: ResourceTabId) => {
+    setActiveTab(nextTab);
+    scrollWindowToTop();
+  };
+
   const tabList: Array<{ id: ResourceTabId; label: string; data: typeof RESOURCES[ResourceTabId] }> = [
     { id: "podcasts", label: "\uD83C\uDFA7 Podcasts", data: RESOURCES.podcasts },
     { id: "websites", label: "\uD83C\uDF10 Websites", data: RESOURCES.websites },
@@ -113,14 +123,14 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} />
       <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Resources</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Curated links and teaching decks for your nephrology rotation</p>
 
       {/* Tab bar — wraps to second row instead of clipping at narrow widths. */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 16 }}>
         {tabList.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
+          <button key={t.id} onClick={() => openResourceTab(t.id)}
             style={{ padding: "8px 14px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
               ...(activeTab === t.id ? activeTabStyle : inactiveTabStyle) }}>
             {t.label}
@@ -228,7 +238,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
       )}
 
       {/* Bottom back button */}
-      <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 20, marginBottom: 0 }}>{"\u2190"} Back</button>
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 20, marginBottom: 0 }} />
     </div>
   );
 }

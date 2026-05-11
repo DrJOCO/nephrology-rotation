@@ -209,7 +209,7 @@ export function calculateEffectiveOsmolality(inputs: HyponatremiaInputs): Effect
       note = "Hypotonic hyponatremia — proceed with the standard differential.";
     } else if (measured >= 275 && measured <= 295) {
       classification = "isotonic";
-      note = "Isotonic measured osm — think pseudohyponatremia (lipemic serum, paraprotein, severe hyperprotein) or non-hypotonic states (TURP/hysteroscopic irrigation, IVIG/mannitol).";
+      note = "Isotonic measured osm — think pseudohyponatremia (lipemic serum, paraprotein, severe hyperproteinemia) or non-hypotonic states (TURP/hysteroscopic irrigation, IVIG/mannitol).";
     } else {
       classification = "hypertonic";
       note = "Hypertonic measured osm — think hyperglycemia/mannitol/glycerol; the low Na may reflect water shift, not water excess.";
@@ -219,7 +219,7 @@ export function calculateEffectiveOsmolality(inputs: HyponatremiaInputs): Effect
     note = "Glucose >250 — likely translational (hypertonic) hyponatremia; correct Na for glucose first.";
   } else {
     classification = "hypotonic";
-    note = "No measured osm; without hyperglycemia or other ineffective osmoles, hypotonic is most likely.";
+    note = "No measured osm; without hyperglycemia or other effective osmoles, hypotonic is most likely.";
   }
   return { value: calculated, totalCalculated, measured, osmolarGap, classification, note };
 }
@@ -570,7 +570,7 @@ export function buildHyponatremiaAssessment(inputs: HyponatremiaInputs): Hyponat
     alerts.push("Severe hyponatremia (Na <120) without severe sx: start 3% saline ~0.25 mL/kg/h; consider proactive dDAVP if cause is reversible or ODS risk is high.");
   }
   if (correctionTarget.highOdsRisk) {
-    alerts.push("High ODS risk profile — cap correction at 8 mEq/L per 24 h; consider DDAVP clamp + relowering with D5W if you exceed the cap.");
+    alerts.push("High ODS risk profile — cap correction at 8 mEq/L per 24 h; consider dDAVP clamp + relowering with D5W if you exceed the cap.");
   }
   if (na !== null && na <= 105) {
     alerts.push("Na ≤105: among the highest-risk groups for ODS — preplan a correction-rate strategy and frequent (q1–2 h) Na monitoring.");

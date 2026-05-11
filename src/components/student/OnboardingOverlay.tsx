@@ -1,24 +1,32 @@
 import { useState } from "react";
 import { T } from "../../data/constants";
+import { Button, InfoBar } from "./shared";
 
 const ONBOARDING_STEPS = [
   {
-    icon: "\uD83D\uDCDD",
-    title: "Optional Baseline Check-In",
+    title: "Start with the baseline",
     body: "You can start with a short assessment to see which nephrology topics are already strong and which ones need more teaching during the rotation.",
-    hint: "Results can tailor Today, review, and spaced repetition",
+    hint: "Results help tune Today, review, and spaced repetition.",
   },
   {
-    icon: "\uD83D\uDCDA",
-    title: "Explore Your Module Curriculum",
-    body: "Each module is built around core study sheets, quizzes, and cases, with journal articles, landmark trials, and guidelines available as optional reference.",
-    hint: "Tap any module to see its content",
+    title: "Use Today as the worklist",
+    body: "Today collects the core work for the current module and keeps optional references separate from required learning.",
+    hint: "Start here when you are deciding what to do next.",
   },
   {
-    icon: "\uD83C\uDFE5",
-    title: "Log Inpatients on Rounds",
+    title: "Open the module curriculum",
+    body: "Each module is built around study sheets, quizzes, and cases, with journal articles, landmark trials, and guidelines available as optional reference.",
+    hint: "Use the module view when you want the full content map.",
+  },
+  {
+    title: "Track inpatients on rounds",
     body: "Track the hospital patients you see, tag diagnoses, and add follow-up notes to build your inpatient experience log.",
-    hint: "Use the Inpatients tab during ward time",
+    hint: "Use the Inpatients tab during ward time.",
+  },
+  {
+    title: "Review progress deliberately",
+    body: "Progress combines quiz signal, cases, spaced repetition, and patient exposure so you can see where to spend the next block of attention.",
+    hint: "Saved items and recommendations stay available when you need a fast return path.",
   },
 ];
 
@@ -33,46 +41,39 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.overlay, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}>
-      <div style={{ background: T.card, borderRadius: 20, maxWidth: 360, width: "100%", padding: "32px 24px 24px", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", animation: "fadeIn 0.3s ease" }}>
-        {/* Step dots */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.overlay, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: T.card, borderRadius: 2, maxWidth: 392, width: "100%", padding: "24px 22px 22px", animation: "fadeIn 0.3s ease", border: `1.5px solid ${T.ink}` }}>
+        <div style={{ fontFamily: T.mono, color: T.muted, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0, marginBottom: 12 }}>
+          Step {step + 1} of {ONBOARDING_STEPS.length}
+        </div>
+
+        <div style={{ display: "flex", gap: 7, marginBottom: 18 }}>
           {ONBOARDING_STEPS.map((_, i) => (
-            <div key={i} style={{ width: 8, height: 8, borderRadius: 4, background: i === step ? T.brand : T.pale, transition: "background 0.3s" }} />
+            <div key={i} style={{ width: 6, height: 6, borderRadius: 0, border: `1px solid ${i <= step ? T.ink : T.line}`, background: i <= step ? T.ink : "transparent", transition: "background 0.3s, border 0.3s" }} />
           ))}
         </div>
 
-        {/* Icon */}
-        <div style={{ fontSize: 48, marginBottom: 16 }}>{s.icon}</div>
+        <h2 style={{ fontSize: 22, fontWeight: 700, color: T.ink, margin: "0 0 8px", fontFamily: T.serif, lineHeight: 1.15 }}>{s.title}</h2>
+        <p style={{ fontSize: 14, color: T.ink2, lineHeight: 1.55, margin: "0 0 14px" }}>{s.body}</p>
 
-        {/* Title */}
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>{s.title}</h2>
+        <InfoBar tone="neutral" style={{ marginBottom: 20, borderRadius: 2 }}>{s.hint}</InfoBar>
 
-        {/* Body */}
-        <p style={{ fontSize: 14, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>{s.body}</p>
-
-        {/* Hint */}
-        <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, background: T.ice, borderRadius: 8, padding: "6px 12px", display: "inline-block", marginBottom: 24 }}>
-          💡 {s.hint}
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-          <button onClick={handleDismiss}
-            style={{ padding: "10px 20px", background: "none", border: "none", color: T.sub, fontSize: 13, cursor: "pointer", fontWeight: 500 }}>
+        <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
+          <button
+            onClick={handleDismiss}
+            style={{ padding: "10px 0", background: "none", border: "none", color: T.ink2, fontSize: 13, cursor: "pointer", fontWeight: 600 }}
+          >
             Skip
           </button>
-          <button onClick={() => isLast ? handleDismiss() : setStep(step + 1)}
-            style={{ padding: "10px 24px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", minWidth: 120 }}>
-            {isLast ? "Get Started" : "Next →"}
-          </button>
+          <Button tone="ink" onClick={() => isLast ? handleDismiss() : setStep(step + 1)} style={{ minWidth: 124, borderRadius: 2 }}>
+            {isLast ? "Get started" : "Next"}
+          </Button>
         </div>
 
-        {/* First Day Guide link on last step */}
         {isLast && onViewFirstDay && (
           <button onClick={() => { localStorage.setItem("neph_hasSeenOnboarding", "true"); onViewFirstDay(); }}
-            style={{ marginTop: 16, background: "none", border: "none", color: T.brand, fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
-            🌅 View First Day Orientation Guide →
+            style={{ marginTop: 16, background: "none", border: "none", color: T.ink, fontSize: 13, fontWeight: 700, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+            View First Day Orientation Guide
           </button>
         )}
       </div>

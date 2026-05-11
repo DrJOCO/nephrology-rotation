@@ -126,7 +126,7 @@ function getPearlIndex(date: Date): number {
 
 function PearlToast({ tip, onDismiss }: { tip: string; onDismiss: () => void }) {
   return (
-    <section style={{ background: T.ice, borderRadius: 18, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
+    <section style={{ background: T.ice, borderRadius: 8, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Sparkles size={16} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
@@ -363,7 +363,7 @@ function buildHeroCard({
   const weekday = now.getDay();
   const clinicAction: NavAction = {
     label: "Open clinic guides",
-    meta: `CKD, HTN, Transplant · ${friday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+    meta: `CKD, DKD, LN, HTN, Transplant · ${friday.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
     tab: "library",
   };
   const patientsAction: NavAction = {
@@ -411,7 +411,7 @@ function buildHeroCard({
     return {
       eyebrow: "Next up",
       title: weekday === 5 ? "Clinic day" : "Clinic prep",
-      body: "Use the CKD, hypertension, and transplant clinic guides as separate outpatient teaching tracks, then tighten one more core module item before clinic.",
+      body: "Use the CKD, DKD, lupus nephritis, hypertension, and transplant clinic guides as separate outpatient teaching tracks, then tighten one more core module item before clinic.",
       tone: "clinic",
       badge: friday.toLocaleDateString("en-US", { weekday: "short" }),
       actions: roundsSecondaryAction ? [clinicAction, roundsSecondaryAction] : [clinicAction],

@@ -1,6 +1,6 @@
 import { T, ARTICLES as DEFAULT_ARTICLES, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
-import { backBtnStyle } from "./shared";
+import { BackButton } from "./shared";
 import type { Bookmarks, StudySheet, SubView } from "../../types";
 import type { StudySheetsData } from "../../utils/studySheets";
 
@@ -26,10 +26,10 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={backBtnStyle}>{"\u2190"} Back</button>
-      <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>{"\u2B50"} Saved Items</h2>
+      <BackButton onClick={onBack} />
+      <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>Saved Items</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>{total} bookmarked</p>
-      {total === 0 && <div style={{ textAlign: "center", padding: 40, color: T.muted, fontSize: 13 }}>Tap the {"\u2606"} on any trial, article, case, or study sheet to save it here.</div>}
+      {total === 0 && <div style={{ textAlign: "center", padding: 40, color: T.muted, fontSize: 13 }}>Use the bookmark control on any trial, article, case, or study sheet to save it here.</div>}
       {renderSection("Landmark Trials", bookmarkedTrials, (t, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("trials", t.name)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0 }}>{"\u2605"}</button>
@@ -66,7 +66,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
           </button>
         </div>
       ))}
-      {total > 3 && <button onClick={onBack} style={{ ...backBtnStyle, marginTop: 20, marginBottom: 0 }}>{"\u2190"} Back</button>}
+      {total > 3 && <BackButton onClick={onBack} placement="inline" style={{ marginTop: 20, marginBottom: 0 }} />}
     </div>
   );
 }

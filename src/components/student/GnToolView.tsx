@@ -1,5 +1,5 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { Activity, AlertTriangle, Calculator, Check, Clipboard, Droplet, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import { Activity, AlertTriangle, Calculator, Clipboard, Droplet, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import {
@@ -13,7 +13,7 @@ import {
   type GnToolInputs,
   type GnUaGrade,
 } from "../../utils/gnTool";
-import { EduDisclaimer, inputLabel, inputStyle, Section } from "./shared";
+import { Chip, EduDisclaimer, inputLabel, inputStyle, Panel, Section } from "./shared";
 
 type ArrayInputKey = "selectedPositive" | "selectedSentNegative" | "selectedHistory";
 
@@ -156,58 +156,13 @@ const HISTORY_OPTIONS: Option[] = [
   { id: "tma_features", label: "MAHA + thrombocytopenia (TMA)" },
 ];
 
-const panelStyle: CSSProperties = {
-  background: T.card,
-  border: `1px solid ${T.line}`,
-  borderRadius: 8,
-  padding: 14,
-  marginBottom: 12,
-};
-
-const sectionTitleStyle: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  fontSize: 14,
-  fontWeight: 600,
-  color: T.navy,
-  marginBottom: 10,
-};
-
-function ToggleChip({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 5,
-        minHeight: 34,
-        padding: "7px 10px",
-        borderRadius: 8,
-        border: `1.5px solid ${selected ? T.ink : T.line}`,
-        background: selected ? T.ink : T.surface2,
-        color: selected ? T.bg : T.text,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        textAlign: "left",
-      }}
-    >
-      {selected && <Check size={13} strokeWidth={2.5} aria-hidden="true" />}
-      <span>{children}</span>
-    </button>
-  );
-}
-
 function OptionGrid({ options, selectedIds, onToggle }: { options: Option[]; selectedIds: string[]; onToggle: (id: string) => void }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
       {options.map((option) => (
-        <ToggleChip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
+        <Chip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
           {option.label}
-        </ToggleChip>
+        </Chip>
       ))}
     </div>
   );
@@ -230,9 +185,9 @@ function SegmentedGroup<TVal extends string>({ options, value, onChange }: { opt
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
       {options.map((option) => (
-        <ToggleChip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
+        <Chip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
           {option.label}
-        </ToggleChip>
+        </Chip>
       ))}
     </div>
   );
@@ -399,20 +354,18 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
       />
 
       {isMobile && (
-        <section style={{ ...panelStyle, borderLeft: `4px solid ${T.info}` }}>
-          <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>Live differential</div>
+        <Panel title="Live differential" tone="info">
           <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
           <a href="#gn-results" style={{ display: "inline-flex", marginTop: 8, color: T.brand, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
             View full differential
           </a>
-        </section>
+        </Panel>
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "minmax(0, 1fr) minmax(380px, 0.95fr)", gap: 14, alignItems: "start" }}>
         <div>
           {/* Syndrome / tempo */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Activity size={17} strokeWidth={2} aria-hidden="true" /> Clinical Syndrome &amp; Tempo</div>
+          <Panel icon={Activity} title="Clinical Syndrome & Tempo">
             <div style={{ marginBottom: 12 }}>
               <label style={inputLabel}>Syndrome</label>
               <SegmentedGroup options={SYNDROME_OPTIONS} value={inputs.syndrome} onChange={(value) => updateField("syndrome", value)} />
@@ -424,11 +377,10 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
             <div style={{ marginTop: 12, color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
               Leave syndrome on “Unclear” to let the tool derive it from your UA + UPCR + Cr trajectory.
             </div>
-          </section>
+          </Panel>
 
           {/* Quantitative / Cr */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Droplet size={17} strokeWidth={2} aria-hidden="true" /> Quantitative &amp; Renal Function</div>
+          <Panel icon={Droplet} title="Quantitative & Renal Function">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, minmax(0, 1fr))", gap: 10, marginBottom: 12 }}>
               <NumberInput label="UPCR (mg/g)" value={inputs.upcr} placeholder="spot" step="1" onChange={(value) => updateField("upcr", value)} />
               <NumberInput label="24h protein (g/d)" value={inputs.protein24h} placeholder="optional" onChange={(value) => updateField("protein24h", value)} />
@@ -454,11 +406,10 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
                 <ResultBadge tone="warning">Albumin {assessment.quantitative.albumin.toFixed(1)} (VTE risk)</ResultBadge>
               )}
             </div>
-          </section>
+          </Panel>
 
           {/* UA findings */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Microscope size={17} strokeWidth={2} aria-hidden="true" /> Urinalysis &amp; Microscopy</div>
+          <Panel icon={Microscope} title="Urinalysis & Microscopy">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
               <div>
                 <label style={inputLabel}>Dipstick protein</label>
@@ -480,11 +431,10 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
             <div style={{ marginTop: 12, color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
               Dysmorphic RBCs and RBC casts are the bedside signature of glomerular hematuria — the highest-yield clue you can get without a biopsy.
             </div>
-          </section>
+          </Panel>
 
           {/* Complement */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><ScanSearch size={17} strokeWidth={2} aria-hidden="true" /> Complement</div>
+          <Panel icon={ScanSearch} title="Complement">
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 12 }}>
               <div>
                 <label style={inputLabel}>C3</label>
@@ -501,41 +451,36 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
             <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, fontFamily: T.serif, fontStyle: "italic" }}>
               {assessment.complementPattern.interpretation}
             </div>
-          </section>
+          </Panel>
 
           {/* Positive serologies */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Pill size={17} strokeWidth={2} aria-hidden="true" /> Positive Serologies</div>
+          <Panel icon={Pill} title="Positive Serologies">
             <OptionGroupGrid groups={POSITIVE_SEROLOGY_GROUPS} selectedIds={inputs.selectedPositive} onToggle={(id) => toggleArray("selectedPositive", id)} />
             <div style={{ marginTop: 10, color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
               Mark anything that has come back positive. The differential will weight these heavily; anti-GBM and PR3/MPO ANCA force urgent action.
             </div>
-          </section>
+          </Panel>
 
           {/* Sent-negative serologies */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><Pill size={17} strokeWidth={2} aria-hidden="true" /> Tests Sent &amp; Negative</div>
+          <Panel icon={Pill} title="Tests Sent & Negative">
             <OptionGrid options={NEGATIVE_SEROLOGY_OPTIONS} selectedIds={inputs.selectedSentNegative} onToggle={(id) => toggleArray("selectedSentNegative", id)} />
             <div style={{ marginTop: 10, color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
               Marking a test as negative removes it from the “still to send” list and downweights the relevant differentials. Leave blank for tests not yet sent.
             </div>
-          </section>
+          </Panel>
 
           {/* History / exam */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><History size={17} strokeWidth={2} aria-hidden="true" /> History &amp; Exam</div>
+          <Panel icon={History} title="History & Exam">
             <OptionGrid options={HISTORY_OPTIONS} selectedIds={inputs.selectedHistory} onToggle={(id) => toggleArray("selectedHistory", id)} />
-          </section>
+          </Panel>
         </div>
 
         {/* Right column — results */}
         <aside id="gn-results" style={{ position: isMobile ? "static" : "sticky", top: 70 }}>
-          <section style={{ ...panelStyle, marginBottom: 12 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start", marginBottom: 10 }}>
-              <div>
-                <div style={sectionTitleStyle}><Calculator size={17} strokeWidth={2} aria-hidden="true" /> Generated Differential</div>
-                <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
-              </div>
+          <Panel
+            icon={Calculator}
+            title="Generated Differential"
+            action={(
               <button
                 type="button"
                 onClick={() => void copyAssessment()}
@@ -546,7 +491,9 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
                 <Clipboard size={14} strokeWidth={2} aria-hidden="true" />
                 {copied ? "Copied" : "Copy"}
               </button>
-            </div>
+            )}
+          >
+            <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginBottom: 10 }}>{assessment.summary}</div>
 
             {assessment.alerts.length > 0 && (
               <div style={{ background: T.dangerBg, border: `1px solid ${T.danger}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
@@ -590,11 +537,10 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
                 ))}
               </div>
             )}
-          </section>
+          </Panel>
 
           {/* Serology plan */}
-          <section style={panelStyle}>
-            <div style={sectionTitleStyle}><AlertTriangle size={17} strokeWidth={2} aria-hidden="true" /> Serology Plan — What to Send Next</div>
+          <Panel icon={AlertTriangle} title="Serology Plan — What to Send Next">
             {assessment.serologyPlan.needed.length === 0 ? (
               <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>
                 The standard battery for this syndrome has been resolved. Reassess if the picture changes.
@@ -619,10 +565,9 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
                 )}
               </div>
             )}
-          </section>
+          </Panel>
 
-          <section style={panelStyle}>
-            <div style={{ color: T.navy, fontWeight: 600, fontSize: 13, marginBottom: 7 }}>Next checks</div>
+          <Panel title="Next checks">
             {assessment.nextSteps.length === 0 ? (
               <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>Add inputs to generate next-step suggestions.</div>
             ) : (
@@ -633,7 +578,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
             <div style={{ color: T.muted, fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>
               Algorithm draws on UpToDate evaluation algorithms, KDIGO 2021 GN guidelines, and standard nephrology teaching. Reasoning aid, not a diagnosis.
             </div>
-          </section>
+          </Panel>
         </aside>
       </div>
 

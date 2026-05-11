@@ -18,7 +18,7 @@ import {
   signInStudentWithPin,
   STUDENT_AUTH_PIN_LENGTH,
 } from "../utils/firebase";
-import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
+import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, scrollWindowToTop, SHARED_KEYS, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
 import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
@@ -683,7 +683,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     }
     setTab(t);
     setSubView(sv);
-    window.scrollTo(0, 0);
+    scrollWindowToTop();
   };
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
@@ -1278,6 +1278,12 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     && authSessionKind !== "none"
     && emailFlowState === "idle",
   );
+  const studentViewKey = useMemo(() => tab + (subView ? JSON.stringify(subView) : ""), [tab, subView]);
+
+  useEffect(() => {
+    if (!studentReadyForApp) return;
+    scrollWindowToTop();
+  }, [studentReadyForApp, studentViewKey]);
 
   if (loading) return (
     <div style={{ minHeight: "100vh", background: T.navyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1473,7 +1479,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       )}
 
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
-      <main id="main-content" tabIndex={-1} className="tab-content-enter" key={tab + (subView ? JSON.stringify(subView) : "")} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + ${subView ? "80px + " : ""}env(safe-area-inset-bottom, 0px))` }}>
+      <main id="main-content" tabIndex={-1} className="tab-content-enter" key={studentViewKey} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + ${subView ? "80px + " : ""}env(safe-area-inset-bottom, 0px))` }}>
         {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} studySheets={studySheets} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={handleSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={handleInstallApp} onDismissInstallPrompt={dismissInstallPrompt} onCompleteConsultTopic={handleCompleteConsultTopic} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
