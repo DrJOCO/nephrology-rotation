@@ -238,7 +238,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
       )}
 
       {/* Bottom back button */}
-      <BackButton onClick={onBack} style={{ marginTop: 20, marginBottom: 0 }} />
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 20, marginBottom: 0 }} />
     </div>
   );
 }

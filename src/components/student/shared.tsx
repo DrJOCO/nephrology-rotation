@@ -8,8 +8,36 @@ import { T } from "../../data/constants";
 
 export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1px solid ${T.line}`, color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "9px 12px", fontWeight: 700, minHeight: 40, borderRadius: 8, boxShadow: "none", zIndex: 99 };
 
-export function BackButton({ onClick, label = "Back", style }: { onClick: () => void; label?: ReactNode; style?: CSSProperties }) {
-  return <button onClick={onClick} style={{ ...backBtnStyle, ...style }}>← {label}</button>;
+export const inlineBackBtnStyle: CSSProperties = {
+  position: "static",
+  background: T.card,
+  border: `1.5px solid ${T.line}`,
+  color: T.brand,
+  fontSize: 14,
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  padding: "10px 16px",
+  fontWeight: 600,
+  minHeight: 44,
+  borderRadius: 22,
+  marginTop: 8,
+};
+
+export function BackButton({
+  onClick,
+  label = "Back",
+  placement = "floating",
+  style,
+}: {
+  onClick: () => void;
+  label?: ReactNode;
+  placement?: "floating" | "inline";
+  style?: CSSProperties;
+}) {
+  const base = placement === "floating" ? backBtnStyle : inlineBackBtnStyle;
+  return <button onClick={onClick} style={{ ...base, ...style }}>{"\u2190"} {label}</button>;
 }
 
 export const inputLabel: CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };
@@ -27,25 +55,37 @@ export const inputStyle: CSSProperties = {
   color: T.text,
 };
 
+type PanelTone = "info" | "warning" | "danger";
+
+const TONE_COLOR: Record<PanelTone, string> = {
+  info: T.info,
+  warning: T.warning,
+  danger: T.danger,
+};
+
 export function Panel({
   icon: Icon,
   title,
   action,
+  tone,
   children,
   style,
 }: {
   icon?: LucideIcon;
   title?: ReactNode;
   action?: ReactNode;
+  tone?: PanelTone;
   children: ReactNode;
   style?: CSSProperties;
 }) {
+  const accent = tone ? { borderLeft: `4px solid ${TONE_COLOR[tone]}` } : null;
+  const hasHeader = Icon || title || action;
   return (
-    <section style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, padding: 14, marginBottom: 12, ...style }}>
-      {(Icon || title || action) && (
+    <section style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, padding: 14, marginBottom: 12, ...accent, ...style }}>
+      {hasHeader && (
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
           {(Icon || title) && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.ink, fontWeight: 600, fontSize: 14, fontFamily: T.serif }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.ink, fontWeight: 600, fontSize: 14, fontFamily: T.serif, minWidth: 0 }}>
               {Icon && <Icon size={17} strokeWidth={2} aria-hidden="true" />}
               {title}
             </div>

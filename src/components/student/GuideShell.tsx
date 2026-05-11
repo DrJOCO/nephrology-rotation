@@ -29,10 +29,10 @@ function toneBg(tone: GuideTone) {
 export function GuideShell({ onBack, children }: { onBack: () => void; children: ReactNode }) {
   return (
     <div style={{ padding: 16 }}>
-      <BackButton onClick={onBack} />
+      <BackButton onClick={onBack} placement="floating" />
       {children}
       <div style={{ marginTop: 16 }}>
-        <BackButton onClick={onBack} />
+        <BackButton onClick={onBack} placement="inline" />
       </div>
       <EduDisclaimer />
     </div>

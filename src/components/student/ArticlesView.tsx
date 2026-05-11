@@ -89,7 +89,7 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
           </div>
         );
       })}
-      {arts.length > 2 && <BackButton onClick={onBack} style={{ marginTop: 16, marginBottom: 0 }} />}
+      {arts.length > 2 && <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16, marginBottom: 0 }} />}
     </div>
   );
 }

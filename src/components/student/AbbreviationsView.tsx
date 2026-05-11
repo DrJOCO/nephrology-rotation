@@ -44,7 +44,7 @@ export default function AbbreviationsView({ onBack }) {
           </div>
         </div>
       )}
-      <BackButton onClick={onBack} style={{ marginTop: 20, marginBottom: 0 }} />
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 20, marginBottom: 0 }} />
     </div>
   );
 }

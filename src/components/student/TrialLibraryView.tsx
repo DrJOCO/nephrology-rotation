@@ -35,7 +35,7 @@ export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, 
         <div style={{ fontSize: 13, color: T.sub, marginBottom: 12 }}>{filtered.length} result{filtered.length !== 1 ? "s" : ""}</div>
       )}
       <CategoryGroupedTrials trials={filtered} bookmarks={bookmarks} onToggleBookmark={onToggleBookmark} />
-      <BackButton onClick={onBack} style={{ marginTop: 16, marginBottom: 0 }} />
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16, marginBottom: 0 }} />
     </div>
   );
 }

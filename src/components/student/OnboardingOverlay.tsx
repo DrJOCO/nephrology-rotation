@@ -49,14 +49,14 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
 
         <div style={{ display: "flex", gap: 7, marginBottom: 18 }}>
           {ONBOARDING_STEPS.map((_, i) => (
-            <div key={i} style={{ width: 7, height: 7, borderRadius: 0, border: `1px solid ${i <= step ? T.ink : T.line}`, background: i <= step ? T.ink : "transparent", transition: "background 0.3s, border 0.3s" }} />
+            <div key={i} style={{ width: 6, height: 6, borderRadius: 0, border: `1px solid ${i <= step ? T.ink : T.line}`, background: i <= step ? T.ink : "transparent", transition: "background 0.3s, border 0.3s" }} />
           ))}
         </div>
 
         <h2 style={{ fontSize: 22, fontWeight: 700, color: T.ink, margin: "0 0 8px", fontFamily: T.serif, lineHeight: 1.15 }}>{s.title}</h2>
         <p style={{ fontSize: 14, color: T.ink2, lineHeight: 1.55, margin: "0 0 14px" }}>{s.body}</p>
 
-        <InfoBar tone="neutral" style={{ marginBottom: 20 }}>{s.hint}</InfoBar>
+        <InfoBar tone="neutral" style={{ marginBottom: 20, borderRadius: 2 }}>{s.hint}</InfoBar>
 
         <div style={{ display: "flex", gap: 10, justifyContent: "space-between", alignItems: "center" }}>
           <button
@@ -65,7 +65,7 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
           >
             Skip
           </button>
-          <Button tone="ink" onClick={() => isLast ? handleDismiss() : setStep(step + 1)} style={{ minWidth: 124 }}>
+          <Button tone="ink" onClick={() => isLast ? handleDismiss() : setStep(step + 1)} style={{ minWidth: 124, borderRadius: 2 }}>
             {isLast ? "Get started" : "Next"}
           </Button>
         </div>

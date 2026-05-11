@@ -197,7 +197,7 @@ export default function RefDetailView({ refId, onBack }: { refId: string; onBack
       </div>
 
       {ref.type === "calculator" ? <CalculatorView refData={ref} /> : ref.type === "atlas" ? <AtlasView refData={ref} /> : <ReferenceCardView refData={ref} />}
-      <BackButton onClick={onBack} style={{ marginTop: 20, marginBottom: 0 }} />
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 20, marginBottom: 0 }} />
     </div>
   );
 }

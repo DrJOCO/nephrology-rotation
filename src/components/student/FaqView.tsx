@@ -31,7 +31,7 @@ export default function FaqView({ onBack }) {
         );
       })}
 
-      {faqs.length > 3 && <BackButton onClick={onBack} style={{ marginTop: 20, marginBottom: 0 }} />}
+      {faqs.length > 3 && <BackButton onClick={onBack} placement="inline" style={{ marginTop: 20, marginBottom: 0 }} />}
     </div>
   );
 }

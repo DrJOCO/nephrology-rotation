@@ -99,7 +99,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
           </div>
         );
       })}
-      <BackButton onClick={onBack} style={{ marginTop: 16, marginBottom: 0 }} />
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16, marginBottom: 0 }} />
     </div>
   );
 }

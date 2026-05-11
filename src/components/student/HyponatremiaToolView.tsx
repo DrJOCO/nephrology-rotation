@@ -300,7 +300,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
       />
 
       {isMobile && (
-        <Panel title="Live differential" style={{ borderLeft: `4px solid ${T.info}` }}>
+        <Panel title="Live differential" tone="info">
           <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
           <a href="#hypona-results" style={{ display: "inline-flex", marginTop: 8, color: T.brand, fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
             View full differential

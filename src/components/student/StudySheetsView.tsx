@@ -168,7 +168,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
           </div>
         );
       })}
-      <BackButton onClick={onBack} style={{ marginTop: 16, marginBottom: 0 }} />
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16, marginBottom: 0 }} />
       <EduDisclaimer />
     </div>
   );

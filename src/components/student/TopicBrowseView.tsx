@@ -45,7 +45,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <BackButton onClick={() => (initialTopic ? onBack() : setSelectedTopic(null))} label={initialTopic ? "Back" : "All Topics"} />
           {initialTopic && (
-            <BackButton onClick={() => setSelectedTopic(null)} label="Browse All Topics" style={{ color: T.navy, borderColor: T.line }} />
+            <BackButton onClick={() => setSelectedTopic(null)} label="Browse All Topics" placement="inline" style={{ color: T.navy, borderColor: T.line, marginTop: 0 }} />
           )}
         </div>
         <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>{selectedTopic}</h2>
