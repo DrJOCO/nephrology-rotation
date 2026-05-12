@@ -77,10 +77,10 @@ export function GuideBody({ children }: { children: ReactNode }) {
   return <main style={{ display: "grid", gap: 14 }}>{children}</main>;
 }
 
-export function GuideMeta({ children, tone = "brand" }: { children: ReactNode; tone?: GuideTone }) {
+export function GuideMeta({ children, tone = "brand", emphasis = "normal" }: { children: ReactNode; tone?: GuideTone; emphasis?: "normal" | "loud" }) {
   const color = toneColor(tone);
   return (
-    <span style={{ fontSize: 13, fontWeight: 700, color, background: toneBg(tone), borderRadius: 6, padding: "3px 7px", textTransform: tone === "warning" ? "uppercase" : undefined }}>
+    <span style={{ fontSize: 13, fontWeight: 700, color, background: toneBg(tone), borderRadius: 6, padding: "3px 7px", textTransform: emphasis === "loud" ? "uppercase" : undefined }}>
       {children}
     </span>
   );

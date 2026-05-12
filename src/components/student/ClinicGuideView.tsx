@@ -43,7 +43,7 @@ export default function ClinicGuideView({ date, topic, isOverride, clinicGuideTe
 
   return (
     <GuideShell onBack={onBack}>
-      <GuideHeader eyebrow="Clinic" icon={guide.icon} title={guide.title} description={guide.subtitle} meta={<><GuideMeta>{formatFriday(date)}</GuideMeta>{isOverride && <GuideMeta tone="warning">Override</GuideMeta>}</>} />
+      <GuideHeader eyebrow="Clinic" icon={guide.icon} title={guide.title} description={guide.subtitle} meta={<><GuideMeta>{formatFriday(date)}</GuideMeta>{isOverride && <GuideMeta tone="warning" emphasis="loud">Override</GuideMeta>}</>} />
       <GuideBody>
         <InfoBar label="Why This Matters" tone="brand">{guide.whyItMatters}</InfoBar>
         <InfoBar label="Teaching Pearl" tone="warning">{guide.teachingPearl}</InfoBar>

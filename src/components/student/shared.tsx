@@ -1,4 +1,4 @@
-import { Check, type LucideIcon } from "lucide-react";
+import { Check, RotateCcw, type LucideIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 import { T } from "../../data/constants";
 
@@ -302,6 +302,117 @@ export function Chip({
   );
 }
 
+export interface ToolOption<T extends string = string> {
+  id: T;
+  label: string;
+  detail?: string;
+}
+
+export function OptionGrid({ options, selectedIds, onToggle }: { options: ToolOption[]; selectedIds: string[]; onToggle: (id: string) => void }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+      {options.map((option) => (
+        <Chip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
+          {option.label}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+
+export function OptionGroupGrid({ groups, selectedIds, onToggle }: { groups: Array<{ label: string; options: ToolOption[] }>; selectedIds: string[]; onToggle: (id: string) => void }) {
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {groups.map((group) => (
+        <div key={group.label}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>{group.label}</div>
+          <OptionGrid options={group.options} selectedIds={selectedIds} onToggle={onToggle} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function SegmentedGroup<TVal extends string>({ options, value, onChange }: { options: ToolOption<TVal>[]; value: TVal; onChange: (value: TVal) => void }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+      {options.map((option) => (
+        <Chip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
+          {option.label}
+        </Chip>
+      ))}
+    </div>
+  );
+}
+
+export function NumberInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  step = "0.1",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  step?: string;
+}) {
+  return (
+    <div>
+      <label style={inputLabel}>{label}</label>
+      <input
+        type="number"
+        inputMode="decimal"
+        min="0"
+        step={step}
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        style={inputStyle}
+      />
+    </div>
+  );
+}
+
+export type ResultBadgeTone = "brand" | "success" | "warning" | "danger" | "info";
+
+export function ResultBadge({ tone, children }: { tone: ResultBadgeTone; children: ReactNode }) {
+  const tones = {
+    brand: { bg: T.brandBg, text: T.brand },
+    success: { bg: T.successBg, text: T.success },
+    warning: { bg: T.warningBg, text: T.warning },
+    danger: { bg: T.dangerBg, text: T.danger },
+    info: { bg: T.infoBg, text: T.info },
+  }[tone];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", background: tones.bg, color: tones.text, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 600 }}>
+      {children}
+    </span>
+  );
+}
+
+export function DifferentialSignalBadge({ signal }: { signal: string }) {
+  if (signal === "High") return <ResultBadge tone="danger">{signal}</ResultBadge>;
+  if (signal === "Moderate") return <ResultBadge tone="warning">{signal}</ResultBadge>;
+  return <ResultBadge tone="info">{signal}</ResultBadge>;
+}
+
+export function ToolResetButton({ onClick, label = "Reset", ariaLabel = "Reset tool" }: { onClick: () => void; label?: string; ariaLabel?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={ariaLabel}
+      style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 38, padding: "8px 11px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.sub, fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+    >
+      <RotateCcw size={15} strokeWidth={2} aria-hidden="true" />
+      {label}
+    </button>
+  );
+}
+
 export function ToolShell({
   title,
   description,
@@ -362,7 +473,7 @@ export function Section({ eyebrow, title, description, action, children, style }
   );
 }
 
-export function LabRow({ label, value, unit, ref: reference, reference: referenceText, alarm }: { label: string; value: string | number; unit?: string; ref?: string; reference?: string; alarm?: boolean }) {
+export function LabRow({ label, value, unit, reference, alarm }: { label: string; value: string | number; unit?: string; reference?: string; alarm?: boolean }) {
   return (
     <div style={{
       display: "grid",
@@ -379,7 +490,7 @@ export function LabRow({ label, value, unit, ref: reference, reference: referenc
         {value}
         {unit && <span style={{ color: T.muted, fontWeight: 400 }}>{unit}</span>}
       </span>
-      <span style={{ color: T.muted, fontSize: 11 }}>{reference ?? referenceText}</span>
+      <span style={{ color: T.muted, fontSize: 11 }}>{reference}</span>
     </div>
   );
 }
@@ -541,23 +652,17 @@ export const PRO_TIPS = [
   "Palliative care is appropriate at any stage of serious illness, not just at end of life. It's distinct from hospice, which requires a prognosis < 6 months.",
 ];
 
-// Map PRE_QUIZ question indices → week numbers
+// Map quiz question indices → week numbers
 // W1: 0-6 (7 Qs), W2: 7-13 (7 Qs), W3: 14-19 (6 Qs), W4: 20-24 (5 Qs)
-export const PRE_QUIZ_WEEK_MAP = [
+const QUIZ_WEEK_MAP = [
   ...Array(7).fill(1),  // indices 0-6
   ...Array(7).fill(2),  // indices 7-13
   ...Array(6).fill(3),  // indices 14-19
   ...Array(5).fill(4),  // indices 20-24
 ];
 
-// Map POST_QUIZ question indices → week numbers (same structure as pre)
-// W1: 0-6 (7 Qs), W2: 7-13 (7 Qs), W3: 14-19 (6 Qs), W4: 20-24 (5 Qs)
-export const POST_QUIZ_WEEK_MAP = [
-  ...Array(7).fill(1),  // indices 0-6
-  ...Array(7).fill(2),  // indices 7-13
-  ...Array(6).fill(3),  // indices 14-19
-  ...Array(5).fill(4),  // indices 20-24
-];
+export const PRE_QUIZ_WEEK_MAP = [...QUIZ_WEEK_MAP];
+export const POST_QUIZ_WEEK_MAP = [...QUIZ_WEEK_MAP];
 
 // Week → topic area mapping for recommendation engine
 export const WEEK_TOPIC_MAP = {

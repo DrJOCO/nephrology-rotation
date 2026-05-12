@@ -53,7 +53,6 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
     setAnswers([]);
     setSelected(null);
     setShowExplanation(false);
-    setShowScenario(false);
   };
 
   // Read Phase
@@ -113,14 +112,15 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 12px", fontFamily: T.serif, fontWeight: 700 }}>Review</h3>
         {questions.map((q, i) => {
           const ans = answers[i];
-          const isCorrect = ans?.correct;
+          const isCorrect = ans?.correct === true;
+          const selectedChoice = ans ? (q.choices[ans.selected] ?? "Unknown answer") : "Not answered";
           return (
             <div key={i} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${isCorrect ? T.success : T.danger}` }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6, lineHeight: 1.4 }}>
                 {i + 1}. {q.q}
               </div>
               <div style={{ fontSize: 13, color: isCorrect ? T.success : T.danger, fontWeight: 600, marginBottom: 6 }}>
-                {isCorrect ? "✓ Correct" : `✗ Your answer: ${q.choices[ans.selected]}`}
+                {isCorrect ? "✓ Correct" : `✗ Your answer: ${selectedChoice}`}
               </div>
               {!isCorrect && (
                 <div style={{ fontSize: 13, color: T.success, fontWeight: 600, marginBottom: 6 }}>

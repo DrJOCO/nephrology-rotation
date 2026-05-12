@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { Activity, AlertTriangle, Calculator, Clipboard, Droplet, History, Microscope, Pill, RotateCcw, ScanSearch } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Activity, AlertTriangle, Calculator, Clipboard, Droplet, History, Microscope, Pill, ScanSearch } from "lucide-react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import {
@@ -13,15 +13,24 @@ import {
   type GnToolInputs,
   type GnUaGrade,
 } from "../../utils/gnTool";
-import { Chip, EduDisclaimer, inputLabel, inputStyle, Panel, Section } from "./shared";
+import {
+  DifferentialSignalBadge,
+  EduDisclaimer,
+  inputLabel,
+  NumberInput,
+  OptionGrid,
+  OptionGroupGrid,
+  Panel,
+  ResultBadge,
+  SegmentedGroup,
+  ToolResetButton,
+  ToolShell,
+  type ToolOption,
+} from "./shared";
 
 type ArrayInputKey = "selectedPositive" | "selectedSentNegative" | "selectedHistory";
 
-interface Option<T extends string = string> {
-  id: T;
-  label: string;
-  detail?: string;
-}
+type Option<T extends string = string> = ToolOption<T>;
 
 const SYNDROME_OPTIONS: Option<GnSyndrome>[] = [
   { id: "unclear", label: "Unclear" },
@@ -156,94 +165,6 @@ const HISTORY_OPTIONS: Option[] = [
   { id: "tma_features", label: "MAHA + thrombocytopenia (TMA)" },
 ];
 
-function OptionGrid({ options, selectedIds, onToggle }: { options: Option[]; selectedIds: string[]; onToggle: (id: string) => void }) {
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-      {options.map((option) => (
-        <Chip key={option.id} selected={selectedIds.includes(option.id)} onClick={() => onToggle(option.id)}>
-          {option.label}
-        </Chip>
-      ))}
-    </div>
-  );
-}
-
-function OptionGroupGrid({ groups, selectedIds, onToggle }: { groups: Array<{ label: string; options: Option[] }>; selectedIds: string[]; onToggle: (id: string) => void }) {
-  return (
-    <div style={{ display: "grid", gap: 10 }}>
-      {groups.map((group) => (
-        <div key={group.label}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 6 }}>{group.label}</div>
-          <OptionGrid options={group.options} selectedIds={selectedIds} onToggle={onToggle} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SegmentedGroup<TVal extends string>({ options, value, onChange }: { options: Option<TVal>[]; value: TVal; onChange: (value: TVal) => void }) {
-  return (
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-      {options.map((option) => (
-        <Chip key={option.id} selected={value === option.id} onClick={() => onChange(option.id)}>
-          {option.label}
-        </Chip>
-      ))}
-    </div>
-  );
-}
-
-function NumberInput({
-  label,
-  value,
-  onChange,
-  placeholder,
-  step = "0.1",
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  step?: string;
-}) {
-  return (
-    <div>
-      <label style={inputLabel}>{label}</label>
-      <input
-        type="number"
-        inputMode="decimal"
-        min="0"
-        step={step}
-        value={value}
-        placeholder={placeholder}
-        onChange={(event) => onChange(event.target.value)}
-        style={inputStyle}
-      />
-    </div>
-  );
-}
-
-function ResultBadge({ tone, children }: { tone: "brand" | "success" | "warning" | "danger" | "info"; children: ReactNode }) {
-  const tones = {
-    brand: { bg: T.brandBg, text: T.brand },
-    success: { bg: T.successBg, text: T.success },
-    warning: { bg: T.warningBg, text: T.warning },
-    danger: { bg: T.dangerBg, text: T.danger },
-    info: { bg: T.infoBg, text: T.info },
-  }[tone];
-  return (
-    <span style={{ display: "inline-flex", alignItems: "center", background: tones.bg, color: tones.text, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 600 }}>
-      {children}
-    </span>
-  );
-}
-
-function DifferentialSignalBadge({ signal }: { signal: string }) {
-  if (signal === "High") return <ResultBadge tone="danger">{signal}</ResultBadge>;
-  if (signal === "Moderate") return <ResultBadge tone="warning">{signal}</ResultBadge>;
-  return <ResultBadge tone="info">{signal}</ResultBadge>;
-}
-
 export default function GnToolView({ onBack }: { onBack: () => void }) {
   const isMobile = useIsMobile(960);
   const [inputs, setInputs] = useState<GnToolInputs>(DEFAULT_GN_INPUTS);
@@ -294,28 +215,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
     }
   };
 
-  const breadcrumb = (
-    <button
-      type="button"
-      onClick={onBack}
-      style={{ background: "none", border: "none", padding: 0, color: T.muted, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6, cursor: "pointer" }}
-    >
-      {"←"} Tools / Glomerular Disease
-    </button>
-  );
-
-  const resetAction = (
-    <button
-      type="button"
-      onClick={() => setInputs(DEFAULT_GN_INPUTS)}
-      title="Reset"
-      aria-label="Reset GN tool"
-      style={{ display: "inline-flex", alignItems: "center", gap: 6, minHeight: 38, padding: "8px 11px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.surface2, color: T.sub, fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
-    >
-      <RotateCcw size={15} strokeWidth={2} aria-hidden="true" />
-      Reset
-    </button>
-  );
+  const resetAction = <ToolResetButton onClick={() => setInputs(DEFAULT_GN_INPUTS)} ariaLabel="Reset GN tool" />;
 
   const complementTone =
     assessment.complementPattern.pattern === "low_c3_low_c4"
@@ -345,14 +245,14 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
           : "Proteinuria not quantified";
 
   return (
-    <div style={{ padding: 16 }}>
-      <Section
-        eyebrow={breadcrumb}
-        title="Glomerular Disease Tool"
-        description="Map syndrome × complement → ranked GN differential, with what the positive serologies mean and which ones still need to be sent. Aligned with KDIGO 2021 GN guidance and UpToDate evaluation algorithms."
-        action={resetAction}
-      />
-
+    <ToolShell
+      onBack={onBack}
+      eyebrow="Tools"
+      title="Glomerular Disease Tool"
+      description="Map syndrome × complement → ranked GN differential, with what the positive serologies mean and which ones still need to be sent. Aligned with KDIGO 2021 GN guidance and UpToDate evaluation algorithms."
+      action={resetAction}
+      footer={<EduDisclaimer />}
+    >
       {isMobile && (
         <Panel title="Live differential" tone="info">
           <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>{assessment.summary}</div>
@@ -581,8 +481,6 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
           </Panel>
         </aside>
       </div>
-
-      <EduDisclaimer />
-    </div>
+    </ToolShell>
   );
 }
