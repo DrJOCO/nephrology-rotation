@@ -3,7 +3,7 @@ import { T } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
 import type { CompletedItems, Bookmarks } from "../../types";
-import { EduDisclaimer, HeadlineMetric, Section } from "./shared";
+import { BackButton, EduDisclaimer, HeadlineMetric, Section } from "./shared";
 
 const caseImgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 12, border: `1px solid ${T.line}` };
 const caseCaptionStyle: CSSProperties = { fontSize: 13, color: T.sub, textAlign: "center", fontStyle: "italic", margin: "4px 0 0", lineHeight: 1.4 };
@@ -60,9 +60,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
   if (phase === "read") {
     return (
       <div style={{ padding: 16 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
-          {"\u2190"} Back to Cases
-        </button>
+        <BackButton onClick={onBack} label="Back to Cases" placement="inline" style={{ marginTop: 0, marginBottom: 12 }} />
 
         <div style={{ background: T.card, borderRadius: 8, padding: 20, border: `1px solid ${T.line}`, marginBottom: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -156,10 +154,11 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
     <div style={{ padding: 16 }}>
       {/* Progress */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <button onClick={() => { if (currentQ === 0 && answers.length === 0) { setPhase("read"); } }}
-          style={{ background: "none", border: "none", color: currentQ === 0 && answers.length === 0 ? T.brand : "transparent", fontSize: 14, cursor: currentQ === 0 ? "pointer" : "default", padding: 0, fontWeight: 600, pointerEvents: currentQ === 0 && answers.length === 0 ? "auto" : "none" }}>
-          {"\u2190"} Back
-        </button>
+        {currentQ === 0 && answers.length === 0 ? (
+          <BackButton onClick={() => setPhase("read")} placement="inline" style={{ marginTop: 0, minHeight: 36, padding: "7px 10px" }} />
+        ) : (
+          <div style={{ width: 76 }} />
+        )}
         <div style={{ fontSize: 13, fontWeight: 600, color: T.sub }}>
           Question {currentQ + 1} of {questions.length}
         </div>
@@ -259,9 +258,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
 
   return (
     <div style={{ padding: 16 }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginBottom: 12, padding: 0, fontWeight: 600 }}>
-        {"\u2190"} Back
-      </button>
+      <BackButton onClick={onBack} placement="inline" style={{ marginTop: 0, marginBottom: 12 }} />
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Core for this module
       </div>
@@ -306,9 +303,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
           </div>
         );
       })}
-      {cases.length > 2 && <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, marginTop: 16, padding: 0, fontWeight: 600 }}>
-        {"\u2190"} Back
-      </button>}
+      {cases.length > 2 && <BackButton onClick={onBack} placement="inline" style={{ marginTop: 16 }} />}
       <EduDisclaimer />
     </div>
   );

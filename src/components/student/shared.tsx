@@ -6,9 +6,9 @@ import { T } from "../../data/constants";
 //  Shared styles used across multiple student components
 // ═══════════════════════════════════════════════════════════════════════
 
-export const backBtnStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1px solid ${T.line}`, color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "9px 12px", fontWeight: 700, minHeight: 40, borderRadius: 8, boxShadow: "none", zIndex: 99 };
+const floatingBackButtonStyle: CSSProperties = { position: "fixed", bottom: 72, right: 16, background: T.card, border: `1px solid ${T.line}`, color: T.brand, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: "9px 12px", fontWeight: 700, minHeight: 40, borderRadius: 8, boxShadow: "none", zIndex: 99 };
 
-export const inlineBackBtnStyle: CSSProperties = {
+const inlineBackButtonStyle: CSSProperties = {
   position: "static",
   background: T.card,
   border: `1.5px solid ${T.line}`,
@@ -36,7 +36,7 @@ export function BackButton({
   placement?: "floating" | "inline";
   style?: CSSProperties;
 }) {
-  const base = placement === "floating" ? backBtnStyle : inlineBackBtnStyle;
+  const base = placement === "floating" ? floatingBackButtonStyle : inlineBackButtonStyle;
   return <button onClick={onClick} style={{ ...base, ...style }}>{"\u2190"} {label}</button>;
 }
 
