@@ -1,8 +1,15 @@
 import React from "react";
 import { T } from "../../../data/constants";
 
+type MiniBarChartItem = {
+  label: string;
+  value: number;
+  valueLabel?: string;
+  color?: string;
+};
+
 // ─── Mini Bar Chart (SVG) ────────────────────────────────────────────
-export function MiniBarChart({ data, width = 280, height = 130 }: { data: { label: string; value: number; color?: string }[]; width?: number; height?: number }) {
+export function MiniBarChart({ data, width = 280, height = 130 }: { data: MiniBarChartItem[]; width?: number; height?: number }) {
   if (!data || !data.length) return null;
   const pad = { top: 16, right: 10, bottom: 22, left: 10 };
   const w = width - pad.left - pad.right;
@@ -17,7 +24,7 @@ export function MiniBarChart({ data, width = 280, height = 130 }: { data: { labe
         const barH = Math.max((d.value / maxVal) * h, 2);
         return <g key={i}>
           <rect x={x} y={pad.top + h - barH} width={barW} height={barH} rx={4} fill={d.color || T.brand} />
-          <text x={x + barW / 2} y={pad.top + h - barH - 4} fontSize={10} fill={T.text} textAnchor="middle" fontWeight={600}>{d.value}%</text>
+          <text x={x + barW / 2} y={pad.top + h - barH - 4} fontSize={10} fill={T.text} textAnchor="middle" fontWeight={600}>{d.valueLabel ?? `${d.value}%`}</text>
           <text x={x + barW / 2} y={height - 4} fontSize={9} fill={T.muted} textAnchor="middle">{d.label}</text>
         </g>;
       })}

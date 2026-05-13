@@ -168,7 +168,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
   // Engagement: count quizzes taken per student
   const engagementData = active.slice(0, 8).map(s => {
     const totalQ = Object.values(s.weeklyScores || {}).flat().length + (s.preScore ? 1 : 0) + (s.postScore ? 1 : 0);
-    return { label: s.name?.split(" ")[0] || "?", value: totalQ, color: totalQ >= 6 ? T.success : totalQ >= 3 ? T.warning : T.danger };
+    return { label: s.name?.split(" ")[0] || "?", value: totalQ, valueLabel: `${totalQ}`, color: totalQ >= 6 ? T.success : totalQ >= 3 ? T.warning : T.danger };
   });
 
   // SR aggregate
@@ -421,7 +421,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
           {engagementData.length > 0 && (
             <div style={cardStyle}>
               <div style={titleStyle}>Student Engagement</div>
-              <div style={subStyle}>Total quizzes completed per student</div>
+              <div style={subStyle}>Total quiz and assessment attempts per student</div>
               <MiniBarChart data={engagementData} width={320} height={140} />
             </div>
           )}
