@@ -4,8 +4,9 @@ import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADD
 import { inputLabel, inputStyle, EduDisclaimer } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
 import { getFollowUpState } from "../../utils/patient";
+import { getPatientSuggestedTopicGroups, type PatientSuggestedTopicGroup } from "../../utils/patientRecommendations";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
-import type { Patient, SubView } from "../../types";
+import type { CompletedItems, Patient, SubView } from "../../types";
 
 const errorStyle: CSSProperties = { fontSize: 13, color: T.danger, marginTop: 3, fontWeight: 500 };
 const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 13, color: current > max * 0.9 ? T.danger : T.muted, textAlign: "right", marginTop: 2 });
@@ -49,6 +50,23 @@ function summarizeTopics(topics: string[]): string {
   if (cleanTopics.length === 0) return "No topics";
   if (cleanTopics.length <= 2) return cleanTopics.join(", ");
   return `${cleanTopics.slice(0, 2).join(", ")} +${cleanTopics.length - 2}`;
+}
+
+function summarizeSuggestedGroup(group: PatientSuggestedTopicGroup): string {
+  const parts: string[] = [];
+  if (group.guides.length > 0) parts.push(`${group.guides.length} guide${group.guides.length !== 1 ? "s" : ""}`);
+  if (group.sheets.length > 0) parts.push(`${group.sheets.length} sheet${group.sheets.length !== 1 ? "s" : ""}`);
+  if (group.trials.length > 0) parts.push(`${group.trials.length} trial${group.trials.length !== 1 ? "s" : ""}`);
+  if (group.tools.length > 0) parts.push(`${group.tools.length} tool${group.tools.length !== 1 ? "s" : ""}`);
+  return parts.join(" · ") || group.reason;
+}
+
+function getSuggestedGroupTarget(group: PatientSuggestedTopicGroup): [string, SubView] | null {
+  if (group.guides[0]) return [group.guides[0].nav[0], group.guides[0].nav[1] as SubView];
+  if (group.sheets[0]) return ["today", { type: "studySheets", week: group.sheets[0].week, sheetId: group.sheets[0].id }];
+  if (group.tools[0]) return [group.tools[0].nav[0], group.tools[0].nav[1] as SubView];
+  if (group.trials[0]) return ["today", { type: "trials", week: group.trials[0].week }];
+  return null;
 }
 
 function buildPatientUpdateDetail(previous: Patient | undefined, next: PatientForm): string {
@@ -341,7 +359,7 @@ const GN_WORKFLOW_SUGGESTION_TOPICS = new Set([
   "Kidney Biopsy",
 ]);
 
-export default function PatientTab({ patients, setPatients, navigate, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void }) {
+export default function PatientTab({ patients, setPatients, navigate, completedItems, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; completedItems?: CompletedItems; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
@@ -508,9 +526,16 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
 
   const active = patients.filter(p => p.status === "active");
   const discharged = patients.filter(p => p.status === "discharged");
+  const suggestedGroups = navigate ? getPatientSuggestedTopicGroups(active, completedItems).slice(0, 3) : [];
   const visibleAddTopics = getVisibleTopicOptions(form.topics, showAllTopics);
   const hiddenAddTopicCount = getHiddenTopicCount(form.topics, showAllTopics);
   const showCompactPhiWarning = patients.length > 0 && !showAdd;
+
+  const openSuggestedGroup = (group: PatientSuggestedTopicGroup) => {
+    const target = getSuggestedGroupTarget(group);
+    if (!target || !navigate) return;
+    navigate(target[0], target[1]);
+  };
 
   return (
     <div style={{ padding: 16 }}>
@@ -542,6 +567,38 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
           {showCompactPhiWarning ? "Initials and learning points only." : PHI_WARNING}
         </div>
       </div>
+
+      {active.length > 0 && navigate && (
+        <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: suggestedGroups.length > 0 ? 10 : 0 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: T.navy, marginBottom: 3 }}>Consult-linked learning</div>
+              <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>
+                {suggestedGroups.length > 0
+                  ? "Matched study sheets, trials, tools, and guides from active consult tags."
+                  : "Current tags are complete or have no matched items left."}
+              </div>
+            </div>
+            <div style={{ background: T.infoBg, color: T.info, border: `1px solid ${T.line}`, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}>
+              {active.length} active
+            </div>
+          </div>
+          {suggestedGroups.length > 0 && (
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+              {suggestedGroups.map(group => (
+                <button
+                  key={group.topic}
+                  onClick={() => openSuggestedGroup(group)}
+                  style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "10px 11px", cursor: "pointer", textAlign: "left", minHeight: 68 }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 800, color: T.navy, lineHeight: 1.25 }}>{group.topic}</div>
+                  <div style={{ fontSize: 12, color: T.sub, marginTop: 4, lineHeight: 1.35 }}>{summarizeSuggestedGroup(group)}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {showAdd && (
         <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `2px solid ${T.brand}` }}>
@@ -658,8 +715,8 @@ export default function PatientTab({ patients, setPatients, navigate, onLogActiv
       {active.length === 0 && !showAdd && (
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏥</div>
-          <div style={{ fontSize: 14 }}>No active inpatients</div>
-          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Tap "+ Add Patient" to track hospital consults</div>
+          <div style={{ fontSize: 14 }}>No active consults</div>
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Add a consult to connect patient topics with study sheets, trials, and tools.</div>
         </div>
       )}
 

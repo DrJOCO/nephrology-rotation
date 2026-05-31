@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { BookOpen, Stethoscope, Activity, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home, Trophy } from "lucide-react";
 import { T, WEEKLY, ARTICLES, CURRICULUM_DECKS } from "../data/constants";
+import { WEEKLY_CASES } from "../data/cases";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import { PRE_QUIZ, POST_QUIZ, TOPIC_REINFORCEMENT_BANK, WEEKLY_QUIZZES, getQuestionByKey, resolveReinforcementTopic, topicToSlug } from "../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems, seedTopicReinforcementSr } from "../utils/spacedRepetition";
@@ -1724,7 +1725,18 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         })()}
         {/* Library hub (Phase 3a shell): lands on a simple stacked view of Guide + Refs sections.
             Phase 3b+ will restructure to the spec §03 Library (filterable by week). */}
-        {tab === "library" && !subView && <LibraryHub navigate={navigate} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
+        {tab === "library" && !subView && (
+          <LibraryHub
+            navigate={navigate}
+            clinicGuides={clinicGuides}
+            clinicGuideTemplates={clinicGuideTemplates}
+            currentWeek={currentWeek}
+            totalWeeks={totalWeeks}
+            studySheets={studySheets}
+            completedItems={completedItems}
+            weeklyScores={weeklyScores}
+          />
+        )}
         {tab === "library" && subView?.type === "refDetail" && (
           <RefDetailView refId={subView.id} onBack={() => navigate("library")} />
         )}
@@ -1765,7 +1777,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <FaqView onBack={() => navigate("library")} />
         )}
         {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
-        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} />}
+        {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} completedItems={completedItems} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}
         </Suspense>
@@ -1802,12 +1814,19 @@ export default StudentApp;
 // heading. Phase 3b+ restructures to the spec's week-filterable Library layout.
 // ─────────────────────────────────────────────────────────────────────────
 function LibraryHub({
-  navigate, clinicGuides, clinicGuideTemplates,
+  navigate, clinicGuides, clinicGuideTemplates, currentWeek, totalWeeks, studySheets, completedItems, weeklyScores,
 }: {
   navigate: (tab: string, sv?: SubView) => void;
   clinicGuides: ClinicGuideRecord[];
   clinicGuideTemplates: ClinicGuideTemplates;
+  currentWeek: number | null;
+  totalWeeks: number;
+  studySheets: StudySheetsData;
+  completedItems: CompletedItems;
+  weeklyScores: WeeklyScores;
 }) {
+  const weeks = Array.from({ length: totalWeeks }, (_, index) => index + 1).filter(week => WEEKLY[week]);
+
   return (
     <div>
       <div style={{ padding: "20px 16px 8px", borderBottom: `1px solid ${T.line}` }}>
@@ -1817,6 +1836,84 @@ function LibraryHub({
           Clinical guides, rotation playbooks, landmark trials, and quick-reference material.
         </p>
       </div>
+      <section style={{ padding: "16px 16px 4px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+          <div>
+            <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>All modules</h2>
+            <p style={{ margin: "5px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.5 }}>
+              Study sheets, decks, cases, quizzes, and references by week.
+            </p>
+          </div>
+          {currentWeek && (
+            <div style={{ background: T.infoBg, color: T.info, border: `1px solid ${T.info}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
+              Current: Module {currentWeek}
+            </div>
+          )}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
+          {weeks.map((week) => {
+            const wk = WEEKLY[week];
+            const sheets = studySheets[week] || [];
+            const decks = CURRICULUM_DECKS.filter(deck => deck.week === week);
+            const cases = WEEKLY_CASES[week] || [];
+            const quizTaken = (weeklyScores[week] || []).length > 0;
+            const sheetDone = sheets.filter(sheet => completedItems.studySheets?.[sheet.id]).length;
+            const deckDone = decks.filter(deck => completedItems.decks?.[deck.id]).length;
+            const caseDone = cases.filter(item => completedItems.cases?.[item.id]).length;
+            const quizDone = quizTaken ? 1 : 0;
+            const quizTotal = WEEKLY_QUIZZES[week]?.length ? 1 : 0;
+            const done = sheetDone + deckDone + caseDone + quizDone;
+            const total = sheets.length + decks.length + cases.length + quizTotal;
+            const referencesTotal = (ARTICLES[week] || []).length;
+            const moduleActions: Array<{ label: string; meta: string; onClick: () => void; disabled?: boolean }> = [
+              { label: "Study sheets", meta: `${sheetDone}/${sheets.length} complete`, onClick: () => navigate("today", { type: "studySheets", week }), disabled: sheets.length === 0 },
+              { label: "Decks", meta: `${deckDone}/${decks.length} reviewed`, onClick: () => navigate("today", { type: "resources", tab: "decks", week }), disabled: decks.length === 0 },
+              { label: "Cases", meta: `${caseDone}/${cases.length} done`, onClick: () => navigate("today", { type: "cases", week }), disabled: cases.length === 0 },
+              { label: "Quiz", meta: quizTotal ? (quizTaken ? "Attempt saved" : `${WEEKLY_QUIZZES[week].length} questions`) : "None", onClick: () => navigate("today", { type: "weeklyQuiz", week }), disabled: quizTotal === 0 },
+              { label: "References", meta: `${referencesTotal} article${referencesTotal !== 1 ? "s" : ""} and trials`, onClick: () => navigate("today", { type: "articles", week }), disabled: referencesTotal === 0 },
+            ];
+
+            return (
+              <div key={week} style={{ background: T.card, border: `1px solid ${currentWeek === week ? T.brand : T.line}`, borderRadius: 12, padding: 14 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: currentWeek === week ? T.brand : T.muted, textTransform: "uppercase", letterSpacing: 0.6 }}>
+                      Module {week}
+                    </div>
+                    <div style={{ marginTop: 3, color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>{wk.title}</div>
+                    <div style={{ marginTop: 4, color: T.sub, fontSize: 13, lineHeight: 1.45 }}>{wk.sub}</div>
+                  </div>
+                  <div style={{ background: done === total && total > 0 ? T.successBg : T.ice, color: done === total && total > 0 ? T.success : T.brand, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}>
+                    {done}/{total}
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 6 }}>
+                  {moduleActions.map(action => (
+                    <button
+                      key={action.label}
+                      onClick={action.onClick}
+                      disabled={action.disabled}
+                      style={{
+                        background: action.disabled ? T.grayBg : T.bg,
+                        color: action.disabled ? T.muted : T.navy,
+                        border: `1px solid ${T.line}`,
+                        borderRadius: 8,
+                        padding: "9px 10px",
+                        cursor: action.disabled ? "not-allowed" : "pointer",
+                        textAlign: "left",
+                        minHeight: 58,
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>{action.label}</div>
+                      <div style={{ fontSize: 12, color: T.sub, marginTop: 3, lineHeight: 1.3 }}>{action.meta}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
       <GuideTab
         navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void}
         subView={null}
