@@ -101,6 +101,18 @@ export function useStudentSync(
     void store.flushPendingSyncQueue();
   }, [online, studentId, nameSet]);
 
+  // Retry loop for writes that failed while ONLINE (e.g. a flaky hospital
+  // network blip): they land in the pending queue, but the flush above only
+  // re-fires on reconnect/identity changes. Poll while anything is queued so
+  // the banner's "will retry" is actually true without a reload.
+  useEffect(() => {
+    if (!online || pendingSyncCount === 0) return;
+    const timer = setInterval(() => {
+      void store.flushPendingSyncQueue();
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, [online, pendingSyncCount]);
+
   // Load from storage on mount
   useEffect(() => {
     ensureGoogleFonts();

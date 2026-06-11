@@ -700,7 +700,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
               ? pendingSyncCount > 0
                 ? `Offline · ${pendingSyncCount} queued update${pendingSyncCount !== 1 ? "s" : ""}. Changes sync when reconnected.`
                 : "Offline · Changes sync when reconnected."
-              : `Reconnected · Syncing ${pendingSyncCount} queued update${pendingSyncCount !== 1 ? "s" : ""}.`}
+              : `${pendingSyncCount} update${pendingSyncCount !== 1 ? "s" : ""} waiting to sync — retrying automatically. Your work is saved on this device.`}
           </span>
         </div>
       )}
