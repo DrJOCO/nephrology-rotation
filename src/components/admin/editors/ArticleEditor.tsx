@@ -1,10 +1,11 @@
 import React, { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { T } from "../../../data/constants";
-import { adminInput, adminLabel } from "../shared";
+import { adminInput, adminLabel, type AdminConfirmOptions } from "../shared";
 import type { ArticlesData } from "../types";
 import { backBtn, tinyBtn } from "../lib/styles";
 
-export function ArticleEditor({ week, articles, setArticles, onBack }: { week: number; articles: ArticlesData; setArticles: React.Dispatch<React.SetStateAction<ArticlesData>>; onBack: () => void }) {
+export function ArticleEditor({ week, articles, setArticles, onBack, requestConfirm }: { week: number; articles: ArticlesData; setArticles: React.Dispatch<React.SetStateAction<ArticlesData>>; onBack: () => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean> }) {
   const weekArticles = articles[week] || [];
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ title: "", journal: "", year: "", url: "", topic: "", type: "Review" });
@@ -26,7 +27,15 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
     setEditIdx(null);
   };
 
-  const remove = (idx: number) => {
+  const remove = async (idx: number) => {
+    const target = weekArticles[idx];
+    const confirmed = await requestConfirm({
+      title: "Remove article?",
+      message: `"${target?.title || "This article"}" will be removed from Module ${week}. This takes effect when you publish.`,
+      confirmLabel: "Remove",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setArticles(prev => {
       const copy = { ...prev };
       copy[week] = (copy[week] || []).filter((_: unknown, i: number) => i !== idx);
@@ -45,7 +54,7 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtn}>← Back</button>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Module {week} Articles</h2>
+        <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: 0, fontWeight: 700 }}>Module {week} Articles</h2>
         <button onClick={() => { setShowAdd(!showAdd); setEditIdx(null); setForm({ title: "", journal: "", year: "", url: "", topic: "", type: "Review" }); }}
           style={{ padding: "8px 14px", background: showAdd ? T.sub : T.warning, color: showAdd ? "white" : T.warningInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ Add Article"}
@@ -87,7 +96,7 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
               </select>
             </div>
           </div>
-          <button onClick={save} style={{ width: "100%", padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={save} style={{ width: "100%", padding: "12px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             {editIdx !== null ? "Update Article" : "Add Article"}
           </button>
         </div>
@@ -101,16 +110,16 @@ export function ArticleEditor({ week, articles, setArticles, onBack }: { week: n
         <div key={i} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, lineHeight: 1.3, wordBreak: "break-word" }}>{a.title}</div>
+              <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, lineHeight: 1.3, wordBreak: "break-word" }}>{a.title}</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{a.journal} ({a.year})</div>
               <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: T.brand, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.brand, background: T.surface2, padding: "2px 8px", borderRadius: 6 }}>{a.type}</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: T.muted, background: T.bg, padding: "2px 8px", borderRadius: 6 }}>{a.topic}</span>
               </div>
             </div>
             <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-              <button onClick={() => startEdit(i)} style={tinyBtn}>✏️</button>
-              <button onClick={() => remove(i)} style={tinyBtn}>🗑</button>
+              <button onClick={() => startEdit(i)} aria-label={`Edit ${a.title}`} title="Edit" style={{ ...tinyBtn, color: T.sub, display: "flex", alignItems: "center" }}><Pencil size={14} aria-hidden="true" /></button>
+              <button onClick={() => void remove(i)} aria-label={`Remove ${a.title}`} title="Remove" style={{ ...tinyBtn, color: T.danger, display: "flex", alignItems: "center" }}><Trash2 size={14} aria-hidden="true" /></button>
             </div>
           </div>
         </div>

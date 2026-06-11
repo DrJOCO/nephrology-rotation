@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { T } from "../../data/constants";
 import { useIsMobile } from "../../utils/helpers";
 import store from "../../utils/store";
-import { HeadlineMetric, Section } from "./shared";
+import { ConfirmSheet, HeadlineMetric, Section } from "./shared";
 import type { QuizQuestion, QuizScore, QuizAnswer } from "../../types";
 
 interface SavedQuizProgress {
@@ -48,6 +48,23 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
   // Quiz persistence
   const quizKey = "quiz_" + title.replace(/[^a-zA-Z0-9]/g, "_");
   const [restored, setRestored] = useState(false);
+  const [restartConfirmOpen, setRestartConfirmOpen] = useState(false);
+
+  const doRestart = () => {
+    store.set(quizKey, null);
+    setCurrent(0);
+    setSelected(null);
+    setAnswers([]);
+    setCorrectCount(0);
+    setFinished(false);
+    setShowResult(false);
+    setShowExplanation(false);
+    const newShuffle = shuffleIndices(questions.length);
+    const count = questionCount && questionCount < questions.length ? questionCount : questions.length;
+    setShuffledOrder(newShuffle.slice(0, count));
+    setChoiceOrders(generateChoiceOrders(questions));
+    setRestartConfirmOpen(false);
+  };
 
   // Fingerprint the question set so we detect when the *content* changes
   // (handles dynamic quizzes like Review Missed / SR Review whose length can stay the same)
@@ -81,7 +98,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
       }
       setRestored(true);
     })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [quizKey, questionsFingerprint]);
 
   // Save progress on change (only after restored)
@@ -188,11 +205,11 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
           </div>
         </div>
         <span style={{ fontSize: 13, color: T.sub, fontWeight: 600, fontFamily: T.mono, minWidth: 36, textAlign: "right" }}>{current + 1}/{quizLen}</span>
-        <button onClick={handleExitQuiz} aria-label="Exit quiz, progress saved" title="Exit (your progress is saved)" style={{ padding: "4px 10px", background: T.card, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={handleExitQuiz} aria-label="Exit quiz, progress saved" title="Exit (your progress is saved)" style={{ padding: "6px 12px", minHeight: 36, background: T.card, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           Exit
         </button>
-        <button onClick={() => { if (answers.length > 0 && !window.confirm("Restart quiz? You'll lose your current answers.")) return; store.set(quizKey, null); setCurrent(0); setSelected(null); setAnswers([]); setCorrectCount(0); setFinished(false); setShowResult(false); setShowExplanation(false); const newShuffle = shuffleIndices(questions.length); const count = questionCount && questionCount < questions.length ? questionCount : questions.length; setShuffledOrder(newShuffle.slice(0, count)); setChoiceOrders(generateChoiceOrders(questions)); }}
-          style={{ padding: "4px 10px", background: T.card, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={() => { if (answers.length > 0) { setRestartConfirmOpen(true); return; } doRestart(); }}
+          style={{ padding: "6px 12px", minHeight: 36, background: T.card, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           Restart
         </button>
       </div>
@@ -240,7 +257,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
         const selectedOrigIdx = choiceMap[selected!];
         const wasCorrect = selectedOrigIdx === q.answer;
         return (
-          <div ref={explanationRef} style={{ background: T.brandBg, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.brand}` }}>
+          <div ref={explanationRef} role="status" aria-live="polite" style={{ background: T.brandBg, borderRadius: 10, padding: mob ? 10 : 16, marginTop: mob ? 8 : 16, borderLeft: `3px solid ${T.brand}` }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.success : T.danger, marginBottom: 4 }}>
               {wasCorrect ? "\u2713 Correct!" : "\u2717 Not quite"}
             </div>
@@ -254,6 +271,18 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
           </div>
         );
       })()}
+
+      {restartConfirmOpen && (
+        <ConfirmSheet
+          title="Restart quiz?"
+          message="You'll lose your current answers and start over with a fresh shuffle."
+          confirmLabel="Restart"
+          cancelLabel="Keep going"
+          tone="danger"
+          onConfirm={doRestart}
+          onCancel={() => setRestartConfirmOpen(false)}
+        />
+      )}
     </div>
   );
 }

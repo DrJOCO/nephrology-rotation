@@ -17,7 +17,7 @@ export default function RefsTab({ navigate }) {
             onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
             onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
             <div style={{ fontSize: 28, marginBottom: 8 }}>{ref.icon}</div>
-            <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>{ref.title}</div>
+            <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, fontFamily: T.serif }}>{ref.title}</div>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{ref.desc}</div>
             {ref.type === "calculator" && (
               <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, marginTop: 8 }}>Calculator →</div>
@@ -35,7 +35,7 @@ export default function RefsTab({ navigate }) {
           onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
           onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
           <Type size={28} strokeWidth={1.5} color={T.brand} aria-hidden="true" style={{ marginBottom: 8 }} />
-          <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, fontFamily: T.serif }}>Nephrology Abbreviations</div>
+          <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, fontFamily: T.serif }}>Nephrology Abbreviations</div>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{ABBREVIATIONS.length} terms you will see in notes and on rounds</div>
           <div style={{ fontSize: 13, color: T.brand, fontWeight: 600, marginTop: 8 }}>Reference →</div>
         </button>

@@ -45,10 +45,10 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <BackButton onClick={() => (initialTopic ? onBack() : setSelectedTopic(null))} label={initialTopic ? "Back" : "All Topics"} />
           {initialTopic && (
-            <BackButton onClick={() => setSelectedTopic(null)} label="Browse All Topics" placement="inline" style={{ color: T.navy, borderColor: T.line, marginTop: 0 }} />
+            <BackButton onClick={() => setSelectedTopic(null)} label="Browse All Topics" placement="inline" style={{ color: T.ink, borderColor: T.line, marginTop: 0 }} />
           )}
         </div>
-        <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>{selectedTopic}</h2>
+        <h2 style={{ color: T.ink, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>{selectedTopic}</h2>
         <p style={{ color: T.sub, fontSize: 13, margin: "0 0 6px" }}>All available resources for this topic</p>
         <p style={{ color: T.muted, fontSize: 13, margin: "0 0 16px", lineHeight: 1.6 }}>
           Start with study sheets, teaching decks, cases, and quizzes. Optional references and external resources are here when you want extra depth.
@@ -255,7 +255,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
         style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: 14, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "flex-start", gap: 12 }}>
         <Icon size={20} strokeWidth={1.5} color={T.sub} aria-hidden="true" />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 700, color: T.navy, lineHeight: 1.3 }}>{topic}</div>
+          <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 700, color: T.ink, lineHeight: 1.3 }}>{topic}</div>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 4 }}>
             {coreItems} core{optionalItems > 0 ? ` • ${optionalItems} optional` : ""}
           </div>
@@ -276,12 +276,12 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
   return (
     <div style={{ padding: 16 }}>
       <BackButton onClick={onBack} />
-      <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>Browse by Topic</h2>
+      <h2 style={{ color: T.ink, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 4px" }}>Browse by Topic</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Explore resources by nephrology topic, independent of module schedule</p>
 
       {groupsWithContent.map(group => (
         <div key={group.label} style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 6, fontFamily: T.serif }}>{group.label}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 6, fontFamily: T.serif }}>{group.label}</div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
             {group.topics.map(renderTopicCard)}
           </div>
@@ -290,7 +290,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
 
       {ungrouped.length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 6, fontFamily: T.serif }}>More</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 6, fontFamily: T.serif }}>More</div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
             {ungrouped.map(renderTopicCard)}
           </div>

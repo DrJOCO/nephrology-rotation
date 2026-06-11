@@ -37,7 +37,7 @@ export function AdminPinGate({
           />
         </div>
         {pinError && <p style={{ color: T.danger, fontSize: 13, margin: "8px 0 0", fontWeight: 600 }}>Incorrect PIN</p>}
-        <button onClick={onSubmit} style={{ width: "100%", padding: "14px 0", background: T.brand, color: "white", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={onSubmit} style={{ width: "100%", padding: "14px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
           Enter
         </button>
         <p style={{ color: T.muted, fontSize: 13, marginTop: 12, lineHeight: 1.5 }}>Signed in as {signedInEmail || "admin user"}. Set or change your PIN in Settings.</p>
@@ -98,7 +98,7 @@ export function AdminPinSetupGate({
           />
         </div>
         {setupError && <p style={{ color: T.danger, fontSize: 13, margin: "0 0 12px", fontWeight: 600 }}>{setupError}</p>}
-        <button onClick={onSubmit} style={{ width: "100%", padding: "14px 0", background: T.brand, color: "white", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={onSubmit} style={{ width: "100%", padding: "14px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>
           Save PIN
         </button>
         <p style={{ color: T.muted, fontSize: 13, marginTop: 12, lineHeight: 1.5 }}>Signed in as {signedInEmail || "admin user"}.</p>

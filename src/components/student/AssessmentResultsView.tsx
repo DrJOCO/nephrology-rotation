@@ -124,7 +124,7 @@ export default function AssessmentResultsView({
       >
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 16, flexWrap: "wrap" }}>
           <div>
-            <h2 style={{ color: T.navy, fontFamily: T.serif, margin: "0 0 8px", fontSize: 26, fontWeight: 700 }}>
+            <h2 style={{ color: T.ink, fontFamily: T.serif, margin: "0 0 8px", fontSize: 26, fontWeight: 700 }}>
               {summary.title}
             </h2>
             <div style={{ color: T.sub, fontSize: 14, lineHeight: 1.6, maxWidth: 560 }}>
@@ -177,7 +177,7 @@ export default function AssessmentResultsView({
               onClick={() => navigate(action.tab, action.subView)}
               style={{
                 background: action.label === recommendedAction.label ? T.brand : T.card,
-                color: action.label === recommendedAction.label ? "white" : T.navy,
+                color: action.label === recommendedAction.label ? "white" : T.ink,
                 border: action.label === recommendedAction.label ? "none" : `1px solid ${T.line}`,
                 borderRadius: 14,
                 padding: "14px 14px",
@@ -191,7 +191,7 @@ export default function AssessmentResultsView({
             >
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{action.label}</div>
-                <div style={{ fontSize: 13, color: action.label === recommendedAction.label ? "rgba(255,255,255,0.82)" : T.sub, marginTop: 4 }}>
+                <div style={{ fontSize: 13, color: action.label === recommendedAction.label ? T.brandInk : T.sub, opacity: action.label === recommendedAction.label ? 0.85 : 1, marginTop: 4 }}>
                   {action.meta}
                 </div>
               </div>
@@ -226,7 +226,7 @@ export default function AssessmentResultsView({
               <div key={area.week} style={{ background: areaTone.tint, borderRadius: 14, padding: "12px 14px", border: `1px solid ${T.line}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", marginBottom: 8, flexWrap: "wrap" }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>
                       Module {area.week}: {area.label}
                     </div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>
@@ -244,14 +244,14 @@ export default function AssessmentResultsView({
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   <button
                     onClick={() => navigate(area.action.tab, area.action.subView)}
-                    style={{ background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                    style={{ background: T.card, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <Target size={14} strokeWidth={2} aria-hidden="true" />
                     {area.action.label}
                   </button>
                   <button
                     onClick={() => navigate(area.practiceAction.tab, area.practiceAction.subView)}
-                    style={{ background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                    style={{ background: T.card, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <RefreshCw size={14} strokeWidth={2} aria-hidden="true" />
                     {area.practiceAction.label}
@@ -281,7 +281,7 @@ export default function AssessmentResultsView({
             }}
           >
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>Review missed questions</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>Review missed questions</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>
                 {missed.length} missed item{missed.length !== 1 ? "s" : ""} with explanations
               </div>
@@ -320,7 +320,7 @@ export default function AssessmentResultsView({
       <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10, paddingBottom: 72 }}>
         <button
           onClick={() => navigate("today")}
-          style={{ background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+          style={{ background: T.card, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
         >
           Done
         </button>
@@ -332,7 +332,7 @@ export default function AssessmentResultsView({
         </button>
         <button
           onClick={() => navigate(recommendedAction.tab, recommendedAction.subView)}
-          style={{ background: T.ice, color: T.navy, border: `1px solid ${T.pale}`, borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+          style={{ background: T.surface2, color: T.ink, border: `1px solid ${T.surface2}`, borderRadius: 14, padding: "14px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
           <BadgeCheck size={16} strokeWidth={2} aria-hidden="true" />
           Start targeted teaching

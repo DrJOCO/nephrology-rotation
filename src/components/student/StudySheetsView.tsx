@@ -45,7 +45,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Core for this module
       </div>
-      <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
+      <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
         Module {week}: Study Sheets
       </h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>
@@ -66,7 +66,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 11, background: isDone ? T.successBg : T.infoBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>{isDone ? "\u2705" : sheet.icon}</div>
                 <div style={{ flex: 1, minWidth: 0, paddingRight: 40 }}>
-                  <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{sheet.title}</div>
+                  <div style={{ fontWeight: 700, color: T.ink, fontSize: 15 }}>{sheet.title}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{sheet.subtitle}</div>
                 </div>
                 <span style={{ color: T.muted, fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>{"\u203A"}</span>
@@ -75,7 +75,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(sheet.id); }}
               aria-label={(bookmarks?.studySheets || []).includes(sheet.id) ? `Unbookmark ${sheet.title}` : `Bookmark ${sheet.title}`}
-              style={{ position: "absolute", top: 12, right: 40, background: "none", border: "none", fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+              style={{ position: "absolute", top: 6, right: 34, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", fontSize: 16, color: (bookmarks?.studySheets || []).includes(sheet.id) ? T.warning : T.muted, cursor: "pointer", padding: 0, lineHeight: 1, zIndex: 1 }}>
               {(bookmarks?.studySheets || []).includes(sheet.id) ? "\u2605" : "\u2606"}
             </button>
 
@@ -113,10 +113,13 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
                     </div>
                     {sheet.trialCallouts.map((callout, ci) => {
                       const trialExists = ALL_LANDMARK_TRIALS.some(t => t.name === callout.trial);
+                      const openTrial = trialExists && navigate ? () => navigate("library", { type: "trialLibrary", searchTrial: callout.trial }) : undefined;
                       return (
                         <div key={ci}
-                          onClick={trialExists && navigate ? () => navigate("library", { type: "trialLibrary", searchTrial: callout.trial }) : undefined}
+                          onClick={openTrial}
+                          onKeyDown={openTrial ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTrial(); } } : undefined}
                           role={trialExists ? "button" : undefined} tabIndex={trialExists ? 0 : undefined}
+                          aria-label={trialExists ? `View ${callout.trial} trial` : undefined}
                           style={{ background: T.warningBg, borderRadius: 10, padding: "10px 14px", marginBottom: 10, borderLeft: `3px solid ${T.warning}`, cursor: trialExists ? "pointer" : "default", transition: "box-shadow 0.2s" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 4 }}>{callout.trial}</div>

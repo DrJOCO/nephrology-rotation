@@ -7,6 +7,8 @@
 //   Completionist (~380 pts) → Attending  (stretch goal)
 //
 
+import { dateKey, todayKey } from "./date";
+
 export interface QuizAttempt {
   correct: number;
   total: number;
@@ -218,14 +220,14 @@ export function checkAchievements(state: StudentState): string[] {
 // Update daily streak + maintain activity log for calendar
 export function updateStreak(gamification: GamificationData | undefined): StreakData {
   const streaks = gamification?.streaks || { currentDays: 0, longestDays: 0, lastActiveDate: null };
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKey();
   const existingLog = streaks.activityLog || [];
 
   if (streaks.lastActiveDate === today) {
     return { ...streaks, activityLog: existingLog }; // already counted today
   }
 
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const yesterday = dateKey(new Date(Date.now() - 86400000));
   let currentDays;
   if (streaks.lastActiveDate === yesterday) {
     currentDays = streaks.currentDays + 1;

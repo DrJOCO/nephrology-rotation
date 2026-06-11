@@ -2,6 +2,7 @@ import { TOPICS } from "../data/constants";
 import { WEEKLY_QUIZZES } from "../data/quizzes";
 import type { ReflectionEntry, SrItem, SrQueue } from "../types";
 import { getTopicContent } from "./topicMapping";
+import { dateKey } from "./date";
 
 const REFLECTION_TOPIC_ALIASES: Record<string, string[]> = {
   "AKI": ["aki", "acute kidney injury"],
@@ -55,15 +56,14 @@ const TOPIC_PATTERNS = TOPICS.map((topic) => ({
   patterns: toAliasPatterns(topic),
 }));
 
+// Local-time day key. (Previously used UTC toISOString, which filed SR review/
+// added dates under the wrong calendar day for users behind UTC near midnight.)
 function toDateOnly(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return dateKey(date);
 }
 
 export function toLocalDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return dateKey(date);
 }
 
 export function extractReflectionTopics(...parts: string[]): string[] {

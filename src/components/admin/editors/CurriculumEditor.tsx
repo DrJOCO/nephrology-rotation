@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Pencil } from "lucide-react";
 import { T, WEEKLY } from "../../../data/constants";
 import { adminInput, adminLabel } from "../shared";
 import type { WeeklyData } from "../types";
@@ -26,7 +27,7 @@ export function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curric
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtn}>← Back</button>
-      <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 16px", fontWeight: 700 }}>Edit Curriculum</h2>
+      <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: "0 0 16px", fontWeight: 700 }}>Edit Curriculum</h2>
 
       {[1,2,3,4].map(w => {
         const wk = curriculum[w] || WEEKLY[w];
@@ -49,7 +50,7 @@ export function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curric
                 <textarea value={form.topicsStr} onChange={e => setForm({...form, topicsStr: e.target.value})} rows={2} style={{...adminInput, resize: "vertical"}} />
               </div>
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={saveEdit} style={{ flex: 1, padding: "10px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
+                <button onClick={saveEdit} style={{ flex: 1, padding: "10px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
                 <button onClick={() => setEditWeek(null)} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
               </div>
             </div>
@@ -60,15 +61,15 @@ export function CurriculumEditor({ curriculum, setCurriculum, onBack }: { curric
           <div key={w} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Module {w}: {wk.title}</div>
+                <div style={{ fontWeight: 700, color: T.ink, fontSize: 15 }}>Module {w}: {wk.title}</div>
                 <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{wk.sub}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
                   {wk.topics.map(t => (
-                    <span key={t} style={{ fontSize: 13, background: T.ice, color: T.navy, padding: "2px 8px", borderRadius: 8, fontWeight: 500 }}>{t}</span>
+                    <span key={t} style={{ fontSize: 13, background: T.surface2, color: T.ink, padding: "2px 8px", borderRadius: 8, fontWeight: 500 }}>{t}</span>
                   ))}
                 </div>
               </div>
-              <button onClick={() => startEdit(w)} style={{ ...tinyBtn, fontSize: 13 }}>✏️</button>
+              <button onClick={() => startEdit(w)} aria-label={`Edit Module ${w}: ${wk.title}`} title="Edit" style={{ ...tinyBtn, color: T.sub, display: "flex", alignItems: "center" }}><Pencil size={14} aria-hidden="true" /></button>
             </div>
           </div>
         );

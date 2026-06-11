@@ -63,7 +63,7 @@ export default function ProgressTab({
             >
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <BadgeCheck size={15} strokeWidth={2} color={objective.met ? T.success : T.muted} aria-hidden="true" />
-                <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{objective.label}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{objective.label}</div>
               </div>
               <div style={{ fontSize: 13, color: T.sub }}>{objective.detail}</div>
             </div>
@@ -89,7 +89,7 @@ export default function ProgressTab({
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: T.navy }}>{domain.label}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>{domain.label}</div>
                         <span style={{ background: tierStyle.bg, color: tierStyle.text, border: `1px solid ${tierStyle.border}`, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                           {domain.tier}
                         </span>

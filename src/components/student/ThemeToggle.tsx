@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { T } from "../../data/constants";
+import { applyTheme } from "../../utils/helpers";
 
 // Phase 2 (spec §01 + §02): light/dark toggle using Lucide monoline icons.
 // Styled for the new light header — transparent background, ink foreground.
@@ -11,8 +12,7 @@ export default function ThemeToggle({ variant = "header" }: { variant?: "header"
   const toggle = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("neph_theme", next);
+    applyTheme(next);
   };
   const label = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
   const Icon = theme === "dark" ? Sun : Moon;

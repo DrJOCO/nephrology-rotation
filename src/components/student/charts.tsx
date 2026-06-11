@@ -12,8 +12,9 @@ export function MiniLineChart({ data, width = 280, height = 120, color }: { data
     y: pad.top + h - (d.value / 100) * h,
   }));
   const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+  const summary = `Line chart: ${data.map(d => `${d.label} ${d.value}%`).join(", ")}`;
   return (
-    <svg width={width} height={height} style={{ display: "block" }}>
+    <svg width={width} height={height} style={{ display: "block" }} role="img" aria-label={summary}>
       {[0, 50, 100].map(v => {
         const y = pad.top + h - (v / 100) * h;
         return <g key={v}><line x1={pad.left} y1={y} x2={width - pad.right} y2={y} stroke={T.line} strokeWidth={0.5} strokeDasharray="4,4" /><text x={pad.left - 4} y={y + 3} fontSize={9} fill={T.muted} textAnchor="end">{v}</text></g>;
@@ -35,8 +36,9 @@ export function HistogramChart({ bins, width = 300, height = 160, label }: { bin
   const groupW = w / bins.length;
   const barCount = bins[0]?.values?.length || 1;
   const barW = Math.min(20, (groupW * 0.7) / barCount);
+  const summary = `${label || "Histogram"}: ${bins.map(b => `${b.label} ${b.values.map(v => v.value).join(" vs ")}`).join(", ")}`;
   return (
-    <svg width={width} height={height} style={{ display: "block" }}>
+    <svg width={width} height={height} style={{ display: "block" }} role="img" aria-label={summary}>
       {label && <text x={width / 2} y={12} fontSize={10} fill={T.muted} textAnchor="middle" fontWeight={600}>{label}</text>}
       {[0, Math.round(maxVal / 2), maxVal].map(v => {
         const y = pad.top + h - (v / maxVal) * h;
@@ -65,8 +67,9 @@ export function FunnelChart({ stages, width = 300, height }: { stages: FunnelSta
   const barMaxW = width - pad.left - pad.right - 100;
   const maxVal = Math.max(...stages.map(s => s.value), 1);
   const rowH = (h - pad.top) / stages.length;
+  const summary = `Funnel: ${stages.map(s => `${s.label} ${s.value}${s.total > 0 ? ` of ${s.total}` : ""}`).join(", ")}`;
   return (
-    <svg width={width} height={h} style={{ display: "block" }}>
+    <svg width={width} height={h} style={{ display: "block" }} role="img" aria-label={summary}>
       {stages.map((s, i) => {
         const y = pad.top + i * rowH;
         const barW = Math.max((s.value / maxVal) * barMaxW, 4);
@@ -95,8 +98,12 @@ export function HeatmapChart({ rows, columns, data, width = 300, height }: { row
     if (v >= 40) return T.warning;
     return T.danger;
   };
+  // Ink pairs for text on state-colored cells (plain white fails in dark mode,
+  // where the state hues lighten).
+  const inkScale = (v: number) => (v >= 80 ? T.successInk : v >= 40 ? T.warningInk : T.dangerInk);
+  const summary = `Heatmap by ${columns.join(", ")}: ${rows.map((row, i) => `${row} ${columns.map((_, j) => data[i]?.[j] ?? "—").join("/")}`).join("; ")}`;
   return (
-    <svg width={width} height={h} style={{ display: "block" }}>
+    <svg width={width} height={h} style={{ display: "block" }} role="img" aria-label={summary}>
       {columns.map((col, j) => (
         <text key={j} x={pad.left + j * cellW + cellW / 2} y={pad.top - 6} fontSize={9} fill={T.muted} textAnchor="middle" fontWeight={600}>{col}</text>
       ))}
@@ -107,7 +114,7 @@ export function HeatmapChart({ rows, columns, data, width = 300, height }: { row
             const val = data[i]?.[j];
             return <g key={j}>
               <rect x={pad.left + j * cellW + 1} y={pad.top + i * cellH + 1} width={cellW - 2} height={cellH - 2} rx={4} fill={colorScale(val)} opacity={0.75} />
-              {val !== null && val !== undefined && <text x={pad.left + j * cellW + cellW / 2} y={pad.top + i * cellH + cellH / 2 + 1} fontSize={9} fill="white" textAnchor="middle" dominantBaseline="middle" fontWeight={600}>{val}%</text>}
+              {val !== null && val !== undefined && <text x={pad.left + j * cellW + cellW / 2} y={pad.top + i * cellH + cellH / 2 + 1} fontSize={9} fill={inkScale(val)} textAnchor="middle" dominantBaseline="middle" fontWeight={600}>{val}%</text>}
             </g>;
           })}
         </g>
@@ -124,8 +131,9 @@ export function MiniBarChart({ data, width = 280, height = 130 }: { data: BarCha
   const maxVal = Math.max(...data.map(d => d.value), 1);
   const barW = Math.min(36, (w / data.length) * 0.6);
   const gap = (w - barW * data.length) / (data.length + 1);
+  const summary = `Bar chart: ${data.map(d => `${d.label} ${d.value}%`).join(", ")}`;
   return (
-    <svg width={width} height={height} style={{ display: "block" }}>
+    <svg width={width} height={height} style={{ display: "block" }} role="img" aria-label={summary}>
       {data.map((d, i) => {
         const x = pad.left + gap + i * (barW + gap);
         const barH = Math.max((d.value / maxVal) * h, 2);

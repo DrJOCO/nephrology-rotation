@@ -13,10 +13,10 @@ const textAreaStyle: React.CSSProperties = {
 
 function buttonStyle(tone: "primary" | "subtle" | "danger" = "subtle"): React.CSSProperties {
   const palette = tone === "primary"
-    ? { bg: T.brand, color: "white", border: T.brand }
+    ? { bg: T.brand, color: T.brandInk, border: T.brand }
     : tone === "danger"
       ? { bg: T.dangerBg, color: T.danger, border: T.danger }
-      : { bg: T.card, color: T.navy, border: T.line };
+      : { bg: T.card, color: T.ink, border: T.line };
   return {
     padding: "9px 12px",
     background: palette.bg,
@@ -198,7 +198,7 @@ export function StudySheetsEditor({
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", margin: "18px 0 10px" }}>
-              <h3 style={{ color: T.navy, fontSize: 16, fontFamily: T.serif, margin: 0 }}>Sections</h3>
+              <h3 style={{ color: T.ink, fontSize: 16, fontFamily: T.serif, margin: 0 }}>Sections</h3>
               <button onClick={() => updateDraft((current) => ({ ...current, sections: [...current.sections, { heading: "New Section", items: ["Add teaching point"] }] }))} style={buttonStyle("subtle")}>
                 Add Section
               </button>
@@ -270,7 +270,7 @@ export function StudySheetsEditor({
             </div>
 
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", margin: "20px 0 10px" }}>
-              <h3 style={{ color: T.navy, fontSize: 16, fontFamily: T.serif, margin: 0 }}>Trial Connections</h3>
+              <h3 style={{ color: T.ink, fontSize: 16, fontFamily: T.serif, margin: 0 }}>Trial Connections</h3>
               <button onClick={() => updateDraft((current) => ({ ...current, trialCallouts: [...(current.trialCallouts || []), { trial: "", pearl: "" }] }))} style={buttonStyle("subtle")}>
                 Add Trial
               </button>

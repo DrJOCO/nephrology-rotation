@@ -30,7 +30,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
     return (
       <div style={{ padding: 20, textAlign: "center" }}>
         <Users size={48} strokeWidth={1.5} color={T.muted} aria-hidden="true" style={{ marginBottom: 12 }} />
-        <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 8px" }}>Cohort</h2>
+        <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: "0 0 8px" }}>Cohort</h2>
         <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.6 }}>
           Join a rotation to see your cohort&apos;s points, levels, and shared learning overview.
         </p>
@@ -83,11 +83,11 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               style={{ width: "100%", background: "none", border: "none", cursor: "pointer", padding: 0, textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                <div style={{ width: 36, height: 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: rank <= 3 ? 22 : 14, fontWeight: 700, color: T.navy, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                <div style={{ width: 36, height: 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: rank <= 3 ? 22 : 14, fontWeight: 700, color: T.ink, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
                   {getRankLabel(rank)}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: T.navy }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: T.ink }}>
                     {student.name || "Unknown"}{isMe ? " (You)" : ""}
                   </div>
                   <div style={{ fontSize: 13, color: T.muted, marginTop: 2 }}>
@@ -113,7 +113,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
                   <span style={{ fontSize: 13, color: T.success, background: T.successBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
                     {student.dischargedPatientCount} discharged
                   </span>
-                  <span style={{ fontSize: 13, color: T.navy, background: T.ice, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
+                  <span style={{ fontSize: 13, color: T.ink, background: T.surface2, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
                     Updated {new Date(student.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -136,7 +136,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
       })}
 
       <div style={{ background: T.card, borderRadius: 12, padding: 14, marginTop: 16, border: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 8, fontFamily: T.serif }}>Shared clinical exposure</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 8, fontFamily: T.serif }}>Shared clinical exposure</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: topCohortTopics.length > 0 ? 10 : 0 }}>
           <span style={{ fontSize: 13, color: T.infoDk, background: T.infoBg, padding: "4px 10px", borderRadius: 999, fontWeight: 600 }}>
             {totalActivePatients} active patients

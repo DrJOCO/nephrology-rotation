@@ -414,7 +414,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
                   <div key={item.id} style={{ border: `1px solid ${T.line}`, borderRadius: 8, padding: 11, background: T.surface }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ color: T.navy, fontSize: 13, lineHeight: 1.35 }}>
+                        <div style={{ color: T.ink, fontSize: 13, lineHeight: 1.35 }}>
                           <span style={{ fontWeight: 700 }}>{index + 1}.</span> <span style={{ fontWeight: 600 }}>{item.title}</span>
                         </div>
                         <div style={{ color: T.muted, fontSize: 12, marginTop: 2 }}>{item.bucket}</div>
@@ -449,7 +449,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
               <div style={{ display: "grid", gap: 8 }}>
                 {assessment.serologyPlan.needed.map((item) => (
                   <div key={item.id} style={{ borderBottom: `1px dotted ${T.line}`, paddingBottom: 6 }}>
-                    <div style={{ color: T.navy, fontSize: 13, fontWeight: 600 }}>{item.label}</div>
+                    <div style={{ color: T.ink, fontSize: 13, fontWeight: 600 }}>{item.label}</div>
                     <div style={{ color: T.sub, fontSize: 12.5, lineHeight: 1.45, marginTop: 2 }}>{item.reason}</div>
                   </div>
                 ))}

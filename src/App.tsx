@@ -29,7 +29,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: T.sans }}>
           <div style={{ background: T.card, borderRadius: 20, padding: 36, maxWidth: 400, width: "100%", textAlign: "center", border: `1px solid ${T.line}` }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
-            <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, margin: "0 0 8px", fontWeight: 700 }}>Something went wrong</h2>
+            <h2 style={{ color: T.ink, fontFamily: T.serif, fontSize: 20, margin: "0 0 8px", fontWeight: 700 }}>Something went wrong</h2>
             <p style={{ color: T.sub, fontSize: 13, margin: "0 0 8px", lineHeight: 1.5 }}>
               The app encountered an unexpected error. Your data is safe.
             </p>
@@ -37,7 +37,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               {this.state.error?.message || "Unknown error"}
             </p>
             <button onClick={() => this.setState({ hasError: false, error: null })}
-              style={{ padding: "12px 32px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              style={{ padding: "12px 32px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
               Try Again
             </button>
           </div>

@@ -3,6 +3,8 @@
 // Each SR item: { questionKey, easeFactor, interval, nextReviewDate, repetitions, lastReviewed, addedDate }
 // questionKey format: "weekly_1_3" = weekly quiz, week 1, question index 3
 
+import { dateKey, todayKey } from "./date";
+
 export interface SrItem {
   questionKey: string;
   easeFactor: number;
@@ -23,7 +25,7 @@ export interface ReviewAnswer {
   correct: boolean;
 }
 
-const today = (): string => new Date().toISOString().slice(0, 10);
+const today = (): string => todayKey();
 
 // Update a single SR item based on whether the answer was correct
 export function updateSrItem(item: SrItem, wasCorrect: boolean): SrItem {
@@ -43,7 +45,7 @@ export function updateSrItem(item: SrItem, wasCorrect: boolean): SrItem {
       repetitions: reps,
       interval,
       easeFactor: ease,
-      nextReviewDate: nextDate.toISOString().slice(0, 10),
+      nextReviewDate: dateKey(nextDate),
       lastReviewed: now,
     };
   } else {
@@ -56,7 +58,7 @@ export function updateSrItem(item: SrItem, wasCorrect: boolean): SrItem {
       repetitions: 0,
       interval: 1,
       easeFactor: ease,
-      nextReviewDate: nextDate.toISOString().slice(0, 10),
+      nextReviewDate: dateKey(nextDate),
       lastReviewed: now,
     };
   }
@@ -91,7 +93,7 @@ export function processQuizResults(answers: QuizAnswer[], source: string, week: 
           questionKey,
           easeFactor: 2.5,
           interval: 1,
-          nextReviewDate: nextDate.toISOString().slice(0, 10),
+          nextReviewDate: dateKey(nextDate),
           repetitions: 0,
           lastReviewed: now,
           addedDate: now,
@@ -138,7 +140,7 @@ export function seedTopicReinforcementSr(
   const now = today();
   const nextDate = new Date();
   nextDate.setDate(nextDate.getDate() + 1);
-  const nextReviewDate = nextDate.toISOString().slice(0, 10);
+  const nextReviewDate = dateKey(nextDate);
 
   for (const topic of weakTopics) {
     const bank = topicBank[topic];

@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { T } from "../../../data/constants";
 import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTemplate, type ClinicGuideTemplates, type ClinicGuideTopic } from "../../../data/clinicGuides";
 import { getCurrentOrNextFriday, ensureCurrentClinicGuide, regenerateClinicGuide } from "../../../utils/clinicRotation";
+import { dateKey } from "../../../utils/date";
 import { normalizeClinicGuideTemplate, normalizeClinicGuideTemplates } from "../../../utils/clinicGuideTemplates";
-import { adminInput, adminLabel, type AdminToastTone } from "../shared";
+import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone } from "../shared";
 import type { ClinicGuideRecord } from "../../../types";
 
 type GuideSectionDraft = {
@@ -95,6 +96,7 @@ export function ClinicGuidesEditor({
   setClinicGuideTemplates,
   onBack,
   showToast,
+  requestConfirm,
 }: {
   clinicGuides: ClinicGuideRecord[];
   setClinicGuides: React.Dispatch<React.SetStateAction<ClinicGuideRecord[]>>;
@@ -102,9 +104,10 @@ export function ClinicGuidesEditor({
   setClinicGuideTemplates: React.Dispatch<React.SetStateAction<ClinicGuideTemplates>>;
   onBack: () => void;
   showToast?: (message: string, tone?: AdminToastTone) => void;
+  requestConfirm?: (options: AdminConfirmOptions) => Promise<boolean>;
 }) {
   const friday = getCurrentOrNextFriday(new Date());
-  const dateStr = friday.toISOString().split("T")[0];
+  const dateStr = dateKey(friday);
   const fridayLabel = friday.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   const clinicTopicCount = CLINIC_GUIDE_TOPICS.length;
   const [selectedTopic, setSelectedTopic] = useState<ClinicGuideTopic>("CKD");
@@ -151,7 +154,20 @@ export function ClinicGuidesEditor({
     }));
   };
 
-  const removeSection = (index: number) => {
+  const removeSection = async (index: number) => {
+    // Only gate removal when the section actually holds content — a fresh
+    // empty section can go without ceremony.
+    const section = draft.sections[index];
+    const hasContent = Boolean(section && (section.items.trim() || (section.heading.trim() && section.heading !== "New Section")));
+    if (hasContent && requestConfirm) {
+      const confirmed = await requestConfirm({
+        title: "Remove section?",
+        message: `"${section.heading || "Untitled section"}" and its items will be removed from this draft.`,
+        confirmLabel: "Remove",
+        tone: "danger",
+      });
+      if (!confirmed) return;
+    }
     setDraft(prev => ({
       ...prev,
       sections: prev.sections.filter((_, sectionIndex) => sectionIndex !== index),
@@ -191,7 +207,7 @@ export function ClinicGuidesEditor({
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
 
-      <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guides</h2>
+      <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guides</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.4 }}>
         Edit the CKD, DKD, Lupus Nephritis, Hypertension, and Transplant guide content students read, then manage dated records for the current guide set.
       </p>
@@ -200,7 +216,7 @@ export function ClinicGuidesEditor({
       <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 12 }}>
           <div>
-            <h3 style={{ color: T.navy, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Edit Guide Content</h3>
+            <h3 style={{ color: T.ink, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Edit Guide Content</h3>
             <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginTop: 3 }}>Changes here update the student-facing guide body, not just the Friday schedule.</div>
           </div>
           {hasUnsavedChanges && <span style={{ color: T.warning, background: T.warningBg, borderRadius: 8, padding: "3px 8px", fontSize: 12, fontWeight: 700, whiteSpace: "nowrap" }}>Unsaved</span>}
@@ -264,7 +280,7 @@ export function ClinicGuidesEditor({
             <div key={index} style={{ border: `1px solid ${T.line}`, borderRadius: 12, padding: 12, marginBottom: 8, background: T.bg }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center", marginBottom: 8 }}>
                 <input value={section.heading} onChange={(event) => updateSection(index, { heading: event.target.value })} placeholder="Section heading" style={{ ...adminInput, flex: 1 }} />
-                <button onClick={() => removeSection(index)} style={{ padding: "8px 10px", background: T.dangerBg, color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Remove</button>
+                <button onClick={() => void removeSection(index)} aria-label={`Remove section: ${section.heading || "Untitled"}`} style={{ padding: "8px 10px", background: T.dangerBg, color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Remove</button>
               </div>
               <textarea value={section.items} onChange={(event) => updateSection(index, { items: event.target.value })} rows={5} placeholder="One item per line" style={{ ...adminInput, resize: "vertical", lineHeight: 1.45 }} />
             </div>
@@ -278,7 +294,7 @@ export function ClinicGuidesEditor({
         <DraftTextArea label="Guideline Basis" value={draft.guidelineBasis} rows={5} hint="One reference per line." onChange={(value) => updateListDraft("guidelineBasis", value)} />
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={saveTemplate} style={{ padding: "10px 14px", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Save Guide Content</button>
+          <button onClick={saveTemplate} style={{ padding: "10px 14px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Save Guide Content</button>
           <button onClick={discardChanges} disabled={!hasUnsavedChanges} style={{ padding: "10px 14px", background: T.bg, color: hasUnsavedChanges ? T.sub : T.muted, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: hasUnsavedChanges ? "pointer" : "not-allowed" }}>Discard Changes</button>
           <button onClick={loadDefaultTemplate} style={{ padding: "10px 14px", background: T.warningBg, color: T.warning, border: `1px solid ${T.warning}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Load Default Text</button>
         </div>
@@ -287,7 +303,7 @@ export function ClinicGuidesEditor({
       {/* Current / next Friday status */}
       <div style={{ background: T.successBg, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.success}40` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.success, textTransform: "uppercase", letterSpacing: 0.3, marginBottom: 8 }}>This Friday's Guide Set</div>
-        <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, marginBottom: 4 }}>{fridayLabel}</div>
+        <div style={{ fontWeight: 700, color: T.ink, fontSize: 15, marginBottom: 4 }}>{fridayLabel}</div>
         <div style={{ color: currentComplete ? T.success : T.sub, fontSize: 13, marginBottom: 10 }}>
           {currentComplete ? `All ${clinicTopicCount} guide records are ready.` : `Missing records: ${missingTopics.join(", ")}`}
         </div>
@@ -298,7 +314,7 @@ export function ClinicGuidesEditor({
                 {template.icon}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{topic}</div>
+                <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>{topic}</div>
                 <div style={{ fontSize: 13, color: record ? T.success : T.sub, marginTop: 2 }}>
                   {record ? "Ready for this Friday" : "Missing for this Friday"}
                 </div>
@@ -311,7 +327,7 @@ export function ClinicGuidesEditor({
       {/* Actions */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         {!currentComplete && (
-          <button onClick={handleEnsure} style={{ padding: "8px 16px", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={handleEnsure} style={{ padding: "8px 16px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             Add Missing Records
           </button>
         )}
@@ -323,7 +339,7 @@ export function ClinicGuidesEditor({
       </div>
 
       {/* History */}
-      <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guide Records ({sorted.length})</h3>
+      <h3 style={{ color: T.ink, fontSize: 15, margin: "0 0 10px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guide Records ({sorted.length})</h3>
       {sorted.length === 0 ? (
         <div style={{ textAlign: "center", padding: 20, color: T.muted, fontSize: 13 }}>No clinic guide records have been added yet.</div>
       ) : (

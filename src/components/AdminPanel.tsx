@@ -4,7 +4,7 @@ import { T, WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import store from "../utils/store";
 import { createAdminInvite, getCurrentAdminUser, listAdminInvites, normalizeEmailAddress, registerInvitedAdmin, sendAdminPasswordReset, signInAdmin, signInAdminWithGoogle, signOutFirebase, type AdminInviteRecord } from "../utils/firebase";
-import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
+import { applyTheme, ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
@@ -321,8 +321,7 @@ function AdminThemeToggle() {
   const toggle = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
-    localStorage.setItem("neph_theme", next);
+    applyTheme(next);
   };
   return (
     <button onClick={toggle} style={{
@@ -878,7 +877,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
   if (loading) return (
     <div style={{ minHeight: "100vh", background: T.dark, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: T.pale, fontFamily: T.serif, fontSize: 18 }}>Loading...</div>
+      <div style={{ color: T.surface2, fontFamily: T.serif, fontSize: 18 }}>Loading...</div>
     </div>
   );
 
@@ -978,11 +977,11 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "analytics" && <AnalyticsTab students={students} rotationCode={rotationCode} settings={settings} articles={articles} />}
         {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} studySheets={studySheets} />}
-        {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} />}
+        {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} requestConfirm={requestConfirm} />}
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "editStudySheets" && <StudySheetsEditor studySheets={studySheets} setStudySheets={setStudySheets} onBack={() => navigate("content")} showToast={showToast} />}
-        {tab === "content" && subView?.type === "announcements" && <AnnouncementsEditor announcements={announcements} setAnnouncements={setAnnouncements} onBack={() => navigate("content")} />}
-        {tab === "content" && subView?.type === "clinicGuides" && <ClinicGuidesEditor clinicGuides={clinicGuides} setClinicGuides={setClinicGuides} clinicGuideTemplates={clinicGuideTemplates} setClinicGuideTemplates={setClinicGuideTemplates} onBack={() => navigate("content")} showToast={showToast} />}
+        {tab === "content" && subView?.type === "announcements" && <AnnouncementsEditor announcements={announcements} setAnnouncements={setAnnouncements} onBack={() => navigate("content")} requestConfirm={requestConfirm} />}
+        {tab === "content" && subView?.type === "clinicGuides" && <ClinicGuidesEditor clinicGuides={clinicGuides} setClinicGuides={setClinicGuides} clinicGuideTemplates={clinicGuideTemplates} setClinicGuideTemplates={setClinicGuideTemplates} onBack={() => navigate("content")} showToast={showToast} requestConfirm={requestConfirm} />}
         {tab === "rotation" && firebaseAdmin && (
           <SettingsTab
             settings={settings}

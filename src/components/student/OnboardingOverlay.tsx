@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { T } from "../../data/constants";
+import { useFocusTrap } from "../../utils/helpers";
 import { Button, InfoBar } from "./shared";
 
 const ONBOARDING_STEPS = [
@@ -19,9 +20,9 @@ const ONBOARDING_STEPS = [
     hint: "Use the module view when you want the full content map.",
   },
   {
-    title: "Track inpatients on rounds",
+    title: "Track consults on rounds",
     body: "Track the hospital patients you see, tag diagnoses, and add follow-up notes to build your inpatient experience log.",
-    hint: "Use the Inpatients tab during ward time.",
+    hint: "Use the Consults tab during ward time.",
   },
   {
     title: "Review progress deliberately",
@@ -34,26 +35,46 @@ export default function OnboardingOverlay({ onDismiss, onViewFirstDay }: { onDis
   const [step, setStep] = useState(0);
   const s = ONBOARDING_STEPS[step];
   const isLast = step === ONBOARDING_STEPS.length - 1;
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Dialog semantics to match the app's other sheets: trap focus while open,
+  // restore it on dismiss, and let ESC skip the tour.
+  useFocusTrap(dialogRef);
 
   const handleDismiss = () => {
     localStorage.setItem("neph_hasSeenOnboarding", "true");
     onDismiss();
   };
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleDismiss();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+     
+  }, []);
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.overlay, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: T.card, borderRadius: 2, maxWidth: 392, width: "100%", padding: "24px 22px 22px", animation: "fadeIn 0.3s ease", border: `1.5px solid ${T.ink}` }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        style={{ background: T.card, borderRadius: 2, maxWidth: 392, width: "100%", padding: "24px 22px 22px", animation: "fadeIn 0.3s ease", border: `1.5px solid ${T.ink}` }}
+      >
         <div style={{ fontFamily: T.mono, color: T.muted, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0, marginBottom: 12 }}>
           Step {step + 1} of {ONBOARDING_STEPS.length}
         </div>
 
-        <div style={{ display: "flex", gap: 7, marginBottom: 18 }}>
+        <div style={{ display: "flex", gap: 7, marginBottom: 18 }} aria-hidden="true">
           {ONBOARDING_STEPS.map((_, i) => (
             <div key={i} style={{ width: 6, height: 6, borderRadius: 0, border: `1px solid ${i <= step ? T.ink : T.line}`, background: i <= step ? T.ink : "transparent", transition: "background 0.3s, border 0.3s" }} />
           ))}
         </div>
 
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: T.ink, margin: "0 0 8px", fontFamily: T.serif, lineHeight: 1.15 }}>{s.title}</h2>
+        <h2 id="onboarding-title" style={{ fontSize: 22, fontWeight: 700, color: T.ink, margin: "0 0 8px", fontFamily: T.serif, lineHeight: 1.15 }}>{s.title}</h2>
         <p style={{ fontSize: 14, color: T.ink2, lineHeight: 1.55, margin: "0 0 14px" }}>{s.body}</p>
 
         <InfoBar tone="neutral" style={{ marginBottom: 20, borderRadius: 2 }}>{s.hint}</InfoBar>

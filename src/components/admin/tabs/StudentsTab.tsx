@@ -108,7 +108,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
       </div>
 
       {isConnected && (
-        <div style={{ background: T.infoBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.navy, lineHeight: 1.5 }}>
+        <div style={{ background: T.infoBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.ink, lineHeight: 1.5 }}>
           📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code. Use <strong>Remove</strong> for test users, duplicates, or mistaken joins.
         </div>
       )}
@@ -118,10 +118,10 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap", marginBottom: duplicateNameGroups.length > 0 ? 12 : 0 }}>
             <div>
               <div style={{ color: T.warning, fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.4 }}>Duplicate Review</div>
-              <div style={{ color: T.navy, fontSize: 15, fontWeight: 800, marginTop: 3 }}>{duplicateNameGroups.length} active duplicate-name group{duplicateNameGroups.length === 1 ? "" : "s"}</div>
+              <div style={{ color: T.ink, fontSize: 15, fontWeight: 800, marginTop: 3 }}>{duplicateNameGroups.length} active duplicate-name group{duplicateNameGroups.length === 1 ? "" : "s"}</div>
               <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginTop: 3 }}>Open the real learner record, remove test joins, or mark older records complete.</div>
             </div>
-            <button onClick={() => navigate("students")} style={{ padding: "8px 12px", background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
+            <button onClick={() => navigate("students")} style={{ padding: "8px 12px", background: T.card, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
               Show Full Roster
             </button>
           </div>
@@ -130,7 +130,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
             <div style={{ display: "grid", gap: 10 }}>
               {duplicateNameGroups.map((group) => (
                 <div key={group.map((student) => student.id).join("-")} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: 12 }}>
-                  <div style={{ color: T.navy, fontSize: 14, fontWeight: 800, marginBottom: 8 }}>{group[0].name}</div>
+                  <div style={{ color: T.ink, fontSize: 14, fontWeight: 800, marginBottom: 8 }}>{group[0].name}</div>
                   <div style={{ display: "grid", gap: 8 }}>
                     {group.map((student) => (
                       <div key={student.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", background: T.bg, borderRadius: 10, padding: 10 }}>
@@ -141,7 +141,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
                           </div>
                         </div>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          <button onClick={() => navigate("students", { type: "studentDetail", id: String(student.id) })} style={{ padding: "7px 10px", background: T.card, color: T.navy, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Open</button>
+                          <button onClick={() => navigate("students", { type: "studentDetail", id: String(student.id) })} style={{ padding: "7px 10px", background: T.card, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Open</button>
                           <button onClick={() => toggleStatus(student.id)} style={{ padding: "7px 10px", background: T.bg, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>{student.status === "active" ? "Complete" : "Reactivate"}</button>
                           <button onClick={() => { void removeStudent(student); }} style={{ padding: "7px 10px", background: T.dangerBg, color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>Remove</button>
                         </div>
@@ -163,15 +163,15 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 14 }}>
           <div style={{ background: T.bg, borderRadius: 12, padding: 12 }}>
             <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", fontWeight: 700 }}>Roster</div>
-            <div style={{ fontSize: 24, color: T.navy, fontWeight: 700, fontFamily: T.mono }}>{students.length}</div>
+            <div style={{ fontSize: 24, color: T.ink, fontWeight: 700, fontFamily: T.mono }}>{students.length}</div>
           </div>
           <div style={{ background: T.bg, borderRadius: 12, padding: 12 }}>
             <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", fontWeight: 700 }}>Active</div>
-            <div style={{ fontSize: 24, color: T.navy, fontWeight: 700, fontFamily: T.mono }}>{students.filter((student) => student.status === "active").length}</div>
+            <div style={{ fontSize: 24, color: T.ink, fontWeight: 700, fontFamily: T.mono }}>{students.filter((student) => student.status === "active").length}</div>
           </div>
           <div style={{ background: T.bg, borderRadius: 12, padding: 12 }}>
             <div style={{ fontSize: 13, color: T.muted, textTransform: "uppercase", fontWeight: 700 }}>Need Assessment</div>
-            <div style={{ fontSize: 24, color: needsAssessmentCount > 0 ? T.danger : T.navy, fontWeight: 700, fontFamily: T.mono }}>{needsAssessmentCount}</div>
+            <div style={{ fontSize: 24, color: needsAssessmentCount > 0 ? T.danger : T.ink, fontWeight: 700, fontFamily: T.mono }}>{needsAssessmentCount}</div>
           </div>
         </div>
 

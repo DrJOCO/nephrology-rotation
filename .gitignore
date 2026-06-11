@@ -36,6 +36,8 @@ tmp/
 .env
 .env.local
 .env.*.local
+.env.production
+# (.env.example is intentionally tracked as the template)
 
 # Firebase cache
 .firebase/

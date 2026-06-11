@@ -1,7 +1,7 @@
 import { useState, useEffect, CSSProperties } from "react";
 import { Pencil, RotateCcw, Check, X, Plus, ChevronRight, Lightbulb } from "lucide-react";
 import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS, TOPIC_KEYWORDS, labelChip } from "../../data/constants";
-import { inputLabel, inputStyle, EduDisclaimer } from "./shared";
+import { inputLabel, inputStyle, EduDisclaimer, ConfirmSheet } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
 import { getFollowUpState } from "../../utils/patient";
 import { getPatientSuggestedTopicGroups, type PatientSuggestedTopicGroup } from "../../utils/patientRecommendations";
@@ -84,7 +84,7 @@ function buildPatientUpdateDetail(previous: Patient | undefined, next: PatientFo
   return "Details updated";
 }
 
-function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: string | number, note: string) => void; onRemoveFollowUp: (patientId: string | number, followUpId: number) => void }) {
+function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editErrors, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; editErrors: Record<string, string | undefined>; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: string | number, note: string) => void; onRemoveFollowUp: (patientId: string | number, followUpId: number) => void }) {
   const isMobile = useIsMobile();
   const [followUpText, setFollowUpText] = useState("");
   const [followUpError, setFollowUpError] = useState<string | null>(null);
@@ -117,16 +117,19 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
           <div>
             <label style={inputLabel}>Initials</label>
-            <input value={editForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => onEditChange({...editForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)})} style={inputStyle} />
+            <input value={editForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => onEditChange({...editForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)})} style={{...inputStyle, ...(editErrors.initials ? inputErrorBorder : {})}} />
+            {editErrors.initials && <div style={errorStyle}>{editErrors.initials}</div>}
           </div>
           <div>
             <label style={inputLabel}>Room #</label>
-            <input value={editForm.room} maxLength={LIMITS.ROOM_MAX} onChange={e => onEditChange({...editForm, room: clampLength(e.target.value, LIMITS.ROOM_MAX)})} style={inputStyle} />
+            <input value={editForm.room} maxLength={LIMITS.ROOM_MAX} onChange={e => onEditChange({...editForm, room: clampLength(e.target.value, LIMITS.ROOM_MAX)})} style={{...inputStyle, ...(editErrors.room ? inputErrorBorder : {})}} />
+            {editErrors.room && <div style={errorStyle}>{editErrors.room}</div>}
           </div>
         </div>
         <div style={{ marginBottom: 10 }}>
           <label style={inputLabel}>Diagnosis</label>
-          <input value={editForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => onEditChange({...editForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)})} style={inputStyle} />
+          <input value={editForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => onEditChange({...editForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)})} style={{...inputStyle, ...(editErrors.dx ? inputErrorBorder : {})}} />
+          {editErrors.dx && <div style={errorStyle}>{editErrors.dx}</div>}
           {(() => {
             const suggested = suggestTopicsFromText(editForm.dx, editForm.topics);
             if (suggested.length === 0) return null;
@@ -158,11 +161,15 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
               );
             })}
           </div>
-          <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>
-            {editForm.topics.length < LIMITS.PATIENT_TOPICS_MIN
-              ? `${editForm.topics.length}/${LIMITS.PATIENT_TOPICS_MIN} selected`
-              : "Add more if clinically relevant."}
-          </div>
+          {editErrors.topics ? (
+            <div style={errorStyle}>{editErrors.topics}</div>
+          ) : (
+            <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>
+              {editForm.topics.length < LIMITS.PATIENT_TOPICS_MIN
+                ? `${editForm.topics.length}/${LIMITS.PATIENT_TOPICS_MIN} selected`
+                : "Add more if clinically relevant."}
+            </div>
+          )}
           {(hiddenEditTopicCount > 0 || showAllEditTopics) && (
             <button
               type="button"
@@ -175,8 +182,11 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={inputLabel}>Notes</label>
-          <textarea value={editForm.notes} maxLength={LIMITS.NOTES_MAX} onChange={e => onEditChange({...editForm, notes: clampLength(e.target.value, LIMITS.NOTES_MAX)})} rows={2} style={{...inputStyle, resize: "vertical"}} />
-          <div style={charCountStyle(editForm.notes.length, LIMITS.NOTES_MAX)}>{editForm.notes.length}/{LIMITS.NOTES_MAX}</div>
+          <textarea value={editForm.notes} maxLength={LIMITS.NOTES_MAX} onChange={e => onEditChange({...editForm, notes: clampLength(e.target.value, LIMITS.NOTES_MAX)})} rows={2} style={{...inputStyle, resize: "vertical", ...(editErrors.notes ? inputErrorBorder : {})}} />
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            {editErrors.notes ? <div style={errorStyle}>{editErrors.notes}</div> : <div />}
+            <div style={charCountStyle(editForm.notes.length, LIMITS.NOTES_MAX)}>{editForm.notes.length}/{LIMITS.NOTES_MAX}</div>
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={onSaveEdit} style={{ flex: 1, padding: "10px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
@@ -195,7 +205,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "stretch" : "flex-start", gap: isMobile ? 7 : 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3, flexWrap: "wrap" }}>
-              <span style={{ fontWeight: 700, color: dimmed ? T.muted : T.navy, fontSize: 14 }}>{p.initials}</span>
+              <span style={{ fontWeight: 700, color: dimmed ? T.muted : T.ink, fontSize: 14 }}>{p.initials}</span>
               {p.room && <span style={{ fontSize: 12, color: T.sub, background: T.bg, padding: "1px 7px", borderRadius: 4 }}>Rm {p.room}</span>}
               <span style={{ fontSize: 12, color: T.muted }}>Added {new Date(p.date).toLocaleDateString()}</span>
             </div>
@@ -217,7 +227,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
               <button
                 onClick={onStartEdit}
                 aria-label={`Edit inpatient ${p.initials || ""}`.trim()}
-                style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "5px 8px", minHeight: 28, fontSize: 11, cursor: "pointer", color: T.brand, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
+                style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "5px 8px", minHeight: 36, fontSize: 11, cursor: "pointer", color: T.brand, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
               >
                 <Pencil size={12} strokeWidth={1.75} aria-hidden="true" /> Edit
               </button>
@@ -225,7 +235,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
             <button
               onClick={onToggle}
               aria-label={dimmed ? `Reactivate inpatient ${p.initials || ""}`.trim() : `Discharge inpatient ${p.initials || ""}`.trim()}
-              style={{ background: "none", border: `1px solid ${dimmed ? T.success : T.muted}`, borderRadius: 6, padding: "5px 8px", minHeight: 28, fontSize: 11, cursor: "pointer", color: dimmed ? T.success : T.sub, display: "inline-flex", alignItems: "center", gap: 4 }}
+              style={{ background: "none", border: `1px solid ${dimmed ? T.success : T.muted}`, borderRadius: 6, padding: "5px 8px", minHeight: 36, fontSize: 11, cursor: "pointer", color: dimmed ? T.success : T.sub, display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               {dimmed ? <><RotateCcw size={12} strokeWidth={1.75} aria-hidden="true" /> Reactivate</> : <><Check size={12} strokeWidth={2} aria-hidden="true" /> Discharge</>}
             </button>
@@ -233,7 +243,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
               onClick={onRemove}
               aria-label={`Remove inpatient ${p.initials || ""} — added in error`.trim()}
               title="Remove (added in error)"
-              style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, minHeight: 28, padding: "5px 8px", fontSize: 11, cursor: "pointer", color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}
+              style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, minHeight: 36, padding: "5px 8px", fontSize: 11, cursor: "pointer", color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               <X size={12} strokeWidth={1.75} aria-hidden="true" /> Remove
             </button>
@@ -248,7 +258,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
             onClick={() => setShowFollowUps(!showFollowUps)}
             aria-expanded={showFollowUps}
             aria-label={`${showFollowUps ? "Collapse" : "Expand"} follow-ups`}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: T.brand, fontWeight: 600, padding: "4px 0", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, minHeight: 28 }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: T.brand, fontWeight: 600, padding: "4px 0", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, minHeight: 36 }}
           >
             <ChevronRight size={14} strokeWidth={2} aria-hidden="true" style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }} />
             Follow-ups ({followUps.length})
@@ -296,7 +306,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, onSta
                 disabled={!followUpText.trim()}
                 style={{
                   padding: "6px 9px",
-                  minHeight: 30,
+                  minHeight: 36,
                   minWidth: 34,
                   background: followUpText.trim() ? T.brand : T.surface2,
                   color: followUpText.trim() ? T.brandInk : T.muted,
@@ -366,6 +376,8 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
   const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editForm, setEditForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
+  const [editErrors, setEditErrors] = useState<Record<string, string | undefined>>({});
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | number | null>(null);
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
@@ -383,6 +395,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
       const isSelected = prev.topics.includes(t);
       return { ...prev, topics: isSelected ? prev.topics.filter(x => x !== t) : [...prev.topics, t] };
     });
+    setEditErrors(prev => ({ ...prev, topics: undefined }));
   };
 
   const addPatient = () => {
@@ -481,14 +494,15 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
     });
   };
 
-  const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [], notes: "" }); };
+  const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [], notes: "" }); setEditErrors({}); };
 
   const saveEdit = () => {
     const { valid, errors } = validatePatientForm(editForm);
     if (!valid) {
-      alert(Object.values(errors)[0] || "Please fix the inpatient entry.");
+      setEditErrors(errors);
       return;
     }
+    setEditErrors({});
     const sanitized = {
       initials: editForm.initials.trim(),
       room: editForm.room.trim(),
@@ -572,7 +586,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
         <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: suggestedGroups.length > 0 ? 10 : 0 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: T.navy, marginBottom: 3 }}>Consult-linked learning</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: T.ink, marginBottom: 3 }}>Consult-linked learning</div>
               <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>
                 {suggestedGroups.length > 0
                   ? "Matched study sheets, trials, tools, and guides from active consult tags."
@@ -591,7 +605,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
                   onClick={() => openSuggestedGroup(group)}
                   style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "10px 11px", cursor: "pointer", textAlign: "left", minHeight: 68 }}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 800, color: T.navy, lineHeight: 1.25 }}>{group.topic}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: T.ink, lineHeight: 1.25 }}>{group.topic}</div>
                   <div style={{ fontSize: 12, color: T.sub, marginTop: 4, lineHeight: 1.35 }}>{summarizeSuggestedGroup(group)}</div>
                 </button>
               ))}
@@ -702,7 +716,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
             {suggestions.map((s, i) => (
               <button key={i} onClick={() => { navigate(...s.nav); setShowSuggestions(false); }}
                 style={{ padding: isMobile ? "8px 12px" : "6px 12px", borderRadius: 8, fontSize: isMobile ? 12 : 11, fontWeight: 600, cursor: "pointer",
-                  background: s.type === "studySheet" ? T.card : s.type === "tool" ? T.infoBg : T.ice,
+                  background: s.type === "studySheet" ? T.card : s.type === "tool" ? T.infoBg : T.surface2,
                   color: s.type === "studySheet" || s.type === "tool" ? T.info : T.brand,
                   border: `1px solid ${s.type === "studySheet" ? T.muted : s.type === "tool" ? T.info : T.brand}` }}>
                 {s.type === "studySheet" ? "📋" : s.type === "tool" ? "🛠" : "📝"} {s.label}
@@ -720,21 +734,37 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
         </div>
       )}
 
-      {active.map(p => <PatientCard key={p.id} p={p} onToggle={() => toggle(p.id)} onRemove={() => remove(p.id)}
-        isEditing={editingId === p.id} editForm={editForm} onStartEdit={() => startEdit(p)} onCancelEdit={cancelEdit} onSaveEdit={saveEdit}
-        onEditChange={setEditForm} onEditToggleTopic={editToggleTopic} onAddFollowUp={addFollowUp} onRemoveFollowUp={removeFollowUp} />)}
+      {active.map(p => <PatientCard key={p.id} p={p} onToggle={() => toggle(p.id)} onRemove={() => setPendingRemoveId(p.id)}
+        isEditing={editingId === p.id} editForm={editForm} editErrors={editErrors} onStartEdit={() => startEdit(p)} onCancelEdit={cancelEdit} onSaveEdit={saveEdit}
+        onEditChange={(form) => { setEditForm(form); setEditErrors({}); }} onEditToggleTopic={editToggleTopic} onAddFollowUp={addFollowUp} onRemoveFollowUp={removeFollowUp} />)}
 
       {discharged.length > 0 && (
         <>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.muted, margin: "20px 0 10px" }}>
             Completed / Discharged ({discharged.length})
           </div>
-          {discharged.map(p => <PatientCard key={p.id} p={p} onToggle={() => toggle(p.id)} onRemove={() => remove(p.id)} dimmed
-            isEditing={editingId === p.id} editForm={editForm} onStartEdit={() => startEdit(p)} onCancelEdit={cancelEdit} onSaveEdit={saveEdit}
-            onEditChange={setEditForm} onEditToggleTopic={editToggleTopic} onAddFollowUp={addFollowUp} onRemoveFollowUp={removeFollowUp} />)}
+          {discharged.map(p => <PatientCard key={p.id} p={p} onToggle={() => toggle(p.id)} onRemove={() => setPendingRemoveId(p.id)} dimmed
+            isEditing={editingId === p.id} editForm={editForm} editErrors={editErrors} onStartEdit={() => startEdit(p)} onCancelEdit={cancelEdit} onSaveEdit={saveEdit}
+            onEditChange={(form) => { setEditForm(form); setEditErrors({}); }} onEditToggleTopic={editToggleTopic} onAddFollowUp={addFollowUp} onRemoveFollowUp={removeFollowUp} />)}
         </>
       )}
       <EduDisclaimer />
+
+      {pendingRemoveId != null && (() => {
+        const pendingPatient = patients.find(p => p.id === pendingRemoveId);
+        const label = pendingPatient?.initials?.trim() || "this consult";
+        return (
+          <ConfirmSheet
+            title="Remove this consult?"
+            message={`This permanently deletes ${label} and any follow-up notes — it can't be undone. If you've finished the consult, use "Discharge" instead to keep it in your log.`}
+            confirmLabel="Remove"
+            cancelLabel="Keep"
+            tone="danger"
+            onConfirm={() => { remove(pendingRemoveId); setPendingRemoveId(null); }}
+            onCancel={() => setPendingRemoveId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

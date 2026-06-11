@@ -19,7 +19,7 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.infoBg, color: T.info, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Optional depth
       </div>
-      <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
+      <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: "0 0 4px", fontWeight: 700 }}>
         Module {week}: {wk?.title || "Curriculum"}
       </h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>
@@ -46,7 +46,7 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
                   <span style={{ fontSize: 18 }}>{a.type === "Guideline" ? "\uD83D\uDCCB" : (a.type === "Landmark Study" || a.type === "Landmark") ? "\u2B50" : "\uD83D\uDCC4"}</span>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, lineHeight: 1.35, marginBottom: 4 }}>{a.title}</div>
+                  <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, lineHeight: 1.35, marginBottom: 4 }}>{a.title}</div>
                   <div style={{ fontSize: 13, color: T.sub }}>{a.journal} ({a.year})</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 6, alignItems: "center" }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.4 }}>{typePrefix(a.type)}{a.type}</span>

@@ -1,6 +1,6 @@
 import { getBootstrapAdminLegacyUids, getCurrentAdminUser, getFirebase, isBootstrapAdminEmail, waitForAuthUser } from "./firebase";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type FirestoreData = Record<string, any>;
 type PendingSyncData = Record<string, unknown> | unknown[];
 type PendingSyncItem =
@@ -369,10 +369,11 @@ const store = {
         clearQueuedSync(queued);
         return;
       }
-      // Rotation-level data
+      // Rotation-level data. Write safeValue (not raw val) so the online path
+      // can never diverge from the sanitized cache/offline-queue payloads.
       const field = KEY_TO_FIELD[key];
       if (field) {
-        await fs.updateDoc(fs.doc(db, "rotations", rotationCode), { [field]: val });
+        await fs.updateDoc(fs.doc(db, "rotations", rotationCode), { [field]: safeValue });
         clearQueuedSync(queued);
       }
     } catch (e) {

@@ -1,6 +1,7 @@
 import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { PRE_QUIZ, POST_QUIZ, getQuestionByKey } from "../data/quizzes";
+import { todayKey } from "./date";
 import type { CompletedItems, Patient, QuizQuestion, QuizScore, SrQueue, SubView, WeeklyScores } from "../types";
 
 export type CompetencyDomain = "AKI" | "CKD" | "Dialysis" | "Electrolytes" | "Transplant" | "Glomerular";
@@ -189,7 +190,6 @@ const DOMAIN_DEFINITIONS: Record<CompetencyDomain, DomainDefinition> = {
 const DOMAIN_ORDER: CompetencyDomain[] = ["AKI", "CKD", "Dialysis", "Electrolytes", "Transplant", "Glomerular"];
 const TIER_RANK: Record<CompetencyTier, number> = { Novice: 0, Developing: 1, Proficient: 2 };
 const FALLBACK_WEEK_DOMAIN: Record<number, CompetencyDomain> = { 1: "AKI", 2: "Electrolytes", 3: "Glomerular", 4: "Dialysis" };
-const TODAY_KEY = new Date().toISOString().slice(0, 10);
 
 const DOMAIN_BY_TOPIC = DOMAIN_ORDER.reduce<Record<string, CompetencyDomain>>((acc, domain) => {
   DOMAIN_DEFINITIONS[domain].topics.forEach((topic) => {
@@ -398,8 +398,9 @@ export function buildCompetencySummary({
   }
 
   const questionEvents = buildQuestionEvents(weeklyScores, preScore, postScore);
+  const todayKeyValue = todayKey();
   const dueItems = new Set(Object.entries(srQueue)
-    .filter(([, item]) => item.nextReviewDate <= TODAY_KEY)
+    .filter(([, item]) => item.nextReviewDate <= todayKeyValue)
     .map(([key]) => key));
 
   const domains = DOMAIN_ORDER.map<CompetencyDomainSummary>((domain) => {

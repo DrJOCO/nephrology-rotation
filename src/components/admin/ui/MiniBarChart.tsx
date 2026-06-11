@@ -9,7 +9,7 @@ type MiniBarChartItem = {
 };
 
 // ─── Mini Bar Chart (SVG) ────────────────────────────────────────────
-export function MiniBarChart({ data, width = 280, height = 130 }: { data: MiniBarChartItem[]; width?: number; height?: number }) {
+export function MiniBarChart({ data, width = 280, height = 130, label }: { data: MiniBarChartItem[]; width?: number; height?: number; label?: string }) {
   if (!data || !data.length) return null;
   const pad = { top: 16, right: 10, bottom: 22, left: 10 };
   const w = width - pad.left - pad.right;
@@ -17,8 +17,12 @@ export function MiniBarChart({ data, width = 280, height = 130 }: { data: MiniBa
   const maxVal = Math.max(...data.map(d => d.value), 1);
   const barW = Math.min(36, (w / data.length) * 0.6);
   const gap = (w - barW * data.length) / (data.length + 1);
+  // Screen readers get the data as a sentence; the bars stay decorative.
+  const summary = label
+    ? `${label}: ${data.map(d => `${d.label} ${d.valueLabel ?? `${d.value}%`}`).join(", ")}`
+    : `Bar chart: ${data.map(d => `${d.label} ${d.valueLabel ?? `${d.value}%`}`).join(", ")}`;
   return (
-    <svg width={width} height={height} style={{ display: "block" }}>
+    <svg width={width} height={height} style={{ display: "block" }} role="img" aria-label={summary}>
       {data.map((d, i) => {
         const x = pad.left + gap + i * (barW + gap);
         const barH = Math.max((d.value / maxVal) * h, 2);

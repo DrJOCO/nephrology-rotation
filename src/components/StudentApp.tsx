@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { BookOpen, Stethoscope, Activity, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home, Trophy } from "lucide-react";
+import { BookOpen, Stethoscope, Activity, Search, User as UserIcon, Flame, WifiOff, LogOut, X, Home, Trophy, Bookmark } from "lucide-react";
 import { T, WEEKLY, ARTICLES, CURRICULUM_DECKS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
@@ -8,38 +8,38 @@ import { processQuizResults, processReviewResults, getDueItems, seedTopicReinfor
 import store from "../utils/store";
 import {
   clearSavedStudentSignInEmail,
-  completeStudentSignInLink,
-  getCurrentStudentUser,
-  getSavedStudentSignInEmail,
-  isStudentEmailLink,
   normalizeStudentPinInput,
-  sendStudentSignInLink,
-  setStudentPinCredential,
   signOutFirebase,
-  signInStudentWithPin,
-  STUDENT_AUTH_PIN_LENGTH,
 } from "../utils/firebase";
-import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, scrollWindowToTop, SHARED_KEYS, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
+import { scrollWindowToTop, useIsMobile, useOnline, useFocusTrap } from "../utils/helpers";
 import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamification";
-import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import { buildCompetencySummary } from "../utils/competency";
 import { getStudentCurrentModule, hasRotationEnded } from "../utils/moduleProgression";
-import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { buildBookmarkActivityDetail, describeStudentNavigation } from "../utils/activityLog";
 import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
 import { getConsultTopicCompletionKey } from "../utils/patientRecommendations";
-import { LIMITS } from "../utils/validation";
+import {
+  useStudentAuth,
+  normalizeEmail,
+  setStoredStudentPinFlowMode,
+  JOINED_AT_KEY,
+  STUDENT_EMAIL_KEY,
+  STUDENT_YEAR_KEY,
+  STUDENT_PENDING_JOIN_CODE_KEY,
+} from "../hooks/useStudentAuth";
+import { useStudentSync } from "../hooks/useStudentSync";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../types";
-import type { User } from "firebase/auth";
 
 // Critical-path components (eager)
-import ThemeToggle from "./student/ThemeToggle";
 import OnboardingOverlay from "./student/OnboardingOverlay";
 import LoginScreen from "./student/LoginScreen";
 import GlobalSearchOverlay from "./student/GlobalSearchOverlay";
 import HomeTab from "./student/HomeTab";
+import LibraryHub from "./student/LibraryHub";
+import ProfileSheet from "./student/ProfileSheet";
+import { ConfirmSheet } from "./student/shared";
 
 // Lazy-loaded sub-views
 const BookmarksView = lazy(() => import("./student/BookmarksView"));
@@ -75,17 +75,7 @@ const LazyFallback = () => (
 );
 
 const INSTALL_PROMPT_DISMISSED_KEY = "neph_installPromptDismissed";
-const JOINED_AT_KEY = "neph_joinedAt";
 const INSTALL_PROMPT_DELAY_MS = 18 * 60 * 60 * 1000;
-const STUDENT_EMAIL_KEY = "neph_studentEmail";
-const STUDENT_YEAR_KEY = "neph_studentYear";
-const STUDENT_PIN_FLOW_MODE_KEY = "neph_studentPinFlowMode";
-const STUDENT_PENDING_JOIN_CODE_KEY = "neph_studentPendingJoinCode";
-const STUDENT_YEAR_OPTIONS = ["MS3", "MS4"] as const;
-type StudentLoginMode = "first_time" | "returning";
-type StudentAuthSessionKind = "none" | "guest" | "verified";
-type StudentEmailFlowState = "idle" | "link_sent" | "needs_completion" | "pin_setup";
-type StudentPinFlowMode = "create" | "reset";
 
 interface DeferredInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -94,7 +84,7 @@ interface DeferredInstallPromptEvent extends Event {
 
 function extractMissedTopics(
   answers: Array<{ qIdx: number; correct: boolean }>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   questions: any[],
 ): string[] {
   const topics = new Set<string>();
@@ -107,81 +97,6 @@ function extractMissedTopics(
   return Array.from(topics);
 }
 
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-function getStoredStudentPinFlowMode(): StudentPinFlowMode | null {
-  if (typeof window === "undefined") return null;
-  const value = window.localStorage.getItem(STUDENT_PIN_FLOW_MODE_KEY);
-  return value === "create" || value === "reset" ? value : null;
-}
-
-function setStoredStudentPinFlowMode(mode: StudentPinFlowMode | null): void {
-  if (typeof window === "undefined") return;
-  if (mode) {
-    window.localStorage.setItem(STUDENT_PIN_FLOW_MODE_KEY, mode);
-  } else {
-    window.localStorage.removeItem(STUDENT_PIN_FLOW_MODE_KEY);
-  }
-}
-
-function clearEmailLinkParamsFromUrl(): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  if (!url.search && !url.hash) return;
-  url.search = "";
-  url.hash = "";
-  window.history.replaceState({}, document.title, url.toString());
-}
-
-function formatStudentAuthError(error: unknown): string {
-  const code = typeof error === "object" && error && "code" in error && typeof error.code === "string"
-    ? error.code
-    : "";
-  const message = error instanceof Error ? error.message : "";
-
-  if (code === "auth/invalid-login-credentials" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
-    return "That email and PIN did not match. Try again or verify your email to set a new PIN.";
-  }
-  if (code === "auth/user-not-found") {
-    return "We couldn't find a student account for that email yet. Use First time to verify your email and create your PIN.";
-  }
-  if (code === "auth/too-many-requests") {
-    return "Too many attempts. Wait a bit, then try again or verify your email again.";
-  }
-  if (code === "auth/quota-exceeded") {
-    return "We’ve hit Firebase’s daily email sign-in limit for now. Try again after the quota resets, or ask the site owner to enable billing for higher email-link limits.";
-  }
-  if (code === "auth/invalid-email") return "Enter a valid email address.";
-  if (code === "auth/invalid-pin" || message === "auth/invalid-pin") {
-    return `Use a ${STUDENT_AUTH_PIN_LENGTH}-digit PIN.`;
-  }
-  if (code === "auth/invalid-action-code" || code === "auth/expired-action-code") {
-    return "That verification link is no longer valid. Send a fresh link and try again.";
-  }
-  if (code === "auth/operation-not-allowed") {
-    return "Student email sign-in is not available yet. Ask your attending for help.";
-  }
-  if (code === "auth/unauthorized-continue-uri" || code === "auth/invalid-continue-uri") {
-    return "This verification link is not available from this site. Ask your attending for a fresh link.";
-  }
-  if (code === "auth/requires-recent-login") {
-    return "Verify your email again, then create a new PIN.";
-  }
-  if (code === "auth/weak-password") {
-    return `Use a ${STUDENT_AUTH_PIN_LENGTH}-digit PIN.`;
-  }
-  if (message === "student/unauthorized") {
-    return "That account is reserved for admin access. Use the admin login instead.";
-  }
-  if (message === "auth/invalid-action-link") {
-    return "Open the email verification link again to finish signing in.";
-  }
-  return message || "Unable to finish student sign-in right now.";
-}
-
-
 function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const isMobile = useIsMobile();
   const adminTapRef = useRef<number[]>([]);
@@ -193,48 +108,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [tab, setTab] = useState("today");
   const [subView, setSubView] = useState<SubView>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
-  // Tracks locally-mutated patients that haven't been flushed to Firestore yet.
-  // Protects against multi-device "last writer wins": when another device's
-  // stale auto-save echoes back via the listener, we keep the local version
-  // for any ID still in `dirty` (adds/edits/discharges/follow-ups) and drop
-  // any ID still in `removed`. Both sets are cleared once our 2s debounce
-  // flushes — at that point our state is canonical until the next mutation.
-  const pendingDirtyPatientIdsRef = useRef<Set<string | number>>(new Set());
-  const pendingRemovedPatientIdsRef = useRef<Set<string | number>>(new Set());
-  const markPatientDirty = (id: string | number) => {
-    pendingRemovedPatientIdsRef.current.delete(id);
-    pendingDirtyPatientIdsRef.current.add(id);
-  };
-  const markPatientRemoved = (id: string | number) => {
-    pendingDirtyPatientIdsRef.current.delete(id);
-    pendingRemovedPatientIdsRef.current.add(id);
-  };
   const [weeklyScores, setWeeklyScores] = useState<WeeklyScores>({});
   const [preScore, setPreScore] = useState<QuizScore | null>(null);
   const [postScore, setPostScore] = useState<QuizScore | null>(null);
-  const [studentName, setStudentName] = useState("");
-  const [studentYear, setStudentYear] = useState("");
-  const [studentPin, setStudentPin] = useState("");
-  const [studentPinConfirm, setStudentPinConfirm] = useState("");
-  const [studentEmail, setStudentEmail] = useState("");
-  const [loginMode, setLoginMode] = useState<StudentLoginMode>("first_time");
-  const [authSessionKind, setAuthSessionKind] = useState<StudentAuthSessionKind>("none");
-  const [emailFlowState, setEmailFlowState] = useState<StudentEmailFlowState>("idle");
-  const [pinFlowMode, setPinFlowMode] = useState<StudentPinFlowMode>("create");
-  const [authSubmitting, setAuthSubmitting] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [authNotice, setAuthNotice] = useState("");
-  const [nameSet, setNameSet] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [studentId, setStudentId] = useState("");
   const [curriculum, setCurriculum] = useState(WEEKLY);
   const [articles, setArticles] = useState(ARTICLES);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [rotationCode, setRotationCodeState] = useState(store.getRotationCode() || "");
-  const [joinCode, setJoinCode] = useState("");
-  const [joinError, setJoinError] = useState("");
-  const [joining, setJoining] = useState(false);
   const [gamification, setGamification] = useState<Gamification>({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
   const [sharedSettings, setSharedSettings] = useState<SharedSettings | null>(null);
   const [completedItems, setCompletedItems] = useState<CompletedItems>({ articles: {}, studySheets: {}, cases: {}, decks: {}, consultTopics: {} });
@@ -246,54 +126,123 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const [clinicGuideTemplates, setClinicGuideTemplates] = useState<ClinicGuideTemplates>(() => normalizeClinicGuideTemplates());
   const [studySheets, setStudySheets] = useState<StudySheetsData>(() => normalizeStudySheets());
-  const [joinedAt, setJoinedAt] = useState<string | null>(null);
   const [installPromptEvent, setInstallPromptEvent] = useState<DeferredInstallPromptEvent | null>(null);
   const [installPromptDismissed, setInstallPromptDismissed] = useState(() => localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === "1");
   // Phase 1 (spec §12): accessible logout confirmation — replaces window.confirm.
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
-  const [joinConfirmOpen, setJoinConfirmOpen] = useState(false);
   // Phase 2 (spec §01): profile sheet holds name, code, theme toggle, end-session.
   const [profileOpen, setProfileOpen] = useState(false);
   const online = useOnline();
-  const [pendingSyncCount, setPendingSyncCount] = useState(() => store.getPendingSyncCount());
-  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Latest student-doc updatedAt we know about — multi-device bookkeeping shared by
+  // both hooks: useStudentAuth stamps it on join/profile writes, useStudentSync stamps
+  // it on save/flush and gates the student-data listener on it to skip stale echoes.
   const latestStudentUpdateRef = useRef<string | null>(null);
-  const loginAttemptsRef = useRef<{ count: number; lockedUntil: number }>({ count: 0, lockedUntil: 0 });
-  const studentSyncIdentity = useMemo(() => {
-    const normalizedEmail = normalizeEmail(studentEmail);
-    if (authSessionKind === "verified") {
-      return {
-        authType: "email_link",
-        ...(normalizedEmail ? { email: normalizedEmail } : {}),
-      };
-    }
-    return {
-      authType: "guest",
-    };
-  }, [authSessionKind, studentEmail]);
 
-  const applyStudentUser = async (user: User | null) => {
-    if (!user) {
-      setStudentId("");
-      setAuthSessionKind("none");
-      return;
-    }
+  const {
+    studentName, setStudentName,
+    studentYear, setStudentYear,
+    studentPin, setStudentPin,
+    studentPinConfirm, setStudentPinConfirm,
+    studentEmail, setStudentEmail,
+    loginMode, setLoginMode,
+    authSessionKind, setAuthSessionKind,
+    emailFlowState, setEmailFlowState,
+    pinFlowMode, setPinFlowMode,
+    authSubmitting, setAuthSubmitting,
+    authError, setAuthError,
+    authNotice, setAuthNotice,
+    nameSet, setNameSet,
+    studentId, setStudentId,
+    rotationCode, setRotationCodeState,
+    joinCode, setJoinCode,
+    joinError, setJoinError,
+    joining,
+    joinedAt, setJoinedAt,
+    joinConfirmOpen, setJoinConfirmOpen,
+    studentSyncIdentity,
+    bootstrapAuthSession,
+    handleLoginModeChange,
+    handleSendStudentSignInLink,
+    handleCompleteStudentEmailLink,
+    handleUseDifferentStudentAccount,
+    handleUpdateStudentName,
+    handleUpdateStudentYear,
+    handleJoinRotation,
+  } = useStudentAuth(
+    latestStudentUpdateRef,
+    patients,
+    weeklyScores,
+    preScore,
+    postScore,
+    gamification,
+    completedItems,
+    srQueue,
+    setPatients,
+    setWeeklyScores,
+    setPreScore,
+    setPostScore,
+    setGamification,
+    setCompletedItems,
+    setBookmarks,
+    setSrQueue,
+    setActivityLog,
+    setReflections,
+    setShowOnboarding,
+  );
 
-    setStudentId(user.uid);
-    await store.set("neph_studentId", user.uid);
-
-    if (user.isAnonymous) {
-      setAuthSessionKind("guest");
-      return;
-    }
-
-    const normalizedEmail = normalizeEmail(user.email || studentEmail || getSavedStudentSignInEmail());
-    setAuthSessionKind("verified");
-    if (normalizedEmail) {
-      setStudentEmail(normalizedEmail);
-      await store.set(STUDENT_EMAIL_KEY, normalizedEmail);
-    }
-  };
+  const {
+    loading,
+    pendingSyncCount,
+    syncTimerRef,
+    markPatientDirty,
+    markPatientRemoved,
+    flushStudentSync,
+  } = useStudentSync(
+    online,
+    latestStudentUpdateRef,
+    bootstrapAuthSession,
+    studentId,
+    setStudentId,
+    nameSet,
+    setNameSet,
+    studentName,
+    setStudentName,
+    studentYear,
+    setStudentYear,
+    studentEmail,
+    studentSyncIdentity,
+    rotationCode,
+    setStudentPin,
+    setJoinCode,
+    setJoinedAt,
+    patients,
+    setPatients,
+    weeklyScores,
+    setWeeklyScores,
+    preScore,
+    setPreScore,
+    postScore,
+    setPostScore,
+    gamification,
+    setGamification,
+    completedItems,
+    setCompletedItems,
+    bookmarks,
+    setBookmarks,
+    srQueue,
+    setSrQueue,
+    activityLog,
+    setActivityLog,
+    reflections,
+    setReflections,
+    setCurriculum,
+    setArticles,
+    setStudySheets,
+    setAnnouncements,
+    setSharedSettings,
+    setClinicGuides,
+    setClinicGuideTemplates,
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -330,13 +279,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     };
   }, []);
 
-  useEffect(() => store.onPendingSyncChanged(setPendingSyncCount), []);
-
-  useEffect(() => {
-    if (!online) return;
-    void store.flushPendingSyncQueue();
-  }, [online, studentId, nameSet]);
-
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
   };
@@ -368,222 +310,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     }
   };
 
-  const noteStudentUpdatedAt = (updatedAt: string) => {
-    latestStudentUpdateRef.current = updatedAt;
-  };
-
-  const resolveAssignedRotationCode = async (user: User, explicitCode: string): Promise<string> => {
-    const normalizedExplicitCode = explicitCode.trim().toUpperCase();
-    if (normalizedExplicitCode.length >= LIMITS.ROTATION_CODE_MIN) {
-      return normalizedExplicitCode;
-    }
-
-    const assignment = await store.getStudentAssignment(user.uid);
-    const assignedCode = assignment?.activeRotationCode?.trim().toUpperCase() || "";
-    if (assignedCode.length >= LIMITS.ROTATION_CODE_MIN) {
-      setJoinCode(assignedCode);
-      return assignedCode;
-    }
-
-    throw new Error("student/no-assigned-rotation");
-  };
-
-  const loadStudentDataForRotation = async (code: string, studentIdToLoad: string) => {
-    const previousRotationCode = store.getRotationCode();
-    store.setRotationCode(code);
-    try {
-      return await store.getStudentData(studentIdToLoad);
-    } finally {
-      store.setRotationCode(previousRotationCode);
-    }
-  };
-
-  // Load from storage on mount
-  useEffect(() => {
-    ensureGoogleFonts();
-    ensureLayoutStyles();
-    ensureThemeStyles();
-    (async () => {
-      let sessionStudentId = "";
-      const savedEmail = normalizeEmail((await store.get<string>(STUDENT_EMAIL_KEY)) || getSavedStudentSignInEmail());
-      const savedPinFlowMode = getStoredStudentPinFlowMode();
-      if (savedEmail) {
-        setStudentEmail(savedEmail);
-      }
-      if (savedPinFlowMode) {
-        setPinFlowMode(savedPinFlowMode);
-        setLoginMode(savedPinFlowMode === "create" ? "first_time" : "returning");
-      }
-
-      try {
-        const pendingEmailLink = await isStudentEmailLink();
-        if (pendingEmailLink) {
-          const activePinFlowMode = savedPinFlowMode || "create";
-          setPinFlowMode(activePinFlowMode);
-          setLoginMode(activePinFlowMode === "create" ? "first_time" : "returning");
-          if (savedEmail) {
-            const { user: completedUser, isNewUser } = await completeStudentSignInLink(savedEmail);
-            if (activePinFlowMode === "create" && !isNewUser) {
-              // Block re-using an existing email via First Time. Force them to Returning.
-              await signOutFirebase();
-              setStoredStudentPinFlowMode(null);
-              clearEmailLinkParamsFromUrl();
-              setEmailFlowState("idle");
-              setLoginMode("returning");
-              setPinFlowMode("reset");
-              setAuthError(`${savedEmail} is already registered. Switch to Returning and use your PIN, or send a reset link.`);
-            } else {
-              sessionStudentId = completedUser.uid;
-              await applyStudentUser(completedUser);
-              clearEmailLinkParamsFromUrl();
-              setStudentPin("");
-              setStudentPinConfirm("");
-              setEmailFlowState("pin_setup");
-              setAuthNotice(
-                activePinFlowMode === "reset"
-                  ? `Email verified for ${savedEmail}. Create a new ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to continue.`
-                  : `Email verified for ${savedEmail}. Create your ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to finish setup.`,
-              );
-            }
-          } else {
-            setEmailFlowState("needs_completion");
-            setAuthNotice("Enter the same email address to finish verification on this device.");
-          }
-        } else {
-          const user = await getCurrentStudentUser();
-          sessionStudentId = user?.uid || "";
-          await applyStudentUser(user);
-          if (user && !user.isAnonymous) {
-            if (savedPinFlowMode) {
-              setEmailFlowState("pin_setup");
-              setAuthNotice(
-                savedPinFlowMode === "reset"
-                  ? `Create a new ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to finish signing back in.`
-                  : `Create your ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to finish setup.`,
-              );
-            } else {
-              setLoginMode("returning");
-            }
-          } else if (!user && savedPinFlowMode) {
-            setStoredStudentPinFlowMode(null);
-          }
-        }
-      } catch (e) {
-        console.warn("Student session init failed:", e);
-        setEmailFlowState("idle");
-        setAuthError(formatStudentAuthError(e));
-      }
-
-      const name = await store.get<string>("neph_name");
-      const year = await store.get<string>(STUDENT_YEAR_KEY);
-      const pin = await store.get<string>("neph_pin");
-      const pendingJoinCode = await store.get<string>(STUDENT_PENDING_JOIN_CODE_KEY);
-      const sidFromStore = await store.get<string>("neph_studentId");
-      const storedJoinedAt = await store.get<string>(JOINED_AT_KEY);
-      const pts = await store.get<Patient[]>("neph_patients");
-      const ws = await store.get<WeeklyScores>("neph_weeklyScores");
-      const pre = await store.get<QuizScore>("neph_preScore");
-      const post = await store.get<QuizScore>("neph_postScore");
-
-      const sharedCurriculum = await store.getShared<typeof WEEKLY>(SHARED_KEYS.curriculum);
-      const sharedArticles = await store.getShared<typeof ARTICLES>(SHARED_KEYS.articles);
-      const sharedStudySheets = await store.getShared<Partial<StudySheetsData>>(SHARED_KEYS.studySheets);
-      const sharedAnnouncements = await store.getShared<Announcement[]>(SHARED_KEYS.announcements);
-      const sharedSettingsData = await store.getShared<SharedSettings>(SHARED_KEYS.settings);
-      const sharedClinicGuideTemplates = await store.getShared<Partial<ClinicGuideTemplates>>(SHARED_KEYS.clinicGuideTemplates);
-
-      if (!sessionStudentId && sidFromStore) setStudentId(sidFromStore);
-      if (name) { setStudentName(name); setNameSet(true); }
-      if (year) setStudentYear(year);
-      if (pin) setStudentPin(normalizeStudentPinInput(pin));
-      if (pendingJoinCode) setJoinCode(pendingJoinCode.trim().toUpperCase());
-      if (storedJoinedAt) setJoinedAt(storedJoinedAt);
-      if (pts) setPatients(pts);
-      if (ws) setWeeklyScores(ws);
-      if (pre) setPreScore(pre);
-      if (post) setPostScore(post);
-      if (sharedCurriculum) setCurriculum(sharedCurriculum);
-      if (sharedArticles) setArticles(sharedArticles);
-      if (sharedStudySheets) setStudySheets(normalizeStudySheets(sharedStudySheets));
-      if (sharedAnnouncements) setAnnouncements(sharedAnnouncements);
-      if (sharedSettingsData) setSharedSettings(sharedSettingsData);
-      if (sharedClinicGuideTemplates) setClinicGuideTemplates(normalizeClinicGuideTemplates(sharedClinicGuideTemplates));
-      const sharedClinicGuides = await store.getShared<ClinicGuideRecord[]>(SHARED_KEYS.clinicGuides);
-      const loadedGuides = sharedClinicGuides || [];
-      const { guides: updatedGuides } = ensureCurrentClinicGuide(loadedGuides);
-      setClinicGuides(updatedGuides);
-      const completed = await store.get<CompletedItems>("neph_completedItems");
-      if (completed) setCompletedItems(completed);
-      const savedBookmarks = await store.get<Bookmarks>("neph_bookmarks");
-      if (savedBookmarks) setBookmarks(savedBookmarks);
-      const savedSrQueue = await store.get<SrQueue>("neph_srQueue");
-      if (savedSrQueue) setSrQueue(savedSrQueue);
-      const savedLog = await store.get<ActivityLogEntry[]>("neph_activityLog");
-      if (savedLog) setActivityLog(savedLog);
-      const savedReflections = await store.get<ReflectionEntry[]>("neph_reflections");
-      if (savedReflections) setReflections(savedReflections);
-      const savedGamification = await store.get<Gamification>("neph_gamification");
-      if (savedGamification) setGamification(savedGamification);
-      setLoading(false);
-    })();
-  // `applyStudentUser` depends on `studentEmail`, but we only want bootstrap once.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Save on changes (consolidated)
-  useEffect(() => {
-    if (loading) return;
-    store.set("neph_patients", patients);
-    store.set("neph_weeklyScores", weeklyScores);
-    store.set("neph_preScore", preScore);
-    store.set("neph_postScore", postScore);
-    if (nameSet) store.set("neph_name", studentName);
-    if (studentYear) store.set(STUDENT_YEAR_KEY, studentYear);
-    if (studentEmail) store.set(STUDENT_EMAIL_KEY, normalizeEmail(studentEmail));
-    store.set("neph_completedItems", completedItems);
-    store.set("neph_bookmarks", bookmarks);
-    store.set("neph_srQueue", srQueue);
-    store.set("neph_activityLog", activityLog);
-    store.set("neph_reflections", reflections);
-    store.set("neph_gamification", gamification);
-
-    // Auto-sync to Firestore (debounced)
-    if (store.getRotationCode() && studentId && nameSet && studentName.trim()) {
-      if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
-      syncTimerRef.current = setTimeout(() => {
-        const updatedAt = new Date().toISOString();
-        const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
-        noteStudentUpdatedAt(updatedAt);
-        store.setStudentData(studentId, {
-          name: studentName,
-          ...studentSyncIdentity,
-          patients,
-          weeklyScores,
-          preScore,
-          postScore,
-          gamification,
-          completedItems,
-          bookmarks,
-          srQueue,
-          activityLog,
-          reflections,
-          updatedAt,
-        });
-        store.setTeamSnapshot(studentId, buildTeamSnapshot({
-          studentId,
-          name: studentName,
-          patients,
-          points,
-          updatedAt,
-        }));
-        // Our snapshot is the canonical state up to this point — clear pending
-        // mutation tracking so future foreign writes merge normally.
-        pendingDirtyPatientIdsRef.current.clear();
-        pendingRemovedPatientIdsRef.current.clear();
-      }, 2000);
-    }
-  }, [patients, weeklyScores, preScore, postScore, studentName, nameSet, loading, completedItems, bookmarks, srQueue, activityLog, reflections, gamification, studentId, studentEmail, studentSyncIdentity]);
-
   // Gamification recompute — intentionally excludes `gamification` from deps to prevent infinite loop
   useEffect(() => {
     if (loading || !nameSet) return;
@@ -600,92 +326,54 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       };
       setGamification(updated);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [patients, weeklyScores, preScore, postScore, nameSet, loading, completedItems, srQueue]);
-
-  // Real-time rotation data listener
-  useEffect(() => {
-    if (!store.getRotationCode()) return;
-    const unsub = store.onRotationChanged((data) => {
-      if (data.curriculum) setCurriculum(data.curriculum);
-      if (data.articles) setArticles(data.articles);
-      if (data.studySheets) setStudySheets(normalizeStudySheets(data.studySheets as Partial<StudySheetsData>));
-      if (data.announcements) setAnnouncements(data.announcements);
-      if (data.settings) setSharedSettings(data.settings);
-      if (data.clinicGuides) setClinicGuides(data.clinicGuides);
-      if (data.clinicGuideTemplates) setClinicGuideTemplates(normalizeClinicGuideTemplates(data.clinicGuideTemplates as Partial<ClinicGuideTemplates>));
-    });
-    return () => unsub();
-  }, [rotationCode]);
-
-  // Real-time listener: admin changes to this student's data (including resets)
-  useEffect(() => {
-    if (!store.getRotationCode() || !studentId || !nameSet) return;
-    const unsub = store.onStudentDataChanged(studentId, (data) => {
-      const incomingUpdatedAt = typeof data.updatedAt === "string" ? data.updatedAt : null;
-      if (incomingUpdatedAt) {
-        const latestKnownUpdatedAt = latestStudentUpdateRef.current;
-        if (latestKnownUpdatedAt && incomingUpdatedAt <= latestKnownUpdatedAt) return;
-        latestStudentUpdateRef.current = incomingUpdatedAt;
-      }
-      if (data.patients) {
-        const incoming = data.patients;
-        const incomingById = new Map(incoming.map((p: Patient) => [p.id, p]));
-        setPatients(currentLocal => {
-          // ID-based merge: keep local for any ID with pending dirty state,
-          // drop any ID still in pendingRemoved, and append incoming-only
-          // entries (additions made on the other device).
-          const result: Patient[] = [];
-          const seen = new Set<string | number>();
-          for (const local of currentLocal) {
-            if (pendingRemovedPatientIdsRef.current.has(local.id)) continue;
-            seen.add(local.id);
-            if (pendingDirtyPatientIdsRef.current.has(local.id)) {
-              result.push(local);
-            } else if (incomingById.has(local.id)) {
-              result.push(incomingById.get(local.id) as Patient);
-            }
-          }
-          for (const inc of incoming) {
-            if (!seen.has(inc.id)) result.push(inc);
-          }
-          return result;
-        });
-      }
-      if (data.weeklyScores) setWeeklyScores(data.weeklyScores);
-      // Use hasOwnProperty so admin resets that null-out scores still apply
-      if (Object.prototype.hasOwnProperty.call(data, "preScore")) setPreScore(data.preScore);
-      if (Object.prototype.hasOwnProperty.call(data, "postScore")) setPostScore(data.postScore);
-      if (data.gamification) setGamification(data.gamification);
-      if (data.completedItems) setCompletedItems(data.completedItems);
-      if (data.bookmarks) setBookmarks(data.bookmarks);
-      if (data.srQueue) setSrQueue(data.srQueue);
-      if (data.activityLog) setActivityLog(data.activityLog);
-      if (data.reflections) setReflections(data.reflections);
-      if (typeof data.name === "string" && data.name.trim()) {
-        setStudentName(data.name);
-        store.set("neph_name", data.name);
-      }
-      if (typeof data.year === "string" && data.year.trim()) {
-        setStudentYear(data.year);
-        store.set(STUDENT_YEAR_KEY, data.year);
-      }
-    });
-    return () => unsub();
-  }, [studentId, nameSet, rotationCode]);
 
   // Phase 3 (spec §01/§03): 5-tab IA — today · library · inpatients · team · me.
   // Old tab ids were aliased during 3a; Phase 3b removed the alias shim after all
   // call sites were canonicalized (commit 4da55c6).
-  const navigate = (t: string, sv: SubView = null) => {
-    const activity = describeStudentNavigation(sv, { articlesByWeek: articles, clinicGuides });
-    if (activity) {
-      logActivity(activity.type, activity.label, activity.detail);
-    }
+  const applyView = (t: string, sv: SubView) => {
     setTab(t);
     setSubView(sv);
     scrollWindowToTop();
   };
+
+  const navigate = (t: string, sv: SubView = null) => {
+    // No-op when re-selecting the current root tab — avoids stacking dead
+    // history entries that make Back appear to do nothing.
+    if (t === tab && sv === null && subView === null) return;
+    const activity = describeStudentNavigation(sv, { articlesByWeek: articles, clinicGuides });
+    if (activity) {
+      logActivity(activity.type, activity.label, activity.detail);
+    }
+    // Push a browser-history entry carrying the destination view so the hardware
+    // / browser Back gesture (and in-app Back, via goBack) retraces navigation.
+    window.history.pushState({ navView: { tab: t, subView: sv } }, "");
+    applyView(t, sv);
+  };
+
+  // Back = browser history back; the popstate handler restores the previous view.
+  // Routing every in-app Back through this keeps the in-app and hardware Back
+  // gestures in sync and returns the student to wherever they actually came from
+  // (e.g. a case opened from the Library returns to the Library, not Today).
+  const goBack = () => {
+    window.history.back();
+  };
+
+  // Hardware / browser Back integration (§ nav). Seed the root entry, then map
+  // popstate to the stored view so Back closes sub-views and retraces navigation
+  // instead of exiting the installed PWA from any depth.
+  useEffect(() => {
+    window.history.replaceState({ navView: { tab: "today", subView: null } }, "");
+    const onPop = (e: PopStateEvent) => {
+      const view = (e.state && (e.state as { navView?: { tab: string; subView: SubView } }).navView) || null;
+      setTab(view?.tab ?? "today");
+      setSubView(view?.subView ?? null);
+      scrollWindowToTop();
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
     const arr = bookmarks[type] || [];
@@ -699,455 +387,6 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       exists ? "Bookmark removed" : "Bookmark saved",
       buildBookmarkActivityDetail(type, itemId, articles),
     );
-  };
-
-  const flushStudentSync = async () => {
-    if (!store.getRotationCode() || !studentId || !nameSet || !studentName.trim()) return;
-
-    const updatedAt = new Date().toISOString();
-    const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
-    noteStudentUpdatedAt(updatedAt);
-
-    await Promise.all([
-      store.setStudentData(studentId, {
-        name: studentName,
-        ...studentSyncIdentity,
-        patients,
-        weeklyScores,
-        preScore,
-        postScore,
-        gamification,
-        completedItems,
-        bookmarks,
-        srQueue,
-        activityLog,
-        reflections,
-        updatedAt,
-      }),
-      store.setTeamSnapshot(studentId, buildTeamSnapshot({
-        studentId,
-        name: studentName,
-        patients,
-        points,
-        updatedAt,
-      })),
-    ]);
-  };
-
-  const handleLoginModeChange = (nextMode: StudentLoginMode) => {
-    setLoginMode(nextMode);
-    if (emailFlowState === "idle") {
-      setPinFlowMode(nextMode === "first_time" ? "create" : "reset");
-    }
-    setAuthError("");
-    setAuthNotice("");
-  };
-
-  const handleSendStudentSignInLink = async (mode: StudentPinFlowMode) => {
-    const normalizedEmail = normalizeEmail(studentEmail);
-    if (mode === "create" && !studentName.trim()) {
-      setAuthError("Enter your name before sending the email verification link.");
-      return;
-    }
-    if (!normalizedEmail) {
-      setAuthError("Enter your email address first.");
-      return;
-    }
-
-    setAuthSubmitting(true);
-    setAuthError("");
-    setAuthNotice("");
-    try {
-      if (mode === "create") {
-        const normalizedName = studentName.trim().slice(0, LIMITS.NAME_MAX);
-        if (normalizedName) {
-          await store.set("neph_name", normalizedName);
-        }
-        await store.set(STUDENT_PENDING_JOIN_CODE_KEY, joinCode.trim().toUpperCase());
-      }
-      await sendStudentSignInLink(normalizedEmail);
-      await store.set(STUDENT_EMAIL_KEY, normalizedEmail);
-      setPinFlowMode(mode);
-      setStoredStudentPinFlowMode(mode);
-      setEmailFlowState("link_sent");
-      setAuthNotice(
-        mode === "reset"
-          ? `Check ${normalizedEmail} for a verification link to reset your PIN.`
-          : `Check ${normalizedEmail} for your email verification link.`,
-      );
-    } catch (error) {
-      console.error("Student sign-in link failed:", error);
-      setAuthError(formatStudentAuthError(error));
-    }
-    setAuthSubmitting(false);
-  };
-
-  const handleCompleteStudentEmailLink = async () => {
-    const normalizedEmail = normalizeEmail(studentEmail);
-    if (!normalizedEmail) {
-      setAuthError("Enter the same email address that received the sign-in link.");
-      return;
-    }
-
-    setAuthSubmitting(true);
-    setAuthError("");
-    setAuthNotice("");
-    try {
-      const { user, isNewUser } = await completeStudentSignInLink(normalizedEmail);
-      if (pinFlowMode === "create" && !isNewUser) {
-        await signOutFirebase();
-        setStoredStudentPinFlowMode(null);
-        clearEmailLinkParamsFromUrl();
-        setEmailFlowState("idle");
-        setLoginMode("returning");
-        setPinFlowMode("reset");
-        setAuthError(`${normalizedEmail} is already registered. Switch to Returning and use your PIN, or send a reset link.`);
-        setAuthSubmitting(false);
-        return;
-      }
-      await applyStudentUser(user);
-      clearEmailLinkParamsFromUrl();
-      await store.set(STUDENT_EMAIL_KEY, normalizedEmail);
-      setStudentPin("");
-      setStudentPinConfirm("");
-      setEmailFlowState("pin_setup");
-      setAuthNotice(
-        pinFlowMode === "reset"
-          ? `Email verified. Create a new ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to continue.`
-          : `Email verified. Create your ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to finish setup.`,
-      );
-    } catch (error) {
-      console.error("Student email sign-in completion failed:", error);
-      setAuthError(formatStudentAuthError(error));
-    }
-    setAuthSubmitting(false);
-  };
-
-  const handleUseDifferentStudentAccount = async () => {
-    setAuthSubmitting(true);
-    setAuthError("");
-    setAuthNotice("");
-    try {
-      await signOutFirebase();
-    } catch (error) {
-      console.warn("Failed to clear trusted student session:", error);
-    }
-
-    clearSavedStudentSignInEmail();
-    setStoredStudentPinFlowMode(null);
-    localStorage.removeItem(STUDENT_EMAIL_KEY);
-    localStorage.removeItem("neph_studentId");
-    localStorage.removeItem("neph_pin");
-    localStorage.removeItem("neph_name");
-    localStorage.removeItem(STUDENT_PENDING_JOIN_CODE_KEY);
-    setStudentName("");
-    setStudentId("");
-    setStudentEmail("");
-    setStudentPin("");
-    setStudentPinConfirm("");
-    setNameSet(false);
-    setJoinCode("");
-    setJoinError("");
-    setAuthSessionKind("none");
-    setEmailFlowState("idle");
-    setPinFlowMode("create");
-    setLoginMode("first_time");
-    setAuthNotice("This device is signed out. Start with First time, or switch to Returning if you already have a PIN.");
-    setAuthSubmitting(false);
-  };
-
-  const handleUpdateStudentName = async (nextName: string) => {
-    const trimmedName = nextName.trim().slice(0, LIMITS.NAME_MAX);
-    if (!trimmedName) {
-      throw new Error("Enter your name before saving.");
-    }
-
-    setStudentName(trimmedName);
-    setNameSet(true);
-    await store.set("neph_name", trimmedName);
-
-    if (!store.getRotationCode() || !studentId) return;
-
-    const updatedAt = new Date().toISOString();
-    const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
-    noteStudentUpdatedAt(updatedAt);
-
-    await Promise.all([
-      store.setStudentData(studentId, {
-        name: trimmedName,
-        ...studentSyncIdentity,
-        updatedAt,
-      }),
-      store.setTeamSnapshot(studentId, buildTeamSnapshot({
-        studentId,
-        name: trimmedName,
-        patients,
-        points,
-        updatedAt,
-      })),
-    ]);
-  };
-
-  const handleUpdateStudentYear = async (nextYear: string) => {
-    const trimmedYear = nextYear.trim();
-    if (!trimmedYear) {
-      throw new Error("Choose your year before saving.");
-    }
-
-    setStudentYear(trimmedYear);
-    await store.set(STUDENT_YEAR_KEY, trimmedYear);
-
-    if (!store.getRotationCode() || !studentId) return;
-
-    const updatedAt = new Date().toISOString();
-    noteStudentUpdatedAt(updatedAt);
-
-    await store.setStudentData(studentId, {
-      year: trimmedYear,
-      ...studentSyncIdentity,
-      updatedAt,
-    });
-  };
-
-  const handleJoinRotation = async (skipEmailProfileConfirm = false) => {
-    const normalizedName = studentName.trim();
-    const normalizedJoinCode = joinCode.trim().toUpperCase();
-    const normalizedEmail = normalizeEmail(studentEmail);
-    const trustedSessionReady = authSessionKind === "verified";
-    const pinSetupPending = emailFlowState === "pin_setup";
-    const needsEmailCompletion = emailFlowState === "needs_completion";
-    const requiresManualRotationCode = loginMode === "first_time" || pinSetupPending || !trustedSessionReady;
-
-    if (loginMode === "first_time" && !normalizedName) {
-      setJoinError("Enter your name so we can create your student profile.");
-      return;
-    }
-    if (requiresManualRotationCode && normalizedJoinCode.length < LIMITS.ROTATION_CODE_MIN) {
-      setJoinError("Enter the rotation code from your attending.");
-      return;
-    }
-    if (pinSetupPending) {
-      if (!normalizedEmail) {
-        setAuthError("Enter the same email address you just verified.");
-        return;
-      }
-      if (studentPin.length !== STUDENT_AUTH_PIN_LENGTH) {
-        setAuthError(`Create a ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to continue.`);
-        return;
-      }
-      if (studentPin !== studentPinConfirm) {
-        setAuthError("Enter the same PIN twice.");
-        return;
-      }
-      if (!trustedSessionReady) {
-        setAuthError("Finish email verification before creating your PIN.");
-        return;
-      }
-    } else if (needsEmailCompletion) {
-      setAuthError("Complete email verification before joining this rotation.");
-      return;
-    } else if (!trustedSessionReady) {
-      if (!normalizedEmail) {
-        setAuthError("Enter your email address first.");
-        return;
-      }
-      if (studentPin.length !== STUDENT_AUTH_PIN_LENGTH) {
-        setAuthError(`Enter your ${STUDENT_AUTH_PIN_LENGTH}-digit PIN to continue.`);
-        return;
-      }
-    }
-
-    if (!normalizedName && loginMode === "first_time") {
-      setJoinError("Enter your name so we can create your student profile.");
-      return;
-    }
-
-    // Rate limiting: block after 5 failed attempts for 30 seconds
-    const now = Date.now();
-    const attempts = loginAttemptsRef.current;
-    if (attempts.lockedUntil > now) {
-      const secsLeft = Math.ceil((attempts.lockedUntil - now) / 1000);
-      setJoinError(`Too many attempts. Try again in ${secsLeft}s.`);
-      return;
-    }
-
-    setJoining(true);
-    setJoinError("");
-    setAuthError("");
-    try {
-      let user: User;
-      if (pinSetupPending) {
-        const signedInUser = await getCurrentStudentUser();
-        if (!signedInUser || signedInUser.isAnonymous) {
-          setAuthError("Finish email verification before creating your PIN.");
-          setJoining(false);
-          return;
-        }
-        user = signedInUser;
-      } else if (trustedSessionReady) {
-        const signedInUser = await getCurrentStudentUser();
-        if (!signedInUser || signedInUser.isAnonymous) {
-          setAuthError("Sign in again to continue.");
-          setJoining(false);
-          return;
-        }
-        user = signedInUser;
-      } else {
-        try {
-          user = await signInStudentWithPin(normalizedEmail, studentPin);
-        } catch (error) {
-          attempts.count++;
-          if (attempts.count >= 5) {
-            attempts.lockedUntil = Date.now() + 30_000;
-            attempts.count = 0;
-            setAuthError("Too many failed PIN attempts. Locked for 30 seconds.");
-          } else {
-            setAuthError(formatStudentAuthError(error));
-          }
-          setJoining(false);
-          return;
-        }
-        await applyStudentUser(user);
-        setStudentPin("");
-        setStudentPinConfirm("");
-        setStoredStudentPinFlowMode(null);
-        setEmailFlowState("idle");
-        setAuthNotice(`Signed in as ${normalizedEmail}. This device will stay signed in unless you sign out.`);
-      }
-
-      const effectiveJoinCode = await resolveAssignedRotationCode(user, normalizedJoinCode);
-      const exists = await store.validateRotationCode(effectiveJoinCode);
-      if (!exists) {
-        // Don't increment the PIN rate-limit counter: an unknown rotation code
-        // is a typo or a rotation the attending hasn't published yet, not a credential attack.
-        setJoinError("Rotation not found. Check the code with your attending and try again.");
-        setJoining(false);
-        return;
-      }
-
-      // Reset attempts on successful validation
-      attempts.count = 0;
-      attempts.lockedUntil = 0;
-
-      if (pinSetupPending) {
-        await setStudentPinCredential(studentPin);
-        await applyStudentUser(user);
-        setStudentPin("");
-        setStudentPinConfirm("");
-        setEmailFlowState("idle");
-        setStoredStudentPinFlowMode(null);
-        setAuthNotice(
-          pinFlowMode === "reset"
-            ? `PIN updated for ${normalizedEmail}. Use it next time you sign in.`
-            : `PIN created for ${normalizedEmail}. This device will stay signed in unless you sign out.`,
-        );
-      }
-
-      const sid = user.uid;
-      const existingData = await loadStudentDataForRotation(effectiveJoinCode, sid);
-      if (!existingData && !normalizedName) {
-        setJoinError("We couldn’t find your assigned rotation. Use First time if this is a new rotation for you.");
-        setJoining(false);
-        return;
-      }
-      if (!existingData && !skipEmailProfileConfirm) {
-        setJoinConfirmOpen(true);
-        setJoining(false);
-        return;
-      }
-
-      // Set rotation code first so store methods work
-      store.setRotationCode(effectiveJoinCode);
-      setRotationCodeState(effectiveJoinCode);
-      setJoinCode(effectiveJoinCode);
-      setStudentId(sid);
-
-      const localJoinedAt = joinedAt || await store.get<string>(JOINED_AT_KEY);
-      const studentIdentity = user.isAnonymous
-        ? { authType: "guest" as const }
-        : {
-            authType: "email_link" as const,
-            ...(normalizedEmail || user.email ? { email: normalizeEmail(user.email || normalizedEmail) } : {}),
-          };
-      if (existingData) {
-        // Returning student on the same account — restore their data
-        if (existingData.patients) setPatients(existingData.patients);
-        if (existingData.weeklyScores) setWeeklyScores(existingData.weeklyScores);
-        if (existingData.preScore) setPreScore(existingData.preScore);
-        if (existingData.postScore) setPostScore(existingData.postScore);
-        if (existingData.gamification) setGamification(existingData.gamification);
-        if (existingData.completedItems) setCompletedItems(existingData.completedItems);
-        if (existingData.bookmarks) setBookmarks(existingData.bookmarks);
-        if (existingData.srQueue) setSrQueue(existingData.srQueue);
-        if (existingData.activityLog) setActivityLog(existingData.activityLog);
-        if (existingData.reflections) setReflections(existingData.reflections);
-        if (typeof existingData.name === "string" && existingData.name.trim()) {
-          setStudentName(existingData.name);
-        }
-        if (typeof existingData.year === "string" && existingData.year.trim()) {
-          setStudentYear(existingData.year);
-          await store.set(STUDENT_YEAR_KEY, existingData.year);
-        }
-        const restoredJoinedAt = typeof existingData.joinedAt === "string" ? existingData.joinedAt : localJoinedAt;
-        if (restoredJoinedAt) {
-          setJoinedAt(restoredJoinedAt);
-          await store.set(JOINED_AT_KEY, restoredJoinedAt);
-        }
-        const updatedAt = new Date().toISOString();
-        noteStudentUpdatedAt(updatedAt);
-        await store.setStudentData(sid, {
-          name: typeof existingData.name === "string" && existingData.name.trim() ? existingData.name : normalizedName,
-          ...studentIdentity,
-          updatedAt,
-        });
-      } else {
-        // First join on this account for this rotation
-        const newJoinedAt = new Date().toISOString();
-        await store.setStudentData(sid, {
-          name: normalizedName,
-          ...(studentYear ? { year: studentYear } : {}),
-          ...studentIdentity,
-          patients,
-          weeklyScores,
-          preScore,
-          postScore,
-          gamification,
-          joinedAt: newJoinedAt,
-          status: "active",
-        });
-        setJoinedAt(newJoinedAt);
-        await store.set(JOINED_AT_KEY, newJoinedAt);
-      }
-
-      // Persist locally
-      setNameSet(true);
-      if (!localStorage.getItem("neph_hasSeenOnboarding")) setShowOnboarding(true);
-      await store.set("neph_name", (typeof existingData?.name === "string" && existingData.name.trim()) ? existingData.name : normalizedName);
-      localStorage.removeItem("neph_pin");
-      await store.set("neph_studentId", sid);
-      if (!user.isAnonymous) {
-        const resolvedEmail = normalizeEmail(user.email || normalizedEmail);
-        await store.set(STUDENT_EMAIL_KEY, resolvedEmail);
-        await store.setStudentAssignment(sid, {
-          activeRotationCode: effectiveJoinCode,
-          ...(resolvedEmail ? { email: resolvedEmail } : {}),
-        });
-      }
-      localStorage.removeItem(STUDENT_PENDING_JOIN_CODE_KEY);
-      if (existingData && !localJoinedAt && typeof existingData.joinedAt !== "string") {
-        const fallbackJoinedAt = new Date().toISOString();
-        setJoinedAt(fallbackJoinedAt);
-        await store.set(JOINED_AT_KEY, fallbackJoinedAt);
-      }
-    } catch (e) {
-      console.error("Join rotation error:", e);
-      if (e instanceof Error && e.message === "student/no-assigned-rotation") {
-        setJoinError("We couldn’t find your assigned rotation yet. Use First time with your rotation code if this is a new rotation.");
-      } else {
-        setJoinError("Unable to start your student session. Check your internet connection and try again. If it keeps happening, ask your attending for help.");
-      }
-    }
-    setJoining(false);
   };
 
   const handleSubmitReflection = async ({ saw, unclear }: { saw: string; unclear: string }) => {
@@ -1288,7 +527,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   if (loading) return (
     <div style={{ minHeight: "100vh", background: T.navyBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: T.pale, fontFamily: T.serif, fontSize: 18 }}>Loading...</div>
+      <div style={{ color: T.surface2, fontFamily: T.serif, fontSize: 18 }}>Loading...</div>
     </div>
   );
 
@@ -1447,7 +686,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         <div
           role="status" aria-live="polite"
           style={{
-            background: online ? T.ice : T.warning,
+            background: online ? T.surface2 : T.warning,
             color: online ? T.brand : T.warningInk,
             borderBottom: `1px solid ${T.line}`,
             padding: "8px 16px", fontSize: 13, fontWeight: 600,
@@ -1474,6 +713,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           onUpdateStudentName={handleUpdateStudentName}
           onUpdateStudentYear={handleUpdateStudentYear}
           onShowTutorial={() => { setProfileOpen(false); setShowOnboarding(true); }}
+          onOpenSaved={() => { setProfileOpen(false); navigate("today", { type: "bookmarks" }); }}
           onEndSession={requestLogout}
           onClose={() => setProfileOpen(false)}
         />
@@ -1485,7 +725,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Module ${subView.week} Quiz`}
-            onBack={() => navigate("today")}
+            onBack={goBack}
             onFinish={(score) => {
               setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]}));
               setSrQueue(prev => {
@@ -1506,7 +746,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const missedQuestions = missed.map(a => WEEKLY_QUIZZES[subView.week][a.qIdx]);
           return missedQuestions.length > 0 ? (
             <QuizEngine questions={missedQuestions} title={`Module ${subView.week} — Review Missed`}
-              onBack={() => navigate("today")}
+              onBack={goBack}
               onFinish={(score) => {
                 logActivity("review_missed", `Module ${subView.week} Review`, `${score.correct}/${score.total}`);
                 navigate("today");
@@ -1515,7 +755,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         })()}
         {tab === "today" && subView?.type === "preQuiz" && (
           <QuizEngine questions={PRE_QUIZ} title="Pre-Rotation Assessment"
-            onBack={() => navigate("today")}
+            onBack={goBack}
             onFinish={(score) => {
               setPreScore(score);
               setSrQueue(prev => {
@@ -1534,7 +774,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         )}
         {tab === "today" && subView?.type === "postQuiz" && (
           <QuizEngine questions={POST_QUIZ} title="Post-Rotation Assessment"
-            onBack={() => navigate("today")}
+            onBack={goBack}
             onFinish={(score) => {
               setPostScore(score);
               setSrQueue(prev => {
@@ -1552,7 +792,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           <AssessmentResultsView mode="post" score={postScore} comparisonScore={preScore} navigate={navigate} srDueCount={getDueItems(srQueue).length} />
         )}
         {tab === "today" && subView?.type === "articles" && (
-          <ArticlesView week={subView.week} onBack={() => navigate("today")} navigate={navigate} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
+          <ArticlesView week={subView.week} onBack={goBack} navigate={navigate} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
             const article = (articles[subView.week] || []).find((item) => item.url === url);
             const wasCompleted = Boolean(completedItems.articles[url]);
             setCompletedItems(prev => {
@@ -1567,10 +807,10 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           }} />
         )}
         {tab === "today" && subView?.type === "trials" && (
-          <LandmarkTrialsView week={subView.week} onBack={() => navigate("today")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
+          <LandmarkTrialsView week={subView.week} onBack={goBack} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} />
         )}
         {tab === "today" && subView?.type === "studySheets" && (
-          <StudySheetsView week={subView.week} initialSheetId={subView.sheetId} studySheets={studySheets} onBack={() => navigate("today")} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
+          <StudySheetsView week={subView.week} initialSheetId={subView.sheetId} studySheets={studySheets} onBack={goBack} navigate={navigate} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("studySheets", id)} onToggleComplete={(sheetId) => {
             const sheet = (studySheets[subView.week] || []).find((item) => item.id === sheetId);
             const wasCompleted = Boolean(completedItems.studySheets[sheetId]);
             setCompletedItems(prev => {
@@ -1585,7 +825,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           }} />
         )}
         {tab === "today" && subView?.type === "cases" && (
-          <CasesView week={subView.week} onBack={() => navigate("today")} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("cases", id)} onCaseComplete={(caseId, result) => {
+          <CasesView week={subView.week} onBack={goBack} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(id) => toggleBookmark("cases", id)} onCaseComplete={(caseId, result) => {
             setCompletedItems(prev => ({
               ...prev,
               cases: { ...prev.cases, [caseId]: { score: result.score, total: result.total, date: new Date().toISOString() } }
@@ -1595,7 +835,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         )}
         {tab === "today" && subView?.type === "resources" && (
           <ResourcesView
-            onBack={() => navigate("today")}
+            onBack={goBack}
             initialTab={subView.tab}
             focusWeek={subView.week}
             completedItems={completedItems}
@@ -1615,30 +855,20 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           />
         )}
         {tab === "today" && subView?.type === "abbreviations" && (
-          <AbbreviationsView onBack={() => navigate("today")} />
+          <AbbreviationsView onBack={goBack} />
         )}
         {tab === "today" && subView?.type === "faq" && (
-          <FaqView onBack={() => navigate("today")} />
+          <FaqView onBack={goBack} />
         )}
         {tab === "today" && subView?.type === "bookmarks" && (
-          <BookmarksView bookmarks={bookmarks} onBack={() => navigate("today")} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} studySheets={studySheets} />
+          <BookmarksView bookmarks={bookmarks} onBack={goBack} onNavigate={navigate} onToggleBookmark={toggleBookmark} articles={articles} studySheets={studySheets} />
         )}
         {tab === "today" && subView?.type === "browseByTopic" && (
-          <TopicBrowseView onBack={() => navigate("today")} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} studySheets={studySheets} />
+          <TopicBrowseView onBack={goBack} navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} completedItems={completedItems} studySheets={studySheets} />
         )}
         {tab === "today" && subView?.type === "topicDetail" && (
           <TopicBrowseView
-            onBack={() => {
-              if (subView.source === "studySheets" && typeof subView.week === "number") {
-                navigate("today", { type: "studySheets", week: subView.week });
-                return;
-              }
-              if (subView.source === "articles" && typeof subView.week === "number") {
-                navigate("today", { type: "articles", week: subView.week });
-                return;
-              }
-              navigate("today", { type: "browseByTopic" });
-            }}
+            onBack={goBack}
             navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void}
             completedItems={completedItems}
             studySheets={studySheets}
@@ -1650,31 +880,31 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const allWeeklyQs = [1,2,3,4].flatMap(w => (WEEKLY_QUIZZES[w] || []).map((q, i) => ({ ...q, _key: `weekly_${w}_${i}` })));
           return (
             <div style={{ padding: 16 }}>
-              <button onClick={() => navigate("today")} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
-              <h2 style={{ color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 6px" }}>Extra Practice</h2>
+              <button onClick={goBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, fontWeight: 600, cursor: "pointer", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>{"\u2190"} Back</button>
+              <h2 style={{ color: T.ink, fontFamily: T.serif, fontSize: 20, fontWeight: 700, margin: "0 0 6px" }}>Extra Practice</h2>
               <p style={{ color: T.sub, fontSize: 13, margin: "0 0 20px", lineHeight: 1.5 }}>Review missed questions or practice from the full question bank.</p>
               {dueKeys.length > 0 && (
                 <button onClick={() => navigate("today", { type: "srReview" })}
                   style={{ width: "100%", background: `linear-gradient(135deg, ${T.warning}, ${T.warning})`, borderRadius: 12, padding: 16, border: "none", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
                   <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDD04"}</span>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, color: "white", fontSize: 15 }}>Spaced Repetition Review</div>
-                    <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 2 }}>{dueKeys.length} question{dueKeys.length !== 1 ? "s" : ""} due — missed questions resurface at increasing intervals</div>
+                    <div style={{ fontWeight: 700, color: T.warningInk, fontSize: 15 }}>Spaced Repetition Review</div>
+                    <div style={{ fontSize: 13, color: T.warningInk, opacity: 0.85, marginTop: 2 }}>{dueKeys.length} question{dueKeys.length !== 1 ? "s" : ""} due — missed questions resurface at increasing intervals</div>
                   </div>
-                  <span style={{ background: "white", color: T.brand, fontSize: 13, fontWeight: 700, padding: "4px 10px", borderRadius: 12, flexShrink: 0 }}>{dueKeys.length}</span>
+                  <span style={{ background: T.surface, color: T.brand, fontSize: 13, fontWeight: 700, padding: "4px 10px", borderRadius: 12, flexShrink: 0 }}>{dueKeys.length}</span>
                 </button>
               )}
               <button onClick={() => navigate("today", { type: "practiceQuiz" })}
                 style={{ width: "100%", background: T.card, borderRadius: 12, padding: 16, border: `1.5px solid ${T.brand}`, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 14, marginBottom: 12 }}>
                 <span style={{ fontSize: 26, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Practice Questions</div>
+                  <div style={{ fontWeight: 700, color: T.ink, fontSize: 15 }}>Practice Questions</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>15 random questions from the full bank of {allWeeklyQs.length}</div>
                 </div>
               </button>
               {Object.keys(srQueue).length > 0 && (
-                <div style={{ background: T.ice, borderRadius: 10, padding: 14, marginTop: 8, borderLeft: `3px solid ${T.brand}` }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, marginBottom: 6 }}>SR Queue Stats</div>
+                <div style={{ background: T.surface2, borderRadius: 10, padding: 14, marginTop: 8, borderLeft: `3px solid ${T.brand}` }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, marginBottom: 6 }}>SR Queue Stats</div>
                   <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.6 }}>
                     <div>Total in queue: {Object.keys(srQueue).length}</div>
                     <div>Due now: {dueKeys.length}</div>
@@ -1693,7 +923,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           }).filter(Boolean);
           return dueQuestions.length > 0 ? (
             <QuizEngine questions={dueQuestions} title="Spaced Repetition Review"
-              onBack={() => navigate("today", { type: "extraPractice" })}
+              onBack={goBack}
               onFinish={(score) => {
                 const reviewAnswers = (score.answers || []).map(a => ({
                   questionKey: dueQuestions[a.qIdx]?._srKey,
@@ -1706,9 +936,9 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           ) : (
             <div style={{ padding: 40, textAlign: "center" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>{"\u2705"}</div>
-              <div style={{ color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>All caught up!</div>
+              <div style={{ color: T.ink, fontFamily: T.serif, fontSize: 18, fontWeight: 700, marginBottom: 8 }}>All caught up!</div>
               <div style={{ color: T.sub, fontSize: 13, marginBottom: 20 }}>No questions due for review right now.</div>
-              <button onClick={() => navigate("today", { type: "extraPractice" })} style={{ padding: "10px 24px", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
+              <button onClick={goBack} style={{ padding: "10px 24px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Back</button>
             </div>
           );
         })()}
@@ -1716,7 +946,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const allWeeklyQs = [1,2,3,4].flatMap(w => WEEKLY_QUIZZES[w] || []);
           return (
             <QuizEngine questions={allWeeklyQs} title="Practice Questions" questionCount={15}
-              onBack={() => navigate("today", { type: "extraPractice" })}
+              onBack={goBack}
               onFinish={(score) => {
                 logActivity("practice_quiz", "Practice Questions", `${score.correct}/${score.total}`);
                 navigate("today", { type: "extraPractice" });
@@ -1735,16 +965,17 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             studySheets={studySheets}
             completedItems={completedItems}
             weeklyScores={weeklyScores}
+            bookmarks={bookmarks}
           />
         )}
         {tab === "library" && subView?.type === "refDetail" && (
-          <RefDetailView refId={subView.id} onBack={() => navigate("library")} />
+          <RefDetailView refId={subView.id} onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "abbreviations" && (
-          <AbbreviationsView onBack={() => navigate("library")} />
+          <AbbreviationsView onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "trialLibrary" && (
-          <TrialLibraryView onBack={() => navigate("library")} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} initialSearch={subView?.searchTrial as string | undefined} />
+          <TrialLibraryView onBack={goBack} bookmarks={bookmarks} onToggleBookmark={(name) => toggleBookmark("trials", name)} initialSearch={subView?.searchTrial as string | undefined} />
         )}
         {tab === "library" && subView?.type === "clinicGuide" && (
           <ClinicGuideView
@@ -1752,29 +983,29 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
             topic={subView.topic || clinicGuides.find(g => g.date === subView.date)?.topic || "CKD"}
             isOverride={clinicGuides.find(g => g.date === subView.date && g.topic === (subView.topic || "CKD"))?.isOverride}
             clinicGuideTemplates={clinicGuideTemplates}
-            onBack={() => navigate("library")}
+            onBack={goBack}
           />
         )}
         {tab === "library" && subView?.type === "clinicGuideHistory" && (
-          <ClinicGuideHistoryView guides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} onSelect={(date, topic) => navigate("library", { type: "clinicGuide", date, topic })} onBack={() => navigate("library")} />
+          <ClinicGuideHistoryView guides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} onSelect={(date, topic) => navigate("library", { type: "clinicGuide", date, topic })} onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "inpatientGuide" && (
-          <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={() => navigate("library")} />
+          <InpatientGuideView topic={subView.topic as import("../data/inpatientGuides").InpatientGuideTopic} onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "akiTool" && (
-          <AkiToolView onBack={() => navigate("library")} onOpenCalculator={(id) => navigate("library", { type: "refDetail", id })} />
+          <AkiToolView onBack={goBack} onOpenCalculator={(id) => navigate("library", { type: "refDetail", id })} />
         )}
         {tab === "library" && subView?.type === "hyponatremiaTool" && (
-          <HyponatremiaToolView onBack={() => navigate("library")} />
+          <HyponatremiaToolView onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "gnTool" && (
-          <GnToolView onBack={() => navigate("library")} />
+          <GnToolView onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "rotationGuide" && (
-          <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={() => navigate("library")} />
+          <RotationGuideView guideId={subView.guideId as import("../data/rotationGuides").RotationGuideId} onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "faq" && (
-          <FaqView onBack={() => navigate("library")} />
+          <FaqView onBack={goBack} />
         )}
         {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} completedItems={completedItems} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} />}
@@ -1790,7 +1021,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           const active = tab === t.id;
           return (
             <button key={t.id} onClick={() => navigate(t.id)}
-              style={{ flex: 1, padding: "8px 0 6px", background: active ? T.ice : "none", border: "none", borderRadius: active ? 12 : 0, margin: "4px 2px", cursor: "pointer",
+              style={{ flex: 1, padding: "8px 0 6px", background: active ? T.surface2 : "none", border: "none", borderRadius: active ? 12 : 0, margin: "4px 2px", cursor: "pointer",
                 display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
                 color: active ? T.brand : T.sub,
                 transition: "background 0.15s ease, color 0.15s ease",
@@ -1807,453 +1038,3 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 }
 
 export default StudentApp;
-
-// ─────────────────────────────────────────────────────────────────────────
-// LibraryHub — Phase 3a shell (spec §03). Landing page for the Library tab.
-// For now it simply stacks the existing Guide and Refs sections behind a common
-// heading. Phase 3b+ restructures to the spec's week-filterable Library layout.
-// ─────────────────────────────────────────────────────────────────────────
-function LibraryHub({
-  navigate, clinicGuides, clinicGuideTemplates, currentWeek, totalWeeks, studySheets, completedItems, weeklyScores,
-}: {
-  navigate: (tab: string, sv?: SubView) => void;
-  clinicGuides: ClinicGuideRecord[];
-  clinicGuideTemplates: ClinicGuideTemplates;
-  currentWeek: number | null;
-  totalWeeks: number;
-  studySheets: StudySheetsData;
-  completedItems: CompletedItems;
-  weeklyScores: WeeklyScores;
-}) {
-  const weeks = Array.from({ length: totalWeeks }, (_, index) => index + 1).filter(week => WEEKLY[week]);
-
-  return (
-    <div>
-      <div style={{ padding: "20px 16px 8px", borderBottom: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Library</div>
-        <h1 style={{ margin: 0, fontFamily: T.serif, fontSize: 28, fontWeight: 600, color: T.ink, letterSpacing: -0.4 }}>Guides &amp; references</h1>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: T.ink2, lineHeight: 1.5 }}>
-          Clinical guides, rotation playbooks, landmark trials, and quick-reference material.
-        </p>
-      </div>
-      <section style={{ padding: "16px 16px 4px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-          <div>
-            <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>All modules</h2>
-            <p style={{ margin: "5px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.5 }}>
-              Study sheets, decks, cases, quizzes, and references by week.
-            </p>
-          </div>
-          {currentWeek && (
-            <div style={{ background: T.infoBg, color: T.info, border: `1px solid ${T.info}`, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700 }}>
-              Current: Module {currentWeek}
-            </div>
-          )}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
-          {weeks.map((week) => {
-            const wk = WEEKLY[week];
-            const sheets = studySheets[week] || [];
-            const decks = CURRICULUM_DECKS.filter(deck => deck.week === week);
-            const cases = WEEKLY_CASES[week] || [];
-            const quizTaken = (weeklyScores[week] || []).length > 0;
-            const sheetDone = sheets.filter(sheet => completedItems.studySheets?.[sheet.id]).length;
-            const deckDone = decks.filter(deck => completedItems.decks?.[deck.id]).length;
-            const caseDone = cases.filter(item => completedItems.cases?.[item.id]).length;
-            const quizDone = quizTaken ? 1 : 0;
-            const quizTotal = WEEKLY_QUIZZES[week]?.length ? 1 : 0;
-            const done = sheetDone + deckDone + caseDone + quizDone;
-            const total = sheets.length + decks.length + cases.length + quizTotal;
-            const referencesTotal = (ARTICLES[week] || []).length;
-            const moduleActions: Array<{ label: string; meta: string; onClick: () => void; disabled?: boolean }> = [
-              { label: "Study sheets", meta: `${sheetDone}/${sheets.length} complete`, onClick: () => navigate("today", { type: "studySheets", week }), disabled: sheets.length === 0 },
-              { label: "Decks", meta: `${deckDone}/${decks.length} reviewed`, onClick: () => navigate("today", { type: "resources", tab: "decks", week }), disabled: decks.length === 0 },
-              { label: "Cases", meta: `${caseDone}/${cases.length} done`, onClick: () => navigate("today", { type: "cases", week }), disabled: cases.length === 0 },
-              { label: "Quiz", meta: quizTotal ? (quizTaken ? "Attempt saved" : `${WEEKLY_QUIZZES[week].length} questions`) : "None", onClick: () => navigate("today", { type: "weeklyQuiz", week }), disabled: quizTotal === 0 },
-              { label: "References", meta: `${referencesTotal} article${referencesTotal !== 1 ? "s" : ""} and trials`, onClick: () => navigate("today", { type: "articles", week }), disabled: referencesTotal === 0 },
-            ];
-
-            return (
-              <div key={week} style={{ background: T.card, border: `1px solid ${currentWeek === week ? T.brand : T.line}`, borderRadius: 12, padding: 14 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: currentWeek === week ? T.brand : T.muted, textTransform: "uppercase", letterSpacing: 0.6 }}>
-                      Module {week}
-                    </div>
-                    <div style={{ marginTop: 3, color: T.navy, fontFamily: T.serif, fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>{wk.title}</div>
-                    <div style={{ marginTop: 4, color: T.sub, fontSize: 13, lineHeight: 1.45 }}>{wk.sub}</div>
-                  </div>
-                  <div style={{ background: done === total && total > 0 ? T.successBg : T.ice, color: done === total && total > 0 ? T.success : T.brand, borderRadius: 999, padding: "5px 9px", fontSize: 12, fontWeight: 800, whiteSpace: "nowrap" }}>
-                    {done}/{total}
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 6 }}>
-                  {moduleActions.map(action => (
-                    <button
-                      key={action.label}
-                      onClick={action.onClick}
-                      disabled={action.disabled}
-                      style={{
-                        background: action.disabled ? T.grayBg : T.bg,
-                        color: action.disabled ? T.muted : T.navy,
-                        border: `1px solid ${T.line}`,
-                        borderRadius: 8,
-                        padding: "9px 10px",
-                        cursor: action.disabled ? "not-allowed" : "pointer",
-                        textAlign: "left",
-                        minHeight: 58,
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1.2 }}>{action.label}</div>
-                      <div style={{ fontSize: 12, color: T.sub, marginTop: 3, lineHeight: 1.3 }}>{action.meta}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-      <GuideTab
-        navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void}
-        subView={null}
-        clinicGuides={clinicGuides}
-        clinicGuideTemplates={clinicGuideTemplates}
-      />
-      <div style={{ padding: "8px 16px", borderTop: `1px solid ${T.line}` }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, margin: "8px 0 4px" }}>Quick references</div>
-      </div>
-      <RefsTab navigate={navigate} />
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// ProfileSheet — Phase 2 (spec §01). Right-side sheet surfacing the items
-// that used to live in the cramped header: name, rotation code, competency
-// signal, theme toggle, sign out. ESC to close. Click backdrop to close.
-// ─────────────────────────────────────────────────────────────────────────
-function ProfileSheet({
-  studentName, studentYear, studentEmail, rotationCode, onUpdateStudentName, onUpdateStudentYear, onShowTutorial, onEndSession, onClose,
-}: {
-  studentName: string; studentYear: string; studentEmail: string; rotationCode: string | null;
-  onUpdateStudentName: (nextName: string) => Promise<void>;
-  onUpdateStudentYear: (nextYear: string) => Promise<void>;
-  onShowTutorial?: () => void;
-  onEndSession: () => void; onClose: () => void;
-}) {
-  const [draftName, setDraftName] = useState(studentName);
-  const [draftYear, setDraftYear] = useState(studentYear || STUDENT_YEAR_OPTIONS[0]);
-  const [savingName, setSavingName] = useState(false);
-  const [savingYear, setSavingYear] = useState(false);
-  const [nameMessage, setNameMessage] = useState("");
-  const [nameError, setNameError] = useState("");
-  const [yearMessage, setYearMessage] = useState("");
-  const [yearError, setYearError] = useState("");
-
-  // Phase 2.5: ESC to close + focus trap + focus return to opener on unmount.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  useEffect(() => {
-    setDraftName(studentName);
-  }, [studentName]);
-
-  useEffect(() => {
-    setDraftYear(studentYear || STUDENT_YEAR_OPTIONS[0]);
-  }, [studentYear]);
-
-  const panelRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(panelRef);
-
-  const trimmedDraftName = draftName.trim();
-  const canSaveName = Boolean(trimmedDraftName && trimmedDraftName !== studentName.trim() && !savingName);
-  const canSaveYear = Boolean(draftYear && draftYear !== studentYear && !savingYear);
-
-  const handleSaveName = async () => {
-    if (!canSaveName) return;
-    setSavingName(true);
-    setNameError("");
-    setNameMessage("");
-    try {
-      await onUpdateStudentName(trimmedDraftName);
-      setNameMessage("Display name updated.");
-    } catch (error) {
-      setNameError(error instanceof Error ? error.message : "Unable to save your name right now.");
-    }
-    setSavingName(false);
-  };
-
-  const handleSaveYear = async () => {
-    if (!canSaveYear) return;
-    setSavingYear(true);
-    setYearError("");
-    setYearMessage("");
-    try {
-      await onUpdateStudentYear(draftYear);
-      setYearMessage("Training year updated.");
-    } catch (error) {
-      setYearError(error instanceof Error ? error.message : "Unable to save your year right now.");
-    }
-    setSavingYear(false);
-  };
-
-  return (
-    <div
-      role="dialog" aria-modal="true" aria-labelledby="profile-sheet-title"
-      onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: T.overlay, zIndex: 9998, display: "flex", justifyContent: "flex-end", animation: "fadeIn 0.15s ease" }}
-    >
-      <div
-        ref={panelRef}
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: T.surface, borderLeft: `1px solid ${T.line}`,
-          width: "min(340px, 100%)", height: "100%",
-          display: "flex", flexDirection: "column",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "calc(12px + env(safe-area-inset-top, 0px)) 20px 8px", borderBottom: `1px solid ${T.line}`, flexShrink: 0 }}>
-          <h2 id="profile-sheet-title" style={{ margin: 0, fontFamily: T.serif, fontSize: 20, fontWeight: 600, color: T.ink, letterSpacing: -0.2 }}>Profile</h2>
-          <button
-            onClick={onClose} aria-label="Close profile"
-            style={{ background: "transparent", border: "none", minHeight: 44, minWidth: 44, borderRadius: 8, cursor: "pointer", color: T.ink, display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            <X size={20} strokeWidth={1.75} aria-hidden="true" />
-          </button>
-        </div>
-
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "12px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-
-        {/* Name + rotation code */}
-        <div style={{ paddingBottom: 12, borderBottom: `1px solid ${T.line}` }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>Student</div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: T.ink, marginBottom: 8 }}>{studentName || "—"}</div>
-          <div style={{ fontSize: 13, color: T.ink2, lineHeight: 1.5, marginBottom: 12 }}>
-            {studentEmail
-              ? "Use the same email later to reopen this account. If your display name is off, you can fix it here."
-              : "This display name appears throughout the rotation. You can update it here anytime."}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>
-              Display Name
-            </label>
-            <input
-              type="text"
-              value={draftName}
-              maxLength={LIMITS.NAME_MAX}
-              onChange={(event) => {
-                setDraftName(event.target.value.slice(0, LIMITS.NAME_MAX));
-                if (nameError) setNameError("");
-                if (nameMessage) setNameMessage("");
-              }}
-              placeholder="Your display name"
-              style={{
-                width: "100%",
-                minHeight: 44,
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: `1px solid ${nameError ? T.danger : T.line}`,
-                background: T.surface2,
-                color: T.ink,
-                fontSize: 14,
-                boxSizing: "border-box",
-              }}
-            />
-            {studentEmail && (
-              <div style={{ fontSize: 12, color: T.ink2 }}>
-                Account email: {studentEmail}
-              </div>
-            )}
-            {(nameMessage || nameError) && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: nameError ? T.danger : T.success,
-                  background: nameError ? T.dangerBg : T.successBg,
-                  border: `1px solid ${nameError ? T.danger : T.success}`,
-                  borderRadius: 10,
-                  padding: "8px 10px",
-                  lineHeight: 1.45,
-                }}
-              >
-                {nameError || nameMessage}
-              </div>
-            )}
-            <button
-              onClick={() => void handleSaveName()}
-              disabled={!canSaveName}
-              style={{
-                minHeight: 44,
-                borderRadius: 12,
-                border: "none",
-                background: canSaveName ? `linear-gradient(135deg, ${T.brand}, ${T.navy})` : T.surface2,
-                color: canSaveName ? "white" : T.muted,
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: canSaveName ? "pointer" : "default",
-                boxShadow: canSaveName ? "0 10px 24px rgba(0,0,0,0.18)" : "none",
-              }}
-            >
-              {savingName ? "Saving..." : "Save display name"}
-            </button>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5 }}>
-              Training Year
-            </label>
-            <select
-              value={draftYear}
-              onChange={(event) => {
-                setDraftYear(event.target.value);
-                if (yearError) setYearError("");
-                if (yearMessage) setYearMessage("");
-              }}
-              style={{
-                width: "100%",
-                minHeight: 44,
-                padding: "12px 14px",
-                borderRadius: 12,
-                border: `1px solid ${yearError ? T.danger : T.line}`,
-                background: T.surface2,
-                color: T.ink,
-                fontSize: 14,
-                boxSizing: "border-box",
-              }}
-            >
-              {STUDENT_YEAR_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-            {(yearMessage || yearError) && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: yearError ? T.danger : T.success,
-                  background: yearError ? T.dangerBg : T.successBg,
-                  border: `1px solid ${yearError ? T.danger : T.success}`,
-                  borderRadius: 10,
-                  padding: "8px 10px",
-                  lineHeight: 1.45,
-                }}
-              >
-                {yearError || yearMessage}
-              </div>
-            )}
-            <button
-              onClick={() => void handleSaveYear()}
-              disabled={!canSaveYear}
-              style={{
-                minHeight: 44,
-                borderRadius: 12,
-                border: "none",
-                background: canSaveYear ? T.brand : T.surface2,
-                color: canSaveYear ? "white" : T.muted,
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: canSaveYear ? "pointer" : "default",
-              }}
-            >
-              {savingYear ? "Saving..." : "Save training year"}
-            </button>
-          </div>
-          {rotationCode && (
-            <span style={{ display: "inline-block", fontSize: 13, fontFamily: T.mono, letterSpacing: 1, color: T.ink2, background: T.surface2, border: `1px solid ${T.line}`, padding: "4px 10px", borderRadius: 999, marginTop: 12 }}>
-              {rotationCode}
-            </span>
-          )}
-        </div>
-
-        {/* Theme */}
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 8 }}>Appearance</div>
-          <ThemeToggle variant="sheet" />
-        </div>
-
-        </div>
-
-        {/* Pinned footer — Tutorial + Sign out always visible */}
-        <div style={{ flexShrink: 0, padding: "12px 20px calc(16px + env(safe-area-inset-bottom, 0px))", borderTop: `1px solid ${T.line}`, display: "flex", flexDirection: "column", gap: 8, background: T.surface }}>
-          {onShowTutorial && (
-            <button
-              onClick={onShowTutorial}
-              style={{
-                width: "100%", minHeight: 40, padding: "10px 16px",
-                background: "transparent", border: `1px solid ${T.line}`, borderRadius: 10,
-                color: T.ink, fontSize: 14, fontWeight: 600,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                cursor: "pointer",
-              }}
-            >
-              Show tutorial
-            </button>
-          )}
-          <button
-            onClick={() => { onClose(); onEndSession(); }}
-            style={{
-              width: "100%", minHeight: 40, padding: "10px 16px",
-              background: "transparent", border: `1px solid ${T.line}`, borderRadius: 10,
-              color: T.ink, fontSize: 14, fontWeight: 600,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              cursor: "pointer",
-            }}
-          >
-            <LogOut size={16} strokeWidth={1.75} aria-hidden="true" />
-            Sign out
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// ConfirmSheet — accessible replacement for window.confirm (spec §12)
-// role=dialog + aria-modal + ESC to cancel + focus the confirm button on open.
-// Kept intentionally small; generalize if we need it in more sites.
-// ─────────────────────────────────────────────────────────────────────────
-function ConfirmSheet({
-  title, message, confirmLabel, cancelLabel, onConfirm, onCancel,
-}: {
-  title: string; message: string; confirmLabel: string; cancelLabel: string;
-  onConfirm: () => void; onCancel: () => void;
-}) {
-  // Phase 2.5: ESC to close + focus trap + focus return; initial focus on confirm.
-  const panelRef = useRef<HTMLDivElement>(null);
-  const confirmRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onCancel]);
-  useFocusTrap(panelRef, confirmRef);
-  return (
-    <div
-      role="dialog" aria-modal="true" aria-labelledby="confirmsheet-title" aria-describedby="confirmsheet-msg"
-      onClick={onCancel}
-      style={{ position: "fixed", inset: 0, background: T.overlay, zIndex: 9998, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 16, paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))", animation: "fadeIn 0.15s ease" }}
-    >
-      <div
-        ref={panelRef}
-        onClick={e => e.stopPropagation()}
-        style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, width: "100%", maxWidth: 420, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
-      >
-        <h2 id="confirmsheet-title" style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 600, color: T.ink, margin: "0 0 8px", letterSpacing: -0.2 }}>{title}</h2>
-        <p id="confirmsheet-msg" style={{ fontSize: 14, color: T.ink2, margin: "0 0 20px", lineHeight: 1.5 }}>{message}</p>
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <button onClick={onCancel}
-            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: T.ink, background: "transparent", border: `1px solid ${T.line}`, borderRadius: 12, cursor: "pointer" }}>
-            {cancelLabel}
-          </button>
-          <button ref={confirmRef} onClick={onConfirm}
-            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: T.brandInk, background: T.brand, border: "none", borderRadius: 12, cursor: "pointer" }}>
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { T } from "../../../data/constants";
-import { adminInput, adminLabel } from "../shared";
+import { adminInput, adminLabel, type AdminConfirmOptions } from "../shared";
 import type { Announcement } from "../../../types";
 import { backBtn, tinyBtn } from "../lib/styles";
 
-export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }: { announcements: Announcement[]; setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>>; onBack: () => void }) {
+export function AnnouncementsEditor({ announcements, setAnnouncements, onBack, requestConfirm }: { announcements: Announcement[]; setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>>; onBack: () => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean> }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<{ title: string; body: string; priority: Announcement["priority"] }>({ title: "", body: "", priority: "normal" });
 
@@ -15,13 +16,23 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
     setShowAdd(false);
   };
 
-  const remove = (id: number) => setAnnouncements(prev => prev.filter(a => a.id !== id));
+  const remove = async (id: number) => {
+    const target = announcements.find(a => a.id === id);
+    const confirmed = await requestConfirm({
+      title: "Delete announcement?",
+      message: `"${target?.title || "This announcement"}" will be removed for all students. This takes effect when you publish.`,
+      confirmLabel: "Delete",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+  };
 
   return (
     <div style={{ padding: 16 }}>
       <button onClick={onBack} style={backBtn}>← Back</button>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 20, margin: 0, fontWeight: 700 }}>Announcements</h2>
+        <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: 0, fontWeight: 700 }}>Announcements</h2>
         <button onClick={() => setShowAdd(!showAdd)}
           style={{ padding: "8px 14px", background: showAdd ? T.sub : T.warning, color: showAdd ? "white" : T.warningInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           {showAdd ? "Cancel" : "+ New"}
@@ -46,7 +57,7 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
               <option value="urgent">Urgent</option>
             </select>
           </div>
-          <button onClick={add} style={{ width: "100%", padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={add} style={{ width: "100%", padding: "12px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             Post Announcement
           </button>
         </div>
@@ -63,7 +74,7 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{a.title}</span>
+                  <span style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>{a.title}</span>
                   {a.priority !== "normal" && (
                     <span style={{ fontSize: 13, fontWeight: 700, color: prioColor, textTransform: "uppercase", background: prioColor + "15", padding: "1px 6px", borderRadius: 4 }}>{a.priority}</span>
                   )}
@@ -71,7 +82,7 @@ export function AnnouncementsEditor({ announcements, setAnnouncements, onBack }:
                 {a.body && <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, wordBreak: "break-word" }}>{a.body}</div>}
                 <div style={{ fontSize: 13, color: T.muted, marginTop: 6 }}>{new Date(a.date).toLocaleString()}</div>
               </div>
-              <button onClick={() => remove(a.id)} style={tinyBtn}>🗑</button>
+              <button onClick={() => void remove(a.id)} aria-label={`Delete announcement: ${a.title}`} title="Delete" style={{ ...tinyBtn, color: T.danger, display: "flex", alignItems: "center" }}><Trash2 size={14} aria-hidden="true" /></button>
             </div>
           </div>
         );

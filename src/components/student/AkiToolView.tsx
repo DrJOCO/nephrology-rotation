@@ -460,7 +460,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                   <div key={item.id} style={{ border: `1px solid ${T.line}`, borderRadius: 8, padding: 11, background: T.surface }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 6 }}>
                       <div style={{ minWidth: 0 }}>
-                        <div style={{ color: T.navy, fontSize: 13, lineHeight: 1.35 }}>
+                        <div style={{ color: T.ink, fontSize: 13, lineHeight: 1.35 }}>
                           <span style={{ fontWeight: 700 }}>{index + 1}.</span> <span style={{ fontWeight: 600 }}>{item.title}</span>
                         </div>
                         <div style={{ color: T.muted, fontSize: 12, marginTop: 2 }}>{item.bucket}</div>

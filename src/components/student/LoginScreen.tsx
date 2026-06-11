@@ -232,7 +232,7 @@ export default function LoginScreen({
           fontSize: 24,
           lineHeight: 1.25,
           fontWeight: 500,
-          color: T.navy,
+          color: T.ink,
           textAlign: "center",
           letterSpacing: -0.2,
         }}>
@@ -252,7 +252,7 @@ export default function LoginScreen({
                 <div style={{ fontSize: 12, fontWeight: 600, color: T.success, marginBottom: 4 }}>
                   Trusted device
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: T.navy, marginBottom: 4 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, marginBottom: 4 }}>
                   Signed in as {studentEmail || "your student account"}
                 </div>
                 <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.55 }}>
@@ -265,7 +265,7 @@ export default function LoginScreen({
                 style={{
                   border: `1px solid ${T.success}`,
                   background: "transparent",
-                  color: T.navy,
+                  color: T.ink,
                   borderRadius: 2,
                   padding: "8px 10px",
                   fontSize: 12,
@@ -429,8 +429,10 @@ export default function LoginScreen({
           <div style={{ marginBottom: 16 }}>
             <label style={fieldLabelStyle}>Rotation code</label>
             {rotationCodeLocked ? (
+              // Announced (not aria-hidden) so screen-reader users hear why the
+              // code can't be entered yet.
               <div
-                aria-hidden="true"
+                role="status"
                 style={{
                   ...monoInputStyle({ centered: true, disabled: true }),
                   minHeight: 36,

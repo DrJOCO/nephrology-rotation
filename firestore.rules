@@ -66,6 +66,26 @@ service cloud.firestore {
       return hasRotationDoc(rotationCode) && rotationAllowsAdmin(rotationData(rotationCode));
     }
 
+    // Ownership (transferring the rotation, editing the admin roster) is a strict
+    // subset of admin: it deliberately OMITS the adminUids-membership clause so a
+    // co-admin who was merely added to adminUids cannot rewrite ownerUid/adminUids
+    // to seize the rotation or lock out the owner. Only the owner (by uid or
+    // ownerEmail), the bootstrap admin, or a legacy/unclaimed doc qualifies.
+    function rotationAllowsOwner(data) {
+      return isAdmin()
+        && (
+          isBootstrapAdminEmail()
+          || (data.keys().hasAny(['ownerUid']) && data.ownerUid == request.auth.uid)
+          || (data.keys().hasAny(['ownerUid']) && isBootstrapLegacyOwnerUid(data.ownerUid))
+          || (request.auth.token.email != null && data.keys().hasAny(['ownerEmail']) && data.ownerEmail.lower() == signedInEmailLower())
+          || rotationLooksLegacy(data)
+        );
+    }
+
+    function isRotationOwner(rotationCode) {
+      return hasRotationDoc(rotationCode) && rotationAllowsOwner(rotationData(rotationCode));
+    }
+
     function isRotationStudent(rotationCode) {
       return isSignedIn()
         && exists(/databases/$(database)/documents/rotations/$(rotationCode)/students/$(request.auth.uid));
@@ -90,16 +110,23 @@ service cloud.firestore {
     }
 
     function hasValidTeamSnapshot(studentId) {
+      // Upper bounds are generous sanity ceilings (a full rotation tops out
+      // around ~400 pts / a few dozen patients) — they exist so a student
+      // can't write points: 999999 and vandalize the shared leaderboard.
       return request.resource.data.studentId == studentId
         && hasValidStudentName()
         && request.resource.data.points is int
         && request.resource.data.points >= 0
+        && request.resource.data.points <= 10000
         && request.resource.data.patientCount is int
         && request.resource.data.patientCount >= 0
+        && request.resource.data.patientCount <= 500
         && request.resource.data.activePatientCount is int
         && request.resource.data.activePatientCount >= 0
+        && request.resource.data.activePatientCount <= 500
         && request.resource.data.dischargedPatientCount is int
         && request.resource.data.dischargedPatientCount >= 0
+        && request.resource.data.dischargedPatientCount <= 500
         && request.resource.data.levelName is string
         && request.resource.data.levelName.size() > 0
         && request.resource.data.levelIcon is string
@@ -151,7 +178,12 @@ service cloud.firestore {
     }
 
     match /studentAssignments/{studentId} {
-      allow get: if isStudentOwner(studentId) || isAdmin();
+      // Assignment docs carry the student's email — readable by the student,
+      // the master admin, or an admin of the rotation the student is in
+      // (not every admin of any rotation).
+      allow get: if isStudentOwner(studentId)
+        || isBootstrapAdminEmail()
+        || (isAdmin() && isRotationAdmin(resource.data.activeRotationCode));
       allow list: if false;
       allow create, update: if isStudentOwner(studentId)
         && request.resource.data.studentId == studentId
@@ -162,7 +194,9 @@ service cloud.firestore {
         && request.resource.data.rotationCodes.size() > 0
         && request.resource.data.updatedAt is string
         && (!request.resource.data.keys().hasAny(['email']) || request.resource.data.email is string);
-      allow delete: if isStudentOwner(studentId) || isAdmin();
+      allow delete: if isStudentOwner(studentId)
+        || isBootstrapAdminEmail()
+        || (isAdmin() && isRotationAdmin(resource.data.activeRotationCode));
     }
 
     // ─── Rotation documents ────────────────────────────────────────
@@ -176,11 +210,21 @@ service cloud.firestore {
                     && request.resource.data.adminUids is list
                     && request.resource.data.adminUids.hasAny([request.auth.uid]);
 
-      allow update: if isRotationAdmin(rotationCode)
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['curriculum', 'articles', 'announcements', 'settings',
-                                 'clinicGuides', 'name', 'location', 'dates',
-                                 'archived', 'archivedAt', 'ownerUid', 'ownerEmail', 'adminUids']);
+      // Any rotation admin may edit content/metadata, but ONLY the owner may
+      // change ownership fields (ownerUid / ownerEmail / adminUids).
+      allow update: if (
+                      isRotationAdmin(rotationCode)
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['curriculum', 'articles', 'announcements', 'settings',
+                                   'clinicGuides', 'name', 'location', 'dates',
+                                   'archived', 'archivedAt'])
+                    ) || (
+                      isRotationOwner(rotationCode)
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['curriculum', 'articles', 'announcements', 'settings',
+                                   'clinicGuides', 'name', 'location', 'dates',
+                                   'archived', 'archivedAt', 'ownerUid', 'ownerEmail', 'adminUids'])
+                    );
 
       allow delete: if isRotationAdmin(rotationCode);
 

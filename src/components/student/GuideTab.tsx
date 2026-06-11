@@ -6,6 +6,7 @@ import { CLINIC_GUIDES, CLINIC_GUIDE_TOPICS, type ClinicGuideTemplates, type Cli
 import { INPATIENT_GUIDES, INPATIENT_GUIDE_TOPICS } from "../../data/inpatientGuides";
 import { ROTATION_GUIDES, ROTATION_GUIDE_IDS } from "../../data/rotationGuides";
 import { getCurrentOrNextFriday } from "../../utils/clinicRotation";
+import { dateKey } from "../../utils/date";
 import { useIsMobile } from "../../utils/helpers";
 import { BackButton } from "./shared";
 import type { ClinicGuideRecord } from "../../types";
@@ -40,17 +41,17 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
       <BackButton onClick={onBack} />
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 14, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 14, background: T.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
           {section.icon}
         </div>
         <div>
-          <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.2 }}>{section.title}</h2>
+          <h2 style={{ color: T.ink, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700, lineHeight: 1.2 }}>{section.title}</h2>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{section.sub}</div>
         </div>
       </div>
 
       {/* Intro */}
-      <div style={{ background: T.ice, borderRadius: 12, padding: 16, marginBottom: 16, borderLeft: `4px solid ${T.brand}` }}>
+      <div style={{ background: T.surface2, borderRadius: 12, padding: 16, marginBottom: 16, borderLeft: `4px solid ${T.brand}` }}>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6, wordBreak: "break-word" }}>{data.intro}</div>
       </div>
 
@@ -66,7 +67,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
                 {cat.emoji}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{cat.title}</div>
+                <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>{cat.title}</div>
                 <div style={{ fontSize: 13, color: T.muted, marginTop: 1 }}>{cat.items.length} items</div>
               </div>
               <span style={{ color: T.muted, fontSize: 14, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0 }}>›</span>
@@ -127,7 +128,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
               <Calculator size={18} strokeWidth={1.75} color={T.info} aria-hidden="true" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>AKI Differential Tool</div>
+              <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>AKI Differential Tool</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Cr trend, UOP, BP, exposures, UA, imaging, FENa/FEUrea, and ranked etiologies</div>
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
@@ -139,7 +140,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
               <Calculator size={18} strokeWidth={1.75} color={T.info} aria-hidden="true" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Hyponatremia Tool</div>
+              <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>Hyponatremia Tool</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Tonicity → impaired water excretion → volume status; correction caps, ODS risk, Adrogué–Madias</div>
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
@@ -151,7 +152,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
               <Calculator size={18} strokeWidth={1.75} color={T.info} aria-hidden="true" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>Glomerular Disease Tool</div>
+              <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>Glomerular Disease Tool</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Syndrome × complement → ranked GN differential, what positive serologies mean, and which to send next</div>
             </div>
             <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
@@ -167,7 +168,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
       {/* Inpatient Consult Guides — HERO (flat card + brand accent stripe) */}
       <div style={{ marginBottom: 14 }}>
         <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.brand}`, padding: 14 }}>
-          <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>Inpatient Consult Guides</div>
+          <div style={{ fontWeight: 700, color: T.ink, fontSize: 15 }}>Inpatient Consult Guides</div>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 2, marginBottom: 12, lineHeight: 1.45 }}>
             What to gather, how to present, red flags, and the assessment framework — by topic.
           </div>
@@ -183,7 +184,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
                     {g.icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, color: T.navy, fontSize: 13, lineHeight: 1.3 }}>{g.title}</div>
+                    <div style={{ fontWeight: 700, color: T.ink, fontSize: 13, lineHeight: 1.3 }}>{g.title}</div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>{g.subtitle}</div>
                   </div>
                   <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
@@ -197,10 +198,10 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
       {/* Clinic Guides */}
       {(() => {
         const friday = getCurrentOrNextFriday(new Date());
-        const dateStr = friday.toISOString().split("T")[0];
+        const dateStr = dateKey(friday);
         return (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Clinic Guides</div>
+            <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Clinic Guides</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
               CKD, diabetic kidney disease, lupus nephritis, hypertension, and transplant outpatient prep.
             </div>
@@ -218,7 +219,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
                   >
                     <span style={{ fontSize: 20, flexShrink: 0 }}>{template.icon}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.3 }}>{topic}</div>
+                      <div style={{ fontWeight: 600, color: T.ink, fontSize: 13, lineHeight: 1.3 }}>{topic}</div>
                       <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>{template.subtitle}</div>
                     </div>
                   </button>
@@ -235,7 +236,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
 
       {/* Rotation workflow */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Rotation Workflow</div>
+        <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Rotation Workflow</div>
         <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
           Use these for the new-consult workup, presentation, and daily follow-up.
         </div>
@@ -249,7 +250,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
                   cursor: "pointer", textAlign: "left" }}>
                 <span style={{ fontSize: 20, flexShrink: 0 }}>{g.icon}</span>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.3 }}>{g.title}</div>
+                  <div style={{ fontWeight: 600, color: T.ink, fontSize: 13, lineHeight: 1.3 }}>{g.title}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>{g.subtitle}</div>
                 </div>
               </button>
@@ -264,7 +265,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
         const sections = GUIDE_SECTIONS.filter(s => KEEP_IDS.includes(s.id));
         return (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontWeight: 700, color: T.navy, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Rotation Playbook</div>
+            <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Rotation Playbook</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
               Practical guides for orientation, clinic visits, note-writing, and what nephrology looks like long-term.
             </div>
@@ -276,7 +277,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
                     cursor: "pointer", textAlign: "left" }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }}>{sec.icon}</span>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: T.navy, fontSize: 13, lineHeight: 1.3 }}>{sec.title}</div>
+                    <div style={{ fontWeight: 600, color: T.ink, fontSize: 13, lineHeight: 1.3 }}>{sec.title}</div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>{sec.sub}</div>
                   </div>
                 </button>
@@ -290,11 +291,11 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
       <button onClick={() => navigate("library", { type: "faq" })}
         style={{ display: "flex", width: "100%", alignItems: "center", gap: 14, padding: 14,
           background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left", marginBottom: 10 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: T.surface2, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           <HelpCircle size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, color: T.navy, fontSize: 14 }}>Rotation FAQ</div>
+          <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>Rotation FAQ</div>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{RESOURCES.faq.length} common rotation questions answered</div>
         </div>
         <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>›</span>
@@ -308,7 +309,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
           <BookOpen size={18} strokeWidth={1.75} color={T.warning} aria-hidden="true" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, color: T.navy, fontSize: 14 }}>Landmark Trial Library</div>
+          <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>Landmark Trial Library</div>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>Browse all {ALL_LANDMARK_TRIALS.length} landmark nephrology trials by category</div>
         </div>
         <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>›</span>

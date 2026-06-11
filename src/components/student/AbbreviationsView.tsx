@@ -12,7 +12,7 @@ export default function AbbreviationsView({ onBack }) {
   return (
     <div style={{ padding: 16 }}>
       <BackButton onClick={onBack} />
-      <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Nephrology Abbreviations</h2>
+      <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Nephrology Abbreviations</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 12px" }}>{ABBREVIATIONS.length} terms you'll encounter on rotation</p>
 
       {/* Search */}
@@ -37,7 +37,7 @@ export default function AbbreviationsView({ onBack }) {
       </div>
 
       {!search && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 14, borderLeft: `4px solid ${T.brand}` }}>
+        <div style={{ background: T.surface2, borderRadius: 12, padding: 14, marginTop: 14, borderLeft: `4px solid ${T.brand}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4 }}>PRO TIP</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
             If you see an abbreviation in a note you don't recognize, search here first. The most common ones you'll encounter daily: Cr, GFR, FENa, UA, UOP, I&Os, HD, PD, AVF, BMP, AG.

@@ -9,6 +9,7 @@ import { WEEKLY_QUIZZES, PRE_QUIZ_BY_WEEK, POST_QUIZ_BY_WEEK } from "../data/qui
 import { WEEKLY_CASES } from "../data/cases";
 import { CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEK_TOPIC_MAP } from "../components/student/shared";
+import { todayKey } from "./date";
 
 interface QuizAttempt {
   correct: number;
@@ -251,10 +252,8 @@ export function getRecommendations(state: RecommendationState): Recommendations 
   const suggestedActions: SuggestedAction[] = [];
 
   // 1. Review SR items if due
-  const dueCount = Object.values(srQueue).filter(item => {
-    const today = new Date().toISOString().slice(0, 10);
-    return item.nextReviewDate <= today;
-  }).length;
+  const today = todayKey();
+  const dueCount = Object.values(srQueue).filter(item => item.nextReviewDate <= today).length;
 
   if (dueCount > 0) {
     suggestedActions.push({

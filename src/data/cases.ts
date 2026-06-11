@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════
 //  Clinical Case-Based Learning — Weekly Vignettes
-//  12 cases (3/week), 3-5 questions each
+//  17 cases across modules 1-4 (5/4/4/4), 3-4 questions each
 // ═══════════════════════════════════════════════════════════════════════
 
 export const WEEKLY_CASES = {
@@ -214,7 +214,7 @@ A diagnostic paracentesis shows 380 PMNs/\u03bcL in the ascitic fluid.`,
             "Increase the IV albumin dose and wait another 48 hours",
           ],
           answer: 2,
-          explanation: "Terlipressin + albumin is the standard treatment for HRS-AKI (CONFIRM trial: 39% vs 18% HRS reversal). Terlipressin causes splanchnic vasoconstriction, counteracting the vasodilation that drives HRS pathophysiology. Important caveat: assess for volume overload before starting terlipressin (respiratory failure risk). Norepinephrine + albumin is an alternative if terlipressin is unavailable. Dialysis is reserved for standard indications (AEIOU). Liver transplant remains the definitive treatment.",
+          explanation: "Terlipressin + albumin is the standard treatment for HRS-AKI (CONFIRM trial: 32% vs 17% HRS reversal). Terlipressin causes splanchnic vasoconstriction, counteracting the vasodilation that drives HRS pathophysiology. Important caveat: assess for volume overload before starting terlipressin (respiratory failure risk). Norepinephrine + albumin is an alternative if terlipressin is unavailable. Dialysis is reserved for standard indications (AEIOU). Liver transplant remains the definitive treatment.",
         },
         {
           q: "The patient's MELD score is 28. Why is this relevant to HRS management?",

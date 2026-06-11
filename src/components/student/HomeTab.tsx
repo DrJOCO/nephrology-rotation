@@ -126,7 +126,7 @@ function getPearlIndex(date: Date): number {
 
 function PearlToast({ tip, onDismiss }: { tip: string; onDismiss: () => void }) {
   return (
-    <section style={{ background: T.ice, borderRadius: 8, border: `1px solid ${T.pale}`, padding: "14px 16px", marginBottom: 16 }}>
+    <section style={{ background: T.surface2, borderRadius: 8, border: `1px solid ${T.surface2}`, padding: "14px 16px", marginBottom: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 8 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Sparkles size={16} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
@@ -628,7 +628,7 @@ export default function HomeTab({
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
           <div>
-            <h1 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>Today</h1>
+            <h1 style={{ margin: 0, color: T.ink, fontFamily: T.serif, fontSize: 30, fontWeight: 700, letterSpacing: -0.5 }}>Today</h1>
             <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.5, maxWidth: 520 }}>
               {headerSub}
             </p>
@@ -644,7 +644,7 @@ export default function HomeTab({
       <div style={{ background: heroStyle.background, borderRadius: 20, padding: 18, border: `1.5px solid ${heroStyle.border}`, marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 16 }}>
           <div>
-            <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
+            <h2 style={{ margin: 0, color: T.ink, fontFamily: T.serif, fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
               {heroCard.title}
             </h2>
             <p style={{ margin: "8px 0 0", color: T.text, fontSize: 14, lineHeight: 1.55, maxWidth: 560 }}>
@@ -664,7 +664,7 @@ export default function HomeTab({
               style={{
                 width: "100%",
                 background: index === 0 ? T.brand : T.card,
-                color: index === 0 ? T.brandInk : T.navy,
+                color: index === 0 ? T.brandInk : T.ink,
                 border: index === 0 ? "none" : `1px solid ${T.line}`,
                 borderRadius: 14,
                 padding: "14px 14px",
@@ -678,7 +678,7 @@ export default function HomeTab({
             >
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700 }}>{action.label}</div>
-                <div style={{ fontSize: 13, color: index === 0 ? "rgba(255,255,255,0.8)" : T.sub, marginTop: 3 }}>
+                <div style={{ fontSize: 13, color: index === 0 ? T.brandInk : T.sub, opacity: index === 0 ? 0.85 : 1, marginTop: 3 }}>
                   {action.meta}
                 </div>
               </div>
@@ -820,7 +820,7 @@ export default function HomeTab({
         <section style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", marginBottom: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
             <div>
-              <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 19, fontWeight: 700 }}>
+              <h2 style={{ margin: 0, color: T.ink, fontFamily: T.serif, fontSize: 19, fontWeight: 700 }}>
                 Consult-linked learning
               </h2>
               <p style={{ margin: "5px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.5 }}>
@@ -831,7 +831,7 @@ export default function HomeTab({
             </div>
             <button
               onClick={() => navigate("patients")}
-              style={{ background: T.ice, color: T.brand, border: `1px solid ${T.line}`, borderRadius: 999, padding: "7px 11px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}
+              style={{ background: T.surface2, color: T.brand, border: `1px solid ${T.line}`, borderRadius: 999, padding: "7px 11px", fontSize: 13, fontWeight: 800, cursor: "pointer" }}
             >
               {activePatientList.length} active
             </button>
@@ -858,7 +858,7 @@ export default function HomeTab({
                   onClick={() => openSuggestedGroup(group)}
                   style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "10px 11px", textAlign: "left", cursor: "pointer", minHeight: 70 }}
                 >
-                  <div style={{ fontSize: 13, color: T.navy, fontWeight: 800, lineHeight: 1.25 }}>{group.topic}</div>
+                  <div style={{ fontSize: 13, color: T.ink, fontWeight: 800, lineHeight: 1.25 }}>{group.topic}</div>
                   <div style={{ fontSize: 12, color: T.sub, marginTop: 4, lineHeight: 1.35 }}>{getSuggestedGroupMeta(group)}</div>
                 </button>
               ))}
@@ -875,7 +875,7 @@ export default function HomeTab({
                   style={{ background: T.grayBg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "9px 10px", cursor: "pointer", textAlign: "left", minHeight: 58 }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                    <span style={{ fontSize: 13, color: T.navy, fontWeight: 800 }}>{patient.initials}</span>
+                    <span style={{ fontSize: 13, color: T.ink, fontWeight: 800 }}>{patient.initials}</span>
                     {patient.room && <span style={{ fontSize: 12, color: T.muted }}>Rm {patient.room}</span>}
                   </div>
                   <div style={{ fontSize: 12, color: T.sub, marginTop: 3, lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -915,7 +915,7 @@ export default function HomeTab({
                   {allDone ? "✓" : remaining}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: T.navy, lineHeight: 1.3 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.ink, lineHeight: 1.3 }}>
                     {allDone ? `${moduleLabel} · all done` : `${moduleLabel} · 1 left`}
                   </div>
                   {nextItem && (
@@ -939,7 +939,7 @@ export default function HomeTab({
           <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "16px 16px", marginBottom: 14 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
               <div>
-                <h2 style={{ margin: 0, color: T.navy, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
+                <h2 style={{ margin: 0, color: T.ink, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>
                   Core path for this module
                 </h2>
                 <p style={{ margin: "6px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.55, maxWidth: 600 }}>
@@ -969,14 +969,14 @@ export default function HomeTab({
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? T.successInk : T.navy, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 999, background: item.done ? T.success : T.card, color: item.done ? T.successInk : T.ink, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, border: `1px solid ${item.done ? T.success : T.line}` }}>
                       {item.done ? "✓" : index + 1}
                     </div>
                     <span style={{ fontSize: 12, fontWeight: 800, color: item.done ? T.success : T.brand, textTransform: "uppercase", letterSpacing: 0.6 }}>
                       {item.done ? "Done" : "Start"}
                     </span>
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: T.navy, lineHeight: 1.25, marginBottom: 6 }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: T.ink, lineHeight: 1.25, marginBottom: 6 }}>
                     {item.label}
                   </div>
                   <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.45 }}>
@@ -996,7 +996,7 @@ export default function HomeTab({
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>
                 {latestAnnouncement.title}
                 {activeAnnouncements.length > 1 ? ` · +${activeAnnouncements.length - 1} more` : ""}
               </div>
@@ -1022,7 +1022,7 @@ export default function HomeTab({
                   <Download size={18} strokeWidth={1.75} color={T.brand} aria-hidden="true" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: T.ink, fontFamily: T.serif, marginBottom: 6 }}>
                     Keep this on the home screen
                   </div>
                   <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.55, maxWidth: 560 }}>
@@ -1048,7 +1048,7 @@ export default function HomeTab({
                   Install app
                 </button>
               ) : (
-                <div style={{ background: T.card, color: T.navy, borderRadius: 12, padding: "10px 12px", fontSize: 13, fontWeight: 600, border: `1px solid ${T.line}` }}>
+                <div style={{ background: T.card, color: T.ink, borderRadius: 12, padding: "10px 12px", fontSize: 13, fontWeight: 600, border: `1px solid ${T.line}` }}>
                   Safari → Share → Add to Home Screen
                 </div>
               )}
@@ -1067,7 +1067,7 @@ export default function HomeTab({
             <RefreshCw size={18} strokeWidth={1.75} color={T.warning} aria-hidden="true" />
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>{srAction.label}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>{srAction.label}</div>
             <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginTop: 3 }}>{srAction.meta}</div>
           </div>
         </button>

@@ -253,7 +253,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
   };
 
   const detailSectionHeadingStyle: React.CSSProperties = {
-    color: T.navy,
+    color: T.ink,
     fontSize: 15,
     margin: "0 0 10px",
     fontFamily: T.serif,
@@ -268,7 +268,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       <div style={{ background: T.card, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>{s.name}</h2>
+            <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 22, margin: "0 0 4px", fontWeight: 700 }}>{s.name}</h2>
             <div style={{ fontSize: 13, color: T.sub }}>{s.year || "MS3/MS4"} • {s.email || "No email"}</div>
             <div style={{ fontSize: 13, color: T.muted, marginTop: 4, fontFamily: T.mono }}>Record ID: {s.studentId}</div>
           </div>
@@ -296,11 +296,11 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
           <div style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Competency Overview</div>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-              <span style={{ fontSize: 26, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{competency.masteryPercent}%</span>
+              <span style={{ fontSize: 26, fontWeight: 700, color: T.ink, fontFamily: T.mono }}>{competency.masteryPercent}%</span>
               <span style={{ fontSize: 13, color: T.sub }}>{competency.masteryDetail}</span>
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-              <span style={{ background: T.ice, color: T.navy, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
+              <span style={{ background: T.surface2, color: T.ink, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
                 Top domain: {competency.topDomain.label}
               </span>
               <span style={{ background: competency.developingCount > 0 ? T.warningBg : T.successBg, color: competency.developingCount > 0 ? T.warning : T.success, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>
@@ -314,7 +314,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Teaching Signal</div>
             {assessment?.summary ? (
               <>
-                <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: T.ink, marginBottom: 8 }}>
                   Teach next: {assessment.summary.recommendedArea.label}{assessment.summary.recommendedArea.missedTopics[0] ? ` — ${assessment.summary.recommendedArea.missedTopics[0]}` : ""}
                 </div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -333,7 +333,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
               </>
             ) : assessment ? (
               <>
-                <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: T.ink, marginBottom: 8 }}>
                   Assessment logged at {assessment.overallPct}%
                 </div>
                 <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
@@ -342,7 +342,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
               </>
             ) : (
               <>
-                <div style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: T.ink, marginBottom: 8 }}>
                   Awaiting assessment signal
                 </div>
                 <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5 }}>
@@ -626,8 +626,8 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             return (
             <div key={i} style={{ padding: "8px 0", borderBottom: i < patients.length - 1 ? `1px solid ${T.line}` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                <span style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{p.initials}</span>
-                {ts.map(t => <span key={t} style={{ fontSize: 13, color: "white", background: T.brand, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
+                <span style={{ fontWeight: 600, color: T.ink, fontSize: 13 }}>{p.initials}</span>
+                {ts.map(t => <span key={t} style={{ fontSize: 13, color: T.brandInk, background: T.brand, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
                 <span style={{ fontSize: 13, color: T.muted, marginLeft: "auto" }}>{new Date(p.date).toLocaleDateString()}</span>
               </div>
               {p.dx && <div style={{ fontSize: 13, color: T.sub, marginTop: 2, wordBreak: "break-word" }}>{p.dx}</div>}
@@ -640,7 +640,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       {/* Feedback Tags */}
       <div style={{ background: T.card, borderRadius: 14, padding: 16, marginBottom: 16, border: `1px solid ${T.line}` }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.navy, fontFamily: T.serif }}>Attending Feedback</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, fontFamily: T.serif }}>Attending Feedback</div>
           <Button size="sm" onClick={() => setShowAddFeedback(!showAddFeedback)}>
             {showAddFeedback ? "Cancel" : "+ Add"}
           </Button>
@@ -701,7 +701,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
         <div style={{ fontSize: 12, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
           Advanced
         </div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 6 }}>Device Recovery</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: T.ink, fontFamily: T.serif, marginBottom: 6 }}>Device Recovery</div>
         <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 12 }}>
           Only use this if the student had to join on a new phone or browser and a second blank record was created.
         </div>

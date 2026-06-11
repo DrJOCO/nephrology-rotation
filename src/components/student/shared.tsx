@@ -1,6 +1,7 @@
 import { Check, RotateCcw, type LucideIcon } from "lucide-react";
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { T } from "../../data/constants";
+import { useFocusTrap } from "../../utils/helpers";
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Shared styles used across multiple student components
@@ -38,6 +39,53 @@ export function BackButton({
 }) {
   const base = placement === "floating" ? floatingBackButtonStyle : inlineBackButtonStyle;
   return <button onClick={onClick} style={{ ...base, ...style }}>{"\u2190"} {label}</button>;
+}
+
+// ConfirmSheet — accessible replacement for window.confirm.
+// role=dialog + aria-modal + ESC to cancel + focus the confirm button on open.
+export function ConfirmSheet({
+  title, message, confirmLabel, cancelLabel, tone = "brand", onConfirm, onCancel,
+}: {
+  title: string; message: string; confirmLabel: string; cancelLabel: string;
+  tone?: "brand" | "danger";
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onCancel(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+  useFocusTrap(panelRef, confirmRef);
+  const confirmBg = tone === "danger" ? T.danger : T.brand;
+  const confirmInk = tone === "danger" ? T.dangerInk : T.brandInk;
+  return (
+    <div
+      role="dialog" aria-modal="true" aria-labelledby="confirmsheet-title" aria-describedby="confirmsheet-msg"
+      onClick={onCancel}
+      style={{ position: "fixed", inset: 0, background: T.overlay, zIndex: 9998, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: 16, paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))", animation: "fadeIn 0.15s ease" }}
+    >
+      <div
+        ref={panelRef}
+        onClick={e => e.stopPropagation()}
+        style={{ background: T.surface, border: `1px solid ${T.line}`, borderRadius: 14, padding: 20, width: "100%", maxWidth: 420, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
+      >
+        <h2 id="confirmsheet-title" style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 600, color: T.ink, margin: "0 0 8px", letterSpacing: -0.2 }}>{title}</h2>
+        <p id="confirmsheet-msg" style={{ fontSize: 14, color: T.ink2, margin: "0 0 20px", lineHeight: 1.5 }}>{message}</p>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onCancel}
+            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: T.ink, background: "transparent", border: `1px solid ${T.line}`, borderRadius: 12, cursor: "pointer" }}>
+            {cancelLabel}
+          </button>
+          <button ref={confirmRef} onClick={onConfirm}
+            style={{ minHeight: 44, padding: "10px 18px", fontSize: 14, fontWeight: 600, color: confirmInk, background: confirmBg, border: "none", borderRadius: 12, cursor: "pointer" }}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export const inputLabel: CSSProperties = { fontSize: 13, fontWeight: 700, color: T.sub, display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.3 };

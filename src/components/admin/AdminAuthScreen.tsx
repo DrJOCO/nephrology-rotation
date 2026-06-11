@@ -115,7 +115,7 @@ export function AdminAuthScreen({
         <button
           onClick={() => { if (authMode === "signup") void onCreateAccount(); else void onSignIn(); }}
           disabled={!authEmail.trim() || !authPassword || (authMode === "signup" && !authPasswordConfirm) || authSubmitting}
-          style={{ width: "100%", padding: "14px 0", background: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? T.brand : T.muted, color: "white", border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? "pointer" : "default", opacity: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? 1 : 0.7 }}
+          style={{ width: "100%", padding: "14px 0", background: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? T.brand : T.muted, color: T.brandInk, border: "none", borderRadius: 0, fontSize: 15, fontWeight: 600, cursor: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? "pointer" : "default", opacity: authEmail.trim() && authPassword && (authMode === "signin" || authPasswordConfirm) && !authSubmitting ? 1 : 0.7 }}
         >
           {authSubmitting ? (authMode === "signup" ? "Creating Account..." : "Signing In...") : (authMode === "signup" ? "Create Admin Account" : "Sign In")}
         </button>

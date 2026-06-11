@@ -1,7 +1,8 @@
-import { useState, CSSProperties } from "react";
+import { useState, useEffect, CSSProperties } from "react";
 import { T } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
+import store from "../../utils/store";
 import type { CompletedItems, Bookmarks } from "../../types";
 import { BackButton, EduDisclaimer, HeadlineMetric, Section } from "./shared";
 
@@ -14,6 +15,17 @@ interface CaseAnswer {
   correct: boolean;
 }
 
+// Interruption safety (same pattern as QuizEngine): in-progress case answers are
+// persisted per case id and restored on remount, so a page in the hallway or a
+// killed PWA doesn't silently discard a half-finished case.
+interface SavedCaseProgress {
+  fingerprint: string;
+  currentQ: number;
+  answers: CaseAnswer[];
+  selected: number | null;
+  showExplanation: boolean;
+}
+
 type CaseData = typeof WEEKLY_CASES[1][0];
 
 function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { caseData: CaseData; onBack: () => void; completedItems: CompletedItems; onCaseComplete: (caseId: string, result: { score: number; total: number }) => void }) {
@@ -23,9 +35,42 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
   const [selected, setSelected] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showScenario, setShowScenario] = useState(true);
+  const [restored, setRestored] = useState(false);
 
   const questions = caseData.questions;
   const done = (completedItems?.cases || {})[caseData.id];
+
+  const caseKey = `case_${caseData.id}`;
+  // Fingerprint guards against restoring positions into edited case content.
+  const questionsFingerprint = questions.length + ":" + questions.map(q => q.q).join("|");
+
+  // Restore an interrupted attempt on mount (stays on the read screen; the CTA
+  // becomes "Resume" so re-reading the scenario first remains possible).
+  useEffect(() => {
+    (async () => {
+      const saved = await store.get<SavedCaseProgress>(caseKey);
+      const savedValid = saved &&
+        saved.fingerprint === questionsFingerprint &&
+        Array.isArray(saved.answers) &&
+        saved.currentQ >= 0 && saved.currentQ < questions.length &&
+        saved.answers.every(a => a.questionIdx >= 0 && a.questionIdx < questions.length);
+      if (savedValid) {
+        setCurrentQ(saved.currentQ);
+        setAnswers(saved.answers);
+        setSelected(saved.selected ?? null);
+        setShowExplanation(saved.showExplanation || false);
+      }
+      setRestored(true);
+    })();
+  }, [caseKey, questionsFingerprint]);  
+
+  // Save while a quiz attempt is in flight; finishing or restarting clears.
+  useEffect(() => {
+    if (!restored || phase !== "quiz") return;
+    store.set(caseKey, { fingerprint: questionsFingerprint, currentQ, answers, selected, showExplanation });
+  }, [phase, currentQ, answers, selected, showExplanation, restored, caseKey, questionsFingerprint]);
+
+  const hasSavedAttempt = answers.length > 0 || currentQ > 0;
 
   const handleSelect = (choiceIdx: number) => {
     if (showExplanation) return; // already answered
@@ -43,17 +88,23 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
       // Quiz complete
       const score = answers.filter(a => a.correct).length;
       onCaseComplete(caseData.id, { score, total: questions.length });
+      store.set(caseKey, null);
       setPhase("results");
     }
   };
 
   const handleRestart = () => {
+    store.set(caseKey, null);
     setPhase("read");
     setCurrentQ(0);
     setAnswers([]);
     setSelected(null);
     setShowExplanation(false);
   };
+
+  // Brief guard so the read-screen CTA doesn't flash "Begin" before a saved
+  // attempt is restored (same pattern as QuizEngine's loading state).
+  if (!restored) return <div style={{ padding: 40, textAlign: "center", color: T.sub }}>Loading case...</div>;
 
   // Read Phase
   if (phase === "read") {
@@ -65,7 +116,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
             <span style={{ fontSize: 28 }}>🏥</span>
             <div>
-              <h2 style={{ color: T.navy, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{caseData.title}</h2>
+              <h2 style={{ color: T.ink, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{caseData.title}</h2>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{caseData.difficulty}</div>
             </div>
           </div>
@@ -84,8 +135,10 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         )}
 
         <button onClick={() => setPhase("quiz")}
-          style={{ width: "100%", padding: "14px 0", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
-          {done ? "Retake Questions" : "Begin Questions"} ({questions.length})
+          style={{ width: "100%", padding: "14px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+          {hasSavedAttempt
+            ? `Resume Questions (${answers.length}/${questions.length} answered)`
+            : `${done ? "Retake Questions" : "Begin Questions"} (${questions.length})`}
         </button>
       </div>
     );
@@ -109,7 +162,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         </Section>
 
         {/* Review answers */}
-        <h3 style={{ color: T.navy, fontSize: 15, margin: "0 0 12px", fontFamily: T.serif, fontWeight: 700 }}>Review</h3>
+        <h3 style={{ color: T.ink, fontSize: 15, margin: "0 0 12px", fontFamily: T.serif, fontWeight: 700 }}>Review</h3>
         {questions.map((q, i) => {
           const ans = answers[i];
           const isCorrect = ans?.correct === true;
@@ -140,7 +193,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             Retry Case
           </button>
           <button onClick={onBack}
-            style={{ flex: 1, padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            style={{ flex: 1, padding: "12px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             Back to Cases
           </button>
         </div>
@@ -157,7 +210,12 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         {currentQ === 0 && answers.length === 0 ? (
           <BackButton onClick={() => setPhase("read")} placement="inline" style={{ marginTop: 0, minHeight: 36, padding: "7px 10px" }} />
         ) : (
-          <div style={{ width: 76 }} />
+          // Mid-case exit: progress is persisted, so leaving is always safe.
+          <button onClick={onBack}
+            aria-label="Exit case — your progress is saved"
+            style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 8, color: T.sub, fontSize: 13, fontWeight: 600, cursor: "pointer", padding: "7px 10px", minHeight: 36 }}>
+            Exit · saved
+          </button>
         )}
         <div style={{ fontSize: 13, fontWeight: 600, color: T.sub }}>
           Question {currentQ + 1} of {questions.length}
@@ -169,7 +227,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
       {/* Scenario reference toggle */}
       <button onClick={() => setShowScenario(!showScenario)}
-        style={{ width: "100%", padding: "8px 12px", background: T.ice, color: T.brand, border: `1px solid ${T.pale}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+        style={{ width: "100%", padding: "8px 12px", background: T.surface2, color: T.brand, border: `1px solid ${T.surface2}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
         {showScenario ? "▾ Hide Scenario" : "▸ Show Clinical Scenario"}
       </button>
       {showScenario && (
@@ -215,7 +273,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
 
       {/* Explanation */}
       {showExplanation && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${selected === q.answer ? T.success : T.danger}` }}>
+        <div role="status" aria-live="polite" style={{ background: T.surface2, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${selected === q.answer ? T.success : T.danger}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: selected === q.answer ? T.success : T.danger, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
             {selected === q.answer ? "Correct!" : "Incorrect"}
           </div>
@@ -228,7 +286,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
       {/* Next button */}
       {showExplanation && (
         <button onClick={handleNext}
-          style={{ width: "100%", padding: "14px 0", background: T.brand, color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
+          style={{ width: "100%", padding: "14px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
           {currentQ < questions.length - 1 ? "Next Question" : "See Results"}
         </button>
       )}
@@ -284,7 +342,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingRight: done ? 110 : 40 }}>
                 <span style={{ fontSize: 22 }}>🏥</span>
                 <div>
-                  <div style={{ fontWeight: 700, color: T.navy, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
+                  <div style={{ fontWeight: 700, color: T.ink, fontSize: 15, lineHeight: 1.3 }}>{c.title}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{c.questions.length} questions</div>
                 </div>
               </div>
@@ -297,7 +355,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
             <button
               onClick={(e) => { e.stopPropagation(); onToggleBookmark(c.id); }}
               aria-label={(bookmarks?.cases || []).includes(c.id) ? `Unbookmark ${c.title}` : `Bookmark ${c.title}`}
-              style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.warning : T.muted, cursor: "pointer", padding: 8, lineHeight: 1, zIndex: 1 }}>
+              style={{ position: "absolute", top: 4, right: 6, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", fontSize: 16, color: (bookmarks?.cases || []).includes(c.id) ? T.warning : T.muted, cursor: "pointer", padding: 0, lineHeight: 1, zIndex: 1 }}>
               {(bookmarks?.cases || []).includes(c.id) ? "★" : "☆"}
             </button>
           </div>

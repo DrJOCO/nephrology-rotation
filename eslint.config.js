@@ -23,7 +23,7 @@ const noLegacyPaletteRule = {
 }
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'ui-for-design', 'review', 'uploads', '.claude', 'tmp', '.firebase']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

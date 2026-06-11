@@ -244,7 +244,7 @@ export const POST_QUIZ = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════
-//  Weekly Quizzes — 10 questions per week (will be expanded in Phase 2)
+//  Weekly Quizzes — one bank per module (MS3/MS4 clinical vignettes)
 // ═══════════════════════════════════════════════════════════════════════
 
 export const WEEKLY_QUIZZES = {

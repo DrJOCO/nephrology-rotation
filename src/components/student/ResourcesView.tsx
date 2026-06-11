@@ -124,7 +124,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
   return (
     <div style={{ padding: 16 }}>
       <BackButton onClick={onBack} />
-      <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Resources</h2>
+      <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Resources</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Curated links and teaching decks for your nephrology rotation</p>
 
       {/* Tab bar — wraps to second row instead of clipping at narrow widths. */}
@@ -156,7 +156,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
 
       {/* Resource cards */}
       {activeData.map((r, i) => {
-        const tc = tagColors[r.tag] || { bg: T.ice, text: T.brand };
+        const tc = tagColors[r.tag] || { bg: T.surface2, text: T.brand };
         const hasCurbsidersFallback = isCurbsidersResource(r.url);
         const appleSearchUrl = hasCurbsidersFallback ? getCurbsidersAppleSearchUrl(r.name) : null;
         const isDeck = activeTab === "decks" && isDeckResource(r);
@@ -172,10 +172,10 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-                  <span style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{r.name}</span>
+                  <span style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>{r.name}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: tc.text, background: tc.bg, padding: "2px 8px", borderRadius: 6 }}>{r.tag}</span>
                   {isDeck && (
-                    <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, background: T.ice, padding: "2px 8px", borderRadius: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, background: T.surface2, padding: "2px 8px", borderRadius: 6 }}>
                       Module {r.week}
                     </span>
                   )}
@@ -209,7 +209,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
                         fontSize: 13,
                         fontWeight: 700,
                         color: deckReviewed ? T.success : T.brand,
-                        background: deckReviewed ? T.successBg : T.ice,
+                        background: deckReviewed ? T.successBg : T.surface2,
                         padding: "8px 12px",
                         borderRadius: 8,
                         border: `1px solid ${deckReviewed ? T.success : T.line}`,
@@ -229,7 +229,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
 
       {/* Bottom tip (podcasts tab only) */}
       {activeTab === "podcasts" && (
-        <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginTop: 6, borderLeft: `4px solid ${T.brand}` }}>
+        <div style={{ background: T.surface2, borderRadius: 12, padding: 14, marginTop: 6, borderLeft: `4px solid ${T.brand}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4 }}>LISTENING TIP</div>
           <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
             Start with Curbsiders #226 (AKI) and REBOOT #48 (Hyponatremia) {"\u2014"} these cover the two most common consults you'll see. All Curbsiders nephrology episodes feature Joel Topf (@kidney_boy) and are outstanding. Listen during your commute {"\u2014"} 15 min/day adds up fast over 4 weeks.

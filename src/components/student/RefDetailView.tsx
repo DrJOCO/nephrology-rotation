@@ -52,16 +52,16 @@ function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
           const numVals: Record<string, number> = {};
           refData.inputs.forEach(inp => { numVals[inp.key] = parseFloat(values[inp.key]) || 0; });
           setResult(refData.calculate(numVals));
-        }} style={{ width: "100%", marginTop: 16, padding: "12px 0", background: T.brand, color: "white", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+        }} style={{ width: "100%", marginTop: 16, padding: "12px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
           Calculate
         </button>
       </div>
 
       {/* Result */}
       {result && (
-        <div style={{ background: T.ice, borderRadius: 14, padding: 20, border: `1px solid ${T.pale}` }}>
+        <div style={{ background: T.surface2, borderRadius: 14, padding: 20, border: `1px solid ${T.surface2}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Result</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: T.navy, fontFamily: T.mono, marginBottom: 10 }}>{result.value}</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: T.ink, fontFamily: T.mono, marginBottom: 10 }}>{result.value}</div>
           <div style={{ fontSize: 14, color: T.text, lineHeight: 1.6, whiteSpace: "pre-line", wordBreak: "break-word", marginBottom: result.caveat ? 10 : 0 }}>{result.interpretation}</div>
           {result.caveat && (
             <div style={{ fontSize: 13, color: T.warning, background: T.warningBg, borderRadius: 8, padding: 10, lineHeight: 1.5 }}>{result.caveat}</div>
@@ -79,7 +79,7 @@ function ReferenceCardView({ refData }: { refData: QuickRefReference }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {sections.map((sec, i) => (
         <div key={i} style={{ background: T.card, borderRadius: 14, padding: 18, border: `1px solid ${T.line}` }}>
-          <div style={{ fontFamily: T.serif, fontWeight: 700, color: T.navy, fontSize: 15, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${T.line}` }}>
+          <div style={{ fontFamily: T.serif, fontWeight: 700, color: T.ink, fontSize: 15, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${T.line}` }}>
             {sec.heading}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -91,7 +91,7 @@ function ReferenceCardView({ refData }: { refData: QuickRefReference }) {
                 return (
                   <div key={j} style={{ fontSize: 13, color: T.text, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ color: T.brand, fontWeight: 700, flexShrink: 0 }}>•</span>
-                    <span><strong style={{ color: T.navy }}>{before.trim()}</strong> <span style={{ color: T.brand }}>→</span> {after.trim()}</span>
+                    <span><strong style={{ color: T.ink }}>{before.trim()}</strong> <span style={{ color: T.brand }}>→</span> {after.trim()}</span>
                   </div>
                 );
               }
@@ -118,7 +118,7 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
 
   return (
     <div>
-      <div style={{ background: T.ice, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.pale}` }}>
+      <div style={{ background: T.surface2, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.surface2}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>Optional reference</div>
         <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
           Use this UA microscopy atlas when it helps with a patient or a teaching question. It does not count toward required weekly progress; core progress comes from study sheets, cases, and quizzes.
@@ -140,7 +140,7 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
       {/* Sections with expandable finding cards */}
       {sections.map((sec, si) => (
         <div key={si} style={{ marginBottom: 20 }}>
-          <div style={{ fontFamily: T.serif, fontWeight: 700, color: T.navy, fontSize: 16, marginBottom: 10, paddingBottom: 6, borderBottom: `1px solid ${T.line}` }}>{sec.heading}</div>
+          <div style={{ fontFamily: T.serif, fontWeight: 700, color: T.ink, fontSize: 16, marginBottom: 10, paddingBottom: 6, borderBottom: `1px solid ${T.line}` }}>{sec.heading}</div>
           {sec.items.map((item, ii) => {
             const key = `${si}-${ii}`;
             const isOpen = expandedItem === key;
@@ -149,7 +149,7 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
                 <button onClick={() => setExpandedItem(isOpen ? null : key)}
                   style={{ width: "100%", padding: "12px 14px", background: isOpen ? T.infoBg : "none", border: "none", cursor: "pointer", textAlign: "left", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, color: T.navy, fontSize: 14 }}>{item.finding}</div>
+                    <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>{item.finding}</div>
                     <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{item.significance}</div>
                   </div>
                   <span style={{ color: T.muted, fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", flexShrink: 0, marginLeft: 8 }}>›</span>
@@ -160,7 +160,7 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
                     <div style={{ fontSize: 13, color: T.text, marginBottom: 10, lineHeight: 1.5 }}>{item.appearance}</div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.3 }}>Associations</div>
                     <div style={{ fontSize: 13, color: T.text, marginBottom: 10, lineHeight: 1.5 }}>{item.associations}</div>
-                    <div style={{ background: T.ice, borderRadius: 8, padding: 10, borderLeft: `3px solid ${T.brand}` }}>
+                    <div style={{ background: T.surface2, borderRadius: 8, padding: 10, borderLeft: `3px solid ${T.brand}` }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 3 }}>CLINICAL PEARL</div>
                       <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{item.clinicalPearl}</div>
                     </div>
@@ -186,7 +186,7 @@ export default function RefDetailView({ refId, onBack }: { refId: string; onBack
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <div style={{ fontSize: 36 }}>{ref.icon}</div>
         <div>
-          <h2 style={{ fontFamily: T.serif, color: T.navy, fontSize: 22, margin: 0, fontWeight: 700 }}>{ref.title}</h2>
+          <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 22, margin: 0, fontWeight: 700 }}>{ref.title}</h2>
           <div style={{ color: T.sub, fontSize: 13 }}>{ref.desc}</div>
           {ref.type === "atlas" && (
             <div style={{ display: "inline-block", marginTop: 6, background: T.infoBg, color: T.info, borderRadius: 999, padding: "4px 9px", fontSize: 13, fontWeight: 700 }}>

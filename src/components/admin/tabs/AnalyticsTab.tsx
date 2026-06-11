@@ -176,7 +176,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
   const srMastered = active.reduce((sum, s) => sum + Object.values(s.srQueue || {}).filter((i: SrItem) => i.interval > 21).length, 0);
 
   const cardStyle = { background: T.card, borderRadius: 14, padding: 18, marginBottom: 16, border: `1px solid ${T.line}` };
-  const titleStyle = { fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: T.serif, marginBottom: 4 };
+  const titleStyle = { fontSize: 14, fontWeight: 700, color: T.ink, fontFamily: T.serif, marginBottom: 4 };
   const subStyle = { fontSize: 13, color: T.sub, marginBottom: 14 };
 
   return (
@@ -193,16 +193,16 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}>
             {[
-              { label: "Rotation blocks", value: historicalRotations.length, tone: T.navy, bg: T.ice },
+              { label: "Rotation blocks", value: historicalRotations.length, tone: T.ink, bg: T.surface2 },
               { label: "Learners tracked", value: allHistoricalStudents.length, tone: T.info, bg: T.infoBg },
               { label: "MS3", value: ms3Students.length, tone: T.warning, bg: T.warningBg },
               { label: "MS4", value: ms4Students.length, tone: T.success, bg: T.successBg },
               { label: "Both assessments", value: historicalAssessmentsComplete, tone: T.danger, bg: T.dangerBg },
-              { label: "Avg core completion", value: formatMetric(overallCoreCompletion), tone: T.navy, bg: T.bg },
-              { label: "Avg best module quiz", value: formatMetric(overallQuizBest), tone: T.navy, bg: T.bg },
-              { label: "Avg quiz attempts", value: overallQuizAttempts === null ? "—" : `${overallQuizAttempts}`, tone: T.navy, bg: T.bg },
-              { label: "Avg optional refs", value: overallOptionalRefs === null ? "—" : `${overallOptionalRefs}`, tone: T.navy, bg: T.bg },
-              { label: "Avg consults logged", value: overallPatientsLogged === null ? "—" : `${overallPatientsLogged}`, tone: T.navy, bg: T.bg },
+              { label: "Avg core completion", value: formatMetric(overallCoreCompletion), tone: T.ink, bg: T.bg },
+              { label: "Avg best module quiz", value: formatMetric(overallQuizBest), tone: T.ink, bg: T.bg },
+              { label: "Avg quiz attempts", value: overallQuizAttempts === null ? "—" : `${overallQuizAttempts}`, tone: T.ink, bg: T.bg },
+              { label: "Avg optional refs", value: overallOptionalRefs === null ? "—" : `${overallOptionalRefs}`, tone: T.ink, bg: T.bg },
+              { label: "Avg consults logged", value: overallPatientsLogged === null ? "—" : `${overallPatientsLogged}`, tone: T.ink, bg: T.bg },
               { label: "Year not set", value: otherYearStudents.length, tone: T.muted, bg: T.grayBg },
             ].map((item) => (
               <div key={item.label} style={{ background: item.bg, borderRadius: 12, padding: 12, border: `1px solid ${T.line}` }}>
@@ -226,8 +226,8 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
             {yearSummaries.map((summary) => (
               <div key={summary.label} style={{ background: T.bg, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: T.navy }}>{summary.label}</div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, background: T.ice, padding: "4px 9px", borderRadius: 999 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: T.ink }}>{summary.label}</div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, background: T.surface2, padding: "4px 9px", borderRadius: 999 }}>
                     {summary.count} learner{summary.count !== 1 ? "s" : ""}
                   </span>
                 </div>
@@ -243,7 +243,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
                     { label: "Consults", value: summary.avgPatients === null ? "—" : `${summary.avgPatients}` },
                   ].map((metric) => (
                     <div key={metric.label} style={{ background: T.card, borderRadius: 10, padding: "10px 11px", border: `1px solid ${T.line}` }}>
-                      <div style={{ fontSize: 17, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{metric.value}</div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, fontFamily: T.mono }}>{metric.value}</div>
                       <div style={{ fontSize: 12, color: T.sub, marginTop: 3 }}>{metric.label}</div>
                     </div>
                   ))}
@@ -291,13 +291,13 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
 
                   return (
                     <tr key={item.rotation.code} style={{ borderTop: `1px solid ${T.line}` }}>
-                      <td style={{ padding: "12px 0", fontSize: 13, fontFamily: T.mono, fontWeight: 700, color: rotationCode === item.rotation.code ? T.brand : T.navy }}>
+                      <td style={{ padding: "12px 0", fontSize: 13, fontFamily: T.mono, fontWeight: 700, color: rotationCode === item.rotation.code ? T.brand : T.ink }}>
                         {item.rotation.code}
                       </td>
                       <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>
                         {[item.rotation.dates, item.rotation.location].filter(Boolean).join(" • ") || "—"}
                       </td>
-                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.navy, fontWeight: 600 }}>
+                      <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.ink, fontWeight: 600 }}>
                         {rotationStudents.length}
                       </td>
                       <td style={{ padding: "12px 8px 12px 0", fontSize: 13, color: T.sub }}>
@@ -318,7 +318,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
       </div>
 
       <div style={{ margin: "18px 0 12px" }}>
-        <h3 style={{ color: T.navy, fontSize: 18, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Current Rotation Deep Dive</h3>
+        <h3 style={{ color: T.ink, fontSize: 18, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Current Rotation Deep Dive</h3>
         <div style={{ color: T.sub, fontSize: 13, marginTop: 4 }}>
           {rotationCode ? `Detailed analytics for the currently connected block (${rotationCode}).` : "Connect to a rotation to see the live block-level analytics below."}
         </div>
@@ -376,7 +376,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
                 {teachingSignals.focusAreas.slice(0, 4).map((item) => (
                   <div key={item.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{item.label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{item.label}</span>
                       <span style={{ fontSize: 13, color: T.sub }}>{item.count} student{item.count !== 1 ? "s" : ""}</span>
                     </div>
                     <div style={{ height: 8, background: T.grayBg, borderRadius: 999, overflow: "hidden" }}>
@@ -403,7 +403,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
                 {domainNeeds.slice(0, 4).map((item) => (
                   <div key={item.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{item.label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{item.label}</span>
                       <span style={{ fontSize: 13, color: T.sub }}>{item.count}/{active.length}</span>
                     </div>
                     <div style={{ height: 8, background: T.grayBg, borderRadius: 999, overflow: "hidden" }}>
@@ -431,8 +431,8 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
             <div style={titleStyle}>Spaced Repetition</div>
             <div style={subStyle}>Aggregate across all students in the current rotation</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              <div style={{ textAlign: "center", background: T.ice, borderRadius: 10, padding: 12 }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: T.mono }}>{srTotal}</div>
+              <div style={{ textAlign: "center", background: T.surface2, borderRadius: 10, padding: 12 }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: T.ink, fontFamily: T.mono }}>{srTotal}</div>
                 <div style={{ fontSize: 13, color: T.sub }}>Items in Queue</div>
               </div>
               <div style={{ textAlign: "center", background: T.successBg, borderRadius: 10, padding: 12 }}>

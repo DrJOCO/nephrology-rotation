@@ -26,7 +26,7 @@ export default function ClinicGuideHistoryView({ guides, clinicGuideTemplates, o
     <div style={{ padding: 16 }}>
       <BackButton onClick={onBack} />
 
-      <h2 style={{ color: T.navy, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guide History</h2>
+      <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinic Guide History</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.4 }}>
         Past outpatient clinic teaching guides for CKD, diabetic kidney disease, lupus nephritis, hypertension, and transplant
       </p>
@@ -44,11 +44,11 @@ export default function ClinicGuideHistoryView({ guides, clinicGuideTemplates, o
               onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)")}
               onMouseLeave={e => (e.currentTarget.style.boxShadow = "none")}>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: T.ice, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: T.surface2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
                   {template?.icon || "📋"}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, color: T.navy, fontSize: 15 }}>{g.topic}</div>
+                  <div style={{ fontWeight: 700, color: T.ink, fontSize: 15 }}>{g.topic}</div>
                   <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{formatDate(g.date)}</div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>

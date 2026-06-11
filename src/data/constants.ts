@@ -16,18 +16,9 @@ import type { CSSProperties } from "react";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const T = {
-  // Deprecated palette aliases. Keep these as exact editorial aliases until
-  // the migration pass replaces old call sites with semantic names.
-  /** @deprecated Use T.ink instead. */
-  navy: "var(--c-text)",
-  /** @deprecated Use T.ink2 instead. */
-  deep: "var(--c-sub)",
-  /** @deprecated Use T.brand instead. */
-  med: "var(--c-brand)",
-  /** @deprecated Use T.surface2 instead. */
-  ice: "var(--c-ice)",
-  /** @deprecated Use T.surface2 instead. */
-  pale: "var(--c-ice)",
+  // Deprecated aliases (navy/deep/med/ice/pale) were removed once the PR 3
+  // migration replaced every call site with the semantic names below —
+  // reintroducing them is a typecheck error, which is the point.
   dark: "var(--c-dark)",
   text: "var(--c-text)", sub: "var(--c-sub)", muted: "var(--c-muted)", line: "var(--c-line)",
   bg: "var(--c-bg)", card: "var(--c-card)",
@@ -163,7 +154,7 @@ export const ARTICLES = {
       url: "https://pubmed.ncbi.nlm.nih.gov/?term=Diagnostic%20Criteria%20and%20Epidemiology%20of%20AKI%20in%20the%20Critically%20Ill",
       topic: "AKI", type: "Review" },
     { title: "Hepatorenal Syndrome in Cirrhosis", journal: "NEJM", year: 2023, url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMra2215136", topic: "Hepatorenal Syndrome", type: "Review" },
-    { title: "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)", journal: "NEJM", year: 2021, url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2034323", topic: "Hepatorenal Syndrome", type: "Landmark Study" },
+    { title: "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)", journal: "NEJM", year: 2021, url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2008290", topic: "Hepatorenal Syndrome", type: "Landmark Study" },
     { title: "Prevention of Contrast-Associated AKI Related to Angiography (PRESERVE)", journal: "NEJM", year: 2018, url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa1710933", topic: "Contrast-Associated AKI", type: "Landmark Study" },
     { title: "Use of IV Contrast in Patients with Kidney Disease: Consensus from ACR and NKF", journal: "Radiology", year: 2020, url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC7873723/", topic: "Contrast-Associated AKI", type: "Guideline" },
     { title: "Rhabdomyolysis and Acute Kidney Injury", journal: "NEJM", year: 2009, url: "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMra0801327", topic: "Rhabdomyolysis", type: "Review" },
@@ -728,7 +719,7 @@ export const STUDY_SHEETS = {
         },
       ],
       trialCallouts: [
-        { trial: "CONFIRM", pearl: "In 300 HRS-AKI patients, terlipressin + albumin reversed HRS in 39% vs 18% on placebo + albumin. FDA-approved 2022 \u2014 watch for respiratory failure if volume-overloaded." },
+        { trial: "CONFIRM", pearl: "In 300 HRS-AKI patients, terlipressin + albumin reversed HRS in 32% vs 17% on placebo + albumin. FDA-approved 2022 \u2014 watch for respiratory failure if volume-overloaded." },
         { trial: "PRESERVE", pearl: "In 5177 high-risk CKD patients getting angiography, IV sodium bicarb and N-acetylcysteine did NOT prevent contrast AKI vs IV saline. Use isotonic saline when prophylaxis is indicated; do not add NAC or routine bicarbonate." },
       ],
     },

@@ -178,6 +178,20 @@ export function ensureThemeStyles(): void {
   document.head.appendChild(s);
 }
 
+// Apply the in-app theme everywhere it matters: the data-theme attribute (CSS),
+// localStorage (persistence), and the <meta name="theme-color"> tags. The static
+// metas in index.html track the *system* scheme; the app's manual toggle must
+// override both so the installed-PWA status bar matches a forced theme.
+// `persist: false` is for startup, where following the system preference should
+// not be recorded as an explicit user choice.
+export function applyTheme(theme: "light" | "dark", persist = true): void {
+  document.documentElement.setAttribute("data-theme", theme);
+  if (persist) localStorage.setItem("neph_theme", theme);
+  const cssBg = getComputedStyle(document.documentElement).getPropertyValue("--c-bg").trim();
+  const color = cssBg || (theme === "dark" ? "#16130E" : "#F7F2E7");
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", color));
+}
+
 // Inject CSS keyframes for shake animation (admin PIN error)
 let _shakeInjected = false;
 export function ensureShakeAnimation(): void {
@@ -345,17 +359,30 @@ export const createRotationCode = (location: string = "", dates: string = ""): s
     datePart = months[now.getMonth()] + String(now.getFullYear()).slice(-2);
   }
 
-  // Combine: LOC-MONYY (e.g. CMC-MAR26)
+  // Append a random suffix UNCONDITIONALLY so codes aren't guessable. The
+  // structured prefix (LOC-MONYY) follows an obvious site+month pattern, so on
+  // its own it lets anyone who guesses it join the rotation and read the team
+  // roster. The suffix keeps the code human-recognizable while making it ~1M
+  // combinations to guess. (Admins who want a memorable code can still type a
+  // custom one in Settings, which bypasses this generator.)
+  const suffix = randomCodeChars(4);
+
+  // Combine: LOC-MONYY-XXXX (e.g. CMC-MAR26-7QK4)
   if (locPart && datePart) {
-    return `${locPart}-${datePart}`;
+    return `${locPart}-${datePart}-${suffix}`;
   }
   if (datePart) {
-    return `NEPH-${datePart}`;
+    return `NEPH-${datePart}-${suffix}`;
   }
 
-  // Fallback: random 6-char code
+  // Fallback: fully random 6-char code
+  return randomCodeChars(6);
+};
+
+// Unambiguous alphabet (no O/0/I/1) for human-typed codes.
+const randomCodeChars = (n: number): string => {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < n; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 };
