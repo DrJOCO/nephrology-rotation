@@ -50,6 +50,9 @@ const TOPIC_ICONS: Record<string, LucideIcon> = {
   Transplant: ArrowLeftRight,
   Hypertension: Gauge,
   "Kidney Stones": Gem,
+  "Nephron Physiology": Microscope,
+  "GFR Assessment": Gauge,
+  Nephrotoxins: Pill,
 };
 
 export function getTopicIcon(topic: string): LucideIcon {

@@ -79,7 +79,8 @@ export const TOPICS = [
   "Acid-Base","Glomerulonephritis","Nephrotic Syndrome","Kidney Biopsy","Dialysis","Dialysis Access","Transplant",
   "Kidney Stones","AIN","Urinalysis","Hypertension","Diuretics","Fluid Management",
   "Calcium/Phosphorus","Proteinuria","Polycystic Kidney Disease",
-  "APOL1-Associated Kidney Disease","Hepatorenal Syndrome","Contrast-Associated AKI","Rhabdomyolysis","Cardiorenal Syndrome","Diabetic Kidney Disease","SGLT2 Inhibitors","Peritoneal Dialysis","Other"
+  "APOL1-Associated Kidney Disease","Hepatorenal Syndrome","Contrast-Associated AKI","Rhabdomyolysis","Cardiorenal Syndrome","Diabetic Kidney Disease","SGLT2 Inhibitors","Peritoneal Dialysis",
+  "Nephron Physiology","GFR Assessment","Nephrotoxins","Other"
 ];
 
 export const COMMON_PATIENT_TOPICS = [
