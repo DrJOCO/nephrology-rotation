@@ -30,7 +30,17 @@ export default function LibraryHub({
   weeklyScores: WeeklyScores;
   bookmarks: Bookmarks;
 }) {
-  const weeks = Array.from({ length: totalWeeks }, (_, index) => index + 1).filter(week => WEEKLY[week]);
+  // Cohort feedback (June 2026): a student couldn't find modules outside the
+  // current one and gave up. Every module is ALWAYS rendered — short rotations
+  // label out-of-window modules "Stretch" instead of hiding them.
+  const weeks = Object.keys(WEEKLY).map(Number).sort((a, b) => a - b);
+  const windowWeeks = Math.min(Math.max(Math.floor(totalWeeks) || 4, 1), 4);
+  const moduleStatus = (week: number): { label: string; color: string; bg: string } | null => {
+    if (currentWeek === week) return { label: "Current", color: T.brand, bg: T.brandBg };
+    if (week > windowWeeks) return { label: "Stretch · optional", color: T.info, bg: T.infoBg };
+    if (currentWeek && week < currentWeek) return { label: "Review", color: T.success, bg: T.successBg };
+    return null; // upcoming within the rotation window — no chip needed
+  };
   const savedCount = (bookmarks?.trials?.length || 0) + (bookmarks?.articles?.length || 0) + (bookmarks?.cases?.length || 0) + (bookmarks?.studySheets?.length || 0);
 
   return (
@@ -61,7 +71,7 @@ export default function LibraryHub({
           <div>
             <h2 style={{ margin: 0, color: T.ink, fontFamily: T.serif, fontSize: 20, fontWeight: 700 }}>All modules</h2>
             <p style={{ margin: "5px 0 0", color: T.sub, fontSize: 13, lineHeight: 1.5 }}>
-              Study sheets, decks, cases, quizzes, and references by week.
+              Study sheets, decks, cases, quizzes, and references by week. Every module stays available all rotation — revisit earlier ones or work ahead anytime.
             </p>
           </div>
           {currentWeek && (
@@ -73,6 +83,7 @@ export default function LibraryHub({
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
           {weeks.map((week) => {
             const wk = WEEKLY[week];
+            const status = moduleStatus(week);
             const sheets = studySheets[week] || [];
             const decks = CURRICULUM_DECKS.filter(deck => deck.week === week);
             const cases = WEEKLY_CASES[week] || [];
@@ -97,8 +108,15 @@ export default function LibraryHub({
               <div key={week} style={{ background: T.card, border: `1px solid ${currentWeek === week ? T.brand : T.line}`, borderRadius: 12, padding: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: currentWeek === week ? T.brand : T.muted, textTransform: "uppercase", letterSpacing: 0.6 }}>
-                      Module {week}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: currentWeek === week ? T.brand : T.muted, textTransform: "uppercase", letterSpacing: 0.6 }}>
+                        Module {week}
+                      </span>
+                      {status && (
+                        <span style={{ fontSize: 11, fontWeight: 700, color: status.color, background: status.bg, borderRadius: 999, padding: "2px 8px" }}>
+                          {status.label}
+                        </span>
+                      )}
                     </div>
                     <div style={{ marginTop: 3, color: T.ink, fontFamily: T.serif, fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>{wk.title}</div>
                     <div style={{ marginTop: 4, color: T.sub, fontSize: 13, lineHeight: 1.45 }}>{wk.sub}</div>

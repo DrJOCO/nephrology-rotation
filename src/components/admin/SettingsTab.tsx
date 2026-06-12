@@ -674,7 +674,7 @@ export function SettingsTab({
                 </select>
               </div>
             </div>
-            <div style={{ fontSize: 13, color: T.muted, marginTop: 8 }}>Sets the current week indicator for students. All content remains accessible regardless of duration.</div>
+            <div style={{ fontSize: 13, color: T.muted, marginTop: 8 }}>Sets module pacing for students. All four modules stay browsable in their Library regardless of duration — modules beyond the rotation window are labeled "Stretch · optional."</div>
           </div>
 
           <div>

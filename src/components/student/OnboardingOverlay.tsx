@@ -20,9 +20,9 @@ const ONBOARDING_STEPS = [
     hint: "Use the module view when you want the full content map.",
   },
   {
-    title: "Track consults on rounds",
-    body: "Track the hospital patients you see, tag diagnoses, and add follow-up notes to build your inpatient experience log.",
-    hint: "Use the Consults tab during ward time.",
+    title: "Log consult topics in 5 seconds",
+    body: "Consults is not a patient tracker — keep your list in Cerner. One tap logs a topic you saw on rounds, and the app immediately matches teaching to it: study sheets, trials, and tools on Today.",
+    hint: "The more topics you log, the better Today's recommendations get.",
   },
   {
     title: "Review progress deliberately",

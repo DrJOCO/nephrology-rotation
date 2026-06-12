@@ -205,7 +205,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "stretch" : "flex-start", gap: isMobile ? 7 : 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3, flexWrap: "wrap" }}>
-              <span style={{ fontWeight: 700, color: dimmed ? T.muted : T.ink, fontSize: 14 }}>{p.initials}</span>
+              <span style={{ fontWeight: 700, color: dimmed ? T.muted : T.ink, fontSize: 14 }}>{p.initials?.trim() || `${topics[0] || "Consult"} (quick log)`}</span>
               {p.room && <span style={{ fontSize: 12, color: T.sub, background: T.bg, padding: "1px 7px", borderRadius: 4 }}>Rm {p.room}</span>}
               <span style={{ fontSize: 12, color: T.muted }}>Added {new Date(p.date).toLocaleDateString()}</span>
             </div>
@@ -381,6 +381,22 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
+  // Quick log (cohort feedback): one tap on a topic chip logs a consult with no
+  // form — the payoff (matched learning) is shown immediately so the loop is
+  // visible at the moment of effort instead of hiding on another tab.
+  const [quickLogExpanded, setQuickLogExpanded] = useState(false);
+  const [quickLogConfirm, setQuickLogConfirm] = useState<{ topic: string; summary: string } | null>(null);
+
+  const quickLogTopic = (topic: string) => {
+    const newId = Date.now();
+    const entry: Patient = { id: newId, initials: "", room: "", dx: "", topics: [topic], notes: "", date: new Date().toISOString(), status: "active", followUps: [] };
+    onMarkPatientDirty?.(newId);
+    setPatients(prev => [entry, ...prev]);
+    onLogActivity?.("patient", "Consult topic logged", topic);
+    const [group] = getPatientSuggestedTopicGroups([entry], completedItems);
+    setQuickLogConfirm({ topic, summary: group ? summarizeSuggestedGroup(group) : "matched learning appears on Today" });
+    setQuickLogExpanded(false);
+  };
 
   const toggleTopic = (t: string) => {
     setForm(prev => {
@@ -553,16 +569,19 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
 
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Inpatient Rounding List</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+        <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Consult Log</h2>
         <button onClick={() => {
           if (showAdd) setShowAllTopics(false);
           setShowAdd(!showAdd);
         }}
-          style={{ padding: "8px 16px", background: showAdd ? T.sub : T.brand, color: showAdd ? "white" : T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-          {showAdd ? "Cancel" : "+ Add Patient"}
+          style={{ padding: "8px 16px", background: showAdd ? T.sub : T.card, color: showAdd ? T.card : T.ink, border: `1px solid ${showAdd ? T.sub : T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          {showAdd ? "Cancel" : "+ Add with details"}
         </button>
       </div>
+      <p style={{ fontSize: 13, color: T.sub, margin: "0 0 12px", lineHeight: 1.5 }}>
+        Not a patient tracker — keep that in Cerner. Tap the topics you see on consults (~5 seconds) and matched teaching appears here and on Today.
+      </p>
 
       <div
         style={{
@@ -581,6 +600,47 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
           {showCompactPhiWarning ? "Initials and learning points only." : PHI_WARNING}
         </div>
       </div>
+
+      {/* Quick log — the primary action. One tap per consult topic. */}
+      {!showAdd && (
+        <div style={{ background: T.card, border: `2px solid ${T.brand}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: T.ink, marginBottom: 8 }}>Saw a consult? Log the topic:</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {(quickLogExpanded ? TOPICS : COMMON_PATIENT_TOPICS).map(topic => (
+              <button
+                key={topic}
+                onClick={() => quickLogTopic(topic)}
+                style={{ padding: "8px 12px", minHeight: 36, borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.bg, color: T.ink, border: `1px solid ${T.line}` }}>
+                {topic}
+              </button>
+            ))}
+            <button
+              onClick={() => setQuickLogExpanded(!quickLogExpanded)}
+              style={{ padding: "8px 12px", minHeight: 36, borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "none", color: T.brand, border: `1px dashed ${T.brand}` }}>
+              {quickLogExpanded ? "Fewer topics" : `All topics (${TOPICS.length})`}
+            </button>
+          </div>
+          {quickLogConfirm && (
+            <div role="status" aria-live="polite" style={{ marginTop: 10, background: T.successBg, border: `1px solid ${T.success}`, borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ fontSize: 13, color: T.success, fontWeight: 600, lineHeight: 1.4 }}>
+                {quickLogConfirm.topic} logged ✓ — {quickLogConfirm.summary}
+              </div>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                {navigate && (
+                  <button onClick={() => navigate("today")}
+                    style={{ padding: "6px 12px", minHeight: 36, background: T.success, color: T.successInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                    See on Today →
+                  </button>
+                )}
+                <button onClick={() => setQuickLogConfirm(null)} aria-label="Dismiss confirmation"
+                  style={{ background: "none", border: "none", color: T.success, cursor: "pointer", fontSize: 16, minWidth: 36, minHeight: 36 }}>
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {active.length > 0 && navigate && (
         <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
@@ -618,7 +678,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
         <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `2px solid ${T.brand}` }}>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
             <div>
-              <label style={inputLabel}>Inpatient Initials</label>
+              <label style={inputLabel}>Initials (optional)</label>
               <input value={form.initials} maxLength={LIMITS.INITIALS_MAX}
                 onChange={e => { setForm({...form, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setFormErrors(prev => ({...prev, initials: undefined})); }}
                 placeholder="e.g. J.S." style={{...inputStyle, ...(formErrors.initials ? inputErrorBorder : {})}} />
@@ -729,8 +789,10 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
       {active.length === 0 && !showAdd && (
         <div style={{ textAlign: "center", padding: 40, color: T.sub }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏥</div>
-          <div style={{ fontSize: 14 }}>No active consults</div>
-          <div style={{ fontSize: 13, color: T.muted, marginTop: 4 }}>Add a consult to connect patient topics with study sheets, trials, and tools.</div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>No consults logged yet</div>
+          <div style={{ fontSize: 13, color: T.muted, marginTop: 4, lineHeight: 1.5, maxWidth: 420, margin: "4px auto 0" }}>
+            Tap a topic above the first time you see it on rounds — the matching study sheet, trials, and tools appear right here and on Today. Your attending may seed a few consults to get you started.
+          </div>
         </div>
       )}
 

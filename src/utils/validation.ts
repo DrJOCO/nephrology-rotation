@@ -40,7 +40,7 @@ export const LIMITS = {
   ANNOUNCEMENT_BODY_MAX: 500,
   ARTICLE_TITLE_MAX: 200,
   ARTICLE_URL_MAX: 500,
-  PATIENT_TOPICS_MIN: 2,
+  PATIENT_TOPICS_MIN: 1,
 };
 
 export const PHI_WARNING =
@@ -100,13 +100,13 @@ export function detectPotentialPhi(text: string | undefined | null): string | nu
 export function validatePatientForm(form: PatientFormData): ValidationResult {
   const errors: Record<string, string> = {};
 
-  // Initials: required, max 5 chars, letters/periods/hyphens only
+  // Initials: OPTIONAL (cohort feedback: required initials made quick topic
+  // logging feel like duplicate Cerner data entry). When present: max 5 chars,
+  // letters/periods/hyphens only.
   const initials = (form.initials || "").trim();
-  if (!initials) {
-    errors.initials = "Patient initials are required";
-  } else if (initials.length > LIMITS.INITIALS_MAX) {
+  if (initials && initials.length > LIMITS.INITIALS_MAX) {
     errors.initials = `Max ${LIMITS.INITIALS_MAX} characters`;
-  } else if (!/^[A-Za-z.\-\s]+$/.test(initials)) {
+  } else if (initials && !/^[A-Za-z.\-\s]+$/.test(initials)) {
     errors.initials = "Letters, periods, and hyphens only";
   }
 
@@ -127,9 +127,10 @@ export function validatePatientForm(form: PatientFormData): ValidationResult {
     if (dxPhi) errors.dx = dxPhi;
   }
 
-  // Topics: at least two required so consult-driven recommendations have useful context.
+  // Topics: at least one — the single signal the consult-linked learning loop
+  // needs. (Was 2; reverted per cohort feedback that logging felt heavyweight.)
   if (!form.topics || form.topics.length < LIMITS.PATIENT_TOPICS_MIN) {
-    errors.topics = `Select at least ${LIMITS.PATIENT_TOPICS_MIN} topics`;
+    errors.topics = `Select at least ${LIMITS.PATIENT_TOPICS_MIN} topic${LIMITS.PATIENT_TOPICS_MIN !== 1 ? "s" : ""}`;
   }
 
   // Notes: optional, max 1000

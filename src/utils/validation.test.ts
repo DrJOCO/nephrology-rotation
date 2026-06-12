@@ -29,17 +29,43 @@ describe("validation", () => {
     expect(result.errors.notes).toBeTruthy();
   });
 
-  it("requires at least two patient topics", () => {
+  it("requires at least one patient topic", () => {
     const result = validatePatientForm({
       initials: "J.S.",
       room: "4B-12",
       dx: "AKI in the setting of sepsis",
+      topics: [],
+      notes: "",
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.topics).toContain("at least 1");
+  });
+
+  it("accepts a quick log with a single topic and no initials", () => {
+    const result = validatePatientForm({
+      initials: "",
+      room: "",
+      dx: "",
+      topics: ["AKI"],
+      notes: "",
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual({});
+  });
+
+  it("still validates initials format when initials are provided", () => {
+    const result = validatePatientForm({
+      initials: "J5!",
+      room: "",
+      dx: "",
       topics: ["AKI"],
       notes: "",
     });
 
     expect(result.valid).toBe(false);
-    expect(result.errors.topics).toContain("at least 2");
+    expect(result.errors.initials).toBeTruthy();
   });
 
   it("detects contact details as likely PHI", () => {

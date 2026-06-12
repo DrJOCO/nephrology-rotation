@@ -513,6 +513,23 @@ export default function HomeTab({
   useEffect(() => { setSelectedTopicIdx(0); }, [patientSuggestedGroups.length]);
   const toggleSuggested = () => setSuggestedExpanded(v => !v);
 
+  // Module-unlock nudge (cohort feedback: students didn't realize earlier
+  // modules stay available). Shows once per newly-unlocked module; the very
+  // first visit just records the baseline without nudging.
+  const [moduleNudge, setModuleNudge] = useState<number | null>(() => {
+    if (typeof currentWeek !== "number") return null;
+    const stored = parseInt(localStorage.getItem("neph_lastSeenModule") || "", 10);
+    if (Number.isNaN(stored)) {
+      localStorage.setItem("neph_lastSeenModule", String(currentWeek));
+      return null;
+    }
+    return currentWeek > stored ? currentWeek : null;
+  });
+  const dismissModuleNudge = () => {
+    if (typeof currentWeek === "number") localStorage.setItem("neph_lastSeenModule", String(currentWeek));
+    setModuleNudge(null);
+  };
+
   const activeAnnouncements = useMemo(
     () => (announcements || [])
       .filter((item) => !item.date || now.getTime() - new Date(item.date).getTime() < SEVEN_DAYS_MS)
@@ -641,6 +658,24 @@ export default function HomeTab({
         </div>
       </div>
 
+      {moduleNudge !== null && (
+        <div role="status" style={{ background: T.infoBg, border: `1px solid ${T.info}`, borderRadius: 12, padding: "10px 14px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ fontSize: 13, color: T.info, fontWeight: 600, lineHeight: 1.45 }}>
+            Module {moduleNudge} is live. Earlier modules stay available — find them all in the Library.
+          </div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <button onClick={() => { dismissModuleNudge(); navigate("library"); }}
+              style={{ padding: "6px 12px", minHeight: 36, background: T.info, color: T.infoInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              Open Library
+            </button>
+            <button onClick={dismissModuleNudge} aria-label="Dismiss module notice"
+              style={{ background: "none", border: "none", color: T.info, cursor: "pointer", fontSize: 16, minWidth: 36, minHeight: 36 }}>
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ background: heroStyle.background, borderRadius: 20, padding: 18, border: `1.5px solid ${heroStyle.border}`, marginBottom: 14 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", marginBottom: 16 }}>
           <div>
@@ -686,6 +721,15 @@ export default function HomeTab({
             </button>
           ))}
         </div>
+
+        {/* Cohort feedback: students couldn't find non-current modules — give the
+            hero card a direct path so discovery doesn't depend on the Library tab. */}
+        <button
+          onClick={() => navigate("library")}
+          style={{ marginTop: 10, background: "none", border: "none", color: T.brand, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 0", minHeight: 36, display: "inline-flex", alignItems: "center", gap: 6 }}
+        >
+          Browse all modules <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />
+        </button>
 
         {suggestedExpanded && patientSuggestedGroups.length > 0 && (() => {
           const safeIdx = Math.min(selectedTopicIdx, patientSuggestedGroups.length - 1);
