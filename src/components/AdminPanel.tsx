@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Moon, Sun } from "lucide-react";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
-import store from "../utils/store";
+import store, { type RotationInfo } from "../utils/store";
 import { createAdminInvite, getCurrentAdminUser, listAdminInvites, normalizeEmailAddress, registerInvitedAdmin, sendAdminPasswordReset, signInAdmin, signInAdminWithGoogle, signOutFirebase, type AdminInviteRecord } from "../utils/firebase";
 import { applyTheme, ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
@@ -492,6 +492,45 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     return true;
   }, [markSharedSnapshotClean]);
 
+  // Single connect path shared by the no-rotation picker banner and both
+  // Settings flows (rotation list + code entry). Hydrates remote data first so
+  // stale local defaults never overwrite the live rotation.
+  const connectRotation = useCallback(async (code: string): Promise<boolean> => {
+    if (!firebaseAdmin) return false;
+    const normalized = code.trim().toUpperCase();
+    if (!normalized) return false;
+    const hydrated = await hydrateRotationData(normalized, firebaseAdmin);
+    if (!hydrated) {
+      showToast("Could not open that rotation. Check the code and your access.", "error");
+      return false;
+    }
+    store.setRotationCode(normalized);
+    setStoredAdminRotationCode(firebaseAdmin.uid, normalized);
+    setRotationCodeState(normalized);
+    showToast(`Connected to rotation ${normalized}.`, "success");
+    return true;
+  }, [firebaseAdmin, hydrateRotationData, showToast]);
+
+  // No-rotation picker: when signed in without a connected rotation, list the
+  // admin's rotations up front (master admin sees all) instead of making them
+  // hunt for a code. Re-runs whenever the admin disconnects.
+  const [availableRotations, setAvailableRotations] = useState<RotationInfo[]>([]);
+  const [availableRotationsLoading, setAvailableRotationsLoading] = useState(false);
+  const [pickerSelection, setPickerSelection] = useState("");
+  const [pickerConnecting, setPickerConnecting] = useState(false);
+  useEffect(() => {
+    if (!firebaseAdmin || rotationCode) return;
+    let cancelled = false;
+    setAvailableRotationsLoading(true);
+    void store.listRotations().then((list) => {
+      if (cancelled) return;
+      setAvailableRotations(list);
+      setPickerSelection((prev) => (prev && list.some((r) => r.code === prev) ? prev : (list[0]?.code || "")));
+      setAvailableRotationsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [firebaseAdmin, rotationCode]);
+
   // Load — when connected to a rotation, hydrate from Firestore first to avoid
   // overwriting shared state with stale local defaults
   useEffect(() => {
@@ -960,6 +999,40 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         themeToggle={<AdminThemeToggle />}
         contentKey={tab + (subView ? JSON.stringify(subView) : "")}
       >
+        {!rotationCode && (
+          <div style={{ background: T.warningBg, border: `1px solid ${T.warning}`, borderRadius: 12, padding: "12px 14px", margin: "0 0 14px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, flexShrink: 0 }}>No rotation connected</div>
+            {availableRotationsLoading ? (
+              <div style={{ fontSize: 13, color: T.sub }}>Loading your rotations…</div>
+            ) : availableRotations.length === 0 ? (
+              <div style={{ fontSize: 13, color: T.sub }}>
+                No rotations found yet — create one in <button onClick={() => navigate("settings")} style={{ background: "none", border: "none", color: T.brand, fontWeight: 700, cursor: "pointer", padding: 0, fontSize: 13, textDecoration: "underline" }}>Settings</button>.
+              </div>
+            ) : (
+              <>
+                <select
+                  value={pickerSelection}
+                  onChange={(event) => setPickerSelection(event.target.value)}
+                  aria-label="Choose a rotation to connect"
+                  style={{ flex: 1, minWidth: 180, padding: "8px 10px", borderRadius: 8, border: `1px solid ${T.line}`, background: T.card, color: T.ink, fontSize: 13, fontFamily: T.mono, letterSpacing: 0.5 }}
+                >
+                  {availableRotations.map((rotation) => (
+                    <option key={rotation.code} value={rotation.code}>
+                      {rotation.code}{rotation.name ? ` — ${rotation.name}` : ""}{rotation.dates ? ` (${rotation.dates})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => { setPickerConnecting(true); void connectRotation(pickerSelection).finally(() => setPickerConnecting(false)); }}
+                  disabled={!pickerSelection || pickerConnecting}
+                  style={{ padding: "8px 16px", minHeight: 36, background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: pickerConnecting ? "wait" : "pointer", opacity: pickerConnecting ? 0.7 : 1 }}
+                >
+                  {pickerConnecting ? "Connecting…" : "Connect"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
         {showPublishBar && (
           <PublishStatusBar
             rotationCode={rotationCode}
@@ -1012,6 +1085,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             requestConfirm={requestConfirm}
             onOpenContent={(subView) => navigate("content", subView ?? null)}
             onSharedDataLoaded={markSharedSnapshotClean}
+            connectRotation={connectRotation}
             focusSection="rotation"
           />
         )}
@@ -1045,6 +1119,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             requestConfirm={requestConfirm}
             onOpenContent={(subView) => navigate("content", subView ?? null)}
             onSharedDataLoaded={markSharedSnapshotClean}
+            connectRotation={connectRotation}
           />
         )}
       </AdminShell>

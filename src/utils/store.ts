@@ -694,7 +694,6 @@ const store = {
       if (!adminUser) return [];
       const { db, fs } = await getFirebase();
       const rotationCollection = fs.collection(db, "rotations");
-      const normalizedEmail = normalizeRotationOwnerEmail(adminUser.email || "");
       const masterAdmin = isBootstrapAdminEmail(adminUser.email || "");
 
       // Master admin sees every rotation; ordinary admins only see rotations
@@ -706,19 +705,22 @@ const store = {
         const allSnap = await fs.getDocs(rotationCollection);
         allSnap.docs.forEach((doc) => docs.set(doc.id, doc));
       } else {
-        const legacyOwnerUids = getBootstrapAdminLegacyUids(normalizedEmail);
-        const [adminSnap, ownerSnap, ...legacyOwnerSnaps] = await Promise.all([
+        // Only query shapes the Firestore list rule can PROVE are allowed:
+        // array-contains on adminUids and equality on ownerUid. (An ownerEmail
+        // query is unprovable — the rule would need .lower() on resource data —
+        // and one denied query used to reject the whole Promise.all, so admins
+        // saw an empty list. allSettled keeps one failure from hiding the rest.)
+        const results = await Promise.allSettled([
           fs.getDocs(fs.query(rotationCollection, fs.where("adminUids", "array-contains", adminUser.uid))),
-          normalizedEmail
-            ? fs.getDocs(fs.query(rotationCollection, fs.where("ownerEmail", "==", normalizedEmail)))
-            : Promise.resolve(null),
-          ...legacyOwnerUids.map((legacyUid) =>
-            fs.getDocs(fs.query(rotationCollection, fs.where("ownerUid", "==", legacyUid)))
-          ),
+          fs.getDocs(fs.query(rotationCollection, fs.where("ownerUid", "==", adminUser.uid))),
         ]);
-        adminSnap.docs.forEach((doc) => docs.set(doc.id, doc));
-        ownerSnap?.docs.forEach((doc) => docs.set(doc.id, doc));
-        legacyOwnerSnaps.forEach((snap) => snap.docs.forEach((doc) => docs.set(doc.id, doc)));
+        results.forEach((result) => {
+          if (result.status === "fulfilled") {
+            result.value.docs.forEach((doc) => docs.set(doc.id, doc));
+          } else {
+            console.warn("listRotations query failed:", result.reason);
+          }
+        });
       }
 
       const rotations = await Promise.all(Array.from(docs.values()).map(async d => {

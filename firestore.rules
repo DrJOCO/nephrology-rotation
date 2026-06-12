@@ -202,7 +202,17 @@ service cloud.firestore {
     // ─── Rotation documents ────────────────────────────────────────
     match /rotations/{rotationCode} {
       allow get: if canReadRotation(rotationCode);
-      allow list: if isAdmin() && rotationAllowsAdmin(resource.data);
+      // List uses only PROVABLE clauses (Firestore validates queries statically,
+      // not per-document): the bootstrap check is request-only, and the two
+      // resource clauses match the client's exact query shapes
+      // (array-contains on adminUids / equality on ownerUid). Email matching
+      // needs .lower() on resource data, which the prover can't handle — that
+      // path lives in `get` via rotationAllowsAdmin instead.
+      allow list: if isAdmin() && (
+        isBootstrapAdminEmail()
+        || request.auth.uid in resource.data.adminUids
+        || resource.data.ownerUid == request.auth.uid
+      );
 
       allow create: if isAdmin()
                     && request.resource.data.keys().hasAll(['name', 'createdAt', 'ownerUid', 'ownerEmail', 'adminUids'])

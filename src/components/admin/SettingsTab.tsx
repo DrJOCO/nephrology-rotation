@@ -175,6 +175,7 @@ export function SettingsTab({
   requestConfirm,
   onOpenContent,
   onSharedDataLoaded,
+  connectRotation,
   focusSection,
 }: {
   settings: SharedSettings;
@@ -205,6 +206,7 @@ export function SettingsTab({
   requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>;
   onOpenContent: (subView?: AdminSubView) => void;
   onSharedDataLoaded: () => void;
+  connectRotation: (code: string) => Promise<boolean>;
   focusSection?: "rotation";
 }) {
   const showRotation = focusSection === "rotation";
@@ -318,30 +320,10 @@ export function SettingsTab({
     }
   };
 
+  // Connect logic lives in AdminPanel (shared with the no-rotation banner);
+  // this and handleRejoin are thin wrappers around it.
   const handleConnectRotation = async (code: string) => {
-    try {
-      await store.ensureRotationOwnership(code, firebaseAdmin);
-      const remote = await store.getRotationData(code);
-      if (!remote) {
-        showToast("Could not read the rotation. Check your connection and try again.", "error");
-        return;
-      }
-      if (remote.curriculum) setCurriculum(remote.curriculum);
-      if (remote.articles) setArticles(remote.articles);
-      setStudySheets(normalizeStudySheets(remote.studySheets as Partial<StudySheetsData> | undefined));
-      if (remote.announcements) setAnnouncements(remote.announcements);
-      setClinicGuides(Array.isArray(remote.clinicGuides) ? remote.clinicGuides as ClinicGuideRecord[] : []);
-      setClinicGuideTemplates(normalizeClinicGuideTemplates(remote.clinicGuideTemplates as Partial<ClinicGuideTemplates> | undefined));
-      if (remote.settings) setSettings((prev) => ({ ...prev, ...remote.settings }));
-      store.setRotationCode(code);
-      setStoredAdminRotationCode(firebaseAdmin.uid, code);
-      setRotationCodeState(code);
-      onSharedDataLoaded();
-      showToast(`Connected to rotation ${code}.`, "success");
-    } catch (error) {
-      console.error("Connect rotation failed:", error);
-      showToast("You do not have access to that rotation, or it could not be opened.", "error");
-    }
+    await connectRotation(code);
   };
 
   const handleUpdateRotationField = async (code: string, field: string, value: string) => {
@@ -405,29 +387,10 @@ export function SettingsTab({
     if (rejoinCode.length < 4) return;
     setRejoining(true);
     setRejoinError("");
-    try {
-      await store.ensureRotationOwnership(rejoinCode, firebaseAdmin);
-      const remote = await store.getRotationData(rejoinCode);
-      if (!remote) {
-        setRejoinError("Rotation not found. Check the code.");
-        setRejoining(false);
-        return;
-      }
-      if (remote.curriculum) setCurriculum(remote.curriculum);
-      if (remote.articles) setArticles(remote.articles);
-      setStudySheets(normalizeStudySheets(remote.studySheets as Partial<StudySheetsData> | undefined));
-      if (remote.announcements) setAnnouncements(remote.announcements);
-      setClinicGuides(Array.isArray(remote.clinicGuides) ? remote.clinicGuides as ClinicGuideRecord[] : []);
-      setClinicGuideTemplates(normalizeClinicGuideTemplates(remote.clinicGuideTemplates as Partial<ClinicGuideTemplates> | undefined));
-      if (remote.settings) setSettings((prev) => ({ ...prev, ...remote.settings }));
-      store.setRotationCode(rejoinCode);
-      setStoredAdminRotationCode(firebaseAdmin.uid, rejoinCode);
-      setRotationCodeState(rejoinCode);
+    const connected = await connectRotation(rejoinCode);
+    if (connected) {
       setRejoinCode("");
-      onSharedDataLoaded();
-      showToast(`Connected to rotation ${rejoinCode}.`, "success");
-    } catch (error) {
-      console.error("Rejoin rotation failed:", error);
+    } else {
       setRejoinError("You do not have access to that rotation, or the code is invalid.");
     }
     setRejoining(false);

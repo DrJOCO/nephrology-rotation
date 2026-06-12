@@ -49,14 +49,13 @@ export function getFirebase() {
 }
 
 export async function waitForAuthUser(): Promise<User | null> {
-  const { auth, authMod } = await getFirebase();
-  if (auth.currentUser) return auth.currentUser;
-  return await new Promise(resolve => {
-    const unsub = authMod.onAuthStateChanged(auth, user => {
-      unsub();
-      resolve(user);
-    });
-  });
+  const { auth } = await getFirebase();
+  // authStateReady() resolves only after persisted-session restoration settles.
+  // (The previous onAuthStateChanged-first-event approach could resolve null on
+  // a cold load before restoration finished — admins then saw empty rotation
+  // lists / spurious sign-in screens until something retried.)
+  await auth.authStateReady();
+  return auth.currentUser;
 }
 
 export function normalizeEmailAddress(email: string): string {
