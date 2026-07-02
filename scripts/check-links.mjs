@@ -3,7 +3,8 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const TARGET_FILES = [
-  "src/data/constants.ts",
+  "src/data/articles.ts",
+  "src/data/resources.ts",
   "src/data/trials.ts",
   "src/data/guides.ts",
 ];
