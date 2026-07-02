@@ -260,6 +260,191 @@ async function ensureRotationCodeDoc(code: string, owner: RotationOwnerSession):
   }, { merge: true });
 }
 
+// ─── Flush guard: never let stale queued data clobber newer remote data ───
+// A device that queued writes while offline may flush long after another
+// device has synced newer progress. When the remote doc's updatedAt is newer
+// than the queued item's, we merge field-wise instead of overwriting:
+// progress-shaped collections get monotonic unions (completed work never
+// un-completes), and where a winner is ambiguous the newest updatedAt wins.
+
+type FirebaseModules = Awaited<ReturnType<typeof getFirebase>>;
+
+function isNewerTimestamp(a: unknown, b: unknown): boolean {
+  // ISO-8601 strings compare correctly lexicographically (same convention as
+  // the student listener's staleness check in StudentApp).
+  return typeof a === "string" && typeof b === "string" && a > b;
+}
+
+async function readFlushRemoteDoc(
+  fs: FirebaseModules["fs"],
+  ref: ReturnType<FirebaseModules["fs"]["doc"]>,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const snap = await fs.getDoc(ref);
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    return isPlainObject(data) ? data : null;
+  } catch (error) {
+    // Can't compare against remote (transient read failure): fall back to the
+    // pre-guard write-as-is behavior rather than blocking the flush forever.
+    console.warn("Pending sync remote read failed, writing queued data as-is:", error);
+    return null;
+  }
+}
+
+function unionCompletionRecord(remote: unknown, queued: unknown): unknown {
+  if (!isPlainObject(remote)) return queued;
+  if (!isPlainObject(queued)) return remote;
+  const merged: Record<string, unknown> = { ...queued };
+  for (const [key, remoteValue] of Object.entries(remote)) {
+    // Union of keys; on a per-key conflict the newer remote copy wins, except
+    // a `true` completion flag is never downgraded (completed stays completed).
+    merged[key] = merged[key] === true && remoteValue === false ? true : remoteValue;
+  }
+  return merged;
+}
+
+function mergeCompletedItems(remote: unknown, queued: unknown): unknown {
+  if (!isPlainObject(remote)) return queued;
+  if (!isPlainObject(queued)) return remote;
+  const merged: Record<string, unknown> = { ...remote, ...queued };
+  for (const section of Object.keys(merged)) {
+    merged[section] = unionCompletionRecord(remote[section], queued[section]);
+  }
+  return merged;
+}
+
+function mergeSrQueues(remote: unknown, queued: unknown): unknown {
+  if (!isPlainObject(remote)) return queued;
+  if (!isPlainObject(queued)) return remote;
+  const merged: Record<string, unknown> = { ...queued };
+  for (const [key, remoteItem] of Object.entries(remote)) {
+    const queuedItem = merged[key];
+    if (!isPlainObject(queuedItem) || !isPlainObject(remoteItem)) {
+      merged[key] = remoteItem;
+      continue;
+    }
+    // Per-card conflict: the more recently reviewed copy carries the later
+    // spaced-repetition state; tie or missing dates → newest doc (remote) wins.
+    merged[key] = isNewerTimestamp(queuedItem.lastReviewed, remoteItem.lastReviewed) ? queuedItem : remoteItem;
+  }
+  return merged;
+}
+
+function mergeActivityLogs(remote: unknown, queued: unknown): unknown {
+  if (!Array.isArray(remote)) return queued;
+  if (!Array.isArray(queued)) return remote;
+  // Logs are append-only: union with de-dupe (entries from the same code path
+  // serialize identically), kept in chronological order.
+  const seen = new Set<string>();
+  const merged: unknown[] = [];
+  for (const entry of [...remote, ...queued]) {
+    const key = JSON.stringify(entry);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(entry);
+  }
+  merged.sort((a, b) => {
+    const ta = isPlainObject(a) && typeof a.timestamp === "string" ? a.timestamp : "";
+    const tb = isPlainObject(b) && typeof b.timestamp === "string" ? b.timestamp : "";
+    return ta.localeCompare(tb);
+  });
+  return merged;
+}
+
+function unionRecordsById(remote: unknown, queued: unknown): unknown {
+  if (!Array.isArray(remote)) return queued;
+  if (!Array.isArray(queued)) return remote;
+  // Union by id so entries added on either device survive. There is no
+  // per-entry timestamp to compare, so on an id conflict the newest doc's
+  // (remote's) copy wins. Note this conservatively resurrects entries the
+  // offline device deleted — losing a deletion beats losing newer edits.
+  const merged: unknown[] = [];
+  const seen = new Set<unknown>();
+  for (const remoteEntry of remote) {
+    merged.push(remoteEntry);
+    if (isPlainObject(remoteEntry) && remoteEntry.id !== undefined) seen.add(remoteEntry.id);
+  }
+  for (const queuedEntry of queued) {
+    if (isPlainObject(queuedEntry) && queuedEntry.id !== undefined && seen.has(queuedEntry.id)) continue;
+    merged.push(queuedEntry);
+  }
+  return merged;
+}
+
+function mergeWeeklyScores(remote: unknown, queued: unknown): unknown {
+  if (!isPlainObject(remote)) return queued;
+  if (!isPlainObject(queued)) return remote;
+  const merged: Record<string, unknown> = { ...queued };
+  for (const [week, remoteAttempts] of Object.entries(remote)) {
+    const queuedAttempts = merged[week];
+    if (!Array.isArray(remoteAttempts) || !Array.isArray(queuedAttempts)) {
+      merged[week] = remoteAttempts;
+      continue;
+    }
+    // Attempts are append-only per week: union by attempt date so neither
+    // device's quiz attempts vanish.
+    const seenDates = new Set(
+      remoteAttempts.map((attempt) => (isPlainObject(attempt) && typeof attempt.date === "string" ? attempt.date : "")),
+    );
+    merged[week] = [
+      ...remoteAttempts,
+      ...queuedAttempts.filter((attempt) =>
+        !(isPlainObject(attempt) && typeof attempt.date === "string" && seenDates.has(attempt.date))),
+    ];
+  }
+  return merged;
+}
+
+function mergeGamification(remote: unknown, queued: unknown): unknown {
+  if (!isPlainObject(remote)) return queued;
+  if (!isPlainObject(queued)) return remote;
+  const remoteAchievements = Array.isArray(remote.achievements) ? remote.achievements : [];
+  const queuedAchievements = Array.isArray(queued.achievements) ? queued.achievements : [];
+  return {
+    ...queued,
+    // Points and streaks are derived and ambiguous to merge → newest updatedAt
+    // (remote) wins; the app recomputes points from the unioned state anyway.
+    ...remote,
+    // Achievements are monotonic — earned on either device stays earned.
+    achievements: Array.from(new Set([...remoteAchievements, ...queuedAchievements])),
+  };
+}
+
+function mergeStudentFlushPayload(remote: Record<string, unknown>, payload: Record<string, unknown>): Record<string, unknown> {
+  const merged: Record<string, unknown> = {};
+  for (const [field, queuedValue] of Object.entries(payload)) {
+    if (!Object.prototype.hasOwnProperty.call(remote, field)) {
+      // Remote never saw this field; the queued value is the only copy.
+      merged[field] = queuedValue;
+      continue;
+    }
+    const remoteValue = remote[field];
+    switch (field) {
+      case "completedItems": merged[field] = mergeCompletedItems(remoteValue, queuedValue); break;
+      case "srQueue": merged[field] = mergeSrQueues(remoteValue, queuedValue); break;
+      case "activityLog": merged[field] = mergeActivityLogs(remoteValue, queuedValue); break;
+      case "weeklyScores": merged[field] = mergeWeeklyScores(remoteValue, queuedValue); break;
+      case "gamification": merged[field] = mergeGamification(remoteValue, queuedValue); break;
+      case "patients":
+      case "reflections":
+        merged[field] = unionRecordsById(remoteValue, queuedValue);
+        break;
+      default:
+        // Scalar or toggleable field (name, pre/post scores, bookmarks, …)
+        // with no safe union: newest updatedAt wins, so the newer remote copy
+        // is kept by omitting the stale queued value from the merge write.
+        break;
+    }
+  }
+  if (Object.keys(merged).length > 0) {
+    // The unioned doc is a genuinely new state — stamp a fresh updatedAt so
+    // other devices' staleness checks pick the merge up.
+    merged.updatedAt = new Date().toISOString();
+  }
+  return merged;
+}
+
 async function flushPendingSyncQueue(): Promise<number> {
   const queue = readPendingSyncQueue();
   if (queue.length === 0) return 0;
@@ -279,14 +464,26 @@ async function flushPendingSyncQueue(): Promise<number> {
         if (!field) continue;
         await fs.updateDoc(fs.doc(db, "rotations", item.rotationCode), { [field]: item.data });
       } else if (item.kind === "setStudentData") {
-        const payload = withoutLegacyLoginPin(item.data);
-        await fs.setDoc(
-          fs.doc(db, "rotations", item.rotationCode, "students", item.studentId),
-          { ...payload, loginPin: fs.deleteField() },
-          { merge: true },
-        );
+        let payload = withoutLegacyLoginPin(item.data);
+        const studentRef = fs.doc(db, "rotations", item.rotationCode, "students", item.studentId);
+        const remote = await readFlushRemoteDoc(fs, studentRef);
+        // Legacy queue items may lack updatedAt ("" here) — treat them as
+        // stale so the merge guard protects whatever remote already has.
+        if (remote && isNewerTimestamp(remote.updatedAt, typeof item.updatedAt === "string" ? item.updatedAt : "")) {
+          payload = mergeStudentFlushPayload(remote, payload);
+        }
+        if (Object.keys(payload).length > 0) {
+          await fs.setDoc(studentRef, { ...payload, loginPin: fs.deleteField() }, { merge: true });
+        }
       } else if (item.kind === "setTeamSnapshot") {
-        await fs.setDoc(fs.doc(db, "rotations", item.rotationCode, "team", item.studentId), item.data, { merge: true });
+        const teamRef = fs.doc(db, "rotations", item.rotationCode, "team", item.studentId);
+        const remote = await readFlushRemoteDoc(fs, teamRef);
+        if (remote && isNewerTimestamp(remote.updatedAt, typeof item.updatedAt === "string" ? item.updatedAt : "")) {
+          // Team snapshots are derived wholesale from student data; a newer
+          // remote snapshot supersedes this stale queued one, so drop it.
+          continue;
+        }
+        await fs.setDoc(teamRef, item.data, { merge: true });
       } else if (item.kind === "updateRotation") {
         await fs.updateDoc(fs.doc(db, "rotations", item.rotationCode), item.data);
       }
