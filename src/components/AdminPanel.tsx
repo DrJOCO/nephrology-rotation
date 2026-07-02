@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { Moon, Sun } from "lucide-react";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import store, { type RotationInfo } from "../utils/store";
 import { createAdminInvite, getCurrentAdminUser, listAdminInvites, normalizeEmailAddress, registerInvitedAdmin, sendAdminPasswordReset, signInAdmin, signInAdminWithGoogle, signOutFirebase, type AdminInviteRecord } from "../utils/firebase";
-import { applyTheme, ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
+import { ensureGoogleFonts, ensureShakeAnimation, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
@@ -12,6 +11,8 @@ import { normalizeAdminStudentRecord } from "../utils/adminStudents";
 import { AdminAuthScreen } from "./admin/AdminAuthScreen";
 import { AdminPinGate, AdminPinSetupGate } from "./admin/AdminPinGate";
 import { AdminShell } from "./admin/AdminShell";
+import { AdminThemeToggle } from "./admin/AdminThemeToggle";
+import { PublishStatusBar } from "./admin/PublishStatusBar";
 import { SettingsTab } from "./admin/SettingsTab";
 import { AdminConfirmDialog, AdminToast, type AdminConfirmOptions, type AdminToastState, type AdminToastTone } from "./admin/shared";
 import { ArticleEditor } from "./admin/editors/ArticleEditor";
@@ -26,313 +27,14 @@ import { AnalyticsTab } from "./admin/tabs/AnalyticsTab";
 import { RotationSummaryReport } from "./admin/views/RotationSummaryReport";
 import { PrintableReport } from "./admin/views/PrintableReport";
 import { StudentDetailView } from "./admin/views/StudentDetailView";
-import { Button } from "./admin/ui/Button";
-import { Icon } from "./student/Icon";
 import { getAdminPinValidationError } from "./admin/pinValidation";
 import { adminScopedKey, getStoredAdminRotationCode, setStoredAdminRotationCode } from "./admin/storage";
+import { getAdminAuthErrorMessage } from "./admin/lib/auth-errors";
+import { buildPublishSnapshot, serializePublishSnapshot } from "./admin/lib/publish";
+import { buildRecoveredStudent } from "./admin/lib/student-recovery";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
-import type { NavigateFn, WeeklyData, ArticlesData, AdminSession, AdminAuthMode } from "./admin/types";
-import type { AdminSubView, AdminStudent, Announcement, SharedSettings, Patient, QuizScore, WeeklyScores, ClinicGuideRecord, CompletedItems, Bookmarks, ActivityLogEntry, ReflectionEntry } from "../types";
-
-type PublishableSharedState = {
-  curriculum: WeeklyData;
-  articles: ArticlesData;
-  studySheets: StudySheetsData;
-  announcements: Announcement[];
-  settings: SharedSettings;
-  clinicGuides: ClinicGuideRecord[];
-  clinicGuideTemplates: ClinicGuideTemplates;
-};
-
-function getPublicSettings(settings: SharedSettings): SharedSettings {
-  const { adminPin: _adminPin, ...publicSettings } = settings;
-  return publicSettings;
-}
-
-function buildPublishSnapshot({
-  curriculum,
-  articles,
-  studySheets,
-  announcements,
-  settings,
-  clinicGuides,
-  clinicGuideTemplates,
-}: PublishableSharedState): PublishableSharedState {
-  return {
-    curriculum,
-    articles,
-    studySheets: normalizeStudySheets(studySheets),
-    announcements,
-    settings: getPublicSettings(settings),
-    clinicGuides,
-    clinicGuideTemplates: normalizeClinicGuideTemplates(clinicGuideTemplates),
-  };
-}
-
-function serializePublishSnapshot(snapshot: PublishableSharedState): string {
-  return JSON.stringify(snapshot);
-}
-
-function formatRelativeTime(iso: string): string {
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "";
-  const sec = Math.max(0, Math.round((Date.now() - then) / 1000));
-  if (sec < 45) return "just now";
-  const min = Math.round(sec / 60);
-  if (min < 60) return `${min} min ago`;
-  const hr = Math.round(min / 60);
-  if (hr < 24) return `${hr} hr ago`;
-  const day = Math.round(hr / 24);
-  if (day < 7) return `${day} day${day === 1 ? "" : "s"} ago`;
-  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
-function PublishStatusBar({
-  rotationCode,
-  dirty,
-  publishing,
-  lastPublishedAt,
-  onPublish,
-}: {
-  rotationCode: string;
-  dirty: boolean;
-  publishing: boolean;
-  lastPublishedAt: string | null;
-  onPublish: () => void;
-}) {
-  const canPublish = Boolean(rotationCode) && dirty && !publishing;
-  const hasRotation = Boolean(rotationCode);
-  const lastShipped = lastPublishedAt ? formatRelativeTime(lastPublishedAt) : null;
-
-  let dotColor: string;
-  let statusText: string;
-  let centerText: string;
-  let ctaLabel: string;
-
-  if (!hasRotation) {
-    dotColor = T.muted;
-    statusText = "NO ROTATION";
-    centerText = "Connect a rotation to publish to students";
-    ctaLabel = "No Rotation";
-  } else if (publishing) {
-    dotColor = T.warning;
-    statusText = "PUBLISHING";
-    centerText = "Sending changes to students…";
-    ctaLabel = "Publishing…";
-  } else if (dirty) {
-    dotColor = T.brand;
-    statusText = "UNPUBLISHED EDITS";
-    centerText = lastShipped
-      ? `Edits since last publish · last shipped ${lastShipped}`
-      : "Edits since last publish";
-    ctaLabel = "Publish to Students";
-  } else {
-    dotColor = T.success;
-    statusText = "PUBLISHED";
-    centerText = lastShipped
-      ? `Up to date · last shipped ${lastShipped}`
-      : "Up to date";
-    ctaLabel = "No Changes";
-  }
-
-  return (
-    <div style={{ background: T.bg, border: `1px solid ${T.brand}`, borderRadius: 0, padding: "8px 10px", marginBottom: 14, display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 auto" }}>
-        <span aria-hidden style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor, flexShrink: 0 }} />
-        <span style={{ fontFamily: T.mono, fontSize: 12, fontWeight: 700, color: T.ink, letterSpacing: 1, textTransform: "uppercase", whiteSpace: "nowrap" }}>
-          {statusText}
-        </span>
-        <span style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, minWidth: 0 }}>
-          {centerText}
-        </span>
-      </div>
-      <Button variant={canPublish ? "primary" : "default"} onClick={onPublish} disabled={!canPublish}>
-        {ctaLabel}
-      </Button>
-    </div>
-  );
-}
-
-function getAdminAuthErrorMessage(error: unknown) {
-  const code = typeof error === "object" && error !== null && "code" in error ? String((error as { code?: unknown }).code) : "";
-  const message = error instanceof Error ? error.message : "";
-  if (message === "admin/unauthorized") {
-    return "This account is not authorized for the admin panel.";
-  }
-  if (message === "admin/invite-required") {
-    return "This email has not been invited yet. Ask an existing admin to add it first.";
-  }
-  if (message === "admin/already-claimed" || message === "admin/already-admin") {
-    return "This email already has an admin account. Sign in instead.";
-  }
-  if (message === "admin/master-only") {
-    return "Only the master admin (joncheng5@gmail.com) can invite new admins.";
-  }
-  if (code === "auth/invalid-email") return "Enter a valid admin email address.";
-  if (code === "auth/email-already-in-use") return "This email already has an account. Sign in instead.";
-  if (code === "auth/weak-password") return "Choose a stronger password with at least 6 characters.";
-  if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
-    return "Email or password incorrect.";
-  }
-  if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-    return "Google sign-in was cancelled before it finished.";
-  }
-  if (code === "auth/popup-blocked") {
-    return "Your browser blocked the Google sign-in popup. Allow popups and try again.";
-  }
-  if (code === "auth/too-many-requests") return "Too many sign-in attempts. Try again later.";
-  if (code === "auth/operation-not-allowed") return "That admin sign-in method is not enabled in Firebase Authentication yet.";
-  return "Admin sign-in failed. Check your email, password, or admin access.";
-}
-
-function pickLatestScore(a: QuizScore | null | undefined, b: QuizScore | null | undefined): QuizScore | null {
-  if (!a) return b || null;
-  if (!b) return a;
-  return new Date(a.date).getTime() >= new Date(b.date).getTime() ? a : b;
-}
-
-function mergeWeeklyScores(source: WeeklyScores = {}, target: WeeklyScores = {}): WeeklyScores {
-  const merged: WeeklyScores = {};
-  const weeks = new Set([...Object.keys(source), ...Object.keys(target)]);
-  weeks.forEach(week => {
-    const seen = new Map<string, QuizScore>();
-    [...(source[week] || []), ...(target[week] || [])].forEach(score => {
-      seen.set(`${score.date}|${score.correct}|${score.total}`, score);
-    });
-    merged[week] = Array.from(seen.values()).sort((a, b) => a.date.localeCompare(b.date));
-  });
-  return merged;
-}
-
-function mergeCompletedItems(source?: CompletedItems, target?: CompletedItems): CompletedItems | undefined {
-  const merged: CompletedItems = {
-    articles: { ...(source?.articles || {}), ...(target?.articles || {}) },
-    studySheets: { ...(source?.studySheets || {}), ...(target?.studySheets || {}) },
-    cases: { ...(source?.cases || {}), ...(target?.cases || {}) },
-    decks: { ...(source?.decks || {}), ...(target?.decks || {}) },
-    consultTopics: { ...(source?.consultTopics || {}), ...(target?.consultTopics || {}) },
-  };
-  if (
-    Object.keys(merged.articles).length === 0 &&
-    Object.keys(merged.studySheets).length === 0 &&
-    Object.keys(merged.cases).length === 0 &&
-    Object.keys(merged.decks || {}).length === 0 &&
-    Object.keys(merged.consultTopics || {}).length === 0
-  ) {
-    return undefined;
-  }
-  return merged;
-}
-
-function mergeBookmarks(source?: Bookmarks, target?: Bookmarks): Bookmarks | undefined {
-  const merged: Bookmarks = {
-    trials: Array.from(new Set([...(source?.trials || []), ...(target?.trials || [])])),
-    articles: Array.from(new Set([...(source?.articles || []), ...(target?.articles || [])])),
-    cases: Array.from(new Set([...(source?.cases || []), ...(target?.cases || [])])),
-    studySheets: Array.from(new Set([...(source?.studySheets || []), ...(target?.studySheets || [])])),
-  };
-  if (
-    merged.trials.length === 0 &&
-    merged.articles.length === 0 &&
-    merged.cases.length === 0 &&
-    merged.studySheets.length === 0
-  ) {
-    return undefined;
-  }
-  return merged;
-}
-
-function mergeActivityLog(source: ActivityLogEntry[] = [], target: ActivityLogEntry[] = []): ActivityLogEntry[] {
-  const deduped = new Map<string, ActivityLogEntry>();
-  [...source, ...target].forEach(entry => {
-    deduped.set(`${entry.timestamp}|${entry.type}|${entry.label}|${entry.detail}`, entry);
-  });
-  return Array.from(deduped.values())
-    .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
-    .slice(-50);
-}
-
-function mergeReflections(source: ReflectionEntry[] = [], target: ReflectionEntry[] = []): ReflectionEntry[] {
-  const deduped = new Map<string, ReflectionEntry>();
-  [...source, ...target].forEach((entry) => {
-    deduped.set(entry.id || `${entry.dayKey}|${entry.submittedAt}`, entry);
-  });
-  return Array.from(deduped.values())
-    .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))
-    .slice(-30);
-}
-
-function buildRecoveredStudent(source: AdminStudent, target: AdminStudent): AdminStudent {
-  const sourcePatients = source.patients || [];
-  const targetPatients = target.patients || [];
-  const mergedPatients = [
-    ...sourcePatients,
-    ...targetPatients.filter(tp => !sourcePatients.some(sp => String(sp.id) === String(tp.id))),
-  ];
-  const mergedAchievements = Array.from(new Set([
-    ...(source.gamification?.achievements || []),
-    ...(target.gamification?.achievements || []),
-  ]));
-  const mergedActivityLog = mergeActivityLog(source.activityLog || [], target.activityLog || []);
-
-  return {
-    ...target,
-    name: target.name || source.name,
-    year: target.year || source.year,
-    email: target.email || source.email,
-    status: target.status === "active" || source.status === "active" ? "active" : "completed",
-    addedDate: [source.addedDate, target.addedDate].filter(Boolean).sort()[0] || new Date().toISOString(),
-    patients: mergedPatients,
-    weeklyScores: mergeWeeklyScores(source.weeklyScores || {}, target.weeklyScores || {}),
-    preScore: pickLatestScore(source.preScore, target.preScore),
-    postScore: pickLatestScore(source.postScore, target.postScore),
-    gamification: {
-      points: Math.max(source.gamification?.points || 0, target.gamification?.points || 0),
-      achievements: mergedAchievements,
-      streaks:
-        (target.gamification?.streaks?.lastActiveDate || "") >= (source.gamification?.streaks?.lastActiveDate || "")
-          ? (target.gamification?.streaks || source.gamification?.streaks || { currentDays: 0, longestDays: 0, lastActiveDate: null })
-          : (source.gamification?.streaks || target.gamification?.streaks || { currentDays: 0, longestDays: 0, lastActiveDate: null }),
-    },
-    srQueue: { ...(source.srQueue || {}), ...(target.srQueue || {}) },
-    activityLog: mergedActivityLog,
-    reflections: mergeReflections(source.reflections, target.reflections),
-    completedItems: mergeCompletedItems(source.completedItems, target.completedItems),
-    bookmarks: mergeBookmarks(source.bookmarks, target.bookmarks),
-    feedbackTags: [
-      ...(source.feedbackTags || []),
-      ...(target.feedbackTags || []).filter(tag =>
-        !(source.feedbackTags || []).some(existing =>
-          existing.tag === tag.tag && existing.date === tag.date && existing.note === tag.note
-        )
-      ),
-    ],
-    lastSyncedAt: new Date().toISOString(),
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-//  Theme Toggle (Dark Mode)
-// ═══════════════════════════════════════════════════════════════════════
-function AdminThemeToggle() {
-  const [theme, setTheme] = useState(() =>
-    document.documentElement.getAttribute("data-theme") || "light"
-  );
-  const toggle = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    applyTheme(next);
-  };
-  return (
-    <button onClick={toggle} style={{
-      background: "transparent", border: `1px solid ${T.line}`, borderRadius: 0,
-      padding: "5px 8px", cursor: "pointer", fontSize: 14, lineHeight: 1,
-      color: T.ink, display: "flex", alignItems: "center",
-    }} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
-      <Icon as={theme === "dark" ? Sun : Moon} size={16} color={T.ink} />
-    </button>
-  );
-}
+import type { WeeklyData, ArticlesData, AdminSession, AdminAuthMode } from "./admin/types";
+import type { AdminSubView, AdminStudent, Announcement, SharedSettings, Patient, ClinicGuideRecord } from "../types";
 
 // ═══════════════════════════════════════════════════════════════════════
 //  Admin Panel (main component)
