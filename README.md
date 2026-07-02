@@ -130,6 +130,8 @@ The repo currently includes Firebase configuration files, but deployment require
 
 ## Rotation Handoff Checklist
 
+For the step-by-step version, run through [docs/SMOKE_TEST.md](docs/SMOKE_TEST.md).
+
 - Confirm the active rotation exists and has the correct dates, location, duration, curriculum, articles, announcements, and clinic guides.
 - Confirm the admin account can sign in, open the target rotation, and has a local admin PIN set.
 - Confirm at least one test student can verify email, create a PIN, join the rotation, complete an item, and sync progress.
