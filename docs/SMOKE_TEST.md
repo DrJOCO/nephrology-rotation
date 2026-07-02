@@ -23,9 +23,9 @@ Use a private/incognito window (or a second browser) for the student steps so ad
 1. Open the app and switch to the admin panel.
 2. Sign in with the admin email/password (or Google sign-in).
 3. Pass the local admin PIN gate. If no PIN is set on this device, the PIN setup screen should appear — set one.
-4. Connect to the target rotation for the upcoming cohort (use the rotation picker / Connect button on the Rotation tab). If the rotation doesn't exist yet, create it there with the correct code.
+4. Connect to the target rotation for the upcoming cohort. If no rotation is connected, a "No rotation connected" banner with a rotation picker appears on entry — choose the rotation and press Connect. (Connecting from the Rotation tab also works.) If the rotation doesn't exist yet, create it on the Rotation tab with the correct code.
 5. Review the rotation settings: start date, duration, location, attending info.
-6. Skim the Content tab: curriculum weeks, articles, announcements, and clinic guides look right for this cohort.
+6. Skim the content: from the Settings tab, open the "Curriculum & Content" section and confirm curriculum weeks, articles, announcements, and clinic guides look right for this cohort.
 7. If you changed anything, publish the changes to students.
 
 **Expected result**
@@ -38,7 +38,7 @@ Use a private/incognito window (or a second browser) for the student steps so ad
 
 - Sign-in errors: `src/utils/firebase.ts` (admin auth helpers) and the Firebase console → Authentication. Admin access also requires an `/admins/{uid}` document in Firestore; invites live in `/adminInvites/{email}`.
 - PIN gate: the admin PIN is a local second lock stored in rotation settings on this device (`src/components/admin/AdminPinGate.tsx`, `src/components/AdminPanel.tsx`). It is intentionally stripped from settings shared with students.
-- Rotation connect/create: `src/components/admin/SettingsTab.tsx`, `store.createRotation` in `src/utils/store.ts`, and Firestore `/rotations/{code}` and `/rotationCodes/{code}`.
+- Rotation connect/create: the shared `connectRotation` path in `src/components/AdminPanel.tsx` (used by both the on-entry picker banner and the Rotation tab), the create form in `src/components/admin/SettingsTab.tsx`, `store.createRotation` in `src/utils/store.ts`, and Firestore `/rotations/{code}` and `/rotationCodes/{code}`.
 - Publish failures: usually connectivity or Firestore rules (`firestore.rules`) — confirm the signed-in admin owns or administers the rotation.
 
 ---
@@ -66,10 +66,10 @@ Use the test student account, in a private window.
 
 **If this fails, look at**
 
-- No verification email: Firebase console → Authentication (email link sign-in must be enabled; check the authorized domains list). Error text mapping lives in `src/components/StudentApp.tsx`.
+- No verification email: Firebase console → Authentication (email link sign-in must be enabled; check the authorized domains list). Error text mapping lives in `src/hooks/useStudentAuth.ts`.
 - "This verification link is not available from this site": the link was opened on a different domain than the app is authorized for — Firebase Auth authorized domains.
 - Link opened on a different device/browser: the app will ask you to re-enter the same email; that is expected behavior, not a bug.
-- PIN/join logic: `src/components/StudentApp.tsx` (join handler) and `src/components/student/LoginScreen.tsx`. PIN length and credential handling: `src/utils/firebase.ts`.
+- PIN/join logic: `handleJoinRotation` in `src/hooks/useStudentAuth.ts` and `src/components/student/LoginScreen.tsx`. PIN length and credential handling: `src/utils/firebase.ts`.
 - Student not appearing in admin list: Firestore `/rotations/{code}/students/{studentId}` and `/studentAssignments/{studentId}`; the admin real-time listener is in `src/components/AdminPanel.tsx`; write path is `store.setStudentData` in `src/utils/store.ts`.
 
 ---
@@ -90,7 +90,7 @@ Use the test student account, in a private window.
 
 - "That email and PIN did not match": PIN-backed credential in `src/utils/firebase.ts`; a PIN reset ("send a reset link") re-runs verification and sets a new PIN.
 - "We couldn't find a student account for that email": the first-time flow never completed — redo Scenario 2.
-- Progress missing after sign-in: rotation lookup via `/studentAssignments/{studentId}` and the student doc hydration in `src/components/StudentApp.tsx` / `src/utils/store.ts`.
+- Progress missing after sign-in: rotation lookup via `/studentAssignments/{studentId}` and the student doc hydration in `src/hooks/useStudentSync.ts` / `src/utils/store.ts`.
 
 ---
 
@@ -104,7 +104,7 @@ Stay signed in as the test student.
 2. Complete another module item (or answer another quiz question).
 3. Confirm the offline banner appears under the header and mentions queued updates that will sync when reconnected.
 4. Go back online.
-5. Confirm the banner switches to a brief "reconnected / syncing" state and then clears entirely.
+5. Confirm the banner switches to a "waiting to sync — retrying automatically" state and then clears entirely once the queue drains.
 6. In the admin Students tab, confirm the offline-completed activity now shows for the test student.
 
 **Expected result**
@@ -113,8 +113,8 @@ Stay signed in as the test student.
 
 **If this fails, look at**
 
-- Banner logic: the offline/pending banner in `src/components/StudentApp.tsx` (driven by `navigator.onLine` and the pending-sync count).
-- Queue behavior: `flushPendingSyncQueue` and the `neph_pendingSyncQueue` localStorage key in `src/utils/store.ts`. The queue retries on reconnect; items that still fail stay queued (check the browser console for "Queued sync flush failed").
+- Banner logic: the offline/pending banner is rendered in `src/components/StudentApp.tsx`, driven by the `online` / `pendingSyncCount` state from `src/hooks/useStudentSync.ts`.
+- Queue behavior: `flushPendingSyncQueue` and the `neph_pendingSyncQueue` localStorage key in `src/utils/store.ts`. `src/hooks/useStudentSync.ts` re-flushes the queue on reconnect and retries every 30 seconds while anything is queued; items that still fail stay queued (check the browser console for "Queued sync flush failed").
 - Data that synced but doesn't appear in admin: same Firestore paths as Scenario 2.
 
 ---
@@ -135,8 +135,8 @@ Stay signed in as the test student.
 
 **If this fails, look at**
 
-- Error copy and rate limiting: the join handler and auth error mapping in `src/components/StudentApp.tsx`.
-- If a bad code somehow "joins": rotation existence check in `src/utils/store.ts` and Firestore `/rotations/{code}`.
+- Error copy and rate limiting: `handleJoinRotation` and the auth error mapping in `src/hooks/useStudentAuth.ts` (five wrong PINs trigger the 30-second lockout; a bad rotation code deliberately does not count against it).
+- If a bad code somehow "joins": `store.validateRotationCode` in `src/utils/store.ts` and Firestore `/rotations/{code}`.
 
 ---
 
