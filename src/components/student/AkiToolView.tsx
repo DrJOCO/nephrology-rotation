@@ -415,7 +415,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
               />
             </div>
             {showDiureticCaveat && (
-              <div style={{ marginTop: 10, background: T.warningBg, border: `1px solid ${T.warning}`, color: T.text, borderRadius: 8, padding: 10, fontSize: 13, lineHeight: 1.5 }}>
+              <div style={{ marginTop: 10, background: T.warningBg, border: `1px solid ${T.warning}`, color: T.ink, borderRadius: 8, padding: 10, fontSize: 13, lineHeight: 1.5 }}>
                 Diuretics selected: FENa is often confounded. FEUrea can help, but it still needs clinical context.
               </div>
             )}
@@ -445,7 +445,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
               <div style={{ background: T.dangerBg, border: `1px solid ${T.danger}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
                 <div style={{ color: T.danger, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>High-risk signals</div>
                 {assessment.alerts.map((alert) => (
-                  <div key={alert} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 4 }}>{alert}</div>
+                  <div key={alert} style={{ color: T.ink, fontSize: 13, lineHeight: 1.45, marginBottom: 4 }}>{alert}</div>
                 ))}
               </div>
             )}
@@ -474,7 +474,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
                     </div>
                     <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 8, paddingTop: 8 }}>
                       {item.next.slice(0, 2).map((step) => (
-                        <div key={step} style={{ color: T.text, fontSize: 12.5, lineHeight: 1.45, marginBottom: 3 }}>{step}</div>
+                        <div key={step} style={{ color: T.ink, fontSize: 12.5, lineHeight: 1.45, marginBottom: 3 }}>{step}</div>
                       ))}
                     </div>
                   </div>
@@ -485,7 +485,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
 
           <Panel title="Next checks">
             {assessment.nextSteps.map((step) => (
-              <div key={step} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
+              <div key={step} style={{ color: T.ink, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
             ))}
             <div style={{ color: T.muted, fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>
               Uses KDIGO-style creatinine/UOP staging signals and standard FENa/FEUrea formulas. This is a reasoning aid, not a diagnosis.

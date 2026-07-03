@@ -5,6 +5,7 @@ import { inputLabel, inputStyle, EduDisclaimer, ConfirmSheet } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
 import { getFollowUpState } from "../../utils/patient";
 import { getPatientSuggestedTopicGroups, type PatientSuggestedTopicGroup } from "../../utils/patientRecommendations";
+import { createQuickLogEntry, summarizeSuggestedGroup } from "../../utils/quickLog";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
 import type { CompletedItems, Patient, SubView } from "../../types";
 
@@ -34,6 +35,18 @@ function getHiddenTopicCount(selectedTopics: string[], expanded: boolean): numbe
   return ADDITIONAL_PATIENT_TOPICS.length - selectedExtraTopics.length;
 }
 
+// Matches topic names and TOPIC_KEYWORDS synonyms, so "siadh" or "low sodium"
+// surfaces Hyponatremia even though the topic name doesn't contain the query.
+function searchQuickLogTopics(query: string): string[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return TOPICS.filter(topic => {
+    if (topic.toLowerCase().includes(q)) return true;
+    const entry = TOPIC_KEYWORDS.find(k => k.topic === topic);
+    return entry ? entry.keywords.some(keyword => keyword.trim().includes(q)) : false;
+  });
+}
+
 function suggestTopicsFromText(text: string, alreadySelected: string[]): string[] {
   const q = text.toLowerCase();
   if (q.trim().length < 2) return [];
@@ -50,15 +63,6 @@ function summarizeTopics(topics: string[]): string {
   if (cleanTopics.length === 0) return "No topics";
   if (cleanTopics.length <= 2) return cleanTopics.join(", ");
   return `${cleanTopics.slice(0, 2).join(", ")} +${cleanTopics.length - 2}`;
-}
-
-function summarizeSuggestedGroup(group: PatientSuggestedTopicGroup): string {
-  const parts: string[] = [];
-  if (group.guides.length > 0) parts.push(`${group.guides.length} guide${group.guides.length !== 1 ? "s" : ""}`);
-  if (group.sheets.length > 0) parts.push(`${group.sheets.length} sheet${group.sheets.length !== 1 ? "s" : ""}`);
-  if (group.trials.length > 0) parts.push(`${group.trials.length} trial${group.trials.length !== 1 ? "s" : ""}`);
-  if (group.tools.length > 0) parts.push(`${group.tools.length} tool${group.tools.length !== 1 ? "s" : ""}`);
-  return parts.join(" · ") || group.reason;
 }
 
 function getSuggestedGroupTarget(group: PatientSuggestedTopicGroup): [string, SubView] | null {
@@ -214,7 +218,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
                 <span key={t} style={{ ...labelChip, fontSize: 10.5, padding: "2px 6px", borderRadius: 5 }}>{t}</span>
               ))}
             </div>
-            {p.dx && <div style={{ fontSize: 13, color: dimmed ? T.muted : T.text, marginBottom: 0, lineHeight: 1.35, wordBreak: "break-word" }}>{p.dx}</div>}
+            {p.dx && <div style={{ fontSize: 13, color: dimmed ? T.muted : T.ink, marginBottom: 0, lineHeight: 1.35, wordBreak: "break-word" }}>{p.dx}</div>}
             {p.notes && (
               <div style={{ fontSize: 12, color: T.sub, fontStyle: "italic", marginTop: 3, wordBreak: "break-word", display: "flex", alignItems: "flex-start", gap: 4, lineHeight: 1.35 }}>
                 <Lightbulb size={12} strokeWidth={1.75} color={T.warning} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
@@ -268,7 +272,7 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
           <div key={f.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "4px 0", marginLeft: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: T.muted }}>{new Date(f.date).toLocaleDateString()} {new Date(f.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
-              <div style={{ fontSize: 13, color: T.text, wordBreak: "break-word" }}>{f.note}</div>
+              <div style={{ fontSize: 13, color: T.ink, wordBreak: "break-word" }}>{f.note}</div>
             </div>
             <button
               onClick={() => onRemoveFollowUp(p.id, f.id)}
@@ -293,10 +297,9 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
                   fontSize: 12,
                   border: `1px solid ${followUpError ? T.danger : T.line}`,
                   borderRadius: 6,
-                  outline: "none",
                   fontFamily: T.sans,
                   background: T.surface2,
-                  color: T.text,
+                  color: T.ink,
                   boxSizing: "border-box",
                 }} />
               <button
@@ -381,21 +384,23 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
+  const [addTopicQuery, setAddTopicQuery] = useState("");
   // Quick log (cohort feedback): one tap on a topic chip logs a consult with no
   // form — the payoff (matched learning) is shown immediately so the loop is
   // visible at the moment of effort instead of hiding on another tab.
   const [quickLogExpanded, setQuickLogExpanded] = useState(false);
+  const [quickLogQuery, setQuickLogQuery] = useState("");
   const [quickLogConfirm, setQuickLogConfirm] = useState<{ topic: string; summary: string } | null>(null);
 
   const quickLogTopic = (topic: string) => {
-    const newId = Date.now();
-    const entry: Patient = { id: newId, initials: "", room: "", dx: "", topics: [topic], notes: "", date: new Date().toISOString(), status: "active", followUps: [] };
-    onMarkPatientDirty?.(newId);
+    const entry = createQuickLogEntry(topic);
+    onMarkPatientDirty?.(entry.id);
     setPatients(prev => [entry, ...prev]);
     onLogActivity?.("patient", "Consult topic logged", topic);
     const [group] = getPatientSuggestedTopicGroups([entry], completedItems);
     setQuickLogConfirm({ topic, summary: group ? summarizeSuggestedGroup(group) : "matched learning appears on Today" });
     setQuickLogExpanded(false);
+    setQuickLogQuery("");
   };
 
   const toggleTopic = (t: string) => {
@@ -479,6 +484,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
     setForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
     setFormErrors({});
     setShowAllTopics(false);
+    setAddTopicQuery("");
     setShowAdd(false);
   };
 
@@ -559,6 +565,8 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
   const suggestedGroups = navigate ? getPatientSuggestedTopicGroups(active, completedItems).slice(0, 3) : [];
   const visibleAddTopics = getVisibleTopicOptions(form.topics, showAllTopics);
   const hiddenAddTopicCount = getHiddenTopicCount(form.topics, showAllTopics);
+  const quickLogMatches = searchQuickLogTopics(quickLogQuery);
+  const addTopicMatches = searchQuickLogTopics(addTopicQuery);
   const showCompactPhiWarning = patients.length > 0 && !showAdd;
 
   const openSuggestedGroup = (group: PatientSuggestedTopicGroup) => {
@@ -570,9 +578,9 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-        <h2 style={{ color: T.text, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Consult Log</h2>
+        <h2 style={{ color: T.ink, fontSize: 16, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>Consult Log</h2>
         <button onClick={() => {
-          if (showAdd) setShowAllTopics(false);
+          if (showAdd) { setShowAllTopics(false); setAddTopicQuery(""); }
           setShowAdd(!showAdd);
         }}
           style={{ padding: "8px 16px", background: showAdd ? T.sub : T.card, color: showAdd ? T.card : T.ink, border: `1px solid ${showAdd ? T.sub : T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -605,8 +613,16 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
       {!showAdd && (
         <div style={{ background: T.card, border: `2px solid ${T.brand}`, borderRadius: 12, padding: 14, marginBottom: 14 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: T.ink, marginBottom: 8 }}>Saw a consult? Log the topic:</div>
+          <input
+            type="search"
+            value={quickLogQuery}
+            onChange={e => setQuickLogQuery(e.target.value)}
+            placeholder={`Search all ${TOPICS.length} topics — e.g. "low sodium", "stones"…`}
+            aria-label="Search consult topics"
+            style={{ ...inputStyle, marginBottom: 8 }}
+          />
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {(quickLogExpanded ? TOPICS : COMMON_PATIENT_TOPICS).map(topic => (
+            {(quickLogQuery.trim() ? quickLogMatches : (quickLogExpanded ? TOPICS : COMMON_PATIENT_TOPICS)).map(topic => (
               <button
                 key={topic}
                 onClick={() => quickLogTopic(topic)}
@@ -614,11 +630,25 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
                 {topic}
               </button>
             ))}
-            <button
-              onClick={() => setQuickLogExpanded(!quickLogExpanded)}
-              style={{ padding: "8px 12px", minHeight: 36, borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "none", color: T.brand, border: `1px dashed ${T.brand}` }}>
-              {quickLogExpanded ? "Fewer topics" : `All topics (${TOPICS.length})`}
-            </button>
+            {!quickLogQuery.trim() && (
+              <button
+                onClick={() => setQuickLogExpanded(!quickLogExpanded)}
+                style={{ padding: "8px 12px", minHeight: 36, borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "none", color: T.brand, border: `1px dashed ${T.brand}` }}>
+                {quickLogExpanded ? "Fewer topics" : `All topics (${TOPICS.length})`}
+              </button>
+            )}
+            {quickLogQuery.trim() && quickLogMatches.length === 0 && (
+              <>
+                <div style={{ fontSize: 13, color: T.sub, padding: "8px 2px", lineHeight: 1.4 }}>
+                  No topics match &ldquo;{quickLogQuery.trim()}&rdquo; — try a different term, or:
+                </div>
+                <button
+                  onClick={() => quickLogTopic("Other")}
+                  style={{ padding: "8px 12px", minHeight: 36, borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.bg, color: T.ink, border: `1px solid ${T.line}` }}>
+                  Log as Other
+                </button>
+              </>
+            )}
           </div>
           {quickLogConfirm && (
             <div role="status" aria-live="polite" style={{ marginTop: 10, background: T.successBg, border: `1px solid ${T.success}`, borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
@@ -716,11 +746,19 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
           </div>
           <div style={{ marginBottom: 10 }}>
             <label style={inputLabel}>Learning Tags (2+ if relevant)</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-              {visibleAddTopics.map(t => {
+            <input
+              type="search"
+              value={addTopicQuery}
+              onChange={e => setAddTopicQuery(e.target.value)}
+              placeholder={`Search all ${TOPICS.length} topics…`}
+              aria-label="Search learning tags"
+              style={{ ...inputStyle, marginTop: 4 }}
+            />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+              {(addTopicQuery.trim() ? addTopicMatches : visibleAddTopics).map(t => {
                 const sel = form.topics.includes(t);
                 return (
-                <button key={t} type="button" onClick={() => toggleTopic(t)}
+                <button key={t} type="button" onClick={() => { toggleTopic(t); if (!sel) setAddTopicQuery(""); }}
                     style={{ padding: isMobile ? "8px 14px" : "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all 0.15s",
                       background: sel ? T.brand : T.card, color: sel ? T.brandInk : T.sub,
                       border: sel ? `1.5px solid ${T.brand}` : `1.5px solid ${T.line}` }}>
@@ -728,8 +766,13 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
                   </button>
                 );
               })}
+              {addTopicQuery.trim() && addTopicMatches.length === 0 && (
+                <div style={{ fontSize: 13, color: T.sub, padding: "6px 2px", lineHeight: 1.4 }}>
+                  No topics match &ldquo;{addTopicQuery.trim()}&rdquo; — try a different term, or tag it as Other.
+                </div>
+              )}
             </div>
-            {(hiddenAddTopicCount > 0 || showAllTopics) && (
+            {!addTopicQuery.trim() && (hiddenAddTopicCount > 0 || showAllTopics) && (
               <button
                 type="button"
                 onClick={() => setShowAllTopics(prev => !prev)}

@@ -127,12 +127,12 @@ export function GuideList({ children }: { children: ReactNode }) {
 
 export function GuideItem({ children, tone = "brand", template = false }: { children: ReactNode; tone?: GuideTone; template?: boolean }) {
   if (template) {
-    return <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word", fontStyle: "italic", background: T.grayBg, borderRadius: 8, padding: "10px 12px" }}>{children}</div>;
+    return <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, wordBreak: "break-word", fontStyle: "italic", background: T.grayBg, borderRadius: 8, padding: "10px 12px" }}>{children}</div>;
   }
   return (
     <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
       <span style={{ color: toneColor(tone), fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>{"\u2022"}</span>
-      <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5, wordBreak: "break-word" }}>{children}</div>
+      <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, wordBreak: "break-word" }}>{children}</div>
     </div>
   );
 }
@@ -150,7 +150,7 @@ export function GuideNumberedItem({ index, children }: { index: number; children
   return (
     <div style={{ display: "flex", gap: 10, background: T.card, borderRadius: 8, padding: "12px 14px", border: `1px solid ${T.line}` }}>
       <span style={{ color: T.brand, fontWeight: 700, fontSize: 14, flexShrink: 0 }}>{index}.</span>
-      <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{children}</div>
+      <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5 }}>{children}</div>
     </div>
   );
 }

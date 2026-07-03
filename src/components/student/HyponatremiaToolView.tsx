@@ -364,7 +364,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
               <div style={{ background: T.dangerBg, border: `1px solid ${T.danger}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
                 <div style={{ color: T.danger, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>High-risk signals</div>
                 {assessment.alerts.map((alert) => (
-                  <div key={alert} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 4 }}>{alert}</div>
+                  <div key={alert} style={{ color: T.ink, fontSize: 13, lineHeight: 1.45, marginBottom: 4 }}>{alert}</div>
                 ))}
               </div>
             )}
@@ -394,7 +394,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
                     {item.next.length > 0 && (
                       <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 8, paddingTop: 8 }}>
                         {item.next.slice(0, 2).map((step) => (
-                          <div key={step} style={{ color: T.text, fontSize: 12.5, lineHeight: 1.45, marginBottom: 3 }}>{step}</div>
+                          <div key={step} style={{ color: T.ink, fontSize: 12.5, lineHeight: 1.45, marginBottom: 3 }}>{step}</div>
                         ))}
                       </div>
                     )}
@@ -421,7 +421,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
             {assessment.correctionTarget.reasons.length > 0 && (
               <div style={{ borderTop: `1px solid ${T.line}`, paddingTop: 8, marginBottom: 10 }}>
                 {assessment.correctionTarget.reasons.map((r) => (
-                  <div key={r} style={{ color: T.text, fontSize: 12.5, lineHeight: 1.45, marginBottom: 4 }}>{r}</div>
+                  <div key={r} style={{ color: T.ink, fontSize: 12.5, lineHeight: 1.45, marginBottom: 4 }}>{r}</div>
                 ))}
               </div>
             )}
@@ -436,7 +436,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
               ) : (
                 <div style={{ display: "grid", gap: 6 }}>
                   {assessment.adrogueMadias.map((row) => (
-                    <div key={row.fluidId} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, color: T.text }}>
+                    <div key={row.fluidId} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13, color: T.ink }}>
                       <span style={{ color: T.sub }}>{row.label}</span>
                       <span style={{ fontFamily: T.mono }}>
                         {row.changePerLiter !== null ? `${row.changePerLiter > 0 ? "+" : ""}${row.changePerLiter.toFixed(2)} mEq/L` : "—"}
@@ -456,7 +456,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
 
           <Panel title="Next checks">
             {assessment.nextSteps.map((step) => (
-              <div key={step} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
+              <div key={step} style={{ color: T.ink, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
             ))}
             <div style={{ color: T.muted, fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>
               Algorithm follows UpToDate "Diagnostic evaluation of adults with hyponatremia" and "Overview of the treatment of hyponatremia in adults". Reasoning aid, not a diagnosis.

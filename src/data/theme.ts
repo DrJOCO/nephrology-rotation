@@ -20,7 +20,7 @@ export const T = {
   // migration replaced every call site with the semantic names below —
   // reintroducing them is a typecheck error, which is the point.
   dark: "var(--c-dark)",
-  text: "var(--c-text)", sub: "var(--c-sub)", muted: "var(--c-muted)", line: "var(--c-line)",
+  sub: "var(--c-sub)", muted: "var(--c-muted)", line: "var(--c-line)",
   bg: "var(--c-bg)", card: "var(--c-card)",
   // Dark header backgrounds — always dark regardless of theme
   navyBg: "var(--c-navy-bg)", deepBg: "var(--c-deep-bg)",

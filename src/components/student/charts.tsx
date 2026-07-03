@@ -76,7 +76,7 @@ export function FunnelChart({ stages, width = 300, height }: { stages: FunnelSta
         const pct = s.total > 0 ? Math.round((s.value / s.total) * 100) : 0;
         return <g key={i}>
           <rect x={pad.left} y={y + 4} width={barW} height={rowH - 10} rx={4} fill={s.color || T.brand} opacity={0.8} />
-          <text x={pad.left + barW + 6} y={y + rowH / 2 + 1} fontSize={10} fill={T.text} dominantBaseline="middle" fontWeight={600}>{s.value}</text>
+          <text x={pad.left + barW + 6} y={y + rowH / 2 + 1} fontSize={10} fill={T.ink} dominantBaseline="middle" fontWeight={600}>{s.value}</text>
           <text x={width - pad.right} y={y + rowH / 2 + 1} fontSize={9} fill={T.muted} textAnchor="end" dominantBaseline="middle">{s.label} ({pct}%)</text>
         </g>;
       })}
@@ -109,7 +109,7 @@ export function HeatmapChart({ rows, columns, data, width = 300, height }: { row
       ))}
       {rows.map((row, i) => (
         <g key={i}>
-          <text x={pad.left - 6} y={pad.top + i * cellH + cellH / 2 + 1} fontSize={9} fill={T.text} textAnchor="end" dominantBaseline="middle">{row.length > 10 ? row.slice(0, 10) + "..." : row}</text>
+          <text x={pad.left - 6} y={pad.top + i * cellH + cellH / 2 + 1} fontSize={9} fill={T.ink} textAnchor="end" dominantBaseline="middle">{row.length > 10 ? row.slice(0, 10) + "..." : row}</text>
           {columns.map((_, j) => {
             const val = data[i]?.[j];
             return <g key={j}>
@@ -139,7 +139,7 @@ export function MiniBarChart({ data, width = 280, height = 130 }: { data: BarCha
         const barH = Math.max((d.value / maxVal) * h, 2);
         return <g key={i}>
           <rect x={x} y={pad.top + h - barH} width={barW} height={barH} rx={4} fill={d.color || T.brand} />
-          <text x={x + barW / 2} y={pad.top + h - barH - 4} fontSize={10} fill={T.text} textAnchor="middle" fontWeight={600}>{d.value}%</text>
+          <text x={x + barW / 2} y={pad.top + h - barH - 4} fontSize={10} fill={T.ink} textAnchor="middle" fontWeight={600}>{d.value}%</text>
           <text x={x + barW / 2} y={height - 4} fontSize={9} fill={T.muted} textAnchor="middle">{d.label}</text>
         </g>;
       })}

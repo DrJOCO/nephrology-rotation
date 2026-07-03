@@ -139,13 +139,12 @@ export default function LoginScreen({
     border: 0,
     borderBottom: `1.5px solid ${hasError ? T.danger : T.line}`,
     borderRadius: 0,
-    outline: "none",
     boxSizing: "border-box",
     fontFamily: T.sans,
     textAlign: centered ? "center" : "left",
     letterSpacing: 0,
     background: "transparent",
-    color: disabled ? T.muted : T.text,
+    color: disabled ? T.muted : T.ink,
     opacity: disabled ? 0.6 : 1,
   });
 
@@ -210,6 +209,20 @@ export default function LoginScreen({
         display: "flex",
         flexDirection: "column",
       }}>
+
+        {/* Wordmark — the first screen a student ever sees should say what this is. */}
+        <div style={{
+          fontFamily: T.mono,
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: T.muted,
+          textAlign: "center",
+          marginBottom: 12,
+        }}>
+          — Nephrology Rotation —
+        </div>
 
         {showStepper && (
           <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }} aria-hidden="true">
@@ -442,7 +455,7 @@ export default function LoginScreen({
                   letterSpacing: 0.4,
                 }}
               >
-                Add after we verify your email
+                Unlocks after verification
               </div>
             ) : (
               <input
@@ -464,13 +477,15 @@ export default function LoginScreen({
                 style={monoInputStyle({ centered: true, hasError: Boolean(joinError) })}
               />
             )}
-            <div style={{ fontSize: 12, color: T.muted, marginTop: 6, lineHeight: 1.5 }}>
-              {rotationCodeLocked
-                ? "We'll unlock this after your email is verified."
-                : isFirstTime
+            {/* The locked state already explains itself in the field — repeating
+                it here made the screen say "verify your email" three times. */}
+            {!rotationCodeLocked && (
+              <div style={{ fontSize: 12, color: T.muted, marginTop: 6, lineHeight: 1.5 }}>
+                {isFirstTime
                   ? "Use the code your attending shared with you."
                   : "Enter the rotation code for the rotation you want to open."}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -539,14 +554,18 @@ export default function LoginScreen({
               >
                 {isFirstTime ? "Already have a PIN?" : "First time?"}
               </button>
-              <button
-                type="button"
-                onClick={needsEmailCompletion ? onCompleteEmailLinkSignIn : () => onSendVerificationLink("reset")}
-                disabled={!resetEnabled}
-                style={siblingAnchorStyle(resetEnabled)}
-              >
-                {resetLabel}
-              </button>
+              {/* First-timers have no PIN to reset — the reset path lives on the
+                  returning screen (and mid-reset states keep it visible). */}
+              {(!isFirstTime || isResetFlow) && (
+                <button
+                  type="button"
+                  onClick={needsEmailCompletion ? onCompleteEmailLinkSignIn : () => onSendVerificationLink("reset")}
+                  disabled={!resetEnabled}
+                  style={siblingAnchorStyle(resetEnabled)}
+                >
+                  {resetLabel}
+                </button>
+              )}
             </div>
           );
         })()}

@@ -77,7 +77,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 18, flexShrink: 0 }}>{sheet.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{sheet.title}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{sheet.title}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>Module {s.week} {done ? " \u2022 Completed" : ""}</div>
                       </div>
                       <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
@@ -99,7 +99,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCCA"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{deck.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{deck.name}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>Module {d.week} {done ? " \u2022 Reviewed" : ""}</div>
                       </div>
                       <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
@@ -121,7 +121,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83C\uDFE5"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{cs.title}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{cs.title}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>Module {c.week} {"\u2022"} {cs.difficulty} {done ? " \u2022 Done" : ""}</div>
                       </div>
                       <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
@@ -139,7 +139,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                     <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCDD"}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>Module {w} Quiz</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>Module {w} Quiz</div>
                     </div>
                     <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
                   </button>
@@ -172,7 +172,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\uD83D\uDCC4"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: T.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{article.title}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{article.title}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>{article.journal} ({article.year}) {done ? " \u2022 Reviewed" : ""}</div>
                       </div>
                       <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
@@ -193,7 +193,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.warningBg, border: `1px solid ${T.warning}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>
                       <span style={{ fontSize: 16, flexShrink: 0 }}>{"\u2B50"}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{trial.name}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{trial.name}</div>
                         <div style={{ fontSize: 13, color: T.muted }}>{trial.journal} ({trial.year})</div>
                       </div>
                       <span style={{ color: T.muted, fontSize: 14, flexShrink: 0 }}>{"\u203A"}</span>
@@ -211,7 +211,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: T.card, border: `1px solid ${T.line}`, borderRadius: 8, marginBottom: 6, textAlign: "left", textDecoration: "none" }}>
                     <span style={{ fontSize: 16, flexShrink: 0 }}>{resource.group === "podcasts" ? "\uD83C\uDFA7" : resource.group === "guidelines" ? "\uD83D\uDCCB" : resource.group === "tools" ? "\uD83D\uDEE0" : "\uD83C\uDF10"}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{resource.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{resource.name}</div>
                       <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.45 }}>
                         {resourceGroupLabels[resource.group]} • {resource.tag}
                       </div>

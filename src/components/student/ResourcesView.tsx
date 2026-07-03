@@ -97,7 +97,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
   const inactiveTabStyle = {
     border: `1px solid ${T.line}`,
     background: T.grayBg,
-    color: T.text,
+    color: T.ink,
     boxShadow: "none",
   };
   const primaryActionStyle = {
@@ -143,7 +143,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
           <div style={{ fontSize: 13, fontWeight: 800, color: T.success, marginBottom: 4 }}>
             Core curriculum
           </div>
-          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5 }}>
             Review the module teaching decks, then tap Mark reviewed to count them toward progress and points.
           </div>
           {focusWeek && (
@@ -231,7 +231,7 @@ export default function ResourcesView({ onBack, initialTab = "podcasts", focusWe
       {activeTab === "podcasts" && (
         <div style={{ background: T.surface2, borderRadius: 12, padding: 14, marginTop: 6, borderLeft: `4px solid ${T.brand}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4 }}>LISTENING TIP</div>
-          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5 }}>
             Start with Curbsiders #226 (AKI) and REBOOT #48 (Hyponatremia) {"\u2014"} these cover the two most common consults you'll see. All Curbsiders nephrology episodes feature Joel Topf (@kidney_boy) and are outstanding. Listen during your commute {"\u2014"} 15 min/day adds up fast over 4 weeks.
           </div>
         </div>

@@ -77,7 +77,7 @@ export function AdminAuthScreen({
               else void onSignIn();
             }}
             placeholder="you@example.com"
-            style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
+            style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
           />
         </div>
         <div style={{ textAlign: "left", marginBottom: 14 }}>
@@ -95,7 +95,7 @@ export function AdminAuthScreen({
               void onSignIn();
             }}
             placeholder={authMode === "signup" ? "Create a password" : "Admin password"}
-            style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
+            style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
           />
         </div>
         {authMode === "signup" && (
@@ -107,7 +107,7 @@ export function AdminAuthScreen({
               onChange={(event) => setAuthPasswordConfirm(event.target.value)}
               onKeyDown={(event) => { if (event.key === "Enter" && authEmail.trim() && authPassword) void onCreateAccount(); }}
               placeholder="Repeat your password"
-              style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
+              style={{ width: "100%", padding: "12px 14px", border: `1px solid ${T.line}`, borderRadius: 0, boxSizing: "border-box", fontSize: 14, background: T.bg, color: T.ink }}
             />
           </div>
         )}

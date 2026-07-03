@@ -96,7 +96,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
 
                     <div style={{ background: T.grayBg, borderRadius: 10, padding: "12px 14px" }}>
                       {section.items.map((item, itemIdx) => (
-                        <div key={itemIdx} style={{ fontSize: 13, color: T.text, lineHeight: 1.6, marginBottom: itemIdx < section.items.length - 1 ? 12 : 0, paddingLeft: 14, position: "relative" }}>
+                        <div key={itemIdx} style={{ fontSize: 13, color: T.ink, lineHeight: 1.6, marginBottom: itemIdx < section.items.length - 1 ? 12 : 0, paddingLeft: 14, position: "relative" }}>
                           <span style={{ position: "absolute", left: 0, color: T.muted, fontWeight: 700 }}>{"\u2022"}</span>
                           {item}
                         </div>
@@ -125,7 +125,7 @@ export default function StudySheetsView({ week, initialSheetId, studySheets = ST
                             <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: 4 }}>{callout.trial}</div>
                             {trialExists && <span style={{ fontSize: 13, color: T.warning, fontWeight: 600 }}>View trial ›</span>}
                           </div>
-                          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.55 }}>{callout.pearl}</div>
+                          <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.55 }}>{callout.pearl}</div>
                         </div>
                       );
                     })}

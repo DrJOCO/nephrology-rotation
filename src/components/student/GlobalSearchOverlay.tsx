@@ -229,7 +229,7 @@ export default function GlobalSearchOverlay({
                 placeholder={activeScope.placeholder}
                 aria-label="Search rotation content"
                 type="search"
-                style={{ width: "100%", padding: "10px 12px 10px 36px", fontSize: 15, border: `1.5px solid ${T.line}`, borderRadius: 10, background: T.bg, color: T.text, outline: "none", boxSizing: "border-box", fontFamily: T.sans }}
+                style={{ width: "100%", padding: "10px 12px 10px 36px", fontSize: 15, border: `1.5px solid ${T.line}`, borderRadius: 10, background: T.bg, color: T.ink, boxSizing: "border-box", fontFamily: T.sans }}
               />
             </div>
             <button

@@ -34,7 +34,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("trials", t.name)} aria-label={`Remove ${t.name} from saved items`} title="Remove from saved" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0, width: 44, height: 44, margin: "-10px 0 -10px -12px", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("library", { type: "trialLibrary", searchTrial: t.name })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{t.name}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{t.name}</div>
             <div style={{ fontSize: 13, color: T.muted }}>{t.category}</div>
           </button>
         </div>
@@ -43,7 +43,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("articles", a.url)} aria-label={`Remove ${a.title} from saved items`} title="Remove from saved" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0, width: 44, height: 44, margin: "-10px 0 -10px -12px", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("today", { type: "articles", week: a._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.title}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.title}</div>
             <div style={{ fontSize: 13, color: T.muted }}>Module {a._week} {"\u2022"} {a.type || "Article"}</div>
           </button>
         </div>
@@ -52,7 +52,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("cases", c.id)} aria-label={`Remove ${c.title} from saved items`} title="Remove from saved" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0, width: 44, height: 44, margin: "-10px 0 -10px -12px", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("today", { type: "cases", week: c._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{c.title}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{c.title}</div>
             <div style={{ fontSize: 13, color: T.muted }}>Module {c._week} {"\u2022"} {c.difficulty}</div>
           </button>
         </div>
@@ -61,7 +61,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
           <button onClick={() => onToggleBookmark("studySheets", s.id)} aria-label={`Remove ${s.title} from saved items`} title="Remove from saved" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0, width: 44, height: 44, margin: "-10px 0 -10px -12px", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("today", { type: "studySheets", week: s._week, sheetId: s.id })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{s.icon} {s.title}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{s.icon} {s.title}</div>
             <div style={{ fontSize: 13, color: T.muted }}>Module {s._week}</div>
           </button>
         </div>

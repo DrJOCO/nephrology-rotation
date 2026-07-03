@@ -34,7 +34,7 @@ export default function PearlToast({ tip, onDismiss }: { tip: string; onDismiss:
           Dismiss
         </button>
       </div>
-      <div style={{ fontSize: 14, color: T.text, lineHeight: 1.65 }}>
+      <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.65 }}>
         {tip}
       </div>
     </section>

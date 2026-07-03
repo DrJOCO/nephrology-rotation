@@ -285,7 +285,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             <select
               value={s.year || "MS3/MS4"}
               onChange={(event) => updateStudent({ year: event.target.value })}
-              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, color: T.text, background: T.card, outline: "none" }}
+              style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${T.line}`, fontSize: 14, color: T.ink, background: T.card }}
             >
               {ADMIN_YEAR_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option === "MS3/MS4" ? "Not set" : option}</option>
@@ -605,7 +605,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
         return (
           <div key={w} style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${T.line}` }}>
             <div>
-              <div style={{ fontWeight: 600, color: T.text, fontSize: 13 }}>Module {w}</div>
+              <div style={{ fontWeight: 600, color: T.ink, fontSize: 13 }}>Module {w}</div>
               <div style={{ fontSize: 13, color: T.muted }}>{ws.length} attempt{ws.length !== 1 ? "s" : ""}</div>
             </div>
             {best !== null ? (
@@ -673,13 +673,13 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                   setFeedbackNote("");
                   setShowAddFeedback(false);
                 }}
-                  style={{ padding: "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", background: T.card, color: T.text, border: `1px solid ${T.line}` }}>
+                  style={{ padding: "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: 500, cursor: "pointer", background: T.card, color: T.ink, border: `1px solid ${T.line}` }}>
                   {tag}
                 </button>
               ))}
             </div>
             <input value={feedbackNote} onChange={e => setFeedbackNote(e.target.value)} placeholder="Optional note (e.g. specific topic)"
-              style={{ width: "100%", padding: "8px 10px", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box", marginBottom: 8 }} />
+              style={{ width: "100%", padding: "8px 10px", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, fontFamily: T.sans, boxSizing: "border-box", marginBottom: 8 }} />
             <input
               placeholder="Or type a custom tag and press Enter"
               onKeyDown={e => {
@@ -691,7 +691,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
                   setShowAddFeedback(false);
                 }
               }}
-              style={{ width: "100%", padding: "8px 10px", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, outline: "none", fontFamily: T.sans, boxSizing: "border-box" }} />
+              style={{ width: "100%", padding: "8px 10px", fontSize: 13, border: `1px solid ${T.line}`, borderRadius: 8, fontFamily: T.sans, boxSizing: "border-box" }} />
           </div>
         )}
       </div>

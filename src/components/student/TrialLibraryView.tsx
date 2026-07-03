@@ -27,7 +27,7 @@ export default function TrialLibraryView({ onBack, bookmarks, onToggleBookmark, 
       </div>
       <input type="text" placeholder="Search trials... (e.g. rituximab, SGLT2, IgA)"
         value={searchQ} onChange={e => setSearchQ(e.target.value)}
-        style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", margin: "12px 0 16px", fontFamily: T.sans, outline: "none" }} />
+        style={{ width: "100%", padding: "10px 14px", border: `1.5px solid ${T.line}`, borderRadius: 10, fontSize: 14, boxSizing: "border-box", margin: "12px 0 16px", fontFamily: T.sans }} />
       {searchQ.trim() && filtered.length === 0 && (
         <div style={{ padding: 20, textAlign: "center", color: T.muted, fontSize: 13 }}>No trials match "{searchQ}"</div>
       )}

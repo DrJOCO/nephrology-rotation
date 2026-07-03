@@ -9,7 +9,7 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides, study
 
   return (
     <div style={{ padding: 16 }}>
-      <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Manage Content</h2>
+      <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Manage Content</h2>
 
       {/* Curriculum */}
       <button onClick={() => navigate("content", { type: "editCurriculum" })}
@@ -31,7 +31,7 @@ export function ContentTab({ navigate, articles, curriculum, clinicGuides, study
           style={{ display: "block", width: "100%", background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, cursor: "pointer", textAlign: "left" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>Module {w}: {(curriculum[w] || WEEKLY[w]).title}</div>
+              <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>Module {w}: {(curriculum[w] || WEEKLY[w]).title}</div>
               <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{(articles[w] || []).length} articles</div>
             </div>
             <span style={{ color: T.muted, fontSize: 14 }}>›</span>

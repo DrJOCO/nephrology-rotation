@@ -234,7 +234,7 @@ export function ClinicGuidesEditor({
                 style={{
                   padding: "8px 12px",
                   background: active ? T.brand : T.bg,
-                  color: active ? "white" : T.text,
+                  color: active ? "white" : T.ink,
                   border: `1px solid ${active ? T.brand : T.line}`,
                   borderRadius: 9,
                   fontSize: 13,
@@ -349,7 +349,7 @@ export function ClinicGuidesEditor({
             <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: T.card, borderRadius: 12, marginBottom: 8, border: `1px solid ${T.line}` }}>
               <span style={{ fontSize: 20 }}>{t?.icon || "📋"}</span>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, color: T.text, fontSize: 14 }}>{g.topic}</div>
+                <div style={{ fontWeight: 600, color: T.ink, fontSize: 14 }}>{g.topic}</div>
                 <div style={{ fontSize: 13, color: T.sub }}>{new Date(g.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
               </div>
               {g.isOverride && <span style={{ fontSize: 13, fontWeight: 700, color: T.warning, background: T.warningBg, borderRadius: 6, padding: "2px 6px" }}>Override</span>}

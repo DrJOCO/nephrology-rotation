@@ -44,6 +44,22 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
   const [shuffledOrder, setShuffledOrder] = useState<number[] | null>(null);
   const [choiceOrders, setChoiceOrders] = useState<Record<number, number[]> | null>(null);
   const explanationRef = useRef<HTMLDivElement | null>(null);
+  const choicesRef = useRef<HTMLDivElement | null>(null);
+
+  // A11y (spec §12): arrow keys move focus between choices; Enter/Space selects
+  // via native button behavior. Selecting submits the answer, so focus movement
+  // must never auto-select — plain buttons, not a radiogroup.
+  const handleChoicesKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const buttons = Array.from(choicesRef.current?.querySelectorAll<HTMLButtonElement>("button") || []);
+    if (buttons.length === 0) return;
+    e.preventDefault();
+    const idx = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    const next = e.key === "ArrowDown"
+      ? (idx + 1) % buttons.length
+      : (idx <= 0 ? buttons.length - 1 : idx - 1);
+    buttons[next].focus();
+  };
 
   // Quiz persistence
   const quizKey = "quiz_" + title.replace(/[^a-zA-Z0-9]/g, "_");
@@ -155,12 +171,12 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
         {/* Missed questions review */}
         {missed.length > 0 && (
           <div style={{ textAlign: "left", marginTop: 16 }}>
-            <div style={{ fontWeight: 700, color: T.text, fontSize: 14, marginBottom: 10, fontFamily: T.serif }}>
+            <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, marginBottom: 10, fontFamily: T.serif }}>
               Review Missed Questions ({missed.length}):
             </div>
             {missed.map((a, i) => (
               <div key={i} style={{ background: T.dangerBg, borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: `3px solid ${T.danger}` }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 8, lineHeight: 1.4 }}>{questions[a.qIdx].q}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, marginBottom: 8, lineHeight: 1.4 }}>{questions[a.qIdx].q}</div>
                 <div style={{ fontSize: 13, color: T.danger, marginBottom: 4 }}>
                   {"\u2717"} Your answer: {questions[a.qIdx].choices[a.chosen]}
                 </div>
@@ -219,15 +235,15 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
 
       {/* Question */}
       <div style={{ background: T.card, borderRadius: 12, padding: mob ? 12 : 20, marginBottom: mob ? 8 : 16, border: `1px solid ${T.line}` }}>
-        <p style={{ color: T.text, fontSize: mob ? 14 : 15, lineHeight: 1.45, margin: 0, fontWeight: 500 }}>{q.q}</p>
+        <p style={{ color: T.ink, fontSize: mob ? 14 : 15, lineHeight: 1.45, margin: 0, fontWeight: 500 }}>{q.q}</p>
       </div>
 
       {/* Choices (shuffled per-question) */}
-      <div style={{ display: "flex", flexDirection: "column", gap: mob ? 6 : 10 }}>
+      <div ref={choicesRef} role="group" aria-label="Answer choices" onKeyDown={handleChoicesKeyDown} style={{ display: "flex", flexDirection: "column", gap: mob ? 6 : 10 }}>
         {choiceMap.map((origChoiceIdx, displayIdx) => {
           const c = q.choices[origChoiceIdx];
           const isCorrectChoice = origChoiceIdx === q.answer;
-          let bg = T.card, border = T.line, textColor = T.text, fontW = 400;
+          let bg = T.card, border = T.line, textColor = T.ink, fontW = 400;
           if (showResult) {
             if (isCorrectChoice) { bg = T.successBg; border = T.success; textColor = T.success; fontW = 600; }
             else if (displayIdx === selected && !isCorrectChoice) { bg = T.dangerBg; border = T.danger; textColor = T.danger; }
@@ -235,6 +251,11 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
 
           return (
             <button key={displayIdx} onClick={() => handleSelect(displayIdx)}
+              aria-pressed={displayIdx === selected}
+              aria-disabled={showResult}
+              aria-label={showResult
+                ? `${c} — ${isCorrectChoice ? "correct answer" : displayIdx === selected ? "your answer, incorrect" : "not selected"}`
+                : undefined}
               style={{ padding: mob ? "10px 12px" : "14px 16px", background: bg, border: `2px solid ${border}`, borderRadius: 10,
                 cursor: showResult ? "default" : "pointer", textAlign: "left", fontSize: mob ? 13 : 14, color: textColor,
                 fontWeight: fontW, display: "flex", alignItems: "flex-start", gap: 10, transition: "all 0.2s", fontFamily: T.sans }}>
@@ -261,7 +282,7 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
             <div style={{ fontSize: 13, fontWeight: 700, color: wasCorrect ? T.success : T.danger, marginBottom: 4 }}>
               {wasCorrect ? "\u2713 Correct!" : "\u2717 Not quite"}
             </div>
-            <div style={{ fontSize: mob ? 12 : 13, color: T.text, lineHeight: 1.45, wordBreak: "break-word" }}>{q.explanation}</div>
+            <div style={{ fontSize: mob ? 12 : 13, color: T.ink, lineHeight: 1.45, wordBreak: "break-word" }}>{q.explanation}</div>
             <button onClick={handleNext} style={{
               width: "100%", marginTop: mob ? 8 : 12, padding: mob ? "11px 0" : "14px 0", background: T.brand, color: T.brandInk,
               border: "none", borderRadius: 10, fontSize: mob ? 14 : 15, fontWeight: 600, cursor: "pointer"

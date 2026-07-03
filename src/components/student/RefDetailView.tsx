@@ -40,7 +40,7 @@ function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
                 placeholder={inp.placeholder}
                 value={values[inp.key] ?? ""}
                 onChange={e => updateVal(inp.key, e.target.value)}
-                style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 15, boxSizing: "border-box", fontFamily: T.mono, outline: "none", transition: "border 0.2s" }}
+                style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${T.line}`, borderRadius: 8, fontSize: 15, boxSizing: "border-box", fontFamily: T.mono, transition: "border 0.2s" }}
                 onFocus={e => e.target.style.borderColor = T.brand}
                 onBlur={e => e.target.style.borderColor = T.line}
               />
@@ -62,7 +62,7 @@ function CalculatorView({ refData }: { refData: QuickRefCalculator }) {
         <div style={{ background: T.surface2, borderRadius: 14, padding: 20, border: `1px solid ${T.surface2}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>Result</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: T.ink, fontFamily: T.mono, marginBottom: 10 }}>{result.value}</div>
-          <div style={{ fontSize: 14, color: T.text, lineHeight: 1.6, whiteSpace: "pre-line", wordBreak: "break-word", marginBottom: result.caveat ? 10 : 0 }}>{result.interpretation}</div>
+          <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6, whiteSpace: "pre-line", wordBreak: "break-word", marginBottom: result.caveat ? 10 : 0 }}>{result.interpretation}</div>
           {result.caveat && (
             <div style={{ fontSize: 13, color: T.warning, background: T.warningBg, borderRadius: 8, padding: 10, lineHeight: 1.5 }}>{result.caveat}</div>
           )}
@@ -89,7 +89,7 @@ function ReferenceCardView({ refData }: { refData: QuickRefReference }) {
               if (hasArrow) {
                 const [before, after] = item.split("→");
                 return (
-                  <div key={j} style={{ fontSize: 13, color: T.text, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <div key={j} style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 8 }}>
                     <span style={{ color: T.brand, fontWeight: 700, flexShrink: 0 }}>•</span>
                     <span><strong style={{ color: T.ink }}>{before.trim()}</strong> <span style={{ color: T.brand }}>→</span> {after.trim()}</span>
                   </div>
@@ -98,7 +98,7 @@ function ReferenceCardView({ refData }: { refData: QuickRefReference }) {
               // Check if item starts with emoji
               const startsWithEmoji = /^[^\w\s]/.test(item) || item.startsWith("⚠");
               return (
-                <div key={j} style={{ fontSize: 13, color: T.text, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <div key={j} style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, display: "flex", alignItems: "flex-start", gap: 8 }}>
                   {!startsWithEmoji && <span style={{ color: T.brand, fontWeight: 700, flexShrink: 0 }}>•</span>}
                   <span>{item}</span>
                 </div>
@@ -120,7 +120,7 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
     <div>
       <div style={{ background: T.surface2, borderRadius: 12, padding: 14, marginBottom: 16, border: `1px solid ${T.surface2}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>Optional reference</div>
-        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5 }}>
           Use this UA microscopy atlas when it helps with a patient or a teaching question. It does not count toward required weekly progress; core progress comes from study sheets, cases, and quizzes.
         </div>
       </div>
@@ -128,7 +128,7 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
       {/* External Image Links banner */}
       <div style={{ background: T.infoBg, borderRadius: 12, padding: 14, marginBottom: 16, borderLeft: `4px solid ${T.info}` }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: T.info, marginBottom: 6 }}>📷 OPTIONAL UA IMAGE RESOURCES</div>
-        <div style={{ fontSize: 13, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images when you want extra visual practice. Pair them with the descriptions here.</div>
+        <div style={{ fontSize: 13, color: T.ink, marginBottom: 8, lineHeight: 1.5 }}>Tap below for real microscopy images when you want extra visual practice. Pair them with the descriptions here.</div>
         {refData.imageLinks.map((link, i) => (
           <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
             style={{ display: "block", fontSize: 13, color: T.brand, fontWeight: 600, textDecoration: "none", padding: "4px 0" }}>
@@ -157,12 +157,12 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
                 {isOpen && (
                   <div style={{ padding: "0 14px 14px" }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.3 }}>Appearance</div>
-                    <div style={{ fontSize: 13, color: T.text, marginBottom: 10, lineHeight: 1.5 }}>{item.appearance}</div>
+                    <div style={{ fontSize: 13, color: T.ink, marginBottom: 10, lineHeight: 1.5 }}>{item.appearance}</div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: T.sub, marginBottom: 3, textTransform: "uppercase", letterSpacing: 0.3 }}>Associations</div>
-                    <div style={{ fontSize: 13, color: T.text, marginBottom: 10, lineHeight: 1.5 }}>{item.associations}</div>
+                    <div style={{ fontSize: 13, color: T.ink, marginBottom: 10, lineHeight: 1.5 }}>{item.associations}</div>
                     <div style={{ background: T.surface2, borderRadius: 8, padding: 10, borderLeft: `3px solid ${T.brand}` }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 3 }}>CLINICAL PEARL</div>
-                      <div style={{ fontSize: 13, color: T.text, lineHeight: 1.5 }}>{item.clinicalPearl}</div>
+                      <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5 }}>{item.clinicalPearl}</div>
                     </div>
                   </div>
                 )}

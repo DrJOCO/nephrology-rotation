@@ -122,7 +122,7 @@ export function StudySheetsEditor({
       <button onClick={onBack} style={{ background: "none", border: "none", color: T.brand, fontSize: 14, fontWeight: 800, cursor: "pointer", marginBottom: 16 }}>{"<"} Back to Content</button>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 16 }}>
         <div>
-          <h2 style={{ color: T.text, fontSize: 22, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Study Sheets</h2>
+          <h2 style={{ color: T.ink, fontSize: 22, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Study Sheets</h2>
           <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>
             Edit the actual student-facing sheet text. IDs stay fixed so bookmarks and completion history still work.
           </div>

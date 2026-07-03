@@ -33,7 +33,7 @@ export function AdminPinGate({
             value={pin}
             onChange={(event) => setPin(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter") onSubmit(); }}
-            style={{ width: "100%", padding: "14px 16px", fontSize: 18, border: `1px solid ${pinError ? T.danger : T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", marginBottom: 16, fontFamily: T.mono, textAlign: "center", letterSpacing: 6, background: T.bg, color: T.ink }}
+            style={{ width: "100%", padding: "14px 16px", fontSize: 18, border: `1px solid ${pinError ? T.danger : T.line}`, borderRadius: 0, boxSizing: "border-box", marginBottom: 16, fontFamily: T.mono, textAlign: "center", letterSpacing: 6, background: T.bg, color: T.ink }}
           />
         </div>
         {pinError && <p style={{ color: T.danger, fontSize: 13, margin: "8px 0 0", fontWeight: 600 }}>Incorrect PIN</p>}
@@ -86,7 +86,7 @@ export function AdminPinSetupGate({
             value={pin}
             onChange={(event) => setPin(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter") onSubmit(); }}
-            style={{ width: "100%", padding: "14px 16px", fontSize: 18, border: `1px solid ${setupError ? T.danger : T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontFamily: T.mono, textAlign: "center", letterSpacing: 6, background: T.bg, color: T.ink }}
+            style={{ width: "100%", padding: "14px 16px", fontSize: 18, border: `1px solid ${setupError ? T.danger : T.line}`, borderRadius: 0, boxSizing: "border-box", fontFamily: T.mono, textAlign: "center", letterSpacing: 6, background: T.bg, color: T.ink }}
           />
           <input
             type="password"
@@ -94,7 +94,7 @@ export function AdminPinSetupGate({
             value={confirmPin}
             onChange={(event) => setConfirmPin(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter") onSubmit(); }}
-            style={{ width: "100%", padding: "14px 16px", fontSize: 18, border: `1px solid ${setupError ? T.danger : T.line}`, borderRadius: 0, outline: "none", boxSizing: "border-box", fontFamily: T.mono, textAlign: "center", letterSpacing: 6, background: T.bg, color: T.ink }}
+            style={{ width: "100%", padding: "14px 16px", fontSize: 18, border: `1px solid ${setupError ? T.danger : T.line}`, borderRadius: 0, boxSizing: "border-box", fontFamily: T.mono, textAlign: "center", letterSpacing: 6, background: T.bg, color: T.ink }}
           />
         </div>
         {setupError && <p style={{ color: T.danger, fontSize: 13, margin: "0 0 12px", fontWeight: 600 }}>{setupError}</p>}

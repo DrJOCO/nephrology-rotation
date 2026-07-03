@@ -7,7 +7,7 @@ export default function RefsTab({ navigate }) {
   const isMobile = useIsMobile();
   return (
     <div style={{ padding: 16 }}>
-      <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Quick Reference</h2>
+      <h2 style={{ color: T.ink, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Quick Reference</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px" }}>Calculators, protocols & clinical guides</p>
 
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>

@@ -4,6 +4,7 @@ import { PRO_TIPS } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
 import { getLevel } from "../../utils/gamification";
 import { getPatientSuggestedTopicGroups } from "../../utils/patientRecommendations";
+import { createQuickLogEntry, summarizeSuggestedGroup } from "../../utils/quickLog";
 import type {
   Announcement,
   Bookmarks,
@@ -21,6 +22,7 @@ import { buildHeroCard, buildLearningPlan, buildStartChecklist } from "./home/bu
 import HomeHeader from "./home/HomeHeader";
 import HeroSection from "./home/HeroSection";
 import ConsultLinkedLearning from "./home/ConsultLinkedLearning";
+import QuickLogCard from "./home/QuickLogCard";
 import CorePathChecklist from "./home/CorePathChecklist";
 import AnnouncementBanner from "./home/AnnouncementBanner";
 import InstallPromptCard from "./home/InstallPromptCard";
@@ -45,6 +47,9 @@ interface HomeTabProps {
   bookmarks: Bookmarks;
   srDueCount: number;
   patients: Patient[];
+  setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
+  onMarkPatientDirty: (id: string | number) => void;
+  onLogActivity: (type: string, label: string, detail?: string) => void;
   online?: boolean;
   competencySummary: CompetencySummary;
   gamification: Gamification;
@@ -72,6 +77,9 @@ export default function HomeTab({
   bookmarks,
   srDueCount,
   patients,
+  setPatients,
+  onMarkPatientDirty,
+  onLogActivity,
   online = true,
   competencySummary,
   gamification,
@@ -97,10 +105,6 @@ export default function HomeTab({
       .filter((patient) => patient.status === "active")
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [patients],
-  );
-  const activePatients = useMemo(
-    () => activePatientList.slice(0, isMobile ? 3 : 4),
-    [activePatientList, isMobile],
   );
   const activeConsultTopics = useMemo(
     () => {
@@ -178,6 +182,19 @@ export default function HomeTab({
     ? "Everything you need to finish strong and close the loop."
     : curriculum[displayWeek]?.sub || "One focused screen for what matters next.";
 
+  // Quick log on Today (cohort feedback): logging must be one tap from launch,
+  // not a tab switch away. Same entry shape as the Consults-tab quick log; the
+  // matched learning it unlocks renders further down this same screen.
+  const [quickLogConfirm, setQuickLogConfirm] = useState<{ topic: string; summary: string } | null>(null);
+  const handleQuickLogTopic = (topic: string) => {
+    const entry = createQuickLogEntry(topic);
+    onMarkPatientDirty(entry.id);
+    setPatients(prev => [entry, ...prev]);
+    onLogActivity("patient", "Consult topic logged", topic);
+    const [group] = getPatientSuggestedTopicGroups([entry], completedItems);
+    setQuickLogConfirm({ topic, summary: group ? summarizeSuggestedGroup(group) : "matched learning appears below" });
+  };
+
   const handleCompleteSuggestedTopic = (group: (typeof patientSuggestedGroups)[number]) => {
     onCompleteConsultTopic({
       topic: group.topic,
@@ -220,10 +237,16 @@ export default function HomeTab({
         onCompleteTopic={handleCompleteSuggestedTopic}
       />
 
+      <QuickLogCard
+        navigate={navigate}
+        onLogTopic={handleQuickLogTopic}
+        confirm={quickLogConfirm}
+        onDismissConfirm={() => setQuickLogConfirm(null)}
+      />
+
       {activePatientList.length > 0 && (
         <ConsultLinkedLearning
           activePatientList={activePatientList}
-          activePatients={activePatients}
           activeConsultTopics={activeConsultTopics}
           patientSuggestedGroups={patientSuggestedGroups}
           isMobile={isMobile}

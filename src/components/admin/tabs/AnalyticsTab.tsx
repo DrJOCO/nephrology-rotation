@@ -181,7 +181,7 @@ export function AnalyticsTab({ students, rotationCode, settings, articles }: { s
 
   return (
     <div style={{ padding: 16 }}>
-      <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Analytics</h2>
+      <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Analytics</h2>
 
       <div style={cardStyle}>
         <div style={titleStyle}>Historical Program View</div>

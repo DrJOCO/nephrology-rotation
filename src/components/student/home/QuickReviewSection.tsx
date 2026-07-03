@@ -23,7 +23,7 @@ export default function QuickReviewSection({ srDueCount, navigate }: {
 
   return (
     <section style={{ marginBottom: 16 }}>
-      <h2 style={{ margin: "0 0 10px", color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Quick review</h2>
+      <h2 style={{ margin: "0 0 10px", color: T.ink, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Quick review</h2>
       <button
         onClick={() => navigate(srAction.tab, srAction.subView)}
         style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.line}`, padding: "14px 14px", cursor: "pointer", textAlign: "left", display: "flex", gap: 12, alignItems: "flex-start", width: "100%" }}

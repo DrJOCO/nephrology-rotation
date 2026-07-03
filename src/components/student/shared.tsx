@@ -98,9 +98,8 @@ export const inputStyle: CSSProperties = {
   fontSize: 14,
   boxSizing: "border-box",
   fontFamily: T.sans,
-  outline: "none",
   background: T.surface2,
-  color: T.text,
+  color: T.ink,
 };
 
 type PanelTone = "info" | "warning" | "danger";
@@ -325,7 +324,7 @@ export function Chip({
     borderRadius: 8,
     border: `1.5px solid ${selected ? color : T.line}`,
     background: selected ? color : T.surface2,
-    color: selected ? solidToneInk(tone) : T.text,
+    color: selected ? solidToneInk(tone) : T.ink,
     fontSize: 13,
     fontWeight: 600,
     fontFamily: T.sans,

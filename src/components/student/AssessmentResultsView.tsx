@@ -204,7 +204,7 @@ export default function AssessmentResultsView({
       <section style={{ background: T.card, borderRadius: 18, border: `1px solid ${T.line}`, padding: "16px 16px", marginBottom: 18 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
           <div>
-            <h3 style={{ margin: 0, color: T.text, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Topic breakdown</h3>
+            <h3 style={{ margin: 0, color: T.ink, fontFamily: T.serif, fontSize: 18, fontWeight: 700 }}>Topic breakdown</h3>
             <div style={{ fontSize: 13, color: T.sub, marginTop: 3 }}>
               Use the low bands to drive teaching, review, and the next quiz set.
             </div>
@@ -298,7 +298,7 @@ export default function AssessmentResultsView({
             <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
               {missed.map((item, index) => (
                 <div key={`${item.qIdx}-${index}`} style={{ background: T.dangerBg, borderRadius: 14, padding: 14, borderLeft: `3px solid ${T.danger}` }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: T.text, lineHeight: 1.5, marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: T.ink, lineHeight: 1.5, marginBottom: 8 }}>
                     {item.question.q}
                   </div>
                   <div style={{ fontSize: 13, color: T.danger, marginBottom: 4 }}>

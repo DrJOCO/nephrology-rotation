@@ -121,7 +121,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             </div>
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 8 }}>Clinical Scenario</div>
-          <div style={{ fontSize: 14, color: T.text, lineHeight: 1.7, whiteSpace: "pre-line" }}>
+          <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.7, whiteSpace: "pre-line" }}>
             {caseData.scenario}
           </div>
           {/* Scenario image */}
@@ -169,7 +169,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
           const selectedChoice = ans ? (q.choices[ans.selected] ?? "Unknown answer") : "Not answered";
           return (
             <div key={i} style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 8, border: `1px solid ${T.line}`, borderLeft: `4px solid ${isCorrect ? T.success : T.danger}` }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 6, lineHeight: 1.4 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, marginBottom: 6, lineHeight: 1.4 }}>
                 {i + 1}. {q.q}
               </div>
               <div style={{ fontSize: 13, color: isCorrect ? T.success : T.danger, fontWeight: 600, marginBottom: 6 }}>
@@ -231,14 +231,14 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
         {showScenario ? "▾ Hide Scenario" : "▸ Show Clinical Scenario"}
       </button>
       {showScenario && (
-        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 14, border: `1px solid ${T.line}`, fontSize: 13, color: T.text, lineHeight: 1.6, whiteSpace: "pre-line", maxHeight: 200, overflowY: "auto" }}>
+        <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 14, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, lineHeight: 1.6, whiteSpace: "pre-line", maxHeight: 200, overflowY: "auto" }}>
           {caseData.scenario}
         </div>
       )}
 
       {/* Question */}
       <div style={{ background: T.card, borderRadius: 14, padding: 18, border: `1px solid ${T.line}`, marginBottom: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: T.text, lineHeight: 1.5, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: T.ink, lineHeight: 1.5, marginBottom: 16 }}>
           {q.q}
         </div>
         {/* Question image */}
@@ -249,7 +249,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
             const isCorrect = i === q.answer;
             let bg = T.card;
             let border = `1.5px solid ${T.line}`;
-            let textColor = T.text;
+            let textColor = T.ink;
             if (showExplanation) {
               if (isCorrect) { bg = T.successBg; border = `1.5px solid ${T.success}`; textColor = T.success; }
               else if (isSelected && !isCorrect) { bg = T.dangerBg; border = `1.5px solid ${T.danger}`; textColor = T.danger; }
@@ -277,7 +277,7 @@ function CaseDetail({ caseData, onBack, completedItems, onCaseComplete }: { case
           <div style={{ fontSize: 13, fontWeight: 700, color: selected === q.answer ? T.success : T.danger, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
             {selected === q.answer ? "Correct!" : "Incorrect"}
           </div>
-          <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.6 }}>
             {q.explanation}
           </div>
         </div>
@@ -320,7 +320,7 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.successBg, color: T.success, borderRadius: 999, padding: "6px 10px", fontSize: 13, fontWeight: 700, marginBottom: 10 }}>
         Core for this module
       </div>
-      <h2 style={{ color: T.text, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Module {week} Clinical Cases</h2>
+      <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Module {week} Clinical Cases</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 16px", lineHeight: 1.5 }}>
         {doneCount}/{cases.length} completed. Work through MS4-level clinical scenarios, then answer the diagnostic and management questions to lock in the module&apos;s core material.
       </p>

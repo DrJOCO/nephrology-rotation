@@ -98,7 +98,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
   return (
     <div style={{ padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ color: T.text, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{duplicateReview ? "Review Duplicates" : "Students"}</h2>
+        <h2 style={{ color: T.ink, fontSize: 20, margin: 0, fontFamily: T.serif, fontWeight: 700 }}>{duplicateReview ? "Review Duplicates" : "Students"}</h2>
         {!isConnected && (
           <button onClick={() => setShowAdd(!showAdd)}
             style={{ padding: "8px 16px", background: showAdd ? T.sub : T.warning, color: showAdd ? "white" : T.warningInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
@@ -135,7 +135,7 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
                     {group.map((student) => (
                       <div key={student.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center", flexWrap: "wrap", background: T.bg, borderRadius: 10, padding: 10 }}>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: 13, color: T.text, fontWeight: 800 }}>{student.email || "No email"} · {student.year || "Year not set"}</div>
+                          <div style={{ fontSize: 13, color: T.ink, fontWeight: 800 }}>{student.email || "No email"} · {student.year || "Year not set"}</div>
                           <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>
                             {student.status} · {(student.patients || []).length} consults · {student.lastSyncedAt ? `synced ${new Date(student.lastSyncedAt).toLocaleDateString()}` : "never synced"}
                           </div>

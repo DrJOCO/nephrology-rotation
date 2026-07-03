@@ -13,7 +13,6 @@ function getSuggestedGroupMeta(group: PatientSuggestedTopicGroup) {
 
 interface ConsultLinkedLearningProps {
   activePatientList: Patient[];
-  activePatients: Patient[];
   activeConsultTopics: string[];
   patientSuggestedGroups: PatientSuggestedTopicGroup[];
   isMobile: boolean;
@@ -22,7 +21,6 @@ interface ConsultLinkedLearningProps {
 
 export default function ConsultLinkedLearning({
   activePatientList,
-  activePatients,
   activeConsultTopics,
   patientSuggestedGroups,
   isMobile,
@@ -81,7 +79,7 @@ export default function ConsultLinkedLearning({
       )}
 
       {patientSuggestedGroups.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8, marginBottom: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
           {patientSuggestedGroups.slice(0, 3).map(group => (
             <button
               key={group.topic}
@@ -95,35 +93,6 @@ export default function ConsultLinkedLearning({
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 8 }}>
-        {activePatients.map(patient => {
-          const topics = patient.topics || (patient.topic ? [patient.topic] : []);
-          return (
-            <button
-              key={patient.id}
-              onClick={() => navigate("patients")}
-              style={{ background: T.grayBg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "9px 10px", cursor: "pointer", textAlign: "left", minHeight: 58 }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontSize: 13, color: T.ink, fontWeight: 800 }}>{patient.initials}</span>
-                {patient.room && <span style={{ fontSize: 12, color: T.muted }}>Rm {patient.room}</span>}
-              </div>
-              <div style={{ fontSize: 12, color: T.sub, marginTop: 3, lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {topics.length > 0 ? topics.slice(0, 2).join(", ") : patient.dx || "Learning tags pending"}
-                {topics.length > 2 ? ` +${topics.length - 2}` : ""}
-              </div>
-            </button>
-          );
-        })}
-        {activePatientList.length > activePatients.length && (
-          <button
-            onClick={() => navigate("patients")}
-            style={{ background: T.bg, border: `1px dashed ${T.line}`, borderRadius: 10, padding: "9px 10px", cursor: "pointer", textAlign: "center", color: T.brand, fontSize: 13, fontWeight: 800 }}
-          >
-            +{activePatientList.length - activePatients.length} more consult{activePatientList.length - activePatients.length !== 1 ? "s" : ""}
-          </button>
-        )}
-      </div>
     </section>
   );
 }

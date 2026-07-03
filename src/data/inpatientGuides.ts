@@ -8,6 +8,7 @@ export const INPATIENT_GUIDE_TOPICS = [
   "Hyponatremia",
   "Hyperkalemia",
   "Dialysis",
+  "ESRD Inpatient",
   "GN",
   "HRS",
   "Contrast AKI",
@@ -338,6 +339,110 @@ export const INPATIENT_GUIDES: Record<
       "An ESRD patient on thrice-weekly HD missed their last two sessions and presents with shortness of breath and potassium 7.0. What is different about this scenario compared to AKI?",
       "CONVINCE (NEJM 2023) showed 23% lower mortality with high-dose online hemodiafiltration vs high-flux HD in select prevalent HD patients. Where does HDF fit in current US dialysis practice, and what are the limitations?",
       "ACHIEVE (Lancet 2025) was stopped for futility — spironolactone in maintenance dialysis didn't reduce CV death/HF hospitalization and increased severe hyperkalemia. How does this change a request to start an MRA on a HD patient with HFrEF?",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  ESRD / DIALYSIS PATIENT INPATIENT ROUNDING
+  // ═══════════════════════════════════════════════════════════════════
+  "ESRD Inpatient": {
+    topic: "ESRD Inpatient",
+    icon: "🏥",
+    title: "ESRD Inpatient Rounding",
+    subtitle:
+      "The admitted dialysis patient — access, volume, potassium, and the chronic care their unit usually handles",
+
+    whyWeGetConsulted:
+      "Every hospitalized dialysis patient — HD or PD — needs nephrology to run their dialysis while admitted, whatever brought them in. The job is to learn their outpatient prescription, protect the access, sort volume and potassium, decide when they dialyze next (or whether PD can continue in-house), and keep the chronic ESRD care (anemia, CKD-MBD, nutrition) from falling apart during the admission.",
+
+    teachingPearl:
+      "The dialysis unit knows this patient better than the hospital does. Your first task is to recover their outpatient reality — schedule, dry weight, access, intradialytic tolerance — because almost every inpatient decision is measured against it.",
+
+    beforeRounds: [
+      "Dialysis unit, schedule (MWF vs TThSa), and when they last dialyzed",
+      "Missed sessions or shortened treatments before admission",
+      "Dry weight (estimated dry weight) and current weight vs it",
+      "Access: fistula, graft, or catheter — site, and any recent problems (prolonged bleeding, poor flows, clotting)",
+      "Access exam: thrill and bruit, or catheter exit site",
+      "Residual urine output (anuric vs still making urine)",
+      "Intradialytic tolerance: hypotension, cramping, how much fluid they typically remove",
+      "Potassium, and whether the draw was pre- or post-dialysis",
+      "Volume exam: edema, crackles, oxygen requirement, BP",
+      "Home meds: phosphate binders (with meals?), calcimimetic, vitamin D analog, antihypertensives (which are held on HD days?)",
+      "Most recent Hgb, iron indices (TSAT/ferritin), phosphorus, calcium, PTH from the outpatient unit if available",
+      "Transplant status: listed, workup in progress, or not a candidate",
+      "Any meds ordered this admission that need renal dosing or are contraindicated (NSAIDs, magnesium/phosphate preps, maintenance IV fluids)",
+      "PD: modality (CAPD manual exchanges vs cycler/CCPD) and the full prescription — number of exchanges, fill volume, dextrose strengths, icodextrin, dwell times",
+      "PD: who does the exchanges at home (patient vs family), and can they do them in the hospital? Does this hospital stock PD supplies and have PD-trained nurses?",
+      "PD: exit site and tunnel exam, and effluent clarity — ask when the effluent was last clear",
+      "PD: recent problems — drain pain, poor drainage, fibrin, leaks, hernias",
+    ],
+
+    thirtySecondSummary:
+      "\"ESRD on __ schedule via __ access, last dialyzed __, admitted for __. Volume is __ relative to dry weight of __, potassium is __, access is __. Plan is to dialyze __ and the main issue today is __.\"",
+
+    howToPresent:
+      "\"This is a __-year-old with ESRD from __, on hemodialysis __ per week via __ at __ unit, last dialyzed __, admitted for __. They are __ kg against a dry weight of __ kg, potassium is __, and the access has a good thrill/bruit (or catheter site is clean). They do/do not make residual urine. Overnight events were __. My plan is dialysis __ with __ fluid removal, and the chronic issues to keep on track are __.\"",
+
+    topDifferentialBuckets: [
+      "Volume: above or below dry weight, and how much to remove",
+      "Access: working, threatened, or infected",
+      "Electrolytes: potassium trajectory between sessions",
+      "Dialysis logistics: when is the next run, and can the admission diagnosis wait for it",
+      "Chronic ESRD care: anemia, CKD-MBD, nutrition, transplant status",
+    ],
+
+    redFlags: [
+      "Hyperkalemia with ECG changes — medical stabilization while arranging urgent dialysis",
+      "Pulmonary edema in an anuric patient — diuretics will not work; dialysis is the treatment",
+      "Fever with a dialysis catheter — catheter-related bloodstream infection until proven otherwise; blood cultures before antibiotics",
+      "Lost thrill/bruit in a fistula or graft — clotted access; call access surgery/interventional early, do not wait",
+      "Prolonged bleeding from access sites — may signal outflow stenosis (or uremic platelet dysfunction)",
+      "Missed multiple sessions — assume potassium and volume are both dangerous until measured",
+      "Pericardial rub or large effusion — uremic pericarditis changes the dialysis prescription (intensive, often heparin-free HD)",
+      "PD: cloudy effluent or abdominal pain — peritonitis until proven otherwise; send effluent cell count and culture BEFORE antibiotics (see the PD Peritonitis guide)",
+      "PD: purulent exit-site drainage or tunnel tenderness — exit-site/tunnel infection, and a peritonitis risk",
+      "PD: catheter not draining — check for constipation, kinking, or migration before assuming the catheter has failed",
+    ],
+
+    commonMistakes: [
+      "Placing a PICC line — vein preservation matters even in ESRD (future access sites); push for alternatives",
+      "BP measurements, blood draws, or IVs in the fistula/graft arm",
+      "Maintenance IV fluids running in an anuric patient",
+      "Reacting to a post-dialysis potassium or a hemodilated post-fluid Hgb — timing of the draw matters",
+      "Treating a chronically 'high' BUN and creatinine as an acute problem — trends against their own baseline, not the reference range",
+      "Holding phosphate binders because the patient is NPO, then continuing to hold them when meals resume — binders only work with food",
+      "Giving fluids for oliguria in a patient who has been anuric for years",
+      "Forgetting to renally dose (or avoid) meds: gabapentin, baclofen, morphine, enoxaparin, NSAIDs, magnesium- or phosphate-containing bowel preps",
+      "Transfusing liberally in a transplant candidate — sensitization risk; transfuse for symptoms/ischemia, not a number",
+      "Not telling the dialysis unit what happened — the discharge handoff (new dry weight, med changes, access events) is part of the consult",
+      "PD: reflexively converting to HD because 'the hospital doesn't do PD' — many admissions can continue PD if supplies and trained nurses are arranged; ask before switching",
+      "PD: forgetting the abdomen must be drained before abdominal surgery, paracentesis, or imaging that a full belly would confound",
+      "PD: missing hidden glucose load — dextrose dialysate is absorbed and matters for glycemic control; icodextrin falsely elevates some point-of-care glucose readings (GDH-PQQ meters)",
+      "PD: sampling effluent after a dry abdomen or too-short dwell — instill dialysate and allow a dwell ≥2 h before sending the cell count",
+    ],
+
+    assessmentFramework: [
+      "1. Recover the outpatient prescription: unit, schedule, dry weight, access, last session",
+      "2. Volume: current weight vs dry weight, exam, oxygen — how much to remove and over how many sessions",
+      "3. Potassium and acid-base: pre-dialysis values, trajectory, whether the next scheduled run is soon enough",
+      "4. Access: examine it every day — thrill/bruit or exit site; protect the arm (sign above the bed)",
+      "5. Dialysis plan: dialyze today vs next scheduled day; adjust for contrast studies, procedures, and OR timing",
+      "6. Anemia: Hgb, TSAT, ferritin — ESA and IV iron usually continue per the outpatient protocol; target Hgb ~10–11 g/dL, avoid >11.5; iron-replete means TSAT >20% and ferritin >200 (PIVOTAL supports proactive IV iron)",
+      "7. CKD-MBD: phosphorus, calcium, PTH — binders with every meal once eating; continue calcimimetic/vitamin D analog; PTH target roughly 2–9× upper normal (KDIGO)",
+      "8. Nutrition: dialysis patients need protein (~1.2 g/kg/day) — do not reflexively order a low-protein 'renal' diet; K/phos restriction, yes",
+      "9. Disposition: confirm the unit has a chair on the right day, and hand off dry weight and med changes",
+      "10. PD patients: decide early whether PD continues in-house (supplies, trained nurses, who runs the cycler) or temporary HD is needed; examine the exit site and effluent daily; drain the abdomen before abdominal procedures; count the dextrose absorbed toward glycemic control; if effluent turns cloudy, culture first and move to the PD Peritonitis pathway",
+    ],
+
+    discussionQuestions: [
+      "A 58-year-old on MWF dialysis via left forearm fistula is admitted Saturday with cellulitis. He last dialyzed Friday, weighs 84 kg against a dry weight of 82 kg, and potassium is 5.1. The admitting team asks if he needs dialysis tonight. How do you decide, and what do you tell them?",
+      "A 47-year-old ESRD patient with a right IJ tunneled catheter spikes a fever to 38.9°C during dialysis. Blood pressure is stable. Walk through your evaluation and management — what do you culture, what antibiotics do you start, and when does the catheter come out?",
+      "You are consulted on a 63-year-old dialysis patient admitted with pneumonia. The intern placed a PICC order for a 10-day antibiotic course and wrote for maintenance fluids at 75 mL/hr. She is anuric. What do you change and why?",
+      "A 39-year-old transplant-listed patient on HD has Hgb 7.8, asymptomatic, TSAT 15%, ferritin 180. The team wants to transfuse. What do you recommend instead, and why does the transfusion decision matter more in this patient?",
+      "A 55-year-old on HD is admitted for 5 days. His phosphorus on admission was 7.2. The team continued his sevelamer 'TID' but he was NPO for 3 of those days, and now he is eating again. His nurse asks when to give the binder doses. What do you teach the team about how binders work?",
+      "A 61-year-old on nightly cycler PD is admitted with a COPD exacerbation, expected stay 3–4 days. The hospitalist writes 'hold PD, nephrology to arrange HD.' Her effluent is clear, she is euvolemic, and potassium is 4.9. What do you recommend instead, and what logistics do you need to sort out for her to continue PD in the hospital?",
+      "A 52-year-old PD patient is admitted for an elective colonoscopy with possible polypectomy. The GI team asks if there is anything special to do around the procedure. What do you tell them about the abdomen, antibiotic prophylaxis, and restarting exchanges?",
     ],
   },
 

@@ -399,7 +399,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
               <div style={{ background: T.dangerBg, border: `1px solid ${T.danger}`, borderRadius: 8, padding: 10, marginBottom: 10 }}>
                 <div style={{ color: T.danger, fontWeight: 600, fontSize: 13, marginBottom: 5 }}>High-risk signals</div>
                 {assessment.alerts.map((alert) => (
-                  <div key={alert} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 4 }}>{alert}</div>
+                  <div key={alert} style={{ color: T.ink, fontSize: 13, lineHeight: 1.45, marginBottom: 4 }}>{alert}</div>
                 ))}
               </div>
             )}
@@ -429,7 +429,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
                     {item.next.length > 0 && (
                       <div style={{ borderTop: `1px solid ${T.line}`, marginTop: 8, paddingTop: 8 }}>
                         {item.next.slice(0, 2).map((step) => (
-                          <div key={step} style={{ color: T.text, fontSize: 12.5, lineHeight: 1.45, marginBottom: 3 }}>{step}</div>
+                          <div key={step} style={{ color: T.ink, fontSize: 12.5, lineHeight: 1.45, marginBottom: 3 }}>{step}</div>
                         ))}
                       </div>
                     )}
@@ -472,7 +472,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
               <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>Add inputs to generate next-step suggestions.</div>
             ) : (
               assessment.nextSteps.map((step) => (
-                <div key={step} style={{ color: T.text, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
+                <div key={step} style={{ color: T.ink, fontSize: 13, lineHeight: 1.45, marginBottom: 6 }}>{step}</div>
               ))
             )}
             <div style={{ color: T.muted, fontSize: 12, lineHeight: 1.5, marginTop: 10 }}>

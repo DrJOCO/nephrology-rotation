@@ -42,7 +42,7 @@ export default function HeroSection({
           <h2 style={{ margin: 0, color: T.ink, fontFamily: T.serif, fontSize: 24, fontWeight: 700, lineHeight: 1.15 }}>
             {heroCard.title}
           </h2>
-          <p style={{ margin: "8px 0 0", color: T.text, fontSize: 14, lineHeight: 1.55, maxWidth: 560 }}>
+          <p style={{ margin: "8px 0 0", color: T.ink, fontSize: 14, lineHeight: 1.55, maxWidth: 560 }}>
             {heroCard.body}
           </p>
         </div>
@@ -107,7 +107,7 @@ export default function HeroSection({
                     onClick={() => onSelectTopic(idx)}
                     style={{
                       background: sel ? T.brand : "transparent",
-                      color: sel ? T.brandInk : T.text,
+                      color: sel ? T.brandInk : T.ink,
                       border: `1px solid ${sel ? T.brand : T.line}`,
                       borderRadius: 999,
                       padding: "6px 12px",

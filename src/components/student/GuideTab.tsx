@@ -52,7 +52,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
 
       {/* Intro */}
       <div style={{ background: T.surface2, borderRadius: 12, padding: 16, marginBottom: 16, borderLeft: `4px solid ${T.brand}` }}>
-        <div style={{ fontSize: 13, color: T.text, lineHeight: 1.6, wordBreak: "break-word" }}>{data.intro}</div>
+        <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.6, wordBreak: "break-word" }}>{data.intro}</div>
       </div>
 
       {/* Categories - accordion */}
@@ -89,7 +89,7 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
                       {!isWarning && !isNever && (
                         <span style={{ color: accent, fontWeight: 700, fontSize: 14, flexShrink: 0, marginTop: 1 }}>•</span>
                       )}
-                      <div style={{ fontSize: 13, color: isWarning ? T.warning : isNever ? T.danger : T.text, lineHeight: 1.5, fontWeight: isWarning || isNever ? 600 : 400, wordBreak: "break-word" }}>
+                      <div style={{ fontSize: 13, color: isWarning ? T.warning : isNever ? T.danger : T.ink, lineHeight: 1.5, fontWeight: isWarning || isNever ? 600 : 400, wordBreak: "break-word" }}>
                         {item}
                       </div>
                     </div>
@@ -116,7 +116,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
     <div style={{ padding: 16 }}>
       {/* Clinical Tools */}
       <div style={{ marginBottom: 18 }}>
-        <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinical Tools</h2>
+        <h2 style={{ color: T.ink, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinical Tools</h2>
         <p style={{ color: T.sub, fontSize: 13, margin: "0 0 10px", lineHeight: 1.4 }}>
           Fast structured reasoning tools for common inpatient consults.
         </p>
@@ -160,7 +160,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
         </div>
       </div>
 
-      <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinical Guides</h2>
+      <h2 style={{ color: T.ink, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Clinical Guides</h2>
       <p style={{ color: T.sub, fontSize: 13, margin: "0 0 12px", lineHeight: 1.4 }}>
         Practical tips for consults, rounding, notes, and presentations.
       </p>

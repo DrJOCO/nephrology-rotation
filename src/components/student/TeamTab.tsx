@@ -55,7 +55,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
 
   return (
     <div style={{ padding: 16 }}>
-      <h2 style={{ color: T.text, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Cohort</h2>
+      <h2 style={{ color: T.ink, fontSize: 18, margin: "0 0 4px", fontFamily: T.serif, fontWeight: 700 }}>Cohort</h2>
       <div style={{ color: T.muted, fontSize: 13, marginBottom: 16 }}>
         {teammates.length} student{teammates.length !== 1 ? "s" : ""} on this rotation
         {myRank > 0 ? ` · You're ranked #${myRank}` : ""}
@@ -97,7 +97,7 @@ export default function TeamTab({ currentStudentId }: { currentStudentId: string
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: T.text, fontFamily: T.mono }}>{student.points}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: T.ink, fontFamily: T.mono }}>{student.points}</div>
                   <div style={{ fontSize: 12, color: T.muted }}>points</div>
                 </div>
                 <span style={{ fontSize: 16, color: T.muted, transform: isExpanded ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>

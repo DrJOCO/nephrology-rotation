@@ -36,9 +36,8 @@ export const adminInput: React.CSSProperties = {
   fontSize: 14,
   boxSizing: "border-box",
   fontFamily: T.sans,
-  outline: "none",
   background: T.card,
-  color: T.text,
+  color: T.ink,
 };
 
 export function AdminToast({ toast, onClose }: { toast: AdminToastState | null; onClose: () => void }) {

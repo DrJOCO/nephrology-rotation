@@ -24,7 +24,7 @@ export default function FaqView({ onBack }) {
             </button>
             {isOpen && (
               <div style={{ padding: "0 16px 16px 40px" }}>
-                <div style={{ fontSize: 13, color: T.text, lineHeight: 1.65, wordBreak: "break-word" }}>{faq.a}</div>
+                <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.65, wordBreak: "break-word" }}>{faq.a}</div>
               </div>
             )}
           </div>
