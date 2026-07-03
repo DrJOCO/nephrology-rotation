@@ -171,10 +171,10 @@ export function getPatientRecommendations(
     });
   }
 
-  // Sort by priority (highest first), limit to top topics
+  // Sort by priority (highest first); callers decide how many to show
   recommendations.sort((a, b) => b.priority - a.priority);
 
-  return recommendations.slice(0, 5);
+  return recommendations;
 }
 
 /**
@@ -406,5 +406,5 @@ export function getPatientSuggestedTopicGroups(
     groups.push({ topic: rec.topic, reason: rec.reason, sheets, trials, tools, guides });
   }
 
-  return groups.slice(0, 5);
+  return groups;
 }

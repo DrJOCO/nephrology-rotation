@@ -80,7 +80,7 @@ export default function ConsultLinkedLearning({
 
       {patientSuggestedGroups.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
-          {patientSuggestedGroups.slice(0, 3).map(group => (
+          {patientSuggestedGroups.map(group => (
             <button
               key={group.topic}
               onClick={() => openSuggestedGroup(group)}

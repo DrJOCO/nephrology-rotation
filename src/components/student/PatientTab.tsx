@@ -562,7 +562,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
 
   const active = patients.filter(p => p.status === "active");
   const discharged = patients.filter(p => p.status === "discharged");
-  const suggestedGroups = navigate ? getPatientSuggestedTopicGroups(active, completedItems).slice(0, 3) : [];
+  const suggestedGroups = navigate ? getPatientSuggestedTopicGroups(active, completedItems) : [];
   const visibleAddTopics = getVisibleTopicOptions(form.topics, showAllTopics);
   const hiddenAddTopicCount = getHiddenTopicCount(form.topics, showAllTopics);
   const quickLogMatches = searchQuickLogTopics(quickLogQuery);

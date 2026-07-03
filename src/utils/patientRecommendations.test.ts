@@ -63,12 +63,13 @@ describe("patientRecommendations", () => {
       expect(recs.length).toBe(0);
     });
 
-    it("limits to 5 recommendations", () => {
+    it("returns a recommendation for every active topic with content", () => {
+      const topics = ["AKI", "CKD", "Hyponatremia", "Hyperkalemia", "Dialysis", "Transplant", "Acid-Base"];
       const patients = [
-        { topics: ["AKI", "CKD", "Hyponatremia", "Hyperkalemia", "Dialysis", "Transplant", "Acid-Base"], date: "2026-03-09", status: "active" as const },
+        { topics, date: "2026-03-09", status: "active" as const },
       ];
       const recs = getPatientRecommendations(patients);
-      expect(recs.length).toBeLessThanOrEqual(5);
+      expect(recs.length).toBe(topics.length);
     });
 
     it("handles PKD and APOL1 topics", () => {
