@@ -251,6 +251,7 @@ export default function HomeTab({
           patientSuggestedGroups={patientSuggestedGroups}
           isMobile={isMobile}
           navigate={navigate}
+          onCompleteTopic={handleCompleteSuggestedTopic}
         />
       )}
 

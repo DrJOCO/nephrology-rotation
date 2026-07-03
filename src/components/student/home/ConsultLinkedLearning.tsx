@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { T } from "../../../data/constants";
 import type { Patient, SubView } from "../../../types";
 import type { PatientSuggestedTopicGroup } from "../../../utils/patientRecommendations";
@@ -17,6 +18,7 @@ interface ConsultLinkedLearningProps {
   patientSuggestedGroups: PatientSuggestedTopicGroup[];
   isMobile: boolean;
   navigate: (tab: string, sv?: SubView) => void;
+  onCompleteTopic: (group: PatientSuggestedTopicGroup) => void;
 }
 
 export default function ConsultLinkedLearning({
@@ -25,6 +27,7 @@ export default function ConsultLinkedLearning({
   patientSuggestedGroups,
   isMobile,
   navigate,
+  onCompleteTopic,
 }: ConsultLinkedLearningProps) {
   const openSuggestedGroup = (group: PatientSuggestedTopicGroup) => {
     if (group.guides[0]) {
@@ -81,14 +84,26 @@ export default function ConsultLinkedLearning({
       {patientSuggestedGroups.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
           {patientSuggestedGroups.map(group => (
-            <button
+            <div
               key={group.topic}
-              onClick={() => openSuggestedGroup(group)}
-              style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "10px 11px", textAlign: "left", cursor: "pointer", minHeight: 70 }}
+              style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, minHeight: 70, display: "flex", alignItems: "stretch" }}
             >
-              <div style={{ fontSize: 13, color: T.ink, fontWeight: 800, lineHeight: 1.25 }}>{group.topic}</div>
-              <div style={{ fontSize: 12, color: T.sub, marginTop: 4, lineHeight: 1.35 }}>{getSuggestedGroupMeta(group)}</div>
-            </button>
+              <button
+                onClick={() => openSuggestedGroup(group)}
+                style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: "10px 4px 10px 11px", textAlign: "left", cursor: "pointer" }}
+              >
+                <div style={{ fontSize: 13, color: T.ink, fontWeight: 800, lineHeight: 1.25 }}>{group.topic}</div>
+                <div style={{ fontSize: 12, color: T.sub, marginTop: 4, lineHeight: 1.35 }}>{getSuggestedGroupMeta(group)}</div>
+              </button>
+              <button
+                onClick={() => onCompleteTopic(group)}
+                aria-label={`Mark ${group.topic} reviewed`}
+                title="Got it — hides until your next consult with this topic"
+                style={{ background: "none", border: "none", borderLeft: `1px solid ${T.line}`, color: T.success, cursor: "pointer", padding: "0 10px", display: "flex", alignItems: "center", borderRadius: "0 10px 10px 0" }}
+              >
+                <Check size={15} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            </div>
           ))}
         </div>
       )}

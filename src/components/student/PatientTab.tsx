@@ -372,7 +372,7 @@ const GN_WORKFLOW_SUGGESTION_TOPICS = new Set([
   "Kidney Biopsy",
 ]);
 
-export default function PatientTab({ patients, setPatients, navigate, completedItems, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; completedItems?: CompletedItems; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void }) {
+export default function PatientTab({ patients, setPatients, navigate, completedItems, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved, onCompleteConsultTopic }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; completedItems?: CompletedItems; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void; onCompleteConsultTopic?: (payload: { topic: string; sheetIds: string[]; trialNames: string[] }) => void }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
@@ -690,14 +690,28 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
           {suggestedGroups.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
               {suggestedGroups.map(group => (
-                <button
+                <div
                   key={group.topic}
-                  onClick={() => openSuggestedGroup(group)}
-                  style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "10px 11px", cursor: "pointer", textAlign: "left", minHeight: 68 }}
+                  style={{ background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, minHeight: 68, display: "flex", alignItems: "stretch" }}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 800, color: T.ink, lineHeight: 1.25 }}>{group.topic}</div>
-                  <div style={{ fontSize: 12, color: T.sub, marginTop: 4, lineHeight: 1.35 }}>{summarizeSuggestedGroup(group)}</div>
-                </button>
+                  <button
+                    onClick={() => openSuggestedGroup(group)}
+                    style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: "10px 4px 10px 11px", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 800, color: T.ink, lineHeight: 1.25 }}>{group.topic}</div>
+                    <div style={{ fontSize: 12, color: T.sub, marginTop: 4, lineHeight: 1.35 }}>{summarizeSuggestedGroup(group)}</div>
+                  </button>
+                  {onCompleteConsultTopic && (
+                    <button
+                      onClick={() => onCompleteConsultTopic({ topic: group.topic, sheetIds: group.sheets.map(s => s.id), trialNames: group.trials.map(t => t.name) })}
+                      aria-label={`Mark ${group.topic} reviewed`}
+                      title="Got it — hides until your next consult with this topic"
+                      style={{ background: "none", border: "none", borderLeft: `1px solid ${T.line}`, color: T.success, cursor: "pointer", padding: "0 10px", display: "flex", alignItems: "center", borderRadius: "0 10px 10px 0" }}
+                    >
+                      <Check size={15} strokeWidth={2.4} aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           )}
