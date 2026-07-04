@@ -20,6 +20,18 @@ export interface RotationInfo {
   ownerUid: string;
 }
 
+// Outcome of a student-doc write: "applied" = Firestore confirmed it,
+// "queued" = offline or failed and parked in the pending-sync queue,
+// "skipped" = nothing was written (no rotation code, or the clobber guard
+// found every field superseded by newer remote data).
+export type StudentWriteStatus = "applied" | "queued" | "skipped";
+export interface StudentWriteResult {
+  status: StudentWriteStatus;
+  // The updatedAt actually persisted — the merge's fresh stamp when the
+  // clobber guard folded in newer remote data; null when nothing was written.
+  updatedAt: string | null;
+}
+
 export interface StudentAssignmentRecord {
   studentId: string;
   activeRotationCode: string;
@@ -86,6 +98,23 @@ function withoutLegacyLoginPin(data: Record<string, unknown>): Record<string, un
   const safe = { ...data };
   delete safe.loginPin;
   return safe;
+}
+
+// Firestore rejects undefined anywhere in a payload, so one stray optional
+// field (e.g. a feedback tag without a note) would fail the whole write and
+// strand it in the retry queue.
+function stripUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((entry) => (entry === undefined ? null : stripUndefinedDeep(entry))) as unknown as T;
+  }
+  if (isPlainObject(value)) {
+    const cleaned: Record<string, unknown> = {};
+    Object.entries(value).forEach(([key, entry]) => {
+      if (entry !== undefined) cleaned[key] = stripUndefinedDeep(entry);
+    });
+    return cleaned as T;
+  }
+  return value;
 }
 
 function emitPendingSyncChanged(queue: PendingSyncItem[]): void {
@@ -266,6 +295,9 @@ async function ensureRotationCodeDoc(code: string, owner: RotationOwnerSession):
 // than the queued item's, we merge field-wise instead of overwriting:
 // progress-shaped collections get monotonic unions (completed work never
 // un-completes), and where a winner is ambiguous the newest updatedAt wins.
+// The direct setStudentData path opts into the same guard via baseUpdatedAt,
+// so a stale device's post-hydration auto-save or logout flush can't clobber
+// newer cloud progress either.
 
 type FirebaseModules = Awaited<ReturnType<typeof getFirebase>>;
 
@@ -777,24 +809,58 @@ const store = {
   },
 
   // ─── Write student data to Firestore directly ────────────────────
-  async setStudentData(studentId: string, data: Record<string, unknown>): Promise<void> {
-    if (!rotationCode) return;
-    const payload = withoutLegacyLoginPin(data);
+  // `options.baseUpdatedAt` opts into the clobber guard: it is the remote
+  // updatedAt the caller's local state is known to incorporate (null = none
+  // known). When the remote doc has advanced past that base, the payload is
+  // merged field-wise under the flush-guard rules instead of overwriting, so
+  // a stale device's full-doc save can't erase newer cloud progress.
+  async setStudentData(studentId: string, data: Record<string, unknown>, options?: { baseUpdatedAt: string | null }): Promise<StudentWriteResult> {
+    if (!rotationCode) return { status: "skipped", updatedAt: null };
+    let payload = stripUndefinedDeep(withoutLegacyLoginPin(data));
     cacheStudentDoc(rotationCode, studentId, payload);
-    const queued: PendingSyncItem = { kind: "setStudentData", rotationCode, studentId, data: payload, updatedAt: new Date().toISOString() };
+    const queued: PendingSyncItem = {
+      kind: "setStudentData",
+      rotationCode,
+      studentId,
+      data: payload,
+      // Guarded writes queue under their base stamp (not "now") so a later
+      // flush still merges against any remote progress this device never saw.
+      updatedAt: options ? options.baseUpdatedAt ?? "" : new Date().toISOString(),
+    };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       queuePendingSync(queued);
-      return;
+      return { status: "queued", updatedAt: null };
     }
     try {
       const { db, fs } = await getFirebase();
       const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
+      if (options) {
+        const remote = await readFlushRemoteDoc(fs, studentRef);
+        if (remote && isNewerTimestamp(remote.updatedAt, options.baseUpdatedAt ?? "")) {
+          payload = mergeStudentFlushPayload(remote, payload);
+          if (Object.keys(payload).length === 0) {
+            clearQueuedSync(queued);
+            return { status: "skipped", updatedAt: null };
+          }
+          cacheStudentDoc(rotationCode, studentId, payload);
+        }
+      }
       await fs.setDoc(studentRef, { ...payload, loginPin: fs.deleteField() }, { merge: true });
       clearQueuedSync(queued);
+      return { status: "applied", updatedAt: typeof payload.updatedAt === "string" ? payload.updatedAt : null };
     } catch (e) {
       console.warn("setStudentData failed, queueing for retry:", e);
       queuePendingSync(queued);
+      return { status: "queued", updatedAt: null };
     }
+  },
+
+  // Last updatedAt persisted in the local student-doc cache — the sync hook's
+  // guard base on a cold start, before any listener snapshot has arrived.
+  getCachedStudentUpdatedAt(studentId: string): string | null {
+    if (!rotationCode || !studentId) return null;
+    const cached = readJson<Record<string, unknown>>(studentDocCacheKey(rotationCode, studentId));
+    return cached && typeof cached.updatedAt === "string" ? cached.updatedAt : null;
   },
 
   // ─── Write sanitized team snapshot to Firestore ──────────────────

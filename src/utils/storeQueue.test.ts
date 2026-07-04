@@ -356,6 +356,35 @@ describe("flushPendingSyncQueue clobber guard", () => {
     expect(writes[0].data.points).toBe(40);
   });
 
+  it("keeps a stale direct write out of the loop too: guarded setStudentData queued offline flushes merged", async () => {
+    // A guarded auto-save that went to the offline queue carries its base
+    // stamp, so the flush guard later merges against anything the device
+    // never incorporated instead of trusting the fresh-looking payload.
+    store.setRotationCode(ROTATION);
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+    const result = await store.setStudentData("stu-1", {
+      name: "Stale Name",
+      completedItems: { articles: { B: true } },
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: OLDER });
+    expect(result).toEqual({ status: "queued", updatedAt: null });
+    const [queuedItem] = readQueue();
+    expect(queuedItem.updatedAt).toBe(OLDER);
+
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      name: "Remote Name",
+      completedItems: { articles: { A: true } },
+    });
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(0);
+    const write = lastStudentWrite();
+    expect(write.data).not.toHaveProperty("name");
+    expect(write.data.completedItems).toEqual({ articles: { A: true, B: true } });
+  });
+
   it("keeps a failed merge-then-write in the queue so the 30s retry loop can re-flush it", async () => {
     // useStudentSync polls flushPendingSyncQueue every 30s while anything is
     // queued — a transient write failure after a merge must stay queued.
@@ -377,5 +406,218 @@ describe("flushPendingSyncQueue clobber guard", () => {
     expect(remainingAfterRetry).toBe(0);
     const write = lastStudentWrite();
     expect(write.data.completedItems).toEqual({ articles: { A: true, B: true } });
+  });
+});
+
+// ─── Direct-write clobber guard ────────────────────────────────────
+// The debounced auto-save and logout flush call setStudentData directly (no
+// offline queue involved). A stale device stamps that payload with a fresh
+// updatedAt, so staleness is judged against baseUpdatedAt — the remote stamp
+// the device last incorporated — not against the payload's own stamp.
+describe("setStudentData clobber guard (direct auto-save/flush path)", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+    mocks.updateDocCalls.length = 0;
+  });
+
+  it("merges instead of overwriting when a stale device opens after another device advanced the cloud", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      name: "Newer Name",
+      preScore: { correct: 9, total: 10, date: NEWER, answers: [] },
+      patients: [{ id: "p1", initials: "AB", notes: "remote edit" }, { id: "p2", initials: "CD" }],
+      weeklyScores: { "1": [{ correct: 5, total: 5, date: NEWER, answers: [] }] },
+      activityLog: [{ type: "quiz", label: "Week 1", detail: "", timestamp: NEWER }],
+      completedItems: { articles: { a1: true, a2: true } },
+      gamification: { points: 40, achievements: ["first-week"], streaks: { currentDays: 2, longestDays: 2, lastActiveDate: "2026-06-02" } },
+      reflections: [{ id: "r2", dayKey: "2026-06-02" }],
+      bookmarks: { trials: ["t-remote"], articles: [], cases: [], studySheets: [] },
+    });
+
+    // The stale device's post-hydration auto-save: localStorage snapshot from
+    // OLDER, but stamped with a fresh updatedAt (this is what defeated the
+    // listener's staleness gate before the guard).
+    const written = await store.setStudentData("stu-1", {
+      name: "Stale Name",
+      preScore: null,
+      patients: [{ id: "p1", initials: "AB", notes: "stale edit" }, { id: "p3", initials: "EF" }],
+      weeklyScores: { "1": [{ correct: 3, total: 5, date: OLDER, answers: [] }] },
+      activityLog: [{ type: "module", label: "AKI", detail: "", timestamp: OLDER }],
+      completedItems: { articles: { a1: true, a3: true } },
+      gamification: { points: 25, achievements: ["first-patient"], streaks: { currentDays: 1, longestDays: 1, lastActiveDate: "2026-06-01" } },
+      reflections: [{ id: "r1", dayKey: "2026-06-01" }],
+      bookmarks: { trials: ["t-stale"], articles: [], cases: [], studySheets: [] },
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: OLDER });
+
+    const write = lastStudentWrite();
+    expect(write.options).toEqual({ merge: true });
+    // Ambiguous fields: newest updatedAt wins → the stale copies are omitted
+    // so the merge write leaves the newer remote values untouched.
+    expect(write.data).not.toHaveProperty("name");
+    expect(write.data).not.toHaveProperty("preScore");
+    expect(write.data).not.toHaveProperty("bookmarks");
+    // Progress collections union: nothing from either device is lost.
+    const patients = write.data.patients as Array<{ id: string; notes?: string }>;
+    expect(patients.map((p) => p.id).sort()).toEqual(["p1", "p2", "p3"]);
+    expect(patients.find((p) => p.id === "p1")?.notes).toBe("remote edit");
+    expect(write.data.completedItems).toEqual({ articles: { a1: true, a2: true, a3: true } });
+    expect((write.data.weeklyScores as Record<string, unknown[]>)["1"]).toHaveLength(2);
+    expect((write.data.activityLog as Array<{ label: string }>).map((e) => e.label)).toEqual(["AKI", "Week 1"]);
+    expect((write.data.reflections as Array<{ id: string }>).map((r) => r.id).sort()).toEqual(["r1", "r2"]);
+    const gamification = write.data.gamification as { points: number; achievements: string[] };
+    expect(gamification.achievements.sort()).toEqual(["first-patient", "first-week"]);
+    expect(gamification.points).toBe(40);
+    // The merged doc gets a fresh stamp (returned so the hook can advance its
+    // base) that other devices' staleness gates will accept.
+    expect(typeof write.data.updatedAt).toBe("string");
+    expect(write.data.updatedAt as string > NEWER).toBe(true);
+    expect(written).toEqual({ status: "applied", updatedAt: write.data.updatedAt });
+  });
+
+  it("merges a logout flush from a device that never received a snapshot (base null)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      name: "Newer Name",
+      completedItems: { articles: { a1: true, a2: true } },
+    });
+
+    await store.setStudentData("stu-1", {
+      name: "Stale Name",
+      completedItems: { articles: { a3: true } },
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: null });
+
+    const write = lastStudentWrite();
+    expect(write.data).not.toHaveProperty("name");
+    expect(write.data.completedItems).toEqual({ articles: { a1: true, a2: true, a3: true } });
+  });
+
+  it("writes as-is when the device already incorporates the remote doc (base == remote stamp)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, name: "Old Name" });
+
+    const written = await store.setStudentData("stu-1", {
+      name: "New Name",
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: NEWER });
+
+    const write = lastStudentWrite();
+    expect(write.data.name).toBe("New Name");
+    expect(written).toEqual({ status: "applied", updatedAt: "2026-06-03T12:00:00.000Z" });
+  });
+
+  it("writes as-is on the first ever sync (no remote doc)", async () => {
+    const written = await store.setStudentData("stu-1", {
+      name: "Only Copy",
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: null });
+
+    const write = lastStudentWrite();
+    expect(write.data.name).toBe("Only Copy");
+    expect(written).toEqual({ status: "applied", updatedAt: "2026-06-03T12:00:00.000Z" });
+  });
+
+  it("leaves unguarded callers (profile/admin writes) at last-write-wins without a remote read", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, name: "Remote Name" });
+    const getDocSpy = vi.spyOn(mocks.fs, "getDoc");
+
+    await store.setStudentData("stu-1", { name: "Admin Override", updatedAt: OLDER });
+
+    expect(getDocSpy).not.toHaveBeenCalled();
+    const write = lastStudentWrite();
+    expect(write.data.name).toBe("Admin Override");
+    getDocSpy.mockRestore();
+  });
+
+  it("exposes the cached student doc stamp as the cold-start guard base", () => {
+    expect(store.getCachedStudentUpdatedAt("stu-1")).toBeNull();
+    localStorage.setItem(`neph_rotation_${ROTATION}_student_stu-1`, JSON.stringify({ updatedAt: NEWER, name: "Cached" }));
+    expect(store.getCachedStudentUpdatedAt("stu-1")).toBe(NEWER);
+  });
+});
+
+// ─── Undefined-field safety ────────────────────────────────────────
+// The default Firestore instance rejects undefined anywhere in a payload. A
+// single optional field (quick feedback tag with no note) used to fail the
+// whole write, silently strand it in the retry queue, and a later clean write
+// for the same student cleared the queue — permanent data loss. setStudentData
+// now deep-strips undefined and reports whether the write applied or queued.
+function containsUndefinedDeep(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (Array.isArray(value)) return value.some(containsUndefinedDeep);
+  if (typeof value === "object" && value !== null) return Object.values(value).some(containsUndefinedDeep);
+  return false;
+}
+
+describe("setStudentData undefined-field safety", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    mocks.setDocCalls.length = 0;
+    // Mimic real default-instance Firestore validation: reject undefined anywhere.
+    vi.spyOn(mocks.fs, "setDoc").mockImplementation(async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
+      if (containsUndefinedDeep(data)) throw new Error("Unsupported field value: undefined");
+      mocks.setDocCalls.push({ path: ref.path, data, options });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("persists a quick feedback tag with no note instead of throw-and-queue (regression)", async () => {
+    const result = await store.setStudentData("stu_1", {
+      feedbackTags: [{ tag: "Strong pathophys reasoning", date: "2026-03-08T12:00:00.000Z", note: undefined }],
+    });
+
+    expect(result.status).toBe("applied");
+    expect(readQueue()).toHaveLength(0);
+    expect(mocks.setDocCalls).toHaveLength(1);
+    const tags = mocks.setDocCalls[0].data.feedbackTags as Array<Record<string, unknown>>;
+    expect(tags).toHaveLength(1);
+    expect("note" in tags[0]).toBe(false);
+    expect(tags[0].tag).toBe("Strong pathophys reasoning");
+  });
+
+  it("strips undefined at the top level and deep inside nested objects", async () => {
+    const result = await store.setStudentData("stu_1", {
+      year: undefined,
+      gamification: { points: 10, streaks: { lastActiveDate: undefined } },
+    });
+
+    expect(result.status).toBe("applied");
+    const write = mocks.setDocCalls[mocks.setDocCalls.length - 1];
+    expect("year" in write.data).toBe(false);
+    expect(write.data.gamification).toEqual({ points: 10, streaks: {} });
+  });
+
+  it("returns 'queued' and keeps the payload when the write fails", async () => {
+    vi.spyOn(mocks.fs, "setDoc").mockRejectedValueOnce(new Error("transient"));
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result.status).toBe("queued");
+    expect(readQueue()).toHaveLength(1);
+  });
+
+  it("returns 'queued' while offline without touching Firestore", async () => {
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result.status).toBe("queued");
+    expect(mocks.setDocCalls).toHaveLength(0);
+  });
+
+  it("returns 'skipped' when no rotation code is set", async () => {
+    store.setRotationCode(null);
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result.status).toBe("skipped");
+    expect(mocks.setDocCalls).toHaveLength(0);
   });
 });
