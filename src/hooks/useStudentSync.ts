@@ -89,6 +89,22 @@ export function useStudentSync(
     pendingDirtyPatientIdsRef.current.delete(id);
     pendingRemovedPatientIdsRef.current.add(id);
   };
+  // The remote updatedAt our local state is known to incorporate — hydrated
+  // from the doc cache on load, advanced by applied listener snapshots and by
+  // our own completed writes. Passed to store.setStudentData as baseUpdatedAt
+  // so the store merges (instead of overwrites) whenever the cloud holds
+  // progress this device never saw — e.g. a stale device whose post-hydration
+  // auto-save or logout flush beats the first onSnapshot on slow hospital wifi.
+  const syncBaseRef = useRef<string | null>(null);
+  const advanceSyncBase = (stamp: string | null) => {
+    if (stamp && (!syncBaseRef.current || stamp > syncBaseRef.current)) syncBaseRef.current = stamp;
+  };
+  // Set when a listener snapshot is applied to React state: that state change
+  // must not re-trigger the Firestore auto-save, or two open devices ping-pong
+  // full-doc writes (each echo re-stamped with a fresh updatedAt) forever.
+  // Consumed by the next auto-save effect run, which persists to localStorage
+  // only and skips the write-back.
+  const suppressNextAutoSyncRef = useRef(false);
 
   const noteStudentUpdatedAt = (updatedAt: string) => {
     latestStudentUpdateRef.current = updatedAt;
@@ -126,6 +142,11 @@ export function useStudentSync(
       const pin = await store.get<string>("neph_pin");
       const pendingJoinCode = await store.get<string>(STUDENT_PENDING_JOIN_CODE_KEY);
       const sidFromStore = await store.get<string>("neph_studentId");
+      // Seed the clobber-guard base from the cached student doc so a routine
+      // reopen on an up-to-date device writes plainly; only a genuinely stale
+      // device (cloud advanced past what this device last saw) merges.
+      const guardStudentId = sessionStudentId || sidFromStore || "";
+      if (guardStudentId) advanceSyncBase(store.getCachedStudentUpdatedAt(guardStudentId));
       const storedJoinedAt = await store.get<string>(JOINED_AT_KEY);
       const pts = await store.get<Patient[]>("neph_patients");
       const ws = await store.get<WeeklyScores>("neph_weeklyScores");
@@ -194,14 +215,23 @@ export function useStudentSync(
     store.set("neph_reflections", reflections);
     store.set("neph_gamification", gamification);
 
+    // Listener-applied remote state: persist it locally (above) but never echo
+    // it back to Firestore — that write-back loop is how two open devices
+    // ping-pong full-doc writes at each other.
+    if (suppressNextAutoSyncRef.current) {
+      suppressNextAutoSyncRef.current = false;
+      return;
+    }
+
     // Auto-sync to Firestore (debounced)
     if (store.getRotationCode() && studentId && nameSet && studentName.trim()) {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(() => {
+        const baseUpdatedAt = syncBaseRef.current;
         const updatedAt = new Date().toISOString();
         const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
         noteStudentUpdatedAt(updatedAt);
-        store.setStudentData(studentId, {
+        void store.setStudentData(studentId, {
           name: studentName,
           ...studentSyncIdentity,
           patients,
@@ -215,7 +245,7 @@ export function useStudentSync(
           activityLog,
           reflections,
           updatedAt,
-        });
+        }, { baseUpdatedAt }).then((result) => advanceSyncBase(result.updatedAt));
         store.setTeamSnapshot(studentId, buildTeamSnapshot({
           studentId,
           name: studentName,
@@ -255,7 +285,11 @@ export function useStudentSync(
         const latestKnownUpdatedAt = latestStudentUpdateRef.current;
         if (latestKnownUpdatedAt && incomingUpdatedAt <= latestKnownUpdatedAt) return;
         latestStudentUpdateRef.current = incomingUpdatedAt;
+        advanceSyncBase(incomingUpdatedAt);
       }
+      // The setters below re-render with this snapshot applied; flag that
+      // render so the auto-save effect doesn't write the echo back.
+      suppressNextAutoSyncRef.current = true;
       if (data.patients) {
         const incoming = data.patients;
         const incomingById = new Map(incoming.map((p: Patient) => [p.id, p]));
@@ -305,6 +339,7 @@ export function useStudentSync(
   const flushStudentSync = async () => {
     if (!store.getRotationCode() || !studentId || !nameSet || !studentName.trim()) return;
 
+    const baseUpdatedAt = syncBaseRef.current;
     const updatedAt = new Date().toISOString();
     const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
     noteStudentUpdatedAt(updatedAt);
@@ -324,7 +359,7 @@ export function useStudentSync(
         activityLog,
         reflections,
         updatedAt,
-      }),
+      }, { baseUpdatedAt }).then((result) => advanceSyncBase(result.updatedAt)),
       store.setTeamSnapshot(studentId, buildTeamSnapshot({
         studentId,
         name: studentName,

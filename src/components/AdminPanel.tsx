@@ -31,7 +31,7 @@ import { getAdminPinValidationError } from "./admin/pinValidation";
 import { adminScopedKey, getStoredAdminRotationCode, setStoredAdminRotationCode } from "./admin/storage";
 import { getAdminAuthErrorMessage } from "./admin/lib/auth-errors";
 import { buildPublishSnapshot, fingerprintRemoteSharedDoc, serializePublishSnapshot } from "./admin/lib/publish";
-import { buildRecoveredStudent } from "./admin/lib/student-recovery";
+import { performStudentRecovery } from "./admin/lib/student-recovery";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import type { WeeklyData, ArticlesData, AdminSession, AdminAuthMode } from "./admin/types";
 import type { AdminSubView, AdminStudent, Announcement, SharedSettings, Patient, ClinicGuideRecord } from "../types";
@@ -447,33 +447,12 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     const target = students.find(s => s.studentId === targetStudentId);
     if (!source || !target) throw new Error("Student record not found.");
 
-    const merged = buildRecoveredStudent(source, target);
-    await store.setStudentData(target.studentId, {
-      name: merged.name,
-      year: merged.year,
-      email: merged.email,
-      status: merged.status,
-      joinedAt: merged.addedDate,
-      patients: merged.patients,
-      weeklyScores: merged.weeklyScores,
-      preScore: merged.preScore,
-      postScore: merged.postScore,
-      gamification: merged.gamification,
-      srQueue: merged.srQueue,
-      activityLog: merged.activityLog,
-      reflections: merged.reflections,
-      completedItems: merged.completedItems,
-      bookmarks: merged.bookmarks,
-      feedbackTags: merged.feedbackTags,
-      updatedAt: new Date().toISOString(),
-    });
-    await store.setTeamSnapshot(target.studentId, buildTeamSnapshot({
+    const merged = await performStudentRecovery(store, source, target, (m) => buildTeamSnapshot({
       studentId: target.studentId,
-      name: merged.name,
-      patients: merged.patients,
-      points: calculatePoints(merged as Parameters<typeof calculatePoints>[0]),
+      name: m.name,
+      patients: m.patients,
+      points: calculatePoints(m as Parameters<typeof calculatePoints>[0]),
     }));
-    await store.deleteStudentData(source.studentId);
 
     setStudents(prev =>
       prev

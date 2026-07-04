@@ -668,7 +668,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
               {FEEDBACK_TAGS.map(tag => (
                 <button key={tag} onClick={() => {
-                  const newTag: FeedbackTag = { tag, date: new Date().toISOString(), note: feedbackNote.trim() || undefined };
+                  // Omit note entirely when empty — Firestore rejects undefined fields
+                  const note = feedbackNote.trim();
+                  const newTag: FeedbackTag = { tag, date: new Date().toISOString(), ...(note ? { note } : {}) };
                   updateStudent({ feedbackTags: [...(s.feedbackTags || []), newTag] });
                   setFeedbackNote("");
                   setShowAddFeedback(false);
@@ -684,7 +686,8 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
               placeholder="Or type a custom tag and press Enter"
               onKeyDown={e => {
                 if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
-                  const newTag: FeedbackTag = { tag: (e.target as HTMLInputElement).value.trim(), date: new Date().toISOString(), note: feedbackNote.trim() || undefined };
+                  const note = feedbackNote.trim();
+                  const newTag: FeedbackTag = { tag: (e.target as HTMLInputElement).value.trim(), date: new Date().toISOString(), ...(note ? { note } : {}) };
                   updateStudent({ feedbackTags: [...(s.feedbackTags || []), newTag] });
                   (e.target as HTMLInputElement).value = "";
                   setFeedbackNote("");
