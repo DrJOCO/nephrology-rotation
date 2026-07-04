@@ -379,3 +379,85 @@ describe("flushPendingSyncQueue clobber guard", () => {
     expect(write.data.completedItems).toEqual({ articles: { A: true, B: true } });
   });
 });
+
+// ─── Undefined-field safety ────────────────────────────────────────
+// The default Firestore instance rejects undefined anywhere in a payload. A
+// single optional field (quick feedback tag with no note) used to fail the
+// whole write, silently strand it in the retry queue, and a later clean write
+// for the same student cleared the queue — permanent data loss. setStudentData
+// now deep-strips undefined and reports whether the write applied or queued.
+function containsUndefinedDeep(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (Array.isArray(value)) return value.some(containsUndefinedDeep);
+  if (typeof value === "object" && value !== null) return Object.values(value).some(containsUndefinedDeep);
+  return false;
+}
+
+describe("setStudentData undefined-field safety", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    mocks.setDocCalls.length = 0;
+    // Mimic real default-instance Firestore validation: reject undefined anywhere.
+    vi.spyOn(mocks.fs, "setDoc").mockImplementation(async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
+      if (containsUndefinedDeep(data)) throw new Error("Unsupported field value: undefined");
+      mocks.setDocCalls.push({ path: ref.path, data, options });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("persists a quick feedback tag with no note instead of throw-and-queue (regression)", async () => {
+    const result = await store.setStudentData("stu_1", {
+      feedbackTags: [{ tag: "Strong pathophys reasoning", date: "2026-03-08T12:00:00.000Z", note: undefined }],
+    });
+
+    expect(result).toBe("applied");
+    expect(readQueue()).toHaveLength(0);
+    expect(mocks.setDocCalls).toHaveLength(1);
+    const tags = mocks.setDocCalls[0].data.feedbackTags as Array<Record<string, unknown>>;
+    expect(tags).toHaveLength(1);
+    expect("note" in tags[0]).toBe(false);
+    expect(tags[0].tag).toBe("Strong pathophys reasoning");
+  });
+
+  it("strips undefined at the top level and deep inside nested objects", async () => {
+    const result = await store.setStudentData("stu_1", {
+      year: undefined,
+      gamification: { points: 10, streaks: { lastActiveDate: undefined } },
+    });
+
+    expect(result).toBe("applied");
+    const write = mocks.setDocCalls[mocks.setDocCalls.length - 1];
+    expect("year" in write.data).toBe(false);
+    expect(write.data.gamification).toEqual({ points: 10, streaks: {} });
+  });
+
+  it("returns 'queued' and keeps the payload when the write fails", async () => {
+    vi.spyOn(mocks.fs, "setDoc").mockRejectedValueOnce(new Error("transient"));
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result).toBe("queued");
+    expect(readQueue()).toHaveLength(1);
+  });
+
+  it("returns 'queued' while offline without touching Firestore", async () => {
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result).toBe("queued");
+    expect(mocks.setDocCalls).toHaveLength(0);
+  });
+
+  it("returns 'skipped' when no rotation code is set", async () => {
+    store.setRotationCode(null);
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result).toBe("skipped");
+    expect(mocks.setDocCalls).toHaveLength(0);
+  });
+});

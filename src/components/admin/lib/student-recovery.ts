@@ -1,4 +1,7 @@
 import type { AdminStudent, QuizScore, WeeklyScores, CompletedItems, Bookmarks, ActivityLogEntry, ReflectionEntry } from "../../../types";
+import type { StudentWriteResult } from "../../../utils/store";
+
+export type { StudentWriteResult };
 
 function pickLatestScore(a: QuizScore | null | undefined, b: QuizScore | null | undefined): QuizScore | null {
   if (!a) return b || null;
@@ -19,42 +22,25 @@ function mergeWeeklyScores(source: WeeklyScores = {}, target: WeeklyScores = {})
   return merged;
 }
 
-function mergeCompletedItems(source?: CompletedItems, target?: CompletedItems): CompletedItems | undefined {
-  const merged: CompletedItems = {
+// Always return concrete (possibly empty) structures: an undefined field in
+// the merged record makes Firestore reject the whole recovery write.
+function mergeCompletedItems(source?: CompletedItems, target?: CompletedItems): CompletedItems {
+  return {
     articles: { ...(source?.articles || {}), ...(target?.articles || {}) },
     studySheets: { ...(source?.studySheets || {}), ...(target?.studySheets || {}) },
     cases: { ...(source?.cases || {}), ...(target?.cases || {}) },
     decks: { ...(source?.decks || {}), ...(target?.decks || {}) },
     consultTopics: { ...(source?.consultTopics || {}), ...(target?.consultTopics || {}) },
   };
-  if (
-    Object.keys(merged.articles).length === 0 &&
-    Object.keys(merged.studySheets).length === 0 &&
-    Object.keys(merged.cases).length === 0 &&
-    Object.keys(merged.decks || {}).length === 0 &&
-    Object.keys(merged.consultTopics || {}).length === 0
-  ) {
-    return undefined;
-  }
-  return merged;
 }
 
-function mergeBookmarks(source?: Bookmarks, target?: Bookmarks): Bookmarks | undefined {
-  const merged: Bookmarks = {
+function mergeBookmarks(source?: Bookmarks, target?: Bookmarks): Bookmarks {
+  return {
     trials: Array.from(new Set([...(source?.trials || []), ...(target?.trials || [])])),
     articles: Array.from(new Set([...(source?.articles || []), ...(target?.articles || [])])),
     cases: Array.from(new Set([...(source?.cases || []), ...(target?.cases || [])])),
     studySheets: Array.from(new Set([...(source?.studySheets || []), ...(target?.studySheets || [])])),
   };
-  if (
-    merged.trials.length === 0 &&
-    merged.articles.length === 0 &&
-    merged.cases.length === 0 &&
-    merged.studySheets.length === 0
-  ) {
-    return undefined;
-  }
-  return merged;
 }
 
 function mergeActivityLog(source: ActivityLogEntry[] = [], target: ActivityLogEntry[] = []): ActivityLogEntry[] {
@@ -124,4 +110,47 @@ export function buildRecoveredStudent(source: AdminStudent, target: AdminStudent
     ],
     lastSyncedAt: new Date().toISOString(),
   };
+}
+
+export interface RecoverySyncStore {
+  setStudentData(studentId: string, data: Record<string, unknown>): Promise<StudentWriteResult>;
+  setTeamSnapshot(studentId: string, data: object): Promise<unknown>;
+  deleteStudentData(studentId: string): Promise<unknown>;
+}
+
+// Merge source → target, write the merged record, and delete the source only
+// after Firestore confirms the target write. A queued or failed write must
+// leave the source untouched — it may hold the student's only progress copy.
+export async function performStudentRecovery(
+  syncStore: RecoverySyncStore,
+  source: AdminStudent,
+  target: AdminStudent,
+  buildSnapshot: (merged: AdminStudent) => object,
+): Promise<AdminStudent> {
+  const merged = buildRecoveredStudent(source, target);
+  const writeResult = await syncStore.setStudentData(target.studentId, {
+    name: merged.name,
+    year: merged.year,
+    email: merged.email,
+    status: merged.status,
+    joinedAt: merged.addedDate,
+    patients: merged.patients,
+    weeklyScores: merged.weeklyScores,
+    preScore: merged.preScore,
+    postScore: merged.postScore,
+    gamification: merged.gamification,
+    srQueue: merged.srQueue,
+    activityLog: merged.activityLog,
+    reflections: merged.reflections,
+    completedItems: merged.completedItems,
+    bookmarks: merged.bookmarks,
+    feedbackTags: merged.feedbackTags,
+    updatedAt: new Date().toISOString(),
+  });
+  if (writeResult !== "applied") {
+    throw new Error("The merged progress could not be confirmed as saved (offline or sync error). Nothing was deleted — try again once the connection is back.");
+  }
+  await syncStore.setTeamSnapshot(target.studentId, buildSnapshot(merged));
+  await syncStore.deleteStudentData(source.studentId);
+  return merged;
 }

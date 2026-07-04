@@ -20,6 +20,11 @@ export interface RotationInfo {
   ownerUid: string;
 }
 
+// Outcome of a student-doc write: "applied" = Firestore confirmed it,
+// "queued" = offline or failed and parked in the pending-sync queue,
+// "skipped" = no rotation code so nothing was written.
+export type StudentWriteResult = "applied" | "queued" | "skipped";
+
 export interface StudentAssignmentRecord {
   studentId: string;
   activeRotationCode: string;
@@ -86,6 +91,23 @@ function withoutLegacyLoginPin(data: Record<string, unknown>): Record<string, un
   const safe = { ...data };
   delete safe.loginPin;
   return safe;
+}
+
+// Firestore rejects undefined anywhere in a payload, so one stray optional
+// field (e.g. a feedback tag without a note) would fail the whole write and
+// strand it in the retry queue.
+function stripUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((entry) => (entry === undefined ? null : stripUndefinedDeep(entry))) as unknown as T;
+  }
+  if (isPlainObject(value)) {
+    const cleaned: Record<string, unknown> = {};
+    Object.entries(value).forEach(([key, entry]) => {
+      if (entry !== undefined) cleaned[key] = stripUndefinedDeep(entry);
+    });
+    return cleaned as T;
+  }
+  return value;
 }
 
 function emitPendingSyncChanged(queue: PendingSyncItem[]): void {
@@ -777,23 +799,25 @@ const store = {
   },
 
   // ─── Write student data to Firestore directly ────────────────────
-  async setStudentData(studentId: string, data: Record<string, unknown>): Promise<void> {
-    if (!rotationCode) return;
-    const payload = withoutLegacyLoginPin(data);
+  async setStudentData(studentId: string, data: Record<string, unknown>): Promise<StudentWriteResult> {
+    if (!rotationCode) return "skipped";
+    const payload = stripUndefinedDeep(withoutLegacyLoginPin(data));
     cacheStudentDoc(rotationCode, studentId, payload);
     const queued: PendingSyncItem = { kind: "setStudentData", rotationCode, studentId, data: payload, updatedAt: new Date().toISOString() };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       queuePendingSync(queued);
-      return;
+      return "queued";
     }
     try {
       const { db, fs } = await getFirebase();
       const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
       await fs.setDoc(studentRef, { ...payload, loginPin: fs.deleteField() }, { merge: true });
       clearQueuedSync(queued);
+      return "applied";
     } catch (e) {
       console.warn("setStudentData failed, queueing for retry:", e);
       queuePendingSync(queued);
+      return "queued";
     }
   },
 
