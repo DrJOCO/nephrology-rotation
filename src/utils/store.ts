@@ -20,6 +20,18 @@ export interface RotationInfo {
   ownerUid: string;
 }
 
+// Outcome of a student-doc write: "applied" = Firestore confirmed it,
+// "queued" = offline or failed and parked in the pending-sync queue,
+// "skipped" = nothing was written (no rotation code, or the clobber guard
+// found every field superseded by newer remote data).
+export type StudentWriteStatus = "applied" | "queued" | "skipped";
+export interface StudentWriteResult {
+  status: StudentWriteStatus;
+  // The updatedAt actually persisted — the merge's fresh stamp when the
+  // clobber guard folded in newer remote data; null when nothing was written.
+  updatedAt: string | null;
+}
+
 export interface StudentAssignmentRecord {
   studentId: string;
   activeRotationCode: string;
@@ -86,6 +98,23 @@ function withoutLegacyLoginPin(data: Record<string, unknown>): Record<string, un
   const safe = { ...data };
   delete safe.loginPin;
   return safe;
+}
+
+// Firestore rejects undefined anywhere in a payload, so one stray optional
+// field (e.g. a feedback tag without a note) would fail the whole write and
+// strand it in the retry queue.
+function stripUndefinedDeep<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((entry) => (entry === undefined ? null : stripUndefinedDeep(entry))) as unknown as T;
+  }
+  if (isPlainObject(value)) {
+    const cleaned: Record<string, unknown> = {};
+    Object.entries(value).forEach(([key, entry]) => {
+      if (entry !== undefined) cleaned[key] = stripUndefinedDeep(entry);
+    });
+    return cleaned as T;
+  }
+  return value;
 }
 
 function emitPendingSyncChanged(queue: PendingSyncItem[]): void {
@@ -784,12 +813,10 @@ const store = {
   // updatedAt the caller's local state is known to incorporate (null = none
   // known). When the remote doc has advanced past that base, the payload is
   // merged field-wise under the flush-guard rules instead of overwriting, so
-  // a stale device's full-doc save can't erase newer cloud progress. Resolves
-  // with the updatedAt actually written, or null when the write was queued,
-  // skipped, or failed — callers use it to advance their base.
-  async setStudentData(studentId: string, data: Record<string, unknown>, options?: { baseUpdatedAt: string | null }): Promise<string | null> {
-    if (!rotationCode) return null;
-    let payload = withoutLegacyLoginPin(data);
+  // a stale device's full-doc save can't erase newer cloud progress.
+  async setStudentData(studentId: string, data: Record<string, unknown>, options?: { baseUpdatedAt: string | null }): Promise<StudentWriteResult> {
+    if (!rotationCode) return { status: "skipped", updatedAt: null };
+    let payload = stripUndefinedDeep(withoutLegacyLoginPin(data));
     cacheStudentDoc(rotationCode, studentId, payload);
     const queued: PendingSyncItem = {
       kind: "setStudentData",
@@ -802,7 +829,7 @@ const store = {
     };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       queuePendingSync(queued);
-      return null;
+      return { status: "queued", updatedAt: null };
     }
     try {
       const { db, fs } = await getFirebase();
@@ -813,18 +840,18 @@ const store = {
           payload = mergeStudentFlushPayload(remote, payload);
           if (Object.keys(payload).length === 0) {
             clearQueuedSync(queued);
-            return null;
+            return { status: "skipped", updatedAt: null };
           }
           cacheStudentDoc(rotationCode, studentId, payload);
         }
       }
       await fs.setDoc(studentRef, { ...payload, loginPin: fs.deleteField() }, { merge: true });
       clearQueuedSync(queued);
-      return typeof payload.updatedAt === "string" ? payload.updatedAt : null;
+      return { status: "applied", updatedAt: typeof payload.updatedAt === "string" ? payload.updatedAt : null };
     } catch (e) {
       console.warn("setStudentData failed, queueing for retry:", e);
       queuePendingSync(queued);
-      return null;
+      return { status: "queued", updatedAt: null };
     }
   },
 

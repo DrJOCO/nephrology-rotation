@@ -30,9 +30,12 @@ import { useStudentSync } from "./useStudentSync";
 
 const h = vi.hoisted(() => {
   const listeners: { student: ((data: Record<string, unknown>) => void) | null } = { student: null };
-  // Mirrors the real contract: resolves with the updatedAt actually written.
-  const setStudentData = vi.fn(async (_studentId: string, data: Record<string, unknown>) =>
-    typeof data.updatedAt === "string" ? data.updatedAt : null);
+  // Mirrors the real contract: resolves with the status and the updatedAt
+  // actually written.
+  const setStudentData = vi.fn(async (_studentId: string, data: Record<string, unknown>) => ({
+    status: "applied" as const,
+    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : null,
+  }));
   const getCachedStudentUpdatedAt = vi.fn((): string | null => null);
   const storeMock = {
     get: vi.fn(async () => null),

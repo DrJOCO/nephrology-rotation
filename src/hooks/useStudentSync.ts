@@ -245,7 +245,7 @@ export function useStudentSync(
           activityLog,
           reflections,
           updatedAt,
-        }, { baseUpdatedAt }).then(advanceSyncBase);
+        }, { baseUpdatedAt }).then((result) => advanceSyncBase(result.updatedAt));
         store.setTeamSnapshot(studentId, buildTeamSnapshot({
           studentId,
           name: studentName,
@@ -359,7 +359,7 @@ export function useStudentSync(
         activityLog,
         reflections,
         updatedAt,
-      }, { baseUpdatedAt }).then(advanceSyncBase),
+      }, { baseUpdatedAt }).then((result) => advanceSyncBase(result.updatedAt)),
       store.setTeamSnapshot(studentId, buildTeamSnapshot({
         studentId,
         name: studentName,

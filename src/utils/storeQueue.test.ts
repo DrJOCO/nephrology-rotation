@@ -367,7 +367,7 @@ describe("flushPendingSyncQueue clobber guard", () => {
       completedItems: { articles: { B: true } },
       updatedAt: "2026-06-03T12:00:00.000Z",
     }, { baseUpdatedAt: OLDER });
-    expect(result).toBeNull();
+    expect(result).toEqual({ status: "queued", updatedAt: null });
     const [queuedItem] = readQueue();
     expect(queuedItem.updatedAt).toBe(OLDER);
 
@@ -476,7 +476,7 @@ describe("setStudentData clobber guard (direct auto-save/flush path)", () => {
     // base) that other devices' staleness gates will accept.
     expect(typeof write.data.updatedAt).toBe("string");
     expect(write.data.updatedAt as string > NEWER).toBe(true);
-    expect(written).toBe(write.data.updatedAt);
+    expect(written).toEqual({ status: "applied", updatedAt: write.data.updatedAt });
   });
 
   it("merges a logout flush from a device that never received a snapshot (base null)", async () => {
@@ -507,7 +507,7 @@ describe("setStudentData clobber guard (direct auto-save/flush path)", () => {
 
     const write = lastStudentWrite();
     expect(write.data.name).toBe("New Name");
-    expect(written).toBe("2026-06-03T12:00:00.000Z");
+    expect(written).toEqual({ status: "applied", updatedAt: "2026-06-03T12:00:00.000Z" });
   });
 
   it("writes as-is on the first ever sync (no remote doc)", async () => {
@@ -518,7 +518,7 @@ describe("setStudentData clobber guard (direct auto-save/flush path)", () => {
 
     const write = lastStudentWrite();
     expect(write.data.name).toBe("Only Copy");
-    expect(written).toBe("2026-06-03T12:00:00.000Z");
+    expect(written).toEqual({ status: "applied", updatedAt: "2026-06-03T12:00:00.000Z" });
   });
 
   it("leaves unguarded callers (profile/admin writes) at last-write-wins without a remote read", async () => {
@@ -537,5 +537,87 @@ describe("setStudentData clobber guard (direct auto-save/flush path)", () => {
     expect(store.getCachedStudentUpdatedAt("stu-1")).toBeNull();
     localStorage.setItem(`neph_rotation_${ROTATION}_student_stu-1`, JSON.stringify({ updatedAt: NEWER, name: "Cached" }));
     expect(store.getCachedStudentUpdatedAt("stu-1")).toBe(NEWER);
+  });
+});
+
+// ─── Undefined-field safety ────────────────────────────────────────
+// The default Firestore instance rejects undefined anywhere in a payload. A
+// single optional field (quick feedback tag with no note) used to fail the
+// whole write, silently strand it in the retry queue, and a later clean write
+// for the same student cleared the queue — permanent data loss. setStudentData
+// now deep-strips undefined and reports whether the write applied or queued.
+function containsUndefinedDeep(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (Array.isArray(value)) return value.some(containsUndefinedDeep);
+  if (typeof value === "object" && value !== null) return Object.values(value).some(containsUndefinedDeep);
+  return false;
+}
+
+describe("setStudentData undefined-field safety", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    mocks.setDocCalls.length = 0;
+    // Mimic real default-instance Firestore validation: reject undefined anywhere.
+    vi.spyOn(mocks.fs, "setDoc").mockImplementation(async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
+      if (containsUndefinedDeep(data)) throw new Error("Unsupported field value: undefined");
+      mocks.setDocCalls.push({ path: ref.path, data, options });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("persists a quick feedback tag with no note instead of throw-and-queue (regression)", async () => {
+    const result = await store.setStudentData("stu_1", {
+      feedbackTags: [{ tag: "Strong pathophys reasoning", date: "2026-03-08T12:00:00.000Z", note: undefined }],
+    });
+
+    expect(result.status).toBe("applied");
+    expect(readQueue()).toHaveLength(0);
+    expect(mocks.setDocCalls).toHaveLength(1);
+    const tags = mocks.setDocCalls[0].data.feedbackTags as Array<Record<string, unknown>>;
+    expect(tags).toHaveLength(1);
+    expect("note" in tags[0]).toBe(false);
+    expect(tags[0].tag).toBe("Strong pathophys reasoning");
+  });
+
+  it("strips undefined at the top level and deep inside nested objects", async () => {
+    const result = await store.setStudentData("stu_1", {
+      year: undefined,
+      gamification: { points: 10, streaks: { lastActiveDate: undefined } },
+    });
+
+    expect(result.status).toBe("applied");
+    const write = mocks.setDocCalls[mocks.setDocCalls.length - 1];
+    expect("year" in write.data).toBe(false);
+    expect(write.data.gamification).toEqual({ points: 10, streaks: {} });
+  });
+
+  it("returns 'queued' and keeps the payload when the write fails", async () => {
+    vi.spyOn(mocks.fs, "setDoc").mockRejectedValueOnce(new Error("transient"));
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result.status).toBe("queued");
+    expect(readQueue()).toHaveLength(1);
+  });
+
+  it("returns 'queued' while offline without touching Firestore", async () => {
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result.status).toBe("queued");
+    expect(mocks.setDocCalls).toHaveLength(0);
+  });
+
+  it("returns 'skipped' when no rotation code is set", async () => {
+    store.setRotationCode(null);
+
+    const result = await store.setStudentData("stu_1", { name: "Ana" });
+
+    expect(result.status).toBe("skipped");
+    expect(mocks.setDocCalls).toHaveLength(0);
   });
 });
