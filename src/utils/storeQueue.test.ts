@@ -88,6 +88,17 @@ describe("offline queueing", () => {
     expect(readQueue()).toHaveLength(0);
   });
 
+  it("reports setShared as queued (not applied) while offline", async () => {
+    const result = await store.setShared("neph_shared_announcements", [{ id: 1 }]);
+    expect(result).toEqual({ applied: false, queued: true });
+  });
+
+  it("reports setShared as neither applied nor queued when no rotation is connected", async () => {
+    store.setRotationCode(null);
+    const result = await store.setShared("neph_shared_announcements", []);
+    expect(result).toEqual({ applied: false, queued: false });
+  });
+
   it("dedupes repeat writes to the same scope instead of growing the queue", async () => {
     await store.setStudentData("stu_1", { name: "A" });
     await store.setStudentData("stu_1", { name: "B" });
@@ -354,6 +365,22 @@ describe("flushPendingSyncQueue clobber guard", () => {
     const writes = mocks.setDocCalls.filter((call) => call.path === TEAM_PATH);
     expect(writes).toHaveLength(1);
     expect(writes[0].data.points).toBe(40);
+  });
+
+  it("reports setShared as applied when the online write reaches Firestore", async () => {
+    const result = await store.setShared("neph_shared_announcements", [{ id: 1 }]);
+    expect(result).toEqual({ applied: true, queued: false });
+    expect(mocks.updateDocCalls.some((call) => "announcements" in call.data)).toBe(true);
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it("reports setShared as queued when the online write throws", async () => {
+    const failing = vi.spyOn(mocks.fs, "updateDoc").mockRejectedValueOnce(new Error("wifi dropped"));
+    const result = await store.setShared("neph_shared_curriculum", { title: "AKI" });
+    failing.mockRestore();
+    expect(result).toEqual({ applied: false, queued: true });
+    // The failed write is parked in the retry queue, not silently lost.
+    expect(readQueue().some((item) => item.key === "neph_shared_curriculum")).toBe(true);
   });
 
   it("keeps a failed merge-then-write in the queue so the 30s retry loop can re-flush it", async () => {

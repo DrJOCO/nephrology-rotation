@@ -19,16 +19,18 @@ export function PublishStatusBar({
   rotationCode,
   dirty,
   publishing,
+  queued = false,
   lastPublishedAt,
   onPublish,
 }: {
   rotationCode: string;
   dirty: boolean;
   publishing: boolean;
+  queued?: boolean;
   lastPublishedAt: string | null;
   onPublish: () => void;
 }) {
-  const canPublish = Boolean(rotationCode) && dirty && !publishing;
+  const canPublish = Boolean(rotationCode) && (dirty || queued) && !publishing;
   const hasRotation = Boolean(rotationCode);
   const lastShipped = lastPublishedAt ? formatRelativeTime(lastPublishedAt) : null;
 
@@ -54,6 +56,13 @@ export function PublishStatusBar({
       ? `Edits since last publish · last shipped ${lastShipped}`
       : "Edits since last publish";
     ctaLabel = "Publish to Students";
+  } else if (queued) {
+    // The last publish never reached Firestore — it is sitting in the offline
+    // retry queue. Say so honestly instead of claiming "Up to date".
+    dotColor = T.warning;
+    statusText = "SAVED LOCALLY";
+    centerText = "Saved locally — will retry when back online";
+    ctaLabel = "Retry Publish";
   } else {
     dotColor = T.success;
     statusText = "PUBLISHED";

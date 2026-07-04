@@ -538,18 +538,23 @@ const store = {
     }
   },
 
-  async setShared(key: string, val: FirestoreData | unknown[]): Promise<void> {
+  // Reports whether the write actually reached Firestore. `applied` means the
+  // remote write succeeded; `queued` means it was deferred to the retry queue
+  // (offline or a transient failure). Both false means there was nothing to do
+  // (no rotation connected). Publish surfaces this instead of always claiming
+  // success — see AdminPanel.publishSharedChanges.
+  async setShared(key: string, val: FirestoreData | unknown[]): Promise<{ applied: boolean; queued: boolean }> {
     const safeValue = key.startsWith("neph_shared_student_") && isPlainObject(val)
       ? withoutLegacyLoginPin(val)
       : val;
     cacheSharedValue(key, safeValue);
     if (!rotationCode) {
-      return;
+      return { applied: false, queued: false };
     }
     const queued: PendingSyncItem = { kind: "setShared", rotationCode, key, data: safeValue, updatedAt: new Date().toISOString() };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       queuePendingSync(queued);
-      return;
+      return { applied: false, queued: true };
     }
     try {
       const { db, fs } = await getFirebase();
@@ -564,7 +569,7 @@ const store = {
         );
         cacheStudentDoc(rotationCode, studentId, payload);
         clearQueuedSync(queued);
-        return;
+        return { applied: true, queued: false };
       }
       // Rotation-level data. Write safeValue (not raw val) so the online path
       // can never diverge from the sanitized cache/offline-queue payloads.
@@ -572,10 +577,15 @@ const store = {
       if (field) {
         await fs.updateDoc(fs.doc(db, "rotations", rotationCode), { [field]: safeValue });
         clearQueuedSync(queued);
+        return { applied: true, queued: false };
       }
+      // Unknown key: cached locally but there is no remote target for it, so
+      // report it as neither applied nor queued rather than falsely "applied".
+      return { applied: false, queued: false };
     } catch (e) {
       console.warn("Firestore setShared failed, queueing for retry:", e);
       queuePendingSync(queued);
+      return { applied: false, queued: true };
     }
   },
 
