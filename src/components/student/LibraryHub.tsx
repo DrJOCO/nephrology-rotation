@@ -18,9 +18,10 @@ const RefsTab = lazy(() => import("./RefsTab"));
 // heading. Phase 3b+ restructures to the spec's week-filterable Library layout.
 // ─────────────────────────────────────────────────────────────────────────
 export default function LibraryHub({
-  navigate, clinicGuides, clinicGuideTemplates, currentWeek, totalWeeks, studySheets, completedItems, weeklyScores, bookmarks,
+  navigate, goBack, clinicGuides, clinicGuideTemplates, currentWeek, totalWeeks, studySheets, completedItems, weeklyScores, bookmarks,
 }: {
   navigate: (tab: string, sv?: SubView) => void;
+  goBack: () => void;
   clinicGuides: ClinicGuideRecord[];
   clinicGuideTemplates: ClinicGuideTemplates;
   currentWeek: number | null;
@@ -157,6 +158,7 @@ export default function LibraryHub({
         subView={null}
         clinicGuides={clinicGuides}
         clinicGuideTemplates={clinicGuideTemplates}
+        goBack={goBack}
       />
       <div style={{ padding: "8px 16px", borderTop: `1px solid ${T.line}` }}>
         <div style={{ fontSize: 13, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 1.2, margin: "8px 0 4px" }}>Quick references</div>

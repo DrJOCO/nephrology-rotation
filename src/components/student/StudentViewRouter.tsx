@@ -367,6 +367,7 @@ function StudentViewRouter({
         {tab === "library" && !subView && (
           <LibraryHub
             navigate={navigate}
+            goBack={goBack}
             clinicGuides={clinicGuides}
             clinicGuideTemplates={clinicGuideTemplates}
             currentWeek={currentWeek}
@@ -416,7 +417,7 @@ function StudentViewRouter({
         {tab === "library" && subView?.type === "faq" && (
           <FaqView onBack={goBack} />
         )}
-        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
+        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} goBack={goBack} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} completedItems={completedItems} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} onCompleteConsultTopic={onCompleteConsultTopic} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}

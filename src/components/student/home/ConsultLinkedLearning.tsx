@@ -82,7 +82,18 @@ export default function ConsultLinkedLearning({
       )}
 
       {patientSuggestedGroups.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(3, minmax(0, 1fr))",
+            gap: 8,
+            // No card cap (attending removed the 3-card limit) — but keep the
+            // section scannable when a student has many active consults by
+            // scrolling internally after ~4 rows instead of growing unbounded.
+            maxHeight: isMobile ? 4 * 78 : 4 * 70,
+            overflowY: "auto",
+          }}
+        >
           {patientSuggestedGroups.map(group => (
             <div
               key={group.topic}
