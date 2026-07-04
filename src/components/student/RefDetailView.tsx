@@ -178,7 +178,14 @@ function AtlasView({ refData }: { refData: QuickRefAtlas }) {
 // ─── Detail View (dispatches to Calculator, Reference, or Atlas) ───
 export default function RefDetailView({ refId, onBack }: { refId: string; onBack: () => void }) {
   const ref = QUICK_REFS.find(r => r.id === refId);
-  if (!ref) return <div style={{ padding: 16 }}>Reference not found.</div>;
+  if (!ref) {
+    return (
+      <div style={{ padding: 16 }}>
+        <BackButton onClick={onBack} />
+        <div style={{ padding: "16px 0" }}>Reference not found.</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 16 }}>

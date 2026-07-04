@@ -10,6 +10,7 @@ import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, Gamificat
 // Critical-path components (eager)
 import HomeTab from "./HomeTab";
 import LibraryHub from "./LibraryHub";
+import { BackButton } from "./shared";
 
 // Lazy-loaded sub-views
 const BookmarksView = lazy(() => import("./BookmarksView"));
@@ -160,7 +161,16 @@ function StudentViewRouter({
                 logActivity("review_missed", `Module ${subView.week} Review`, `${score.correct}/${score.total}`);
                 navigate("today");
               }} />
-          ) : null;
+          ) : (
+            <div style={{ padding: 16 }}>
+              <BackButton onClick={goBack} />
+              <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🎉</div>
+                <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Nothing to review</div>
+                <div style={{ fontSize: 14, color: T.sub }}>You didn't miss any questions on this quiz.</div>
+              </div>
+            </div>
+          );
         })()}
         {tab === "today" && subView?.type === "preQuiz" && (
           <QuizEngine questions={PRE_QUIZ} title="Pre-Rotation Assessment"

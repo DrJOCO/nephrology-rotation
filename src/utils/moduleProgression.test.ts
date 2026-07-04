@@ -1,3 +1,8 @@
+// Pin the timezone before any date-sensitive module is imported so the DST
+// spring-forward regression below is reproducible regardless of the host's
+// local timezone.
+process.env.TZ = "America/New_York";
+
 import { describe, expect, it } from "vitest";
 import { CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
@@ -94,5 +99,30 @@ describe("moduleProgression", () => {
   it("keeps longer rotations active while capping the visible module at four", () => {
     expect(getCalendarWeek("2026-04-01", 6, new Date("2026-05-05T12:00:00.000Z"))).toBe(4);
     expect(hasRotationEnded("2026-04-01", 6, new Date("2026-05-05T12:00:00.000Z"))).toBe(false);
+  });
+
+  // Regression: week/end-date boundaries must be computed from calendar-day
+  // counts, not millisecond division, so a DST spring-forward (which shortens
+  // one local day to 23 hours) can't push a boundary a day late.
+  describe("DST spring-forward boundaries (America/New_York)", () => {
+    it("does not push the calendar week a day late across the March 2026 spring-forward", () => {
+      // DST spring-forward in 2026 is Sunday 2026-03-08. A rotation starting
+      // Monday 2026-03-02 should be in week 2 by Monday 2026-03-09 (7 full
+      // calendar days later), even though that week crossed the DST jump.
+      expect(getCalendarWeek("2026-03-02", 4, new Date("2026-03-09T12:00:00"))).toBe(2);
+    });
+
+    it("does not push the calendar week a day late across the March 2027 spring-forward", () => {
+      // DST spring-forward in 2027 is Sunday 2027-03-14.
+      expect(getCalendarWeek("2027-03-08", 4, new Date("2027-03-15T12:00:00"))).toBe(2);
+    });
+
+    it("ends the rotation on the correct calendar day across the March 2027 spring-forward", () => {
+      // A 1-week rotation starting 2027-03-08 should have ended by 2027-03-15
+      // (7 calendar days later), regardless of the DST transition on 03-14.
+      expect(hasRotationEnded("2027-03-08", 1, new Date("2027-03-15T12:00:00"))).toBe(true);
+      // The day before should still be within week 1 (not yet ended).
+      expect(hasRotationEnded("2027-03-08", 1, new Date("2027-03-14T12:00:00"))).toBe(false);
+    });
   });
 });
