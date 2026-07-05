@@ -440,6 +440,227 @@ describe("flushPendingSyncQueue clobber guard", () => {
   });
 });
 
+// ─── Per-field stamps (fieldStamps) ────────────────────────────────
+// Scalar conflicts become decidable when BOTH sides carry a fieldStamp:
+// authorship time wins, not the app-open-inflated doc updatedAt. Missing
+// stamps on either side must fall back to EXACTLY the old behavior.
+describe("flush merge with per-field stamps", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+    mocks.updateDocCalls.length = 0;
+  });
+
+  it("keeps a queued scalar whose stamp is newer than the remote's (offline profile edit survives)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      name: "Remote Name",
+      fieldStamps: { name: "2026-06-01T09:00:00.000Z" },
+    });
+    seedQueue([studentItem({
+      name: "Offline Edit",
+      fieldStamps: { name: "2026-06-01T15:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(0);
+    const write = lastStudentWrite();
+    expect(write.data.name).toBe("Offline Edit");
+    // The winning value keeps its authorship stamp, written as a partial map
+    // under merge:true so unrelated remote stamps are untouched.
+    expect(write.data.fieldStamps).toEqual({ name: "2026-06-01T15:00:00.000Z" });
+  });
+
+  it("drops a queued scalar whose stamp is older than the remote's", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      name: "Remote Name",
+      fieldStamps: { name: "2026-06-02T09:00:00.000Z" },
+    });
+    seedQueue([studentItem({
+      name: "Older Edit",
+      fieldStamps: { name: "2026-06-01T09:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(0);
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+  });
+
+  it("falls back to today's behavior (newest doc wins) when the remote has no stamp", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, name: "Remote Name" });
+    seedQueue([studentItem({
+      name: "Stamped Edit",
+      fieldStamps: { name: "2026-06-01T15:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    // Pre-migration remote doc: no stamps to compare, stale queued scalar is
+    // dropped exactly as before.
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+  });
+
+  it("accumulates fieldStamps key-wise when offline payloads merge in the queue", async () => {
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+    await store.setStudentData("stu-1", { year: "MS4", fieldStamps: { year: "2026-06-01T10:00:00.000Z" } });
+    await store.setStudentData("stu-1", { name: "Ana", fieldStamps: { name: "2026-06-01T11:00:00.000Z" } });
+
+    const [item] = readQueue();
+    expect((item.data as Record<string, unknown>).fieldStamps).toEqual({
+      year: "2026-06-01T10:00:00.000Z",
+      name: "2026-06-01T11:00:00.000Z",
+    });
+  });
+
+  it("keeps a residual field's stamp when a partial write settles the rest", async () => {
+    seedQueue([studentItem({
+      year: "MS4",
+      name: "Old",
+      fieldStamps: { year: "2026-06-01T10:00:00.000Z", name: "2026-06-01T11:00:00.000Z" },
+    }, OLDER)]);
+
+    await store.setStudentData("stu-1", { name: "Ana" });
+
+    const queue = readQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].data).toEqual({ year: "MS4", fieldStamps: { year: "2026-06-01T10:00:00.000Z" } });
+  });
+});
+
+// ─── Patient removals (removedPatients tombstones) ─────────────────
+// The old unionRecordsById documented that it resurrects deletions; the
+// stamped patient merge honors them instead: a removal beats an entry iff
+// removedAt > the entry's updatedAt (missing entry stamp = removal wins).
+describe("flush merge honors patient removals", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+  });
+
+  it("deletes a remote patient the queued payload removed", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [
+        { id: "p1", initials: "AB", updatedAt: "2026-06-01T09:00:00.000Z" },
+        { id: "p2", initials: "CD", updatedAt: "2026-06-01T09:00:00.000Z" },
+      ],
+    });
+    seedQueue([studentItem({
+      patients: [{ id: "p2", initials: "CD", updatedAt: "2026-06-01T09:00:00.000Z" }],
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect((write.data.patients as Array<{ id: string }>).map((p) => p.id)).toEqual(["p2"]);
+    expect(write.data.removedPatients).toEqual({ p1: "2026-06-02T08:00:00.000Z" });
+  });
+
+  it("keeps a patient edited after the removal (edit outruns the delete)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB", notes: "edited later", updatedAt: "2026-06-02T10:00:00.000Z" }],
+    });
+    seedQueue([studentItem({
+      patients: [],
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect((write.data.patients as Array<{ id: string }>).map((p) => p.id)).toEqual(["p1"]);
+  });
+
+  it("treats an unstamped entry as older, so the removal wins", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB" }],
+    });
+    seedQueue([studentItem({
+      patients: [],
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.patients).toEqual([]);
+  });
+
+  it("still unions and resurrects nothing extra when no removals are recorded (old behavior)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB", notes: "remote edit" }],
+    });
+    seedQueue([studentItem({
+      patients: [{ id: "p1", initials: "AB", notes: "stale edit" }, { id: "p3", initials: "EF" }],
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    const patients = write.data.patients as Array<{ id: string; notes?: string }>;
+    expect(patients.map((p) => p.id).sort()).toEqual(["p1", "p3"]);
+    // Unstamped conflict: newest doc (remote) still wins, exactly as before.
+    expect(patients.find((p) => p.id === "p1")?.notes).toBe("remote edit");
+  });
+
+  it("applies a residual removal even when the payload carries no patients list", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB", updatedAt: "2026-06-01T09:00:00.000Z" }],
+      name: "Same Name",
+    });
+    seedQueue([studentItem({
+      completedItems: { articles: { A: true } },
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.patients).toEqual([]);
+    expect(write.data.removedPatients).toEqual({ p1: "2026-06-02T08:00:00.000Z" });
+  });
+
+  it("prunes removal records older than 60 days from the written map", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [],
+      removedPatients: { ancient: "2026-01-01T00:00:00.000Z" },
+    });
+    seedQueue([studentItem({
+      patients: [],
+      removedPatients: { recent: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.removedPatients).toEqual({ recent: "2026-06-02T08:00:00.000Z" });
+  });
+});
+
 // ─── Direct-write clobber guard ────────────────────────────────────
 // The debounced auto-save and logout flush call setStudentData directly (no
 // offline queue involved). A stale device stamps that payload with a fresh

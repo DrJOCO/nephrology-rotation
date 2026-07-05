@@ -427,7 +427,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
     clearSavedStudentSignInEmail();
     setStoredStudentPinFlowMode(null);
-    ["neph_name", STUDENT_YEAR_KEY, "neph_pin", "neph_studentId", STUDENT_EMAIL_KEY, STUDENT_PENDING_JOIN_CODE_KEY, "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
+    ["neph_name", STUDENT_YEAR_KEY, "neph_pin", "neph_studentId", STUDENT_EMAIL_KEY, STUDENT_PENDING_JOIN_CODE_KEY, "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", "neph_removedPatients", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
     store.setRotationCode(null);
     // Reset all state
     setStudentName("");

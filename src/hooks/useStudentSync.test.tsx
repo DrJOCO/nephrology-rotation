@@ -107,6 +107,8 @@ interface HarnessApi {
   completedItems: CompletedItems;
   setWeeklyScores: (updater: (prev: WeeklyScores) => WeeklyScores) => void;
   weeklyScores: WeeklyScores;
+  setStudentName: (name: string) => void;
+  studentName: string;
   sync: ReturnType<typeof useStudentSync>;
 }
 
@@ -194,6 +196,8 @@ function useHarness() {
   api.completedItems = completedItems;
   api.setWeeklyScores = setWeeklyScores;
   api.weeklyScores = weeklyScores;
+  api.setStudentName = setStudentName;
+  api.studentName = studentName;
   api.sync = sync;
   return sync;
 }
@@ -383,6 +387,137 @@ describe("listener merge guards (Done marks and quiz attempts)", () => {
 
     // Union by attempt date: both survive.
     expect(api.weeklyScores[1]).toEqual([remoteAttempt, localAttempt]);
+  });
+});
+
+// Cached synced doc matching the harness's initial state exactly, so the
+// boot diff finds nothing dirty (an in-sync device reopening the app).
+function makeInSyncCachedDoc(): Record<string, unknown> {
+  return {
+    updatedAt: CACHED,
+    name: "Ana",
+    authType: "guest",
+    patients: [],
+    weeklyScores: {},
+    preScore: null,
+    postScore: null,
+    gamification: { points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } },
+    completedItems: { articles: {}, studySheets: {}, cases: {}, decks: {}, consultTopics: {} },
+    bookmarks: { trials: [], articles: [], cases: [], studySheets: [] },
+    srQueue: {},
+    activityLog: [],
+    reflections: [],
+    removedPatients: {},
+  };
+}
+
+describe("dirty-field-only writes (fieldStamps)", () => {
+  it("writes nothing on a routine reopen when local state matches the synced doc cache", async () => {
+    h.getCachedStudentUpdatedAt.mockReturnValue(CACHED);
+    h.getCachedStudentDoc.mockReturnValue(makeInSyncCachedDoc());
+    await mountHarness();
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(h.setStudentData).not.toHaveBeenCalled();
+    expect(h.storeMock.setTeamSnapshot).not.toHaveBeenCalled();
+
+    // A real mutation still schedules a write.
+    act(() => {
+      api.setPatients((prev) => [...prev, makePatient("p-1")]);
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(h.setStudentData).toHaveBeenCalledTimes(1);
+  });
+
+  it("writes only the dirty fields plus name/identity, with per-field stamps", async () => {
+    h.getCachedStudentUpdatedAt.mockReturnValue(CACHED);
+    h.getCachedStudentDoc.mockReturnValue(makeInSyncCachedDoc());
+    await mountHarness();
+
+    act(() => {
+      api.setPatients((prev) => [...prev, makePatient("p-1")]);
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    expect(h.setStudentData).toHaveBeenCalledTimes(1);
+    const [, payload] = setStudentDataCall(0);
+    // Only the changed field (patients) plus the always-riding name/identity
+    // and bookkeeping — no weeklyScores/bookmarks/etc. dragged along.
+    expect(Object.keys(payload).sort()).toEqual(["authType", "fieldStamps", "name", "patients", "updatedAt"]);
+    const written = payload.patients as Patient[];
+    expect(written).toHaveLength(1);
+    // Per-entry stamp applied centrally by the save effect's diff.
+    expect(typeof written[0].updatedAt).toBe("string");
+    // fieldStamps carries only the changed key, matching the entry stamp.
+    expect(payload.fieldStamps).toEqual({ patients: written[0].updatedAt });
+  });
+
+  it("records a removal in removedPatients and blocks echo resurrection after the refs clear", async () => {
+    await mountHarness();
+    act(() => {
+      api.setPatients((prev) => [...prev, makePatient("p-1")]);
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(2100); // first sync carries p-1
+    });
+    h.setStudentData.mockClear();
+
+    // Student deletes the patient (same sequence as PatientTab/HomeTab).
+    act(() => {
+      api.sync.markPatientRemoved("p-1");
+      api.setPatients((prev) => prev.filter((p) => p.id !== "p-1"));
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(h.setStudentData).toHaveBeenCalledTimes(1);
+    const [, payload] = setStudentDataCall(0);
+    expect(payload.patients).toEqual([]);
+    expect(typeof (payload.removedPatients as Record<string, string>)["p-1"]).toBe("string");
+
+    // The debounce cleared the pendingRemoved ref; an older echo still
+    // carrying p-1 must not resurrect it — the removal record persists.
+    act(() => {
+      h.listeners.student!({
+        updatedAt: INCOMING,
+        patients: [{ ...makePatient("p-1"), updatedAt: "2026-07-01T08:00:00.000Z" }],
+      });
+    });
+    expect(api.patients).toEqual([]);
+  });
+
+  it("keeps a locally-newer name when a snapshot carries an older name stamp", async () => {
+    await mountHarness();
+    await act(async () => {
+      vi.advanceTimersByTime(2100); // app-open save out of the way
+    });
+
+    // Local rename inside the debounce window (stamped "now" by the diff).
+    act(() => {
+      api.setStudentName("Ana Updated");
+    });
+    // Another device's snapshot: newer doc updatedAt, but its name was
+    // authored before the local rename.
+    act(() => {
+      h.listeners.student!({
+        updatedAt: INCOMING,
+        name: "Stale Name",
+        fieldStamps: { name: "2026-06-30T10:00:00.000Z" },
+      });
+    });
+    expect(api.studentName).toBe("Ana Updated");
+
+    // Old-client snapshot without stamps still applies as before.
+    act(() => {
+      h.listeners.student!({ updatedAt: "2026-07-03T10:00:00.000Z", name: "Old Client Name" });
+    });
+    expect(api.studentName).toBe("Old Client Name");
   });
 });
 

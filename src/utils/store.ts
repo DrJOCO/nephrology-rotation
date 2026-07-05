@@ -1,5 +1,11 @@
 import { getBootstrapAdminLegacyUids, getCurrentAdminUser, getFirebase, isBootstrapAdminEmail, waitForAuthUser } from "./firebase";
-import { mergeCompletedItems, mergeWeeklyScores } from "./progressMerge";
+import {
+  mergeCompletedItems,
+  mergePatientsWithRemovals,
+  mergeRemovedPatientMaps,
+  mergeWeeklyScores,
+  pruneRemovedPatients,
+} from "./progressMerge";
 
  
 type FirestoreData = Record<string, any>;
@@ -106,6 +112,25 @@ function mergePayload<T extends PendingSyncData | Record<string, unknown>>(exist
   return next;
 }
 
+// Student payloads carry two per-key maps that must accumulate rather than
+// replace when payloads merge (queue dedup, doc cache): fieldStamps (a later
+// partial write must not wipe the stamps of fields only the earlier payload
+// carries) and removedPatients (removals from both payloads stay honored).
+function mergeStudentPayload(existing: Record<string, unknown> | null | undefined, next: Record<string, unknown>): Record<string, unknown> {
+  if (!isPlainObject(existing)) return next;
+  const merged: Record<string, unknown> = { ...existing, ...next };
+  if (isPlainObject(existing.fieldStamps) || isPlainObject(next.fieldStamps)) {
+    merged.fieldStamps = {
+      ...(isPlainObject(existing.fieldStamps) ? existing.fieldStamps : {}),
+      ...(isPlainObject(next.fieldStamps) ? next.fieldStamps : {}),
+    };
+  }
+  if (isPlainObject(existing.removedPatients) || isPlainObject(next.removedPatients)) {
+    merged.removedPatients = mergeRemovedPatientMaps(existing.removedPatients, next.removedPatients);
+  }
+  return merged;
+}
+
 function withoutLegacyLoginPin(data: Record<string, unknown>): Record<string, unknown> {
   const safe = { ...data };
   delete safe.loginPin;
@@ -209,7 +234,7 @@ function queuePendingSync(item: PendingSyncItem): void {
   if (existing.kind === "setShared" && item.kind === "setShared") {
     merged.data = mergePayload(existing.data, item.data);
   } else if (existing.kind === "setStudentData" && item.kind === "setStudentData") {
-    merged.data = mergePayload(existing.data, item.data);
+    merged.data = mergeStudentPayload(existing.data, item.data);
   } else if (existing.kind === "setTeamSnapshot" && item.kind === "setTeamSnapshot") {
     merged.data = mergePayload(existing.data, item.data);
   } else if (existing.kind === "updateRotation" && item.kind === "updateRotation") {
@@ -253,9 +278,17 @@ function settleQueuedSync(written: PendingSyncItem, priorSnapshot: string | null
     }
     if (isPlainObject(queued.data) && isPlainObject(written.data)) {
       const residual = Object.fromEntries(
-        Object.entries(queued.data).filter(([key]) => !Object.prototype.hasOwnProperty.call(written.data, key)),
+        Object.entries(queued.data).filter(([key]) => key !== "fieldStamps" && !Object.prototype.hasOwnProperty.call(written.data, key)),
       );
       if (Object.keys(residual).length > 0) {
+        // Residual fields keep their authorship stamps so the eventual flush
+        // merge can still decide their scalar conflicts per-field.
+        if (isPlainObject(queued.data.fieldStamps)) {
+          const residualStamps = Object.fromEntries(
+            Object.entries(queued.data.fieldStamps).filter(([key]) => Object.prototype.hasOwnProperty.call(residual, key)),
+          );
+          if (Object.keys(residualStamps).length > 0) residual.fieldStamps = residualStamps;
+        }
         next.push({ ...queued, data: residual } as PendingSyncItem);
         changed = true;
         continue;
@@ -290,7 +323,7 @@ function cacheStudentDoc(code: string, studentId: string, data: Record<string, u
   const existing = readJson<Record<string, unknown>>(studentDocCacheKey(code, studentId));
   writeJson(
     studentDocCacheKey(code, studentId),
-    mergePayload(existing ? withoutLegacyLoginPin(existing) : null, withoutLegacyLoginPin(data)),
+    mergeStudentPayload(existing ? withoutLegacyLoginPin(existing) : null, withoutLegacyLoginPin(data)),
   );
 }
 
@@ -527,23 +560,40 @@ function mergeGamification(remote: unknown, queued: unknown): unknown {
 }
 
 function mergeStudentFlushPayload(remote: Record<string, unknown>, payload: Record<string, unknown>): Record<string, unknown> {
+  const remoteStamps = isPlainObject(remote.fieldStamps) ? remote.fieldStamps : {};
+  const queuedStamps = isPlainObject(payload.fieldStamps) ? payload.fieldStamps : {};
+  // Removals recorded on either side apply to the patient merge.
+  const removedPatients = mergeRemovedPatientMaps(remote.removedPatients, payload.removedPatients);
   const merged: Record<string, unknown> = {};
+  const mergedStamps: Record<string, string> = {};
+  const now = new Date().toISOString();
   for (const [field, queuedValue] of Object.entries(payload)) {
+    // Bookkeeping fields ride alongside the real fields and are resolved below.
+    if (field === "updatedAt" || field === "fieldStamps" || field === "removedPatients") continue;
     if (!Object.prototype.hasOwnProperty.call(remote, field)) {
       // Remote never saw this field; the queued value is the only copy.
       merged[field] = queuedValue;
+      const stamp = queuedStamps[field];
+      if (typeof stamp === "string") mergedStamps[field] = stamp;
       continue;
     }
     const remoteValue = remote[field];
     switch (field) {
-      case "completedItems": merged[field] = mergeCompletedItems(remoteValue, queuedValue); break;
-      case "srQueue": merged[field] = mergeSrQueues(remoteValue, queuedValue); break;
-      case "activityLog": merged[field] = mergeActivityLogs(remoteValue, queuedValue); break;
-      case "weeklyScores": merged[field] = mergeWeeklyScores(remoteValue, queuedValue); break;
-      case "gamification": merged[field] = mergeGamification(remoteValue, queuedValue); break;
+      case "completedItems": merged[field] = mergeCompletedItems(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "srQueue": merged[field] = mergeSrQueues(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "activityLog": merged[field] = mergeActivityLogs(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "weeklyScores": merged[field] = mergeWeeklyScores(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "gamification": merged[field] = mergeGamification(remoteValue, queuedValue); mergedStamps[field] = now; break;
       case "patients":
+        // Per-entry stamps + removedPatients replace the old resurrect-deletes
+        // union: a deletion made on either device sticks unless the entry was
+        // edited after it was deleted.
+        merged[field] = mergePatientsWithRemovals(remoteValue, queuedValue, removedPatients);
+        mergedStamps[field] = now;
+        break;
       case "reflections":
         merged[field] = unionRecordsById(remoteValue, queuedValue);
+        mergedStamps[field] = now;
         break;
       case "preScore":
       case "postScore": {
@@ -552,25 +602,58 @@ function mergeStudentFlushPayload(remote: Record<string, unknown>, payload: Reco
         // offline quiz survives. Omit the field when the remote copy wins so
         // the merge write leaves it untouched.
         const winner = mergeQuizScores(remoteValue, queuedValue);
-        if (winner !== remoteValue) merged[field] = winner;
+        if (winner !== remoteValue) {
+          merged[field] = winner;
+          mergedStamps[field] = now;
+        }
         break;
       }
       case "bookmarks": {
         const union = mergeBookmarks(remoteValue, queuedValue);
-        if (union !== remoteValue) merged[field] = union;
+        if (union !== remoteValue) {
+          merged[field] = union;
+          mergedStamps[field] = now;
+        }
         break;
       }
-      default:
-        // Scalar field with no per-item timestamp or safe union (name, year,
-        // authType, …): newest doc updatedAt wins, so the newer remote copy is
-        // kept by omitting the stale queued value from the merge write.
+      default: {
+        // Scalar field with no per-item shape to union (name, year, authType,
+        // …). When BOTH sides carry a fieldStamp the conflict is decidable by
+        // authorship time — a queued offline profile edit survives a doc whose
+        // updatedAt was merely re-stamped by an app-open save. Stamps missing
+        // on either side (old client, pre-migration doc) fall back to the old
+        // rule: newest doc updatedAt wins, stale queued value dropped.
+        const remoteStamp = remoteStamps[field];
+        const queuedStamp = queuedStamps[field];
+        if (typeof remoteStamp === "string" && typeof queuedStamp === "string" && queuedStamp > remoteStamp) {
+          merged[field] = queuedValue;
+          mergedStamps[field] = queuedStamp;
+        }
         break;
+      }
+    }
+  }
+  // A queue residual can carry removals without a patients list; apply them to
+  // the remote list so the deletion still lands instead of waiting for the
+  // next patients write.
+  if (!Object.prototype.hasOwnProperty.call(payload, "patients")
+    && isPlainObject(payload.removedPatients)
+    && Array.isArray(remote.patients)) {
+    const filtered = mergePatientsWithRemovals(remote.patients, [], removedPatients);
+    if (filtered.length !== remote.patients.length) {
+      merged.patients = filtered;
+      mergedStamps.patients = now;
     }
   }
   if (Object.keys(merged).length > 0) {
+    if (Object.prototype.hasOwnProperty.call(payload, "removedPatients")) {
+      const pruned = pruneRemovedPatients(removedPatients, now);
+      if (Object.keys(pruned).length > 0) merged.removedPatients = pruned;
+    }
+    if (Object.keys(mergedStamps).length > 0) merged.fieldStamps = mergedStamps;
     // The unioned doc is a genuinely new state — stamp a fresh updatedAt so
     // other devices' staleness checks pick the merge up.
-    merged.updatedAt = new Date().toISOString();
+    merged.updatedAt = now;
   }
   return merged;
 }

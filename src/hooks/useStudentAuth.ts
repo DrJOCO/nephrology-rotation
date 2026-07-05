@@ -44,6 +44,7 @@ const RESIDUAL_PROGRESS_KEYS = [
   "neph_activityLog",
   "neph_reflections",
   "neph_gamification",
+  "neph_removedPatients",
   JOINED_AT_KEY,
 ] as const;
 export type StudentLoginMode = "first_time" | "returning";
@@ -514,6 +515,9 @@ export function useStudentAuth(
       store.setStudentData(studentId, {
         name: trimmedName,
         ...studentSyncIdentity,
+        // Authorship stamp: if this edit is queued offline, the flush merge
+        // can prove it is newer than a doc merely re-stamped by an app open.
+        fieldStamps: { name: updatedAt },
         updatedAt,
       }),
       store.setTeamSnapshot(studentId, buildTeamSnapshot({
@@ -543,6 +547,8 @@ export function useStudentAuth(
     await store.setStudentData(studentId, {
       year: trimmedYear,
       ...studentSyncIdentity,
+      // Same authorship stamp as the name path — offline year edits survive.
+      fieldStamps: { year: updatedAt },
       updatedAt,
     });
   };

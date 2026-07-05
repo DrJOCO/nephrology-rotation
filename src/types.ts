@@ -17,6 +17,10 @@ export interface Patient {
   date: string;
   status: "active" | "discharged";
   followUps: FollowUp[];
+  // Per-entry edit stamp, maintained centrally by useStudentSync's save
+  // effect; decides entry-vs-entry and entry-vs-removal conflicts on merge.
+  // Absent on entries that predate per-item stamps.
+  updatedAt?: string;
 }
 
 export interface QuizAnswer {
