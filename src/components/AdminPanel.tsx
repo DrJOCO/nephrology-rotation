@@ -11,6 +11,7 @@ import { normalizeAdminStudentRecord } from "../utils/adminStudents";
 import { AdminAuthScreen } from "./admin/AdminAuthScreen";
 import { AdminPinGate, AdminPinSetupGate } from "./admin/AdminPinGate";
 import { AdminShell } from "./admin/AdminShell";
+import { StudentPreview } from "./admin/StudentPreview";
 import { AdminThemeToggle } from "./admin/AdminThemeToggle";
 import { PublishStatusBar } from "./admin/PublishStatusBar";
 import { SettingsTab } from "./admin/SettingsTab";
@@ -44,6 +45,9 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [tab, setTab] = useState("dashboard");
   const [subView, setSubView] = useState<AdminSubView>(null);
   const [loading, setLoading] = useState(true);
+  // "View as student" preview sandbox — StudentPreview enters/exits store
+  // preview mode on mount/unmount, so toggling this flag is the whole control.
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [firebaseAdmin, setFirebaseAdmin] = useState<AdminSession | null>(null);
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
@@ -717,6 +721,12 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     );
   }
 
+  // Full-screen student preview replaces the panel entirely while open, then
+  // returns the admin to exactly where they left off (tab/subView untouched).
+  if (previewOpen) {
+    return <StudentPreview rotationCode={rotationCode || null} onExit={() => setPreviewOpen(false)} />;
+  }
+
   const tabs = [
     { id: "dashboard", label: "Dashboard" },
     { id: "students", label: "Students" },
@@ -738,6 +748,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         onLock={() => setAuthed(false)}
         onSignOut={() => { void handleAdminSignOut(); }}
         onExit={onExit}
+        onPreview={() => setPreviewOpen(true)}
         themeToggle={<AdminThemeToggle />}
         contentKey={tab + (subView ? JSON.stringify(subView) : "")}
       >

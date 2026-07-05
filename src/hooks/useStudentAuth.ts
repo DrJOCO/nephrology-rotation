@@ -274,6 +274,20 @@ export function useStudentAuth(
   // Completes a pending email sign-in link or restores the current Firebase user,
   // and returns the session's student id ("" when no session was established).
   const bootstrapAuthSession = async (): Promise<string> => {
+    // "View as student" preview: seed a self-contained guest session WITHOUT
+    // any Firebase Auth call (no isStudentEmailLink, getCurrentStudentUser,
+    // signInAnonymously, or signOut). getSavedStudentSignInEmail also reads real
+    // localStorage, so it must not run either. The seeded neph_studentId is the
+    // synthetic preview id; authSessionKind "guest" + idle email flow are what
+    // StudentApp's studentReadyForApp gate needs to boot straight into the app.
+    if (store.isPreview()) {
+      const previewStudentId = (await store.get<string>("neph_studentId")) || "";
+      setStudentId(previewStudentId);
+      setAuthSessionKind("guest");
+      setEmailFlowState("idle");
+      return previewStudentId;
+    }
+
     let sessionStudentId = "";
     const savedEmail = normalizeEmail((await store.get<string>(STUDENT_EMAIL_KEY)) || getSavedStudentSignInEmail());
     const savedPinFlowMode = getStoredStudentPinFlowMode();

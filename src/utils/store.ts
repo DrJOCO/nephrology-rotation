@@ -77,7 +77,25 @@ const studentAssignmentCacheKey = (studentId: string) => `neph_student_assignmen
 
 let rotationCode: string | null = localStorage.getItem("neph_rotationCode") || null;
 
+// ─── Preview ("View as student") mode ────────────────────────────────
+// When the admin opens the student experience as a sandbox, ALL persistence
+// must be inert: no Firestore writes, no pending-sync enqueue, and no touching
+// the real localStorage (a shared hospital device may hold a real student's
+// `neph_*` session). Private get/set funnel through an in-memory Map instead,
+// and every write/mutation method below early-returns its honest "nothing
+// written" shape. Reads of SHARED rotation content still pass through so the
+// instructor previews what students actually see. See store.enterPreview.
+let previewMode = false;
+let previewStore: Map<string, unknown> | null = null;
+// The admin's real in-memory rotation pointer, parked while preview borrows
+// `rotationCode` to read the previewed rotation's shared content. Restored by
+// exitPreview so the admin panel resumes on its own rotation untouched.
+let preExitRotationCode: string | null = null;
+
 function readJson<T>(key: string): T | null {
+  if (previewMode && previewStore) {
+    return previewStore.has(key) ? (previewStore.get(key) as T) : null;
+  }
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) as T : null;
@@ -88,6 +106,12 @@ function readJson<T>(key: string): T | null {
 }
 
 function writeJson(key: string, value: unknown): void {
+  if (previewMode && previewStore) {
+    // Round-trip through JSON so the in-memory copy matches what localStorage
+    // would have returned (plain data, no live object references shared out).
+    previewStore.set(key, value === undefined ? null : JSON.parse(JSON.stringify(value)));
+    return;
+  }
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
@@ -657,7 +681,41 @@ async function flushPendingSyncQueue(): Promise<number> {
   return remaining.length;
 }
 
+// Nothing was written — the shape setStudentData/setShared return so the
+// preview's no-op writes are indistinguishable from a real "no rotation" write.
+const PREVIEW_STUDENT_WRITE: StudentWriteResult = { status: "skipped", updatedAt: null };
+const PREVIEW_SHARED_WRITE = { applied: false, queued: false } as const;
+
 const store = {
+  // ─── Preview ("View as student") mode ────────────────────────────
+  // Seed the in-memory session (any `neph_*` keys the seed provides) and flip
+  // every write/mutation method to a no-op. The admin's real `neph_*`
+  // localStorage keys are neither read nor overwritten while preview is on.
+  enterPreview(seed?: Record<string, unknown>): void {
+    preExitRotationCode = rotationCode;
+    previewStore = new Map<string, unknown>();
+    if (seed) {
+      Object.entries(seed).forEach(([key, value]) => {
+        previewStore!.set(key, value === undefined ? null : JSON.parse(JSON.stringify(value)));
+      });
+    }
+    previewMode = true;
+    // Point shared-content reads at the previewed rotation. Falls back to the
+    // admin's connected rotation so Home/Library/Consults show real published
+    // content; the write guards keep this pointer inert for Firestore writes.
+    const seededCode = seed && typeof seed.neph_rotationCode === "string" ? seed.neph_rotationCode : null;
+    rotationCode = seededCode || preExitRotationCode;
+  },
+  exitPreview(): void {
+    previewMode = false;
+    previewStore = null;
+    rotationCode = preExitRotationCode;
+    preExitRotationCode = null;
+  },
+  isPreview(): boolean {
+    return previewMode;
+  },
+
   // ─── Private storage (always localStorage) ───────────────────────
   async get<T = unknown>(key: string): Promise<T | null> {
     return readJson<T>(key);
@@ -704,6 +762,7 @@ const store = {
   // (no rotation connected). Publish surfaces this instead of always claiming
   // success — see AdminPanel.publishSharedChanges.
   async setShared(key: string, val: FirestoreData | unknown[]): Promise<{ applied: boolean; queued: boolean }> {
+    if (previewMode) return { ...PREVIEW_SHARED_WRITE };
     const safeValue = key.startsWith("neph_shared_student_") && isPlainObject(val)
       ? withoutLegacyLoginPin(val)
       : val;
@@ -771,6 +830,13 @@ const store = {
 
   // ─── Rotation code management ────────────────────────────────────
   setRotationCode(code: string | null) {
+    // In preview the in-memory pointer may move (so shared-content reads target
+    // the previewed rotation), but the admin device's persisted `neph_rotationCode`
+    // must never change — enterPreview/exitPreview save and restore it.
+    if (previewMode) {
+      rotationCode = code;
+      return;
+    }
     rotationCode = code;
     if (code) localStorage.setItem("neph_rotationCode", code);
     else localStorage.removeItem("neph_rotationCode");
@@ -779,9 +845,13 @@ const store = {
     return rotationCode;
   },
   getPendingSyncCount(): number {
+    // The preview session never queues; surface 0 rather than the admin
+    // device's real backlog (which the student banner must not expose).
+    if (previewMode) return 0;
     return readPendingSyncQueue().length;
   },
   onPendingSyncChanged(callback: (count: number) => void): () => void {
+    if (previewMode) { callback(0); return () => {}; }
     if (typeof window === "undefined") return () => {};
     const handler = (event: Event) => {
       const nextCount = event instanceof CustomEvent && typeof event.detail?.count === "number"
@@ -794,6 +864,8 @@ const store = {
     return () => window.removeEventListener(PENDING_SYNC_EVENT, handler);
   },
   async flushPendingSyncQueue(): Promise<number> {
+    // Never drain the admin device's real retry queue while previewing.
+    if (previewMode) return 0;
     return flushPendingSyncQueue();
   },
 
@@ -945,6 +1017,9 @@ const store = {
   // brand-new student whose doc hasn't been created yet. Callers use it to
   // stop auto-saves from silently resurrecting the deleted record.
   onStudentDataChanged(studentId: string, callback: (data: FirestoreData) => void, onRemoved?: () => void): () => void {
+    // The preview student has no cloud doc; skip the listener so its snapshots
+    // (or a deleted-doc callback) can't perturb the sandbox.
+    if (previewMode) return () => {};
     if (!rotationCode || !studentId) return () => {};
     let unsub: (() => void) | null = null;
     let sawDoc = false;
@@ -973,6 +1048,7 @@ const store = {
   // merged field-wise under the flush-guard rules instead of overwriting, so
   // a stale device's full-doc save can't erase newer cloud progress.
   async setStudentData(studentId: string, data: Record<string, unknown>, options?: { baseUpdatedAt: string | null }): Promise<StudentWriteResult> {
+    if (previewMode) return { ...PREVIEW_STUDENT_WRITE };
     if (!rotationCode) return { status: "skipped", updatedAt: null };
     let payload = stripUndefinedDeep(withoutLegacyLoginPin(data));
     cacheStudentDoc(rotationCode, studentId, payload);
@@ -1037,6 +1113,7 @@ const store = {
   // while this device was live — re-flushing them would silently resurrect
   // the deleted doc.
   discardQueuedStudentSync(studentId: string): void {
+    if (previewMode) return;
     if (!rotationCode || !studentId) return;
     const queue = readPendingSyncQueue();
     const next = queue.filter((item) =>
@@ -1048,6 +1125,7 @@ const store = {
 
   // ─── Write sanitized team snapshot to Firestore ──────────────────
   async setTeamSnapshot(studentId: string, data: object): Promise<void> {
+    if (previewMode) return;
     if (!rotationCode || !studentId) return;
     const payload = data as Record<string, unknown>;
     cacheTeamDoc(rotationCode, studentId, payload);
@@ -1101,6 +1179,7 @@ const store = {
   },
 
   async setStudentAssignment(studentId: string, data: { activeRotationCode: string; email?: string }): Promise<void> {
+    if (previewMode) return;
     const activeRotationCode = normalizeRotationCodeValue(data.activeRotationCode);
     if (!studentId || !activeRotationCode) return;
 
@@ -1200,6 +1279,7 @@ const store = {
 
   // ─── Update rotation metadata ───────────────────────────────────
   async updateRotation(code: string, data: Record<string, unknown>): Promise<void> {
+    if (previewMode) return;
     cacheRotationDoc(code, data);
     const queued: PendingSyncItem = { kind: "updateRotation", rotationCode: code, data, updatedAt: new Date().toISOString() };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -1219,6 +1299,7 @@ const store = {
 
   // ─── Delete a single student document ───────────────────────────
   async deleteStudentData(studentId: string): Promise<void> {
+    if (previewMode) return;
     if (!rotationCode || !studentId) return;
     try {
       const { db, fs } = await getFirebase();
@@ -1232,6 +1313,7 @@ const store = {
 
   // ─── Delete rotation and its students ───────────────────────────
   async deleteRotation(code: string): Promise<void> {
+    if (previewMode) return;
     try {
       const { db, fs } = await getFirebase();
       // Delete all students in subcollection first

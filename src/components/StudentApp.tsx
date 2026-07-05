@@ -408,6 +408,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const handleLogout = async () => {
     setLogoutConfirmOpen(false);
+    // In "View as student" preview, "End session" must not mutate real state
+    // (no signOutFirebase — that would kill the admin's session — and no real
+    // localStorage teardown). Just leave the sandbox, same as Exit preview.
+    if (store.isPreview()) {
+      onAdminToggle?.();
+      return;
+    }
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     await flushStudentSync();
     if (store.getPendingSyncCount() > 0) {
