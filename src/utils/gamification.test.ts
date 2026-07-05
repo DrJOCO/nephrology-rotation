@@ -1,3 +1,8 @@
+// Pin the timezone before any date-sensitive module is imported so the DST
+// spring-forward regression below is reproducible regardless of the host's
+// local timezone.
+process.env.TZ = "America/New_York";
+
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   calculatePoints,
@@ -373,5 +378,19 @@ describe("updateStreak", () => {
 
     const todayCount = result.activityLog!.filter(d => d === "2026-03-08").length;
     expect(todayCount).toBe(1);
+  });
+
+  it("continues the streak across a DST spring-forward day (regression: Date.now() - 86400000 undercounts 'yesterday')", () => {
+    // DST spring-forward in 2026 is Sunday 2026-03-08 (America/New_York):
+    // that local day is only 23 hours long. "Today" is the day after, so
+    // subtracting a flat 86400000ms from now can still resolve to today's
+    // date instead of yesterday's, wrongly breaking an active streak.
+    vi.setSystemTime(new Date("2026-03-09T16:00:00Z")); // noon local (EDT, UTC-4) on 2026-03-09
+    const result = updateStreak({
+      streaks: { currentDays: 4, longestDays: 4, lastActiveDate: "2026-03-08", activityLog: ["2026-03-08"] },
+    });
+
+    expect(result.currentDays).toBe(5); // continued, not reset to 1
+    expect(result.lastActiveDate).toBe("2026-03-09");
   });
 });

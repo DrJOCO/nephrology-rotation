@@ -158,37 +158,3 @@ export function validateFollowUp(text: string | undefined | null): FollowUpValid
   if (phiError) return { valid: false, error: phiError };
   return { valid: true, error: null };
 }
-
-// ── Login form validation ──────────────────────────────────────────────
-
-/**
- * Validate login form fields
- * @param {{ name: string, pin: string, code: string }} fields
- * @returns {{ valid: boolean, errors: Record<string, string> }}
- */
-export function validateLoginForm({ name, pin, code }: { name: string; pin: string; code: string }): ValidationResult {
-  const errors: Record<string, string> = {};
-
-  const trimmedName = (name || "").trim();
-  if (!trimmedName) {
-    errors.name = "Name is required";
-  } else if (trimmedName.length > LIMITS.NAME_MAX) {
-    errors.name = `Max ${LIMITS.NAME_MAX} characters`;
-  }
-
-  if (pin && pin.length !== LIMITS.PIN_LENGTH) {
-    errors.pin = "PIN must be exactly 4 digits";
-  } else if (pin && !/^\d{4}$/.test(pin)) {
-    errors.pin = "PIN must be 4 digits";
-  }
-
-  if (code) {
-    if (code.length < LIMITS.ROTATION_CODE_MIN) {
-      errors.code = `At least ${LIMITS.ROTATION_CODE_MIN} characters`;
-    } else if (code.length > LIMITS.ROTATION_CODE_MAX) {
-      errors.code = `Max ${LIMITS.ROTATION_CODE_MAX} characters`;
-    }
-  }
-
-  return { valid: Object.keys(errors).length === 0, errors };
-}

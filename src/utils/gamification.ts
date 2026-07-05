@@ -227,7 +227,12 @@ export function updateStreak(gamification: GamificationData | undefined): Streak
     return { ...streaks, activityLog: existingLog }; // already counted today
   }
 
-  const yesterday = dateKey(new Date(Date.now() - 86400000));
+  // Compute "yesterday" from calendar-date components (not Date.now() -
+  // 86400000ms), which across a DST spring-forward still lands on today's
+  // date and wrongly resets an active streak.
+  const now = new Date();
+  const yesterdayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const yesterday = dateKey(yesterdayDate);
   let currentDays;
   if (streaks.lastActiveDate === yesterday) {
     currentDays = streaks.currentDays + 1;
