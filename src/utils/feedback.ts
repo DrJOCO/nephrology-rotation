@@ -1,10 +1,10 @@
-// One-tap student feedback ("this page confused me") — a standalone module so
-// it stays out of store.ts's pending-sync queue (which another agent is
-// refactoring in parallel). Writes go to rotations/{code}/feedback/{autoId}.
-// Offline/failed sends are parked in their own localStorage queue and retried
-// on `online` events / app load, mirroring the read/write-with-try/catch idiom
-// used throughout the codebase (see store.ts's pending-sync queue).
+// One-tap student feedback ("this page confused me") — a standalone module
+// that deliberately stays out of store.ts's pending-sync queue. Writes go to
+// rotations/{code}/feedback/{autoId}. Offline/failed sends are parked in their
+// own localStorage queue and retried on `online` events / app load, mirroring
+// the read/write-with-try/catch idiom used throughout the codebase.
 import { getFirebase } from "./firebase";
+import store from "./store";
 
 // Named distinctly from data/feedbackTags.ts's FEEDBACK_TAGS, which is an
 // unrelated feature (attending-authored feedback tags about a student).
@@ -89,6 +89,11 @@ export async function submitStudentFeedback(
   rotationCode: string,
   entry: StudentFeedbackEntry,
 ): Promise<{ status: "sent" | "queued" }> {
+  // "View as student" preview: this module bypasses store.ts, so the store's
+  // preview write guards don't cover it. An admin tapping Send in the sandbox
+  // must neither write real feedback nor pollute the device's retry queue —
+  // the preview banner already promises "nothing is saved".
+  if (store.isPreview()) return { status: "sent" };
   if (!rotationCode) {
     // No rotation connected — there's no destination collection to retry
     // against later, so there's nothing useful to queue. This shouldn't
@@ -122,6 +127,22 @@ export function getPendingFeedbackCount(): number {
  * Leaves still-failing entries in the queue for the next retry.
  */
 export async function flushPendingFeedback(): Promise<number> {
+  if (store.isPreview()) return 0;
+  // The mount-time flush and an `online`-event flush can overlap; without this
+  // guard both would read the same queue and double-send every entry (addDoc
+  // has no idempotency key, so duplicates would reach the admin surface).
+  if (flushInFlight) return readPendingQueue().length;
+  flushInFlight = true;
+  try {
+    return await flushPendingFeedbackInner();
+  } finally {
+    flushInFlight = false;
+  }
+}
+
+let flushInFlight = false;
+
+async function flushPendingFeedbackInner(): Promise<number> {
   const queue = readPendingQueue();
   if (queue.length === 0) return 0;
 

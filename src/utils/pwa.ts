@@ -55,9 +55,15 @@ export function registerAppServiceWorker(): void {
     return;
   }
 
-  // Reload exactly once when the newly-activated worker takes control. Registered
+  // Reload exactly once when a NEW worker takes over from an old one. On a
+  // first-ever visit the page starts uncontrolled and clientsClaim() fires
+  // controllerchange moments after load — reloading then would yank the page
+  // out from under a student mid-join, so only an update takeover (page was
+  // already controlled, or the user accepted the toast) reloads. Registered
   // up front so it also covers the "already waiting at load" path below.
+  const controlledAtLoad = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!controlledAtLoad && !waitingWorker) return;
     if (reloadingAfterUpdate) return;
     reloadingAfterUpdate = true;
     window.location.reload();

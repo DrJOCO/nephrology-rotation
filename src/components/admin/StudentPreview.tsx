@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { T } from "../../data/constants";
 import store from "../../utils/store";
 import StudentApp from "../StudentApp";
@@ -11,12 +11,21 @@ import { buildStudentPreviewSeed } from "./lib/preview-seed";
 // fresh per preview session (keyed by mount), so no preview state persists
 // across sessions.
 export function StudentPreview({ rotationCode, onExit }: { rotationCode: string | null; onExit: () => void }) {
-  // Enter on mount, exit on unmount — pairing them here guarantees preview mode
-  // is torn down even if the parent unmounts this without calling onExit.
-  // rotationCode is captured once at mount; a fresh preview session remounts.
+  // StudentApp renders only AFTER enterPreview has run. React fires child
+  // effects before parent effects, so mounting StudentApp in the same pass
+  // would let its auth bootstrap and load path run against the REAL store
+  // before the preview flag flips. Gating on `ready` (set by this effect)
+  // pushes StudentApp's mount to a later commit, strictly after enterPreview.
+  // Enter/exit are paired here so preview mode is torn down even if the
+  // parent unmounts this without calling onExit.
+  const [ready, setReady] = useState(false);
   useEffect(() => {
     store.enterPreview(buildStudentPreviewSeed(rotationCode));
-    return () => store.exitPreview();
+    setReady(true);
+    return () => {
+      setReady(false);
+      store.exitPreview();
+    };
   }, [rotationCode]);
 
   return (
@@ -59,7 +68,7 @@ export function StudentPreview({ rotationCode, onExit }: { rotationCode: string 
       </div>
       {/* In preview, StudentApp's admin gesture (5-tap title) exits the sandbox
           rather than opening a nested admin panel. */}
-      <StudentApp onAdminToggle={onExit} />
+      {ready && <StudentApp onAdminToggle={onExit} />}
     </div>
   );
 }
