@@ -16,6 +16,7 @@ import {
 } from "../lib/student-analytics";
 import { backBtn } from "../lib/styles";
 import { getScorePct } from "../lib/format";
+import { findSuspiciousDuplicateAttempts } from "../../../utils/dataHealth";
 import { Button } from "../ui/Button";
 import { StatTile } from "../ui/StatTile";
 
@@ -85,6 +86,9 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
   const prePct = getScorePct(s.preScore);
   const postPct = getScorePct(s.postScore);
   const wkScores = s.weeklyScores || {};
+  // Data-health: subtly mark quiz attempts that look like reopen-duplicates from
+  // a since-fixed bug. Detection only — the attending decides; nothing is deleted.
+  const duplicateReport = findSuspiciousDuplicateAttempts(wkScores);
   const patients = s.patients || [];
   const competency = buildAdminCompetencySnapshot(s, settings, articles);
   const assessment = buildAdminAssessmentSignal(s);
@@ -603,18 +607,50 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
 
       {/* Module Scores */}
       <h3 style={detailSectionHeadingStyle}>Module Quizzes</h3>
+      {duplicateReport.hasDuplicates && (
+        <div style={{ background: T.infoBg, border: `1px solid ${T.info}55`, borderRadius: 10, padding: "8px 12px", marginBottom: 8, fontSize: 12, color: T.sub, lineHeight: 1.5 }}>
+          <strong style={{ color: T.info }}>Data health:</strong> {duplicateReport.totalSurplus} attempt{duplicateReport.totalSurplus === 1 ? "" : "s"} below look like duplicate re-records from a since-fixed bug (marked <span style={{ color: T.info, fontWeight: 700 }}>⚠ likely duplicate</span>). Counts are shown as-is — nothing has been changed.
+        </div>
+      )}
       {[1,2,3,4].map(w => {
         const ws = wkScores[w] || [];
         const best = ws.length > 0 ? Math.max(...ws.map(x => Math.round((x.correct/x.total)*100))) : null;
+        const flaggedInWeek = ws.filter(x => duplicateReport.flaggedDates.has(x.date)).length;
         return (
-          <div key={w} style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${T.line}` }}>
-            <div>
-              <div style={{ fontWeight: 600, color: T.ink, fontSize: 13 }}>Module {w}</div>
-              <div style={{ fontSize: 13, color: T.muted }}>{ws.length} attempt{ws.length !== 1 ? "s" : ""}</div>
+          <div key={w} style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 600, color: T.ink, fontSize: 13 }}>Module {w}</div>
+                <div style={{ fontSize: 13, color: T.muted }}>
+                  {ws.length} attempt{ws.length !== 1 ? "s" : ""}
+                  {flaggedInWeek > 0 && (
+                    <span style={{ color: T.info, fontWeight: 600 }}> · {flaggedInWeek} likely duplicate</span>
+                  )}
+                </div>
+              </div>
+              {best !== null ? (
+                <div style={{ fontSize: 18, fontWeight: 700, color: best >= 80 ? T.success : best >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>{best}%</div>
+              ) : <div style={{ fontSize: 13, color: T.muted }}>—</div>}
             </div>
-            {best !== null ? (
-              <div style={{ fontSize: 18, fontWeight: 700, color: best >= 80 ? T.success : best >= 60 ? T.warning : T.danger, fontFamily: T.mono }}>{best}%</div>
-            ) : <div style={{ fontSize: 13, color: T.muted }}>—</div>}
+            {ws.length > 0 && (
+              <div style={{ marginTop: 8, display: "grid", gap: 4 }}>
+                {ws.map((attempt, ai) => {
+                  const flagged = duplicateReport.flaggedDates.has(attempt.date);
+                  const pct = attempt.total > 0 ? Math.round((attempt.correct / attempt.total) * 100) : 0;
+                  return (
+                    <div key={ai} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: flagged ? T.info : T.sub, fontFamily: T.mono }}>
+                      <span style={{ minWidth: 96 }}>{new Date(attempt.date).toLocaleDateString()}</span>
+                      <span style={{ minWidth: 68 }}>{attempt.correct}/{attempt.total} · {pct}%</span>
+                      {flagged && (
+                        <span title="Same score and answers as a nearby attempt — likely a duplicate re-record from a since-fixed bug" style={{ fontSize: 11, fontWeight: 700, color: T.info, background: T.infoBg, border: `1px solid ${T.info}55`, borderRadius: 6, padding: "1px 6px" }}>
+                          ⚠ likely duplicate
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}

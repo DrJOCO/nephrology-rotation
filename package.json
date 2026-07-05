@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:safe": "VITE_USE_EMULATORS=true vite",
+    "emulators": "firebase emulators:start --only auth,firestore",
+    "deploy:preview": "vite build && firebase hosting:channel:deploy staging",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

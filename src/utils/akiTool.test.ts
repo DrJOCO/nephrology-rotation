@@ -195,4 +195,53 @@ describe("AKI tool calculations", () => {
     expect(stage.baseline).toBeNull();
     expect(stage.creatinineStage).toBeNull();
   });
+
+  // ── Blank-as-zero regression guards (clinical-safety bug class) ──────────
+  it("returns pending FENa (not a fabricated 0.0% 'prerenal') when urine Na is blank", () => {
+    const fena = calculateFena({
+      serumNa: "140",
+      urineNa: "", // not entered — must NOT be read as 0
+      urineCr: "100",
+      serumCrForUrine: "",
+      currentCr: "2",
+    });
+    expect(fena.value).toBeNull();
+    expect(fena.label).toBe("FENa pending");
+    expect(fena.missing).toContain("urine Na");
+  });
+
+  it("computes FENa normally when urine Na is an explicit 0 (legitimate value)", () => {
+    const fena = calculateFena({
+      serumNa: "140",
+      urineNa: "0", // explicitly zero — a real (very sodium-avid) measurement
+      urineCr: "100",
+      serumCrForUrine: "",
+      currentCr: "2",
+    });
+    expect(fena.value).toBe(0);
+    expect(fena.missing).toHaveLength(0);
+    expect(fena.label).toBe("FENa 0%");
+  });
+
+  it("does not derive a UOP stage (no false anuria) when 24-h volume is blank but weight is entered", () => {
+    const derived = deriveUopFrom24h("", "70");
+    expect(derived.stage).toBeNull();
+    expect(derived.totalMl).toBeNull();
+    expect(derived.label).toMatch(/Enter 24-hour UOP volume/i);
+
+    const stage = calculateAkiStage({ baselineCr: "1.0", currentCr: "1.2", uop: "not_recorded", uop24hVolumeMl: "", weightKg: "70", krtInitiated: false });
+    expect(stage.uopStage).toBeNull();
+    expect(stage.overallStage).toBe(0); // Cr entered and non-AKI; UOP contributes nothing
+  });
+
+  it("still stages true anuria (Stage 3) when 24-h volume is an explicit 0", () => {
+    const derived = deriveUopFrom24h("0", "70");
+    expect(derived.totalMl).toBe(0);
+    expect(derived.stage).toBe(3);
+    expect(derived.label).toMatch(/anuria/i);
+
+    const stage = calculateAkiStage({ baselineCr: "1.0", currentCr: "1.2", uop: "not_recorded", uop24hVolumeMl: "0", weightKg: "70", krtInitiated: false });
+    expect(stage.uopStage).toBe(3);
+    expect(stage.overallStage).toBe(3);
+  });
 });

@@ -28,6 +28,9 @@ const BOOTSTRAP_ADMIN_LEGACY_UIDS: Record<string, string[]> = {
   "joncheng5@gmail.com": ["aXjhgOzT0mPQt97bGMqR4CHI1jp1"],
 };
 
+// Guards against double emulator wiring across HMR re-executions.
+let emulatorsWired = false;
+
 async function loadFirebase() {
   const [{ initializeApp, getApps }, fs, authMod] = await Promise.all([
     import("firebase/app"),
@@ -35,7 +38,25 @@ async function loadFirebase() {
     import("firebase/auth"),
   ]);
   const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  return { db: fs.getFirestore(app), fs, auth: authMod.getAuth(app), authMod };
+  const db = fs.getFirestore(app);
+  const auth = authMod.getAuth(app);
+  // Dev safety: plain `npm run dev` talks to the PRODUCTION Firebase project
+  // (live cohort data). `npm run dev:safe` sets VITE_USE_EMULATORS so auth and
+  // Firestore point at the local emulator suite (`npm run emulators`) instead.
+  if (import.meta.env.DEV && !emulatorsWired) {
+    emulatorsWired = true;
+    if (import.meta.env.VITE_USE_EMULATORS === "true") {
+      authMod.connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+      fs.connectFirestoreEmulator(db, "127.0.0.1", 8080);
+      console.info("Connected to local Firebase emulators (auth :9099, firestore :8080).");
+    } else {
+      console.warn(
+        "DEV IS USING THE PRODUCTION FIREBASE PROJECT (live cohort data). " +
+        "Prefer `npm run emulators` + `npm run dev:safe` for development.",
+      );
+    }
+  }
+  return { db, fs, auth, authMod };
 }
 
 let _promise: ReturnType<typeof loadFirebase> | null = null;

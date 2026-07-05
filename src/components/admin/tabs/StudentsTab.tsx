@@ -7,6 +7,7 @@ import type { AdminStudent, AdminSubView, SharedSettings } from "../../../types"
 import { buildAdminCompetencySnapshot, buildAdminAssessmentSignal } from "../lib/student-analytics";
 import { buildDuplicateNameGroups, buildDuplicateStudentIdSet } from "../lib/duplicates";
 import { getScorePct, getMinutesSince } from "../lib/format";
+import { findSuspiciousDuplicateAttempts } from "../../../utils/dataHealth";
 
 export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, duplicateReview = false, deleteStudentRecord, writeStudentToFirestore, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; duplicateReview?: boolean; deleteStudentRecord: (student: AdminStudent) => Promise<void>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -16,9 +17,17 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
   const [yearFilter, setYearFilter] = useState("all");
   const [syncFilter, setSyncFilter] = useState<"all" | "fresh" | "stale" | "unsynced" | "needsAssessment">("all");
   const [sortBy, setSortBy] = useState<"name" | "newest" | "oldest" | "masteryLow" | "masteryHigh" | "syncOldest" | "syncNewest">("name");
+  const [showDupAttempts, setShowDupAttempts] = useState(false);
   const isConnected = !!rotationCode;
   const duplicateNameGroups = buildDuplicateNameGroups(students.filter((student) => student.status === "active"));
   const duplicateStudentIds = buildDuplicateStudentIdSet(duplicateNameGroups);
+
+  // Data-health check: surface students whose weeklyScores may contain
+  // reopen-duplicate quiz attempts from a since-fixed bug. Detection only — the
+  // attending reviews before trusting attempt counts. No data is mutated here.
+  const studentsWithDupAttempts = students
+    .map((student) => ({ student, report: findSuspiciousDuplicateAttempts(student.weeklyScores) }))
+    .filter((entry) => entry.report.hasDuplicates);
 
   const addStudent = () => {
     if (!form.name.trim()) return;
@@ -110,6 +119,48 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
       {isConnected && (
         <div style={{ background: T.infoBg, borderRadius: 10, padding: 12, marginBottom: 16, fontSize: 13, color: T.ink, lineHeight: 1.5 }}>
           📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code. Use <strong>Remove</strong> for test users, duplicates, or mistaken joins.
+        </div>
+      )}
+
+      {studentsWithDupAttempts.length > 0 && (
+        <div style={{ background: T.infoBg, border: `1px solid ${T.info}55`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ color: T.info, fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.4 }}>Data Health</div>
+              <div style={{ color: T.ink, fontSize: 15, fontWeight: 800, marginTop: 3 }}>
+                Possible duplicate quiz attempts detected for {studentsWithDupAttempts.length} student{studentsWithDupAttempts.length === 1 ? "" : "s"}
+              </div>
+              <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginTop: 3 }}>
+                From a since-fixed bug where reopening a completed module quiz re-recorded the attempt. Review before trusting attempt counts and averages. Nothing has been changed.
+              </div>
+            </div>
+            <button
+              onClick={() => setShowDupAttempts((prev) => !prev)}
+              style={{ padding: "8px 12px", background: T.card, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}
+            >
+              {showDupAttempts ? "Hide" : "Review"}
+            </button>
+          </div>
+
+          {showDupAttempts && (
+            <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
+              {studentsWithDupAttempts.map(({ student, report }) => (
+                <button
+                  key={student.id}
+                  onClick={() => navigate("students", { type: "studentDetail", id: String(student.id) })}
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, textAlign: "left", background: T.card, border: `1px solid ${T.line}`, borderRadius: 10, padding: 10, cursor: "pointer", width: "100%" }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, color: T.ink, fontWeight: 800 }}>{student.name}</div>
+                    <div style={{ fontSize: 12, color: T.sub, marginTop: 2 }}>
+                      {report.totalSurplus} extra attempt{report.totalSurplus === 1 ? "" : "s"} across module{report.groups.length === 1 ? "" : "s"} {report.groups.map((group) => group.week).join(", ")}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 13, color: T.info, fontWeight: 800, flexShrink: 0 }}>Open →</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
