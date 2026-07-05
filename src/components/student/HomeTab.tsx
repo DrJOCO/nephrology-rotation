@@ -4,7 +4,7 @@ import { PRO_TIPS } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
 import { getLevel } from "../../utils/gamification";
 import { getPatientSuggestedTopicGroups } from "../../utils/patientRecommendations";
-import { createQuickLogEntry, summarizeSuggestedGroup } from "../../utils/quickLog";
+import { clearQuickLogGuard, createQuickLogEntry, summarizeSuggestedGroup } from "../../utils/quickLog";
 import type {
   Announcement,
   Bookmarks,
@@ -49,6 +49,7 @@ interface HomeTabProps {
   patients: Patient[];
   setPatients: React.Dispatch<React.SetStateAction<Patient[]>>;
   onMarkPatientDirty: (id: string | number) => void;
+  onMarkPatientRemoved: (id: string | number) => void;
   onLogActivity: (type: string, label: string, detail?: string) => void;
   online?: boolean;
   competencySummary: CompetencySummary;
@@ -79,6 +80,7 @@ export default function HomeTab({
   patients,
   setPatients,
   onMarkPatientDirty,
+  onMarkPatientRemoved,
   onLogActivity,
   online = true,
   competencySummary,
@@ -187,14 +189,26 @@ export default function HomeTab({
   // Quick log on Today (cohort feedback): logging must be one tap from launch,
   // not a tab switch away. Same entry shape as the Consults-tab quick log; the
   // matched learning it unlocks renders further down this same screen.
-  const [quickLogConfirm, setQuickLogConfirm] = useState<{ topic: string; summary: string } | null>(null);
+  const [quickLogConfirm, setQuickLogConfirm] = useState<{ topic: string; entryId: string | number; summary: string } | null>(null);
   const handleQuickLogTopic = (topic: string) => {
     const entry = createQuickLogEntry(topic);
     onMarkPatientDirty(entry.id);
     setPatients(prev => [entry, ...prev]);
     onLogActivity("patient", "Consult topic logged", topic);
     const [group] = getPatientSuggestedTopicGroups([entry], completedItems);
-    setQuickLogConfirm({ topic, summary: group ? summarizeSuggestedGroup(group) : "matched learning appears below" });
+    setQuickLogConfirm({ topic, entryId: entry.id, summary: group ? summarizeSuggestedGroup(group) : "matched learning appears below" });
+  };
+  // Mirrors PatientTab.undoQuickLog: removes the just-logged entry (points
+  // self-correct since they derive from the patients array) and clears the
+  // dedupe guard so a deliberate re-log works immediately.
+  const undoQuickLog = () => {
+    if (!quickLogConfirm) return;
+    const { topic, entryId } = quickLogConfirm;
+    onMarkPatientRemoved(entryId);
+    setPatients(prev => prev.filter(p => p.id !== entryId));
+    onLogActivity("patient", "Consult topic undone", topic);
+    clearQuickLogGuard(topic);
+    setQuickLogConfirm(null);
   };
 
   const handleCompleteSuggestedTopic = (group: (typeof patientSuggestedGroups)[number]) => {
@@ -244,6 +258,7 @@ export default function HomeTab({
         onLogTopic={handleQuickLogTopic}
         confirm={quickLogConfirm}
         onDismissConfirm={() => setQuickLogConfirm(null)}
+        onUndo={undoQuickLog}
       />
 
       {activePatientList.length > 0 && (

@@ -48,7 +48,7 @@ function TestHarness() {
       return () => {
         overlayCloseRef.current = null;
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+       
     }, [isOpen]);
   };
 

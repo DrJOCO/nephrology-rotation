@@ -58,6 +58,7 @@ function renderHomeTab(patients: Patient[]) {
       patients={patients}
       setPatients={() => {}}
       onMarkPatientDirty={() => {}}
+      onMarkPatientRemoved={() => {}}
       onLogActivity={() => {}}
       online
       competencySummary={COMPETENCY_SUMMARY}

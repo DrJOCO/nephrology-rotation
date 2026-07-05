@@ -310,7 +310,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       return () => {
         overlayCloseRef.current = null;
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+       
     }, [isOpen]);
   };
 
