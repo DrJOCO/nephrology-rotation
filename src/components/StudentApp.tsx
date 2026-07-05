@@ -273,9 +273,23 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   // Hardware / browser Back integration (§ nav). Seed the root entry, then map
   // popstate to the stored view so Back closes sub-views and retraces navigation
   // instead of exiting the installed PWA from any depth.
+  //
+  // Full-screen overlays (e.g. global search) don't push a navView of their own —
+  // they float on top of whatever tab/subView is current. Without special handling,
+  // hardware/browser Back would silently navigate the view underneath while the
+  // overlay stayed open. So a ref tracks whether an overlay is currently open; the
+  // effect below pushes a history entry when it opens, and popstate closes the
+  // overlay (instead of changing the view) whenever one is open.
+  const overlayCloseRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     window.history.replaceState({ navView: { tab: "today", subView: null } }, "");
     const onPop = (e: PopStateEvent) => {
+      if (overlayCloseRef.current) {
+        const close = overlayCloseRef.current;
+        overlayCloseRef.current = null;
+        close();
+        return;
+      }
       const view = (e.state && (e.state as { navView?: { tab: string; subView: SubView } }).navView) || null;
       setTab(view?.tab ?? "today");
       setSubView(view?.subView ?? null);
@@ -284,6 +298,36 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
+  // Registers `close` to run on the next hardware/browser Back while `isOpen` is
+  // true, pushing a history entry so Back has something to pop instead of falling
+  // through to the view underneath. Shared by every full-screen overlay layer.
+  const useBackClosesOverlay = (isOpen: boolean, close: () => void) => {
+    useEffect(() => {
+      if (!isOpen) return;
+      window.history.pushState({ overlay: true }, "");
+      overlayCloseRef.current = close;
+      return () => {
+        overlayCloseRef.current = null;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
+  };
+
+  // Search is a full-screen overlay (GlobalSearchOverlay, position: fixed / inset: 0)
+  // that floats above the current tab/subView — see useBackClosesOverlay above for why
+  // hardware/browser Back needs special handling for it.
+  useBackClosesOverlay(searchOpen, () => setSearchOpen(false));
+  // Closing from in-app UI (X button, selecting a result, Escape): if the overlay's
+  // history entry is still on top, pop it so hardware Back doesn't later land on a
+  // dead entry; otherwise (already popped via hardware Back) just clear the state.
+  const closeSearchOverlay = () => {
+    if (overlayCloseRef.current) {
+      window.history.back();
+    } else {
+      setSearchOpen(false);
+    }
+  };
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
     const arr = bookmarks[type] || [];
@@ -450,8 +494,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("library", { type: "guideDetail", id: "firstday" }); }} />}
       {searchOpen && (
         <GlobalSearchOverlay
-          onClose={() => setSearchOpen(false)}
-          onNavigate={(t, sv) => { navigate(t, sv as SubView | undefined); setSearchOpen(false); }}
+          onClose={closeSearchOverlay}
+          onNavigate={(t, sv) => { navigate(t, sv as SubView | undefined); closeSearchOverlay(); }}
           articles={articles}
           studySheets={studySheets}
           patients={patients}

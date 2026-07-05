@@ -119,8 +119,10 @@ export default function HomeTab({
     [activePatientList],
   );
   const patientSuggestedGroups = useMemo(
-    () => getPatientSuggestedTopicGroups(patients || [], completedItems),
-    [completedItems, patients],
+    // Match the Consults tab's definition of "active" (PatientTab.tsx) — only
+    // non-discharged consults should surface suggested learning here.
+    () => getPatientSuggestedTopicGroups(activePatientList, completedItems),
+    [activePatientList, completedItems],
   );
   const [suggestedExpanded, setSuggestedExpanded] = useState(false);
   const [selectedTopicIdx, setSelectedTopicIdx] = useState(0);
