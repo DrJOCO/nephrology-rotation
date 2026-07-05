@@ -158,3 +158,25 @@ export function validateFollowUp(text: string | undefined | null): FollowUpValid
   if (phiError) return { valid: false, error: phiError };
   return { valid: true, error: null };
 }
+
+// ── Quiz score entry validation (admin manual pre/post/module scores) ──
+
+/**
+ * Validate a manually entered quiz score. Both fields arrive as strings from
+ * the form. Rules: both must be whole numbers, total >= 1, 0 <= correct <= total.
+ * Returns an error message for inline display, or null when valid.
+ */
+export function validateQuizScoreEntry(correctRaw: string, totalRaw: string): string | null {
+  const correctText = (correctRaw || "").trim();
+  const totalText = (totalRaw || "").trim();
+  if (!correctText || !totalText) return "Enter both correct and total";
+  if (!/^\d+$/.test(correctText) || !/^\d+$/.test(totalText)) {
+    return "Scores must be whole numbers (no negatives or decimals)";
+  }
+  const correct = Number(correctText);
+  const total = Number(totalText);
+  if (!Number.isSafeInteger(correct) || !Number.isSafeInteger(total)) return "Score is too large";
+  if (total < 1) return "Total questions must be at least 1";
+  if (correct > total) return `Correct (${correct}) can't exceed total (${total})`;
+  return null;
+}

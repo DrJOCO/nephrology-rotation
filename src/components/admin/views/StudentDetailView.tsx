@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { T, TOPICS, FEEDBACK_TAGS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../../../data/constants";
-import { validatePatientForm, clampLength, LIMITS, PHI_WARNING } from "../../../utils/validation";
+import { validatePatientForm, validateQuizScoreEntry, clampLength, LIMITS, PHI_WARNING } from "../../../utils/validation";
 import { buildStudentProgressSummary } from "../../../utils/adminStudents";
 import type { AdminStudent, Patient, QuizScore, SharedSettings, FeedbackTag } from "../../../types";
 import type { NavigateFn, ArticlesData } from "../types";
@@ -26,6 +26,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
   const [scoreType, setScoreType] = useState("pre"); // pre, post, weekly
   const [scoreWeek, setScoreWeek] = useState(1);
   const [scoreForm, setScoreForm] = useState({ correct: "", total: "" });
+  const [scoreError, setScoreError] = useState<string>("");
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [patientStudentIds, setPatientStudentIds] = useState<string[]>(() => s?.studentId ? [s.studentId] : []);
   const [patForm, setPatForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
@@ -108,9 +109,14 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
   };
 
   const saveScore = () => {
-    const correct = parseInt(scoreForm.correct);
-    const total = parseInt(scoreForm.total);
-    if (isNaN(correct) || isNaN(total) || total === 0) return;
+    // Guard analytics: reject non-integers, negatives, total < 1, correct > total.
+    const validationError = validateQuizScoreEntry(scoreForm.correct, scoreForm.total);
+    if (validationError) {
+      setScoreError(validationError);
+      return;
+    }
+    const correct = parseInt(scoreForm.correct, 10);
+    const total = parseInt(scoreForm.total, 10);
     const entry: QuizScore = { correct, total, date: new Date().toISOString(), answers: [] };
 
     if (scoreType === "pre") {
@@ -124,6 +130,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
     }
     setShowScoreEntry(false);
     setScoreForm({ correct: "", total: "" });
+    setScoreError("");
   };
 
   const addPatient = () => {
@@ -394,7 +401,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             <label style={adminLabel}>Quiz Type</label>
             <div style={{ display: "flex", gap: 6 }}>
               {["pre", "post", "weekly"].map(t => (
-                <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); }}
+                <button key={t} onClick={() => { setScoreType(t); setScoreForm({ correct: "", total: t === "weekly" ? "10" : "25" }); setScoreError(""); }}
                   style={{ flex: 1, padding: "8px 0", background: scoreType === t ? T.ink : T.bg, color: scoreType === t ? T.bg : T.sub,
                     border: `1px solid ${scoreType === t ? T.ink : T.line}`, borderRadius: 2, fontSize: 13, fontWeight: 600, cursor: "pointer", textTransform: "capitalize" }}>
                   {t === "weekly" ? "Module" : t + "-Test"}
@@ -419,16 +426,21 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
             <div>
               <label style={adminLabel}>Correct</label>
-              <input type="number" value={scoreForm.correct} onChange={e => setScoreForm({...scoreForm, correct: e.target.value})} placeholder="e.g. 18" style={{...adminInput, fontFamily: T.mono}} />
+              <input type="number" min={0} step={1} value={scoreForm.correct} onChange={e => { setScoreForm({...scoreForm, correct: e.target.value}); setScoreError(""); }} placeholder="e.g. 18" style={{...adminInput, fontFamily: T.mono}} />
             </div>
             <div>
               <label style={adminLabel}>Total Questions</label>
-              <input type="number" value={scoreForm.total} onChange={e => setScoreForm({...scoreForm, total: e.target.value})} placeholder="e.g. 25" style={{...adminInput, fontFamily: T.mono}} />
+              <input type="number" min={1} step={1} value={scoreForm.total} onChange={e => { setScoreForm({...scoreForm, total: e.target.value}); setScoreError(""); }} placeholder="e.g. 25" style={{...adminInput, fontFamily: T.mono}} />
             </div>
           </div>
+          {scoreError && (
+            <div role="alert" style={{ fontSize: 13, color: T.danger, fontWeight: 600, marginBottom: 12, lineHeight: 1.4 }}>
+              {scoreError}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8 }}>
             <Button block variant="primary" onClick={saveScore} style={{ flex: 1 }}>Save Score</Button>
-            <Button block onClick={() => setShowScoreEntry(false)} style={{ flex: 1 }}>Cancel</Button>
+            <Button block onClick={() => { setShowScoreEntry(false); setScoreError(""); }} style={{ flex: 1 }}>Cancel</Button>
           </div>
         </div>
       )}
