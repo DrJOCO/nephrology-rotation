@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { BackLevelProvider, type BackLevelContextValue } from "../hooks/backLevelContext";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import store from "../utils/store";
@@ -299,20 +300,57 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  // Imperative core of the Back-closes-a-layer mechanism: push a history entry
+  // so Back has something to pop, install `close` on overlayCloseRef so the
+  // shared popstate handler runs it (instead of navigating), and return a
+  // cleanup that clears the ref if Back hasn't already consumed it. Shared by
+  // full-screen overlays (via useBackClosesOverlay) and deep leaf views' local
+  // detail levels (via the BackLevel context below), so there is exactly one
+  // history/popstate mechanism.
+  const registerBackHandler = (close: () => void) => {
+    window.history.pushState({ overlay: true }, "");
+    overlayCloseRef.current = close;
+    return () => {
+      if (overlayCloseRef.current === close) {
+        overlayCloseRef.current = null;
+      }
+    };
+  };
+
   // Registers `close` to run on the next hardware/browser Back while `isOpen` is
   // true, pushing a history entry so Back has something to pop instead of falling
   // through to the view underneath. Shared by every full-screen overlay layer.
   const useBackClosesOverlay = (isOpen: boolean, close: () => void) => {
     useEffect(() => {
       if (!isOpen) return;
-      window.history.pushState({ overlay: true }, "");
-      overlayCloseRef.current = close;
-      return () => {
-        overlayCloseRef.current = null;
-      };
-       
+      return registerBackHandler(close);
+
     }, [isOpen]);
   };
+
+  // Context value threading the same mechanism down to deep leaf views
+  // (TopicBrowseView, CasesView) whose local detail level would otherwise be
+  // skipped by hardware Back. `hasLiveLevelRef` tracks whether a registered
+  // level's pushed entry is still on the stack, so a leaf view's on-screen Back
+  // can pop it (rather than leaving a dead entry) — mirroring closeSearchOverlay.
+  const backLevelValue = useMemo<BackLevelContextValue>(() => {
+    const hasLiveLevelRef = { current: false };
+    return {
+      hasLiveLevelRef,
+      registerLevel: (close: () => void) => {
+        hasLiveLevelRef.current = true;
+        const cleanup = registerBackHandler(() => {
+          hasLiveLevelRef.current = false;
+          close();
+        });
+        return () => {
+          hasLiveLevelRef.current = false;
+          cleanup();
+        };
+      },
+    };
+
+  }, []);
 
   // Search is a full-screen overlay (GlobalSearchOverlay, position: fixed / inset: 0)
   // that floats above the current tab/subView — see useBackClosesOverlay above for why
@@ -328,6 +366,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       setSearchOpen(false);
     }
   };
+  // NOTE on the other full-screen layers (OnboardingOverlay, ProfileSheet, the
+  // two ConfirmSheets): registering them here would NOT be a safe one-liner.
+  // Unlike search — whose in-app close routes through closeSearchOverlay and
+  // pops the pushed history entry — those layers dismiss by flipping their
+  // boolean directly (X / Cancel / Confirm / ESC). That fires the effect
+  // cleanup but leaves the pushed entry on the stack, so a later hardware Back
+  // would pop a dead entry and navigate the tab underneath. Wiring them safely
+  // means threading a history.back()-aware close into each dismiss path, which
+  // is more than one line and out of scope for this conservative nav fix.
 
   const toggleBookmark = (type: keyof Bookmarks, itemId: string) => {
     const arr = bookmarks[type] || [];
@@ -553,6 +600,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
       <main id="main-content" tabIndex={-1} className="tab-content-enter" key={studentViewKey} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + ${subView ? "80px + " : ""}env(safe-area-inset-bottom, 0px))` }}>
+        <BackLevelProvider value={backLevelValue}>
         <StudentViewRouter
           tab={tab}
           subView={subView}
@@ -595,6 +643,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           markPatientDirty={markPatientDirty}
           markPatientRemoved={markPatientRemoved}
         />
+        </BackLevelProvider>
       </main>
 
       {/* Bottom Nav — hidden during quiz sessions so feedback isn't covered. */}

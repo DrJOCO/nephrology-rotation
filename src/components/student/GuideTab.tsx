@@ -34,7 +34,12 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
   const section = GUIDE_SECTIONS.find(s => s.id === sectionId);
   const data = GUIDE_DATA[sectionId];
 
-  if (!section || !data) return <div style={{ padding: 16 }}>Section not found.</div>;
+  if (!section || !data) return (
+    <div style={{ padding: 16 }}>
+      <BackButton onClick={onBack} />
+      <div style={{ padding: "16px 0" }}>Section not found.</div>
+    </div>
+  );
 
   return (
     <div style={{ padding: 16 }}>

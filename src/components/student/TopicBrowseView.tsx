@@ -4,6 +4,7 @@ import { WEEKLY_CASES } from "../../data/cases";
 import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
 import { getTopicIcon } from "../../data/topicIcons";
 import { useIsMobile } from "../../utils/helpers";
+import { useBackClosesLevel } from "../../hooks/backLevelContext";
 import { BackButton } from "./shared";
 import type { StudySheetsData } from "../../utils/studySheets";
 
@@ -36,6 +37,17 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
     setSelectedTopic(initialTopic);
   }, [initialTopic]);
 
+  // Grid → topic is a local detail level (state, not a pushed subView), so
+  // hardware Back would skip it and navigate the tab underneath. Register it so
+  // Back drops to the grid first. When opened via a deep-link (initialTopic),
+  // the primary Back is `onBack()` (already history-backed), so no local level
+  // to intercept here. `closeTopic` is used by the on-screen "All Topics" Back
+  // so it pops the pushed entry rather than leaving a dead one.
+  const closeTopic = useBackClosesLevel(
+    Boolean(selectedTopic) && !initialTopic,
+    () => setSelectedTopic(null),
+  );
+
   if (selectedTopic) {
     const content = getTopicContent(selectedTopic);
     const hasCoreContent = content.studySheets.length > 0 || content.decks.length > 0 || content.cases.length > 0 || content.quizWeeks.length > 0;
@@ -43,7 +55,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
     return (
       <div style={{ padding: 16 }}>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <BackButton onClick={() => (initialTopic ? onBack() : setSelectedTopic(null))} label={initialTopic ? "Back" : "All Topics"} />
+          <BackButton onClick={() => (initialTopic ? onBack() : closeTopic())} label={initialTopic ? "Back" : "All Topics"} />
           {initialTopic && (
             <BackButton onClick={() => setSelectedTopic(null)} label="Browse All Topics" placement="inline" style={{ color: T.ink, borderColor: T.line, marginTop: 0 }} />
           )}
