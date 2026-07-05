@@ -8,9 +8,11 @@ import { calculatePoints } from "../utils/gamification";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { normalizeAdminStudentRecord } from "../utils/adminStudents";
+import { deleteRotationFeedback, listRotationFeedback, type StoredFeedbackEntry } from "../utils/feedback";
 import { AdminAuthScreen } from "./admin/AdminAuthScreen";
 import { AdminPinGate, AdminPinSetupGate } from "./admin/AdminPinGate";
 import { AdminShell } from "./admin/AdminShell";
+import { StudentPreview } from "./admin/StudentPreview";
 import { AdminThemeToggle } from "./admin/AdminThemeToggle";
 import { PublishStatusBar } from "./admin/PublishStatusBar";
 import { SettingsTab } from "./admin/SettingsTab";
@@ -44,6 +46,9 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [tab, setTab] = useState("dashboard");
   const [subView, setSubView] = useState<AdminSubView>(null);
   const [loading, setLoading] = useState(true);
+  // "View as student" preview sandbox — StudentPreview enters/exits store
+  // preview mode on mount/unmount, so toggling this flag is the whole control.
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [firebaseAdmin, setFirebaseAdmin] = useState<AdminSession | null>(null);
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
@@ -77,6 +82,11 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const [clinicGuideTemplates, setClinicGuideTemplates] = useState<ClinicGuideTemplates>(() => normalizeClinicGuideTemplates());
   const [rotationCode, setRotationCodeState] = useState("");
+  // Student feedback ("this page confused me") — one-shot fetch on section
+  // open + explicit refresh, per spec (no realtime listener needed here).
+  const [studentFeedback, setStudentFeedback] = useState<StoredFeedbackEntry[]>([]);
+  const [studentFeedbackLoaded, setStudentFeedbackLoaded] = useState(false);
+  const [studentFeedbackLoading, setStudentFeedbackLoading] = useState(false);
   const [lastPublishedSnapshotJson, setLastPublishedSnapshotJson] = useState("");
   const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null);
   const [publishQueued, setPublishQueued] = useState(false);
@@ -423,18 +433,26 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     const existing = students.find(student => student.studentId === studentId);
     const merged = { ...existing, ...data };
     const updatedAt = new Date().toISOString();
-    store.setStudentData(studentId, {
-      ...data,
-      ...(typeof merged.year === "string" && merged.year.trim() ? { year: merged.year } : {}),
-      updatedAt,
+    // Writing a student the live roster doesn't know is a re-add: a deletion
+    // tombstone from an earlier Remove would make the rules reject the write,
+    // so clear it first. Admin-only — student joins can't clear tombstones.
+    const clearTombstone = existing
+      ? Promise.resolve()
+      : store.clearStudentTombstone(studentId).catch((error) => console.warn("Could not clear student tombstone:", error));
+    void clearTombstone.then(() => {
+      void store.setStudentData(studentId, {
+        ...data,
+        ...(typeof merged.year === "string" && merged.year.trim() ? { year: merged.year } : {}),
+        updatedAt,
+      });
+      void store.setTeamSnapshot(studentId, buildTeamSnapshot({
+        studentId,
+        name: typeof merged.name === "string" ? merged.name : "Unknown",
+        patients: Array.isArray(merged.patients) ? merged.patients as Patient[] : [],
+        points: calculatePoints(merged as Parameters<typeof calculatePoints>[0]),
+        updatedAt,
+      }));
     });
-    void store.setTeamSnapshot(studentId, buildTeamSnapshot({
-      studentId,
-      name: typeof merged.name === "string" ? merged.name : "Unknown",
-      patients: Array.isArray(merged.patients) ? merged.patients as Patient[] : [],
-      points: calculatePoints(merged as Parameters<typeof calculatePoints>[0]),
-      updatedAt,
-    }));
   }, [rotationCode, firebaseAdmin, students]);
 
   const recoverStudentToRecord = useCallback(async (sourceStudentId: string, targetStudentId: string) => {
@@ -470,6 +488,40 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
 
     setStudents(prev => prev.filter(existing => existing.studentId !== student.studentId && existing.id !== student.id));
   }, [firebaseAdmin, rotationCode]);
+
+  const refreshStudentFeedback = useCallback(async () => {
+    if (!rotationCode) return;
+    setStudentFeedbackLoading(true);
+    try {
+      const entries = await listRotationFeedback(rotationCode);
+      setStudentFeedback(entries);
+      setStudentFeedbackLoaded(true);
+    } catch (error) {
+      console.error("Failed to load student feedback:", error);
+      showToast("Could not load student feedback.", "error");
+    }
+    setStudentFeedbackLoading(false);
+  }, [rotationCode, showToast]);
+
+  const dismissStudentFeedback = useCallback(async (entryId: string) => {
+    if (!rotationCode) return;
+    const previous = studentFeedback;
+    setStudentFeedback((prev) => prev.filter((entry) => entry.id !== entryId));
+    try {
+      await deleteRotationFeedback(rotationCode, entryId);
+    } catch (error) {
+      console.error("Failed to dismiss student feedback:", error);
+      setStudentFeedback(previous);
+      showToast("Could not dismiss that feedback entry.", "error");
+    }
+  }, [rotationCode, studentFeedback, showToast]);
+
+  // Reset feedback state on rotation switch/disconnect so a new connection
+  // doesn't briefly show the previous rotation's entries.
+  useEffect(() => {
+    setStudentFeedback([]);
+    setStudentFeedbackLoaded(false);
+  }, [rotationCode]);
 
   const navigate = (t: string, sv: AdminSubView = null) => { setTab(t); setSubView(sv); };
   const activePin = (settings?.adminPin || "").trim();
@@ -717,6 +769,12 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     );
   }
 
+  // Full-screen student preview replaces the panel entirely while open, then
+  // returns the admin to exactly where they left off (tab/subView untouched).
+  if (previewOpen) {
+    return <StudentPreview rotationCode={rotationCode || null} onExit={() => setPreviewOpen(false)} />;
+  }
+
   const tabs = [
     { id: "dashboard", label: "Dashboard" },
     { id: "students", label: "Students" },
@@ -738,6 +796,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         onLock={() => setAuthed(false)}
         onSignOut={() => { void handleAdminSignOut(); }}
         onExit={onExit}
+        onPreview={() => setPreviewOpen(true)}
         themeToggle={<AdminThemeToggle />}
         contentKey={tab + (subView ? JSON.stringify(subView) : "")}
       >
@@ -785,7 +844,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             onPublish={() => { void publishSharedChanges(); }}
           />
         )}
-        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
+        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} studentFeedback={studentFeedback} studentFeedbackLoaded={studentFeedbackLoaded} studentFeedbackLoading={studentFeedbackLoading} onLoadStudentFeedback={refreshStudentFeedback} onDismissStudentFeedback={dismissStudentFeedback} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} articles={articles} onBack={() => navigate("dashboard")} />}
         {tab === "students" && (!subView || subView.type === "reviewDuplicates") && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} duplicateReview={subView?.type === "reviewDuplicates"} deleteStudentRecord={deleteStudentRecord} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} deleteStudentRecord={deleteStudentRecord} navigate={navigate} settings={settings} articles={articles} requestConfirm={requestConfirm} showToast={showToast} />}

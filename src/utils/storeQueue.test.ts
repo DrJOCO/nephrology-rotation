@@ -15,21 +15,39 @@ const mocks = vi.hoisted(() => {
   const remoteDocs = new Map<string, Record<string, unknown>>();
   const setDocCalls: Array<{ path: string; data: Record<string, unknown>; options?: { merge?: boolean } }> = [];
   const updateDocCalls: Array<{ path: string; data: Record<string, unknown> }> = [];
+  const deleteDocCalls: Array<{ path: string }> = [];
+  // Interleaved write/delete order, for ordering assertions (e.g. tombstone
+  // must land before the doc deletes).
+  const opLog: string[] = [];
   const fs = {
     doc: (_db: unknown, ...segments: string[]) => ({ path: segments.join("/") }),
+    collection: (_db: unknown, ...segments: string[]) => ({ path: segments.join("/") }),
     getDoc: async (ref: { path: string }) => {
       const data = remoteDocs.get(ref.path);
       return { exists: () => data !== undefined, data: () => data };
     },
+    getDocs: async (ref: { path: string }) => {
+      const prefix = `${ref.path}/`;
+      const docs = [...remoteDocs.keys()]
+        .filter((path) => path.startsWith(prefix) && !path.slice(prefix.length).includes("/"))
+        .map((path) => ({ id: path.slice(prefix.length), data: () => remoteDocs.get(path) }));
+      return { docs, size: docs.length };
+    },
     setDoc: async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
       setDocCalls.push({ path: ref.path, data, options });
+      opLog.push(`set:${ref.path}`);
     },
     updateDoc: async (ref: { path: string }, data: Record<string, unknown>) => {
       updateDocCalls.push({ path: ref.path, data });
     },
+    deleteDoc: async (ref: { path: string }) => {
+      deleteDocCalls.push({ path: ref.path });
+      opLog.push(`delete:${ref.path}`);
+      remoteDocs.delete(ref.path);
+    },
     deleteField: () => DELETE_FIELD,
   };
-  return { remoteDocs, setDocCalls, updateDocCalls, fs };
+  return { remoteDocs, setDocCalls, updateDocCalls, deleteDocCalls, opLog, fs };
 });
 
 vi.mock("./firebase", () => ({
@@ -440,6 +458,227 @@ describe("flushPendingSyncQueue clobber guard", () => {
   });
 });
 
+// ─── Per-field stamps (fieldStamps) ────────────────────────────────
+// Scalar conflicts become decidable when BOTH sides carry a fieldStamp:
+// authorship time wins, not the app-open-inflated doc updatedAt. Missing
+// stamps on either side must fall back to EXACTLY the old behavior.
+describe("flush merge with per-field stamps", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+    mocks.updateDocCalls.length = 0;
+  });
+
+  it("keeps a queued scalar whose stamp is newer than the remote's (offline profile edit survives)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      name: "Remote Name",
+      fieldStamps: { name: "2026-06-01T09:00:00.000Z" },
+    });
+    seedQueue([studentItem({
+      name: "Offline Edit",
+      fieldStamps: { name: "2026-06-01T15:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(0);
+    const write = lastStudentWrite();
+    expect(write.data.name).toBe("Offline Edit");
+    // The winning value keeps its authorship stamp, written as a partial map
+    // under merge:true so unrelated remote stamps are untouched.
+    expect(write.data.fieldStamps).toEqual({ name: "2026-06-01T15:00:00.000Z" });
+  });
+
+  it("drops a queued scalar whose stamp is older than the remote's", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      name: "Remote Name",
+      fieldStamps: { name: "2026-06-02T09:00:00.000Z" },
+    });
+    seedQueue([studentItem({
+      name: "Older Edit",
+      fieldStamps: { name: "2026-06-01T09:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(0);
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+  });
+
+  it("falls back to today's behavior (newest doc wins) when the remote has no stamp", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, name: "Remote Name" });
+    seedQueue([studentItem({
+      name: "Stamped Edit",
+      fieldStamps: { name: "2026-06-01T15:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    // Pre-migration remote doc: no stamps to compare, stale queued scalar is
+    // dropped exactly as before.
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+  });
+
+  it("accumulates fieldStamps key-wise when offline payloads merge in the queue", async () => {
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+    await store.setStudentData("stu-1", { year: "MS4", fieldStamps: { year: "2026-06-01T10:00:00.000Z" } });
+    await store.setStudentData("stu-1", { name: "Ana", fieldStamps: { name: "2026-06-01T11:00:00.000Z" } });
+
+    const [item] = readQueue();
+    expect((item.data as Record<string, unknown>).fieldStamps).toEqual({
+      year: "2026-06-01T10:00:00.000Z",
+      name: "2026-06-01T11:00:00.000Z",
+    });
+  });
+
+  it("keeps a residual field's stamp when a partial write settles the rest", async () => {
+    seedQueue([studentItem({
+      year: "MS4",
+      name: "Old",
+      fieldStamps: { year: "2026-06-01T10:00:00.000Z", name: "2026-06-01T11:00:00.000Z" },
+    }, OLDER)]);
+
+    await store.setStudentData("stu-1", { name: "Ana" });
+
+    const queue = readQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].data).toEqual({ year: "MS4", fieldStamps: { year: "2026-06-01T10:00:00.000Z" } });
+  });
+});
+
+// ─── Patient removals (removedPatients tombstones) ─────────────────
+// The old unionRecordsById documented that it resurrects deletions; the
+// stamped patient merge honors them instead: a removal beats an entry iff
+// removedAt > the entry's updatedAt (missing entry stamp = removal wins).
+describe("flush merge honors patient removals", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+  });
+
+  it("deletes a remote patient the queued payload removed", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [
+        { id: "p1", initials: "AB", updatedAt: "2026-06-01T09:00:00.000Z" },
+        { id: "p2", initials: "CD", updatedAt: "2026-06-01T09:00:00.000Z" },
+      ],
+    });
+    seedQueue([studentItem({
+      patients: [{ id: "p2", initials: "CD", updatedAt: "2026-06-01T09:00:00.000Z" }],
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect((write.data.patients as Array<{ id: string }>).map((p) => p.id)).toEqual(["p2"]);
+    expect(write.data.removedPatients).toEqual({ p1: "2026-06-02T08:00:00.000Z" });
+  });
+
+  it("keeps a patient edited after the removal (edit outruns the delete)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB", notes: "edited later", updatedAt: "2026-06-02T10:00:00.000Z" }],
+    });
+    seedQueue([studentItem({
+      patients: [],
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect((write.data.patients as Array<{ id: string }>).map((p) => p.id)).toEqual(["p1"]);
+  });
+
+  it("treats an unstamped entry as older, so the removal wins", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB" }],
+    });
+    seedQueue([studentItem({
+      patients: [],
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.patients).toEqual([]);
+  });
+
+  it("still unions and resurrects nothing extra when no removals are recorded (old behavior)", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB", notes: "remote edit" }],
+    });
+    seedQueue([studentItem({
+      patients: [{ id: "p1", initials: "AB", notes: "stale edit" }, { id: "p3", initials: "EF" }],
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    const patients = write.data.patients as Array<{ id: string; notes?: string }>;
+    expect(patients.map((p) => p.id).sort()).toEqual(["p1", "p3"]);
+    // Unstamped conflict: newest doc (remote) still wins, exactly as before.
+    expect(patients.find((p) => p.id === "p1")?.notes).toBe("remote edit");
+  });
+
+  it("applies a residual removal even when the payload carries no patients list", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [{ id: "p1", initials: "AB", updatedAt: "2026-06-01T09:00:00.000Z" }],
+      name: "Same Name",
+    });
+    seedQueue([studentItem({
+      completedItems: { articles: { A: true } },
+      removedPatients: { p1: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.patients).toEqual([]);
+    expect(write.data.removedPatients).toEqual({ p1: "2026-06-02T08:00:00.000Z" });
+  });
+
+  it("prunes removal records older than 60 days from the written map", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      patients: [],
+      removedPatients: { ancient: "2026-01-01T00:00:00.000Z" },
+    });
+    seedQueue([studentItem({
+      patients: [],
+      removedPatients: { recent: "2026-06-02T08:00:00.000Z" },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.removedPatients).toEqual({ recent: "2026-06-02T08:00:00.000Z" });
+  });
+});
+
 // ─── Direct-write clobber guard ────────────────────────────────────
 // The debounced auto-save and logout flush call setStudentData directly (no
 // offline queue involved). A stale device stamps that payload with a fresh
@@ -841,6 +1080,121 @@ describe("setShared flush with unmapped key", () => {
       expect.anything(),
     );
     warnSpy.mockRestore();
+  });
+});
+
+// ─── Deletion tombstones ───────────────────────────────────────────
+// deleteStudentData writes a tombstone BEFORE deleting the docs; the client
+// write paths check it whenever the remote doc is missing, so a device that
+// was offline during the delete stops cleanly instead of resurrecting the
+// doc (the documented gap the live listener could not cover).
+describe("student deletion tombstones", () => {
+  const TOMBSTONE_PATH = `rotations/${ROTATION}/studentTombstones/stu-1`;
+
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+    mocks.deleteDocCalls.length = 0;
+    mocks.opLog.length = 0;
+  });
+
+  it("deleteStudentData writes the tombstone before deleting the docs (no unguarded gap)", async () => {
+    await store.deleteStudentData("stu-1");
+
+    expect(mocks.opLog).toEqual([
+      `set:${TOMBSTONE_PATH}`,
+      `delete:${STUDENT_PATH}`,
+      `delete:${TEAM_PATH}`,
+    ]);
+    const tombstoneWrite = mocks.setDocCalls.find((call) => call.path === TOMBSTONE_PATH);
+    expect(tombstoneWrite?.data.studentId).toBe("stu-1");
+    expect(typeof tombstoneWrite?.data.deletedAt).toBe("string");
+  });
+
+  it("flush drops a tombstoned student's queued writes, purges the queue, and emits the removal event", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+    const removedEvents: Array<Record<string, unknown>> = [];
+    const onRemoved = (event: Event) => removedEvents.push((event as CustomEvent).detail);
+    window.addEventListener("neph:student-removed", onRemoved);
+    seedQueue([
+      studentItem({ name: "Ghost", completedItems: { articles: { A: true } } }, OLDER),
+      { kind: "setTeamSnapshot", rotationCode: ROTATION, studentId: "stu-1", data: { points: 5, updatedAt: OLDER }, updatedAt: OLDER },
+    ]);
+
+    const remaining = await store.flushPendingSyncQueue();
+    window.removeEventListener("neph:student-removed", onRemoved);
+
+    expect(remaining).toBe(0);
+    expect(readQueue()).toHaveLength(0);
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+    // The same-flush team snapshot is dropped too, not written first.
+    expect(mocks.setDocCalls.filter((call) => call.path === TEAM_PATH)).toHaveLength(0);
+    expect(removedEvents).toEqual([{ rotationCode: ROTATION, studentId: "stu-1" }]);
+  });
+
+  it("guarded setStudentData stops cleanly on a tombstone: skipped, queue purged, event emitted", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+    seedQueue([{ kind: "setTeamSnapshot", rotationCode: ROTATION, studentId: "stu-1", data: { points: 5 }, updatedAt: OLDER }]);
+    const removedEvents: Array<Record<string, unknown>> = [];
+    const onRemoved = (event: Event) => removedEvents.push((event as CustomEvent).detail);
+    window.addEventListener("neph:student-removed", onRemoved);
+
+    const result = await store.setStudentData("stu-1", {
+      name: "Ghost",
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: OLDER });
+    window.removeEventListener("neph:student-removed", onRemoved);
+
+    expect(result).toEqual({ status: "skipped", updatedAt: null });
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+    expect(readQueue()).toHaveLength(0);
+    expect(removedEvents).toEqual([{ rotationCode: ROTATION, studentId: "stu-1" }]);
+  });
+
+  it("proceeds as a first write when the doc is missing and no tombstone exists", async () => {
+    const result = await store.setStudentData("stu-1", {
+      name: "First Sync",
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: null });
+
+    expect(result.status).toBe("applied");
+    const write = lastStudentWrite();
+    expect(write.data.name).toBe("First Sync");
+  });
+
+  it("does not tombstone-check unguarded writes (admin paths clear tombstones explicitly)", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+    const getDocSpy = vi.spyOn(mocks.fs, "getDoc");
+
+    const result = await store.setStudentData("stu-1", { name: "Restored", updatedAt: NEWER });
+
+    expect(getDocSpy).not.toHaveBeenCalled();
+    expect(result.status).toBe("applied");
+    getDocSpy.mockRestore();
+  });
+
+  it("clearStudentTombstone deletes the tombstone doc", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+
+    await store.clearStudentTombstone("stu-1");
+
+    expect(mocks.deleteDocCalls.map((call) => call.path)).toContain(TOMBSTONE_PATH);
+    expect(mocks.remoteDocs.has(TOMBSTONE_PATH)).toBe(false);
+  });
+
+  it("deleteRotation deletes the studentTombstones subcollection docs", async () => {
+    mocks.remoteDocs.set(`rotations/${ROTATION}/students/stu-9`, { name: "X" });
+    mocks.remoteDocs.set(`rotations/${ROTATION}/studentTombstones/stu-9`, { studentId: "stu-9" });
+
+    await store.deleteRotation(ROTATION);
+
+    const deleted = mocks.deleteDocCalls.map((call) => call.path);
+    expect(deleted).toContain(`rotations/${ROTATION}/students/stu-9`);
+    expect(deleted).toContain(`rotations/${ROTATION}/studentTombstones/stu-9`);
+    expect(deleted).toContain(`rotations/${ROTATION}`);
   });
 });
 

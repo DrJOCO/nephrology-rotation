@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { BackLevelProvider, type BackLevelContextValue } from "../hooks/backLevelContext";
 import { T, WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
@@ -12,11 +12,14 @@ import { scrollWindowToTop, useIsMobile, useOnline } from "../utils/helpers";
 import { calculatePoints, checkAchievements, updateStreak } from "../utils/gamification";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
-import { buildCompetencySummary } from "../utils/competency";
-import { getStudentCurrentModule, hasRotationEnded } from "../utils/moduleProgression";
-import { buildBookmarkActivityDetail, describeStudentNavigation } from "../utils/activityLog";
-import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
-import { getConsultTopicCompletionKey } from "../utils/patientRecommendations";
+import { getConsultTopicCompletionKey } from "../utils/consultTopicKey";
+import { flushPendingFeedback } from "../utils/feedback";
+// NOTE: activityLog, reflections, competency, and moduleProgression each
+// statically import the bulk content datasets (cases/quizzes/guides/…). To keep
+// them out of the always-loaded boot chunk they are NOT imported at module top:
+// competency/moduleProgression now run inside the lazy StudentViewRouter, and
+// activityLog/reflections helpers are dynamically import()-ed inside the event
+// handlers that need them (navigate, toggleBookmark, handleSubmitReflection).
 import {
   useStudentAuth,
   normalizeEmail,
@@ -35,13 +38,29 @@ import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, SharedSet
 // Critical-path components (eager)
 import OnboardingOverlay from "./student/OnboardingOverlay";
 import LoginScreen from "./student/LoginScreen";
-import GlobalSearchOverlay from "./student/GlobalSearchOverlay";
 import ProfileSheet from "./student/ProfileSheet";
+import FeedbackSheet from "./student/FeedbackSheet";
 import StudentHeader from "./student/StudentHeader";
 import OfflineSyncBanner from "./student/OfflineSyncBanner";
 import StudentBottomNav from "./student/StudentBottomNav";
-import StudentViewRouter from "./student/StudentViewRouter";
 import { ConfirmSheet } from "./student/shared";
+
+// Lazy-loaded so the bulk content datasets they pull in (quizzes/cases/guides/
+// trials/studySheets/inpatientGuides/resources/clinicGuides/rotationGuides) ride
+// their own chunks instead of the always-loaded boot graph. StudentViewRouter is
+// the tab/subView switch (incl. HomeTab); GlobalSearchOverlay builds the full
+// search index and only mounts when the student opens search — so its corpus
+// loads on first open. See src/App.tsx AdminPanel for the same pattern.
+const StudentViewRouter = lazy(() => import("./student/StudentViewRouter"));
+const GlobalSearchOverlay = lazy(() => import("./student/GlobalSearchOverlay"));
+
+// Suspense fallback for the main content area — mirrors App.tsx's styled
+// Admin fallback and the router's own LazyFallback, using T tokens.
+const StudentViewFallback = () => (
+  <div style={{ padding: 40, textAlign: "center" }}>
+    <div style={{ color: T.sub, fontFamily: T.serif, fontSize: 14 }}>Loading...</div>
+  </div>
+);
 
 function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const isMobile = useIsMobile();
@@ -75,6 +94,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   // Phase 2 (spec §01): profile sheet holds name, code, theme toggle, end-session.
   const [profileOpen, setProfileOpen] = useState(false);
+  // Zero-discovery in-app feedback ("this page confused me") — see FeedbackSheet.
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const online = useOnline();
   // Latest student-doc updatedAt we know about — multi-device bookkeeping shared by
   // both hooks: useStudentAuth stamps it on join/profile writes, useStudentSync stamps
@@ -136,6 +157,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const {
     loading,
     pendingSyncCount,
+    studentRemoved,
     syncTimerRef,
     markPatientDirty,
     markPatientRemoved,
@@ -189,6 +211,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const { searchOpen, setSearchOpen } = useGlobalSearchShortcut();
   const { installPromptVariant, handleInstallApp, dismissInstallPrompt } = useInstallPrompt({ nameSet, joinedAt });
+
+  // Retry any feedback stranded by hospital wifi: on app load, and whenever
+  // the browser regains connectivity.
+  useEffect(() => {
+    void flushPendingFeedback();
+    const onOnline = () => { void flushPendingFeedback(); };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
@@ -253,9 +284,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     // No-op when re-selecting the current root tab — avoids stacking dead
     // history entries that make Back appear to do nothing.
     if (t === tab && sv === null && subView === null) return;
-    const activity = describeStudentNavigation(sv, { articlesByWeek: articles, clinicGuides });
-    if (activity) {
-      logActivity(activity.type, activity.label, activity.detail);
+    // describeStudentNavigation lives in activityLog, which statically imports the
+    // bulk content datasets — load it on demand so it stays out of the boot chunk.
+    // The activity-log detail is a background nicety (never blocks navigation), so
+    // resolving it a tick later via dynamic import is behavior-preserving.
+    if (sv) {
+      void import("../utils/activityLog").then(({ describeStudentNavigation }) => {
+        const activity = describeStudentNavigation(sv, { articlesByWeek: articles, clinicGuides });
+        if (activity) logActivity(activity.type, activity.label, activity.detail);
+      });
     }
     // Push a browser-history entry carrying the destination view so the hardware
     // / browser Back gesture (and in-app Back, via goBack) retraces navigation.
@@ -383,18 +420,35 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       ...prev,
       [type]: exists ? prev[type].filter(id => id !== itemId) : [...prev[type], itemId],
     }));
-    logActivity(
-      "bookmark",
-      exists ? "Bookmark removed" : "Bookmark saved",
-      buildBookmarkActivityDetail(type, itemId, articles),
-    );
+    // buildBookmarkActivityDetail (activityLog) statically imports bulk content;
+    // load it on demand so the boot chunk stays lean. The detail is a background
+    // label — resolving it a tick later is behavior-preserving.
+    void import("../utils/activityLog").then(({ buildBookmarkActivityDetail }) => {
+      logActivity(
+        "bookmark",
+        exists ? "Bookmark removed" : "Bookmark saved",
+        buildBookmarkActivityDetail(type, itemId, articles),
+      );
+    });
   };
 
   const handleSubmitReflection = async ({ saw, unclear }: { saw: string; unclear: string }) => {
+    // reflections + moduleProgression both statically import bulk content
+    // (quizzes/cases); load them on demand from this already-async handler.
+    const [{ buildReflectionEntry, addReflectionItemsToSrQueue, buildReflectionActivityDetail }, { getStudentCurrentModule }] = await Promise.all([
+      import("../utils/reflections"),
+      import("../utils/moduleProgression"),
+    ]);
+    const fallbackWeek = getStudentCurrentModule({
+      rotationStart: sharedSettings?.rotationStart,
+      totalWeeks,
+      completedItems,
+      weeklyScores,
+    }) || 1;
     const entry = buildReflectionEntry({
       saw,
       unclear,
-      fallbackWeek: currentWeek || 1,
+      fallbackWeek,
       srQueue,
     });
     const nextReflections = [...reflections.filter((item) => item.dayKey !== entry.dayKey), entry].slice(-30);
@@ -408,6 +462,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const handleLogout = async () => {
     setLogoutConfirmOpen(false);
+    // In "View as student" preview, "End session" must not mutate real state
+    // (no signOutFirebase — that would kill the admin's session — and no real
+    // localStorage teardown). Just leave the sandbox, same as Exit preview.
+    if (store.isPreview()) {
+      onAdminToggle?.();
+      return;
+    }
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     await flushStudentSync();
     if (store.getPendingSyncCount() > 0) {
@@ -427,7 +488,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
     clearSavedStudentSignInEmail();
     setStoredStudentPinFlowMode(null);
-    ["neph_name", STUDENT_YEAR_KEY, "neph_pin", "neph_studentId", STUDENT_EMAIL_KEY, STUDENT_PENDING_JOIN_CODE_KEY, "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
+    ["neph_name", STUDENT_YEAR_KEY, "neph_pin", "neph_studentId", STUDENT_EMAIL_KEY, STUDENT_PENDING_JOIN_CODE_KEY, "neph_patients", "neph_weeklyScores", "neph_preScore", "neph_postScore", "neph_rotationCode", "neph_completedItems", "neph_gamification", "neph_bookmarks", "neph_srQueue", "neph_activityLog", "neph_reflections", "neph_removedPatients", JOINED_AT_KEY].forEach(k => localStorage.removeItem(k));
     store.setRotationCode(null);
     // Reset all state
     setStudentName("");
@@ -463,27 +524,13 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   };
 
   const totalWeeks = parseInt(sharedSettings?.duration || "4", 10);
-  const currentWeek = useMemo(() => getStudentCurrentModule({
-    rotationStart: sharedSettings?.rotationStart,
-    totalWeeks,
-    completedItems,
-    weeklyScores,
-  }), [completedItems, sharedSettings?.rotationStart, totalWeeks, weeklyScores]);
-  const rotationEnded = useMemo(
-    () => hasRotationEnded(sharedSettings?.rotationStart, totalWeeks),
-    [sharedSettings?.rotationStart, totalWeeks],
-  );
-  const competencySummary = useMemo(() => buildCompetencySummary({
-    weeklyScores,
-    preScore,
-    postScore,
-    completedItems,
-    srQueue,
-    currentWeek,
-    totalWeeks,
-    articlesByWeek: articles,
-    patients,
-  }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles, patients]);
+  const rotationStart = sharedSettings?.rotationStart;
+  // currentWeek / rotationEnded / competencySummary were previously computed here
+  // via getStudentCurrentModule / hasRotationEnded / buildCompetencySummary — all
+  // of which statically import the bulk content datasets (cases/quizzes/…). Those
+  // derived values are consumed ONLY by the lazy StudentViewRouter (HomeTab,
+  // LibraryHub, ProgressTab), so the computation now lives inside that lazy
+  // boundary and rides its chunk. StudentApp passes the raw inputs below.
 
   const activeRotationCode = rotationCode || store.getRotationCode() || "";
   const studentReadyForApp = Boolean(
@@ -494,6 +541,9 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     && emailFlowState === "idle",
   );
   const studentViewKey = useMemo(() => tab + (subView ? JSON.stringify(subView) : ""), [tab, subView]);
+  // Auto-captured page context for feedback — current tab/view identifier,
+  // e.g. "today" or "library/guideDetail". No typing required from the student.
+  const currentPageLabel = tab + (subView ? `/${subView.type}` : "");
 
   useEffect(() => {
     if (!studentReadyForApp) return;
@@ -534,20 +584,47 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     );
   }
 
+  // Admin removed this student's record (live delete, or discovered via a
+  // deletion tombstone after being offline): an honest end state instead of
+  // an app that silently stops saving. Sync is already stopped by the hook.
+  if (studentRemoved) {
+    return (
+      <div style={{ minHeight: "100vh", background: T.navyBg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: T.sans }}>
+        <div style={{ background: T.card, borderRadius: 16, padding: "28px 24px", maxWidth: 420, textAlign: "center", border: `1px solid ${T.line}` }}>
+          <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: "0 0 10px", fontWeight: 700 }}>
+            You were removed from this rotation
+          </h2>
+          <p style={{ color: T.sub, fontSize: 14, lineHeight: 1.6, margin: "0 0 20px" }}>
+            Your attending removed this student record from rotation {activeRotationCode || "this rotation"}.
+            Nothing more will sync from this device. If this is unexpected, check with your attending — they can restore your access.
+          </p>
+          <button
+            onClick={() => void handleLogout()}
+            style={{ padding: "12px 24px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: T.sans }}>
       {/* Skip to main content — Phase 2.5 (§12). Visually hidden until focused. */}
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
       {showOnboarding && <OnboardingOverlay onDismiss={() => setShowOnboarding(false)} onViewFirstDay={() => { setShowOnboarding(false); navigate("library", { type: "guideDetail", id: "firstday" }); }} />}
       {searchOpen && (
-        <GlobalSearchOverlay
-          onClose={closeSearchOverlay}
-          onNavigate={(t, sv) => { navigate(t, sv as SubView | undefined); closeSearchOverlay(); }}
-          articles={articles}
-          studySheets={studySheets}
-          patients={patients}
-          currentStudentId={studentId}
-        />
+        <Suspense fallback={<div style={{ position: "fixed", inset: 0, zIndex: 10000, background: T.bg }} />}>
+          <GlobalSearchOverlay
+            onClose={closeSearchOverlay}
+            onNavigate={(t, sv) => { navigate(t, sv as SubView | undefined); closeSearchOverlay(); }}
+            articles={articles}
+            studySheets={studySheets}
+            patients={patients}
+            currentStudentId={studentId}
+          />
+        </Suspense>
       )}
       {logoutConfirmOpen && (
         <ConfirmSheet
@@ -580,9 +657,19 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         gamification={gamification}
         onTitleActivate={() => { handleTitleTap(); navigate("today"); }}
         onOpenSearch={() => setSearchOpen(true)}
+        onOpenFeedback={() => setFeedbackOpen(true)}
         onOpenProfile={() => setProfileOpen(true)}
       />
       <OfflineSyncBanner online={online} pendingSyncCount={pendingSyncCount} />
+      {feedbackOpen && (
+        <FeedbackSheet
+          page={currentPageLabel}
+          studentId={studentId}
+          studentName={studentName}
+          rotationCode={activeRotationCode}
+          onClose={() => setFeedbackOpen(false)}
+        />
+      )}
       {profileOpen && (
         <ProfileSheet
           studentName={studentName}
@@ -601,6 +688,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
       {/* Content Area — Phase 2.5 (§12): <main> landmark + id for skip-to-content. */}
       <main id="main-content" tabIndex={-1} className="tab-content-enter" key={studentViewKey} style={{ padding: `0 0 calc(${T.navH + T.navPad}px + ${subView ? "80px + " : ""}env(safe-area-inset-bottom, 0px))` }}>
         <BackLevelProvider value={backLevelValue}>
+        <Suspense fallback={<StudentViewFallback />}>
         <StudentViewRouter
           tab={tab}
           subView={subView}
@@ -627,10 +715,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           announcements={announcements}
           clinicGuides={clinicGuides}
           clinicGuideTemplates={clinicGuideTemplates}
-          currentWeek={currentWeek}
+          rotationStart={rotationStart}
           totalWeeks={totalWeeks}
-          rotationEnded={rotationEnded}
-          competencySummary={competencySummary}
           online={online}
           studentId={studentId}
           installPromptVariant={installPromptVariant}
@@ -643,6 +729,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
           markPatientDirty={markPatientDirty}
           markPatientRemoved={markPatientRemoved}
         />
+        </Suspense>
         </BackLevelProvider>
       </main>
 

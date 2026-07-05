@@ -3,6 +3,7 @@ import { WEEKLY_CASES } from "../../../data/cases";
 import type { AdminStudent, SharedSettings } from "../../../types";
 import type { ArticlesData } from "../types";
 import { formatBriefDate } from "./format";
+import { isArticleCompleted } from "../../../utils/articleKeys";
 import { findTeachingTopicMeta, topicMatchesAny } from "./exposure";
 import {
   buildAdminCompetencySnapshot,
@@ -198,7 +199,7 @@ export function pickTeachingPlanResources(topic: string, targetStudents: DailyBr
     (articlesByWeek[week] || [])
       .filter((article) => topicMatchesAny(article.topic, aliases) || week === weeks[0])
       .map((article) => {
-        const completed = targetStudents.filter((student) => student.student.completedItems?.articles?.[article.url]).length;
+        const completed = targetStudents.filter((student) => isArticleCompleted(student.student.completedItems?.articles, article)).length;
         return { week, title: article.title, topic: article.topic, completed, total: targetStudents.length };
       })
   );

@@ -2,6 +2,7 @@ import { ARTICLES, CURRICULUM_DECKS } from "../../../data/constants";
 import { WEEKLY_QUIZZES } from "../../../data/quizzes";
 import { WEEKLY_CASES } from "../../../data/cases";
 import { getCurrentOrNextFriday } from "../../../utils/clinicRotation";
+import { isArticleCompleted } from "../../../utils/articleKeys";
 import type { CompletedItems, QuizScore, SubView, WeeklyScores } from "../../../types";
 import type { StudySheetsData } from "../../../utils/studySheets";
 import type { HeroCard, LearningPlan, NavAction, StartChecklistItem } from "./types";
@@ -55,7 +56,7 @@ export function buildLearningPlan({
 
     const weekSheetsDone = weekSheets.filter((sheet) => completedItems.studySheets?.[sheet.id]).length;
     const weekDecksDone = weekDecks.filter((deck) => completedItems.decks?.[deck.id]).length;
-    const weekArticlesDone = weekArticles.filter((article) => completedItems.articles?.[article.url]).length;
+    const weekArticlesDone = weekArticles.filter((article) => isArticleCompleted(completedItems.articles, article)).length;
     const weekCasesDone = weekCases.filter((item) => completedItems.cases?.[item.id]).length;
     const weekQuizTaken = (weeklyScores[week] || []).length > 0;
 

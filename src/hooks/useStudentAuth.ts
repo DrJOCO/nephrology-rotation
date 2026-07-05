@@ -44,6 +44,7 @@ const RESIDUAL_PROGRESS_KEYS = [
   "neph_activityLog",
   "neph_reflections",
   "neph_gamification",
+  "neph_removedPatients",
   JOINED_AT_KEY,
 ] as const;
 export type StudentLoginMode = "first_time" | "returning";
@@ -274,6 +275,20 @@ export function useStudentAuth(
   // Completes a pending email sign-in link or restores the current Firebase user,
   // and returns the session's student id ("" when no session was established).
   const bootstrapAuthSession = async (): Promise<string> => {
+    // "View as student" preview: seed a self-contained guest session WITHOUT
+    // any Firebase Auth call (no isStudentEmailLink, getCurrentStudentUser,
+    // signInAnonymously, or signOut). getSavedStudentSignInEmail also reads real
+    // localStorage, so it must not run either. The seeded neph_studentId is the
+    // synthetic preview id; authSessionKind "guest" + idle email flow are what
+    // StudentApp's studentReadyForApp gate needs to boot straight into the app.
+    if (store.isPreview()) {
+      const previewStudentId = (await store.get<string>("neph_studentId")) || "";
+      setStudentId(previewStudentId);
+      setAuthSessionKind("guest");
+      setEmailFlowState("idle");
+      return previewStudentId;
+    }
+
     let sessionStudentId = "";
     const savedEmail = normalizeEmail((await store.get<string>(STUDENT_EMAIL_KEY)) || getSavedStudentSignInEmail());
     const savedPinFlowMode = getStoredStudentPinFlowMode();
@@ -514,6 +529,9 @@ export function useStudentAuth(
       store.setStudentData(studentId, {
         name: trimmedName,
         ...studentSyncIdentity,
+        // Authorship stamp: if this edit is queued offline, the flush merge
+        // can prove it is newer than a doc merely re-stamped by an app open.
+        fieldStamps: { name: updatedAt },
         updatedAt,
       }),
       store.setTeamSnapshot(studentId, buildTeamSnapshot({
@@ -543,6 +561,8 @@ export function useStudentAuth(
     await store.setStudentData(studentId, {
       year: trimmedYear,
       ...studentSyncIdentity,
+      // Same authorship stamp as the name path — offline year edits survive.
+      fieldStamps: { year: updatedAt },
       updatedAt,
     });
   };

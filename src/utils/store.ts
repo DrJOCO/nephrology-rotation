@@ -1,5 +1,11 @@
 import { getBootstrapAdminLegacyUids, getCurrentAdminUser, getFirebase, isBootstrapAdminEmail, waitForAuthUser } from "./firebase";
-import { mergeCompletedItems, mergeWeeklyScores } from "./progressMerge";
+import {
+  mergeCompletedItems,
+  mergePatientsWithRemovals,
+  mergeRemovedPatientMaps,
+  mergeWeeklyScores,
+  pruneRemovedPatients,
+} from "./progressMerge";
 
  
 type FirestoreData = Record<string, any>;
@@ -70,6 +76,10 @@ const PENDING_SYNC_KEY = "neph_pendingSyncQueue";
 // reports lost offline work.
 const PENDING_SYNC_CORRUPT_KEY = "neph_pendingSyncQueue_corrupt";
 const PENDING_SYNC_EVENT = "neph:pending-sync-changed";
+// Fired when a write discovers this student's record was deleted by an admin
+// (deletion tombstone found where the doc used to be). useStudentSync listens
+// and surfaces the removed-student state instead of retrying forever.
+export const STUDENT_REMOVED_EVENT = "neph:student-removed";
 const rotationDocCacheKey = (code: string) => `neph_rotation_doc_${code}`;
 const studentDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_student_${studentId}`;
 const teamDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_team_${studentId}`;
@@ -77,7 +87,25 @@ const studentAssignmentCacheKey = (studentId: string) => `neph_student_assignmen
 
 let rotationCode: string | null = localStorage.getItem("neph_rotationCode") || null;
 
+// ─── Preview ("View as student") mode ────────────────────────────────
+// When the admin opens the student experience as a sandbox, ALL persistence
+// must be inert: no Firestore writes, no pending-sync enqueue, and no touching
+// the real localStorage (a shared hospital device may hold a real student's
+// `neph_*` session). Private get/set funnel through an in-memory Map instead,
+// and every write/mutation method below early-returns its honest "nothing
+// written" shape. Reads of SHARED rotation content still pass through so the
+// instructor previews what students actually see. See store.enterPreview.
+let previewMode = false;
+let previewStore: Map<string, unknown> | null = null;
+// The admin's real in-memory rotation pointer, parked while preview borrows
+// `rotationCode` to read the previewed rotation's shared content. Restored by
+// exitPreview so the admin panel resumes on its own rotation untouched.
+let preExitRotationCode: string | null = null;
+
 function readJson<T>(key: string): T | null {
+  if (previewMode && previewStore) {
+    return previewStore.has(key) ? (previewStore.get(key) as T) : null;
+  }
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) as T : null;
@@ -88,6 +116,12 @@ function readJson<T>(key: string): T | null {
 }
 
 function writeJson(key: string, value: unknown): void {
+  if (previewMode && previewStore) {
+    // Round-trip through JSON so the in-memory copy matches what localStorage
+    // would have returned (plain data, no live object references shared out).
+    previewStore.set(key, value === undefined ? null : JSON.parse(JSON.stringify(value)));
+    return;
+  }
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
@@ -104,6 +138,25 @@ function mergePayload<T extends PendingSyncData | Record<string, unknown>>(exist
     return { ...existing, ...next } as T;
   }
   return next;
+}
+
+// Student payloads carry two per-key maps that must accumulate rather than
+// replace when payloads merge (queue dedup, doc cache): fieldStamps (a later
+// partial write must not wipe the stamps of fields only the earlier payload
+// carries) and removedPatients (removals from both payloads stay honored).
+function mergeStudentPayload(existing: Record<string, unknown> | null | undefined, next: Record<string, unknown>): Record<string, unknown> {
+  if (!isPlainObject(existing)) return next;
+  const merged: Record<string, unknown> = { ...existing, ...next };
+  if (isPlainObject(existing.fieldStamps) || isPlainObject(next.fieldStamps)) {
+    merged.fieldStamps = {
+      ...(isPlainObject(existing.fieldStamps) ? existing.fieldStamps : {}),
+      ...(isPlainObject(next.fieldStamps) ? next.fieldStamps : {}),
+    };
+  }
+  if (isPlainObject(existing.removedPatients) || isPlainObject(next.removedPatients)) {
+    merged.removedPatients = mergeRemovedPatientMaps(existing.removedPatients, next.removedPatients);
+  }
+  return merged;
 }
 
 function withoutLegacyLoginPin(data: Record<string, unknown>): Record<string, unknown> {
@@ -209,7 +262,7 @@ function queuePendingSync(item: PendingSyncItem): void {
   if (existing.kind === "setShared" && item.kind === "setShared") {
     merged.data = mergePayload(existing.data, item.data);
   } else if (existing.kind === "setStudentData" && item.kind === "setStudentData") {
-    merged.data = mergePayload(existing.data, item.data);
+    merged.data = mergeStudentPayload(existing.data, item.data);
   } else if (existing.kind === "setTeamSnapshot" && item.kind === "setTeamSnapshot") {
     merged.data = mergePayload(existing.data, item.data);
   } else if (existing.kind === "updateRotation" && item.kind === "updateRotation") {
@@ -253,9 +306,17 @@ function settleQueuedSync(written: PendingSyncItem, priorSnapshot: string | null
     }
     if (isPlainObject(queued.data) && isPlainObject(written.data)) {
       const residual = Object.fromEntries(
-        Object.entries(queued.data).filter(([key]) => !Object.prototype.hasOwnProperty.call(written.data, key)),
+        Object.entries(queued.data).filter(([key]) => key !== "fieldStamps" && !Object.prototype.hasOwnProperty.call(written.data, key)),
       );
       if (Object.keys(residual).length > 0) {
+        // Residual fields keep their authorship stamps so the eventual flush
+        // merge can still decide their scalar conflicts per-field.
+        if (isPlainObject(queued.data.fieldStamps)) {
+          const residualStamps = Object.fromEntries(
+            Object.entries(queued.data.fieldStamps).filter(([key]) => Object.prototype.hasOwnProperty.call(residual, key)),
+          );
+          if (Object.keys(residualStamps).length > 0) residual.fieldStamps = residualStamps;
+        }
         next.push({ ...queued, data: residual } as PendingSyncItem);
         changed = true;
         continue;
@@ -290,7 +351,7 @@ function cacheStudentDoc(code: string, studentId: string, data: Record<string, u
   const existing = readJson<Record<string, unknown>>(studentDocCacheKey(code, studentId));
   writeJson(
     studentDocCacheKey(code, studentId),
-    mergePayload(existing ? withoutLegacyLoginPin(existing) : null, withoutLegacyLoginPin(data)),
+    mergeStudentPayload(existing ? withoutLegacyLoginPin(existing) : null, withoutLegacyLoginPin(data)),
   );
 }
 
@@ -414,6 +475,35 @@ async function readFlushRemoteDoc(
   return isPlainObject(data) ? data : null;
 }
 
+// True when an admin deleted this student (tombstone doc present). Only read
+// in the doc-missing case, so the common write path costs no extra reads.
+async function readStudentTombstone(
+  fs: FirebaseModules["fs"],
+  db: FirebaseModules["db"],
+  code: string,
+  studentId: string,
+): Promise<boolean> {
+  const snap = await fs.getDoc(fs.doc(db, "rotations", code, "studentTombstones", studentId));
+  return snap.exists();
+}
+
+function emitStudentRemoved(code: string, studentId: string): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(STUDENT_REMOVED_EVENT, { detail: { rotationCode: code, studentId } }));
+}
+
+// Drop queued writes for a student whose cloud record an admin deleted —
+// re-flushing them would silently resurrect the deleted doc.
+function discardQueuedStudentSyncItems(code: string, studentId: string): void {
+  if (!code || !studentId) return;
+  const queue = readPendingSyncQueue();
+  const next = queue.filter((item) =>
+    !((item.kind === "setStudentData" || item.kind === "setTeamSnapshot")
+      && item.rotationCode === code
+      && item.studentId === studentId));
+  if (next.length !== queue.length) writePendingSyncQueue(next);
+}
+
 function mergeSrQueues(remote: unknown, queued: unknown): unknown {
   if (!isPlainObject(remote)) return queued;
   if (!isPlainObject(queued)) return remote;
@@ -527,23 +617,40 @@ function mergeGamification(remote: unknown, queued: unknown): unknown {
 }
 
 function mergeStudentFlushPayload(remote: Record<string, unknown>, payload: Record<string, unknown>): Record<string, unknown> {
+  const remoteStamps = isPlainObject(remote.fieldStamps) ? remote.fieldStamps : {};
+  const queuedStamps = isPlainObject(payload.fieldStamps) ? payload.fieldStamps : {};
+  // Removals recorded on either side apply to the patient merge.
+  const removedPatients = mergeRemovedPatientMaps(remote.removedPatients, payload.removedPatients);
   const merged: Record<string, unknown> = {};
+  const mergedStamps: Record<string, string> = {};
+  const now = new Date().toISOString();
   for (const [field, queuedValue] of Object.entries(payload)) {
+    // Bookkeeping fields ride alongside the real fields and are resolved below.
+    if (field === "updatedAt" || field === "fieldStamps" || field === "removedPatients") continue;
     if (!Object.prototype.hasOwnProperty.call(remote, field)) {
       // Remote never saw this field; the queued value is the only copy.
       merged[field] = queuedValue;
+      const stamp = queuedStamps[field];
+      if (typeof stamp === "string") mergedStamps[field] = stamp;
       continue;
     }
     const remoteValue = remote[field];
     switch (field) {
-      case "completedItems": merged[field] = mergeCompletedItems(remoteValue, queuedValue); break;
-      case "srQueue": merged[field] = mergeSrQueues(remoteValue, queuedValue); break;
-      case "activityLog": merged[field] = mergeActivityLogs(remoteValue, queuedValue); break;
-      case "weeklyScores": merged[field] = mergeWeeklyScores(remoteValue, queuedValue); break;
-      case "gamification": merged[field] = mergeGamification(remoteValue, queuedValue); break;
+      case "completedItems": merged[field] = mergeCompletedItems(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "srQueue": merged[field] = mergeSrQueues(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "activityLog": merged[field] = mergeActivityLogs(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "weeklyScores": merged[field] = mergeWeeklyScores(remoteValue, queuedValue); mergedStamps[field] = now; break;
+      case "gamification": merged[field] = mergeGamification(remoteValue, queuedValue); mergedStamps[field] = now; break;
       case "patients":
+        // Per-entry stamps + removedPatients replace the old resurrect-deletes
+        // union: a deletion made on either device sticks unless the entry was
+        // edited after it was deleted.
+        merged[field] = mergePatientsWithRemovals(remoteValue, queuedValue, removedPatients);
+        mergedStamps[field] = now;
+        break;
       case "reflections":
         merged[field] = unionRecordsById(remoteValue, queuedValue);
+        mergedStamps[field] = now;
         break;
       case "preScore":
       case "postScore": {
@@ -552,25 +659,58 @@ function mergeStudentFlushPayload(remote: Record<string, unknown>, payload: Reco
         // offline quiz survives. Omit the field when the remote copy wins so
         // the merge write leaves it untouched.
         const winner = mergeQuizScores(remoteValue, queuedValue);
-        if (winner !== remoteValue) merged[field] = winner;
+        if (winner !== remoteValue) {
+          merged[field] = winner;
+          mergedStamps[field] = now;
+        }
         break;
       }
       case "bookmarks": {
         const union = mergeBookmarks(remoteValue, queuedValue);
-        if (union !== remoteValue) merged[field] = union;
+        if (union !== remoteValue) {
+          merged[field] = union;
+          mergedStamps[field] = now;
+        }
         break;
       }
-      default:
-        // Scalar field with no per-item timestamp or safe union (name, year,
-        // authType, …): newest doc updatedAt wins, so the newer remote copy is
-        // kept by omitting the stale queued value from the merge write.
+      default: {
+        // Scalar field with no per-item shape to union (name, year, authType,
+        // …). When BOTH sides carry a fieldStamp the conflict is decidable by
+        // authorship time — a queued offline profile edit survives a doc whose
+        // updatedAt was merely re-stamped by an app-open save. Stamps missing
+        // on either side (old client, pre-migration doc) fall back to the old
+        // rule: newest doc updatedAt wins, stale queued value dropped.
+        const remoteStamp = remoteStamps[field];
+        const queuedStamp = queuedStamps[field];
+        if (typeof remoteStamp === "string" && typeof queuedStamp === "string" && queuedStamp > remoteStamp) {
+          merged[field] = queuedValue;
+          mergedStamps[field] = queuedStamp;
+        }
         break;
+      }
+    }
+  }
+  // A queue residual can carry removals without a patients list; apply them to
+  // the remote list so the deletion still lands instead of waiting for the
+  // next patients write.
+  if (!Object.prototype.hasOwnProperty.call(payload, "patients")
+    && isPlainObject(payload.removedPatients)
+    && Array.isArray(remote.patients)) {
+    const filtered = mergePatientsWithRemovals(remote.patients, [], removedPatients);
+    if (filtered.length !== remote.patients.length) {
+      merged.patients = filtered;
+      mergedStamps.patients = now;
     }
   }
   if (Object.keys(merged).length > 0) {
+    if (Object.prototype.hasOwnProperty.call(payload, "removedPatients")) {
+      const pruned = pruneRemovedPatients(removedPatients, now);
+      if (Object.keys(pruned).length > 0) merged.removedPatients = pruned;
+    }
+    if (Object.keys(mergedStamps).length > 0) merged.fieldStamps = mergedStamps;
     // The unioned doc is a genuinely new state — stamp a fresh updatedAt so
     // other devices' staleness checks pick the merge up.
-    merged.updatedAt = new Date().toISOString();
+    merged.updatedAt = now;
   }
   return merged;
 }
@@ -585,10 +725,18 @@ async function flushPendingSyncQueue(): Promise<number> {
   }
 
   const failed = new Set<PendingSyncItem>();
+  // Students whose docs were found tombstoned during THIS flush: their later
+  // same-flush items (e.g. the queued team snapshot) are dropped too, since
+  // discarding the live queue doesn't rewind this loop's snapshot array.
+  const tombstoned = new Set<string>();
+  const tombstoneKey = (item: { rotationCode: string; studentId: string }) => `${item.rotationCode}/${item.studentId}`;
 
   for (const item of queue) {
     try {
       const { db, fs } = await getFirebase();
+      if ((item.kind === "setStudentData" || item.kind === "setTeamSnapshot") && tombstoned.has(tombstoneKey(item))) {
+        continue;
+      }
       if (item.kind === "setShared") {
         const field = KEY_TO_FIELD[item.key];
         if (!field) {
@@ -602,6 +750,16 @@ async function flushPendingSyncQueue(): Promise<number> {
         let payload = withoutLegacyLoginPin(item.data);
         const studentRef = fs.doc(db, "rotations", item.rotationCode, "students", item.studentId);
         const remote = await readFlushRemoteDoc(fs, studentRef);
+        if (!remote && await readStudentTombstone(fs, db, item.rotationCode, item.studentId)) {
+          // An admin deleted this student while this device was offline —
+          // flushing would resurrect the doc (this was the documented gap the
+          // live listener couldn't cover). Drop the payload, purge the
+          // student's remaining queued writes, and surface the removal.
+          tombstoned.add(tombstoneKey(item));
+          discardQueuedStudentSyncItems(item.rotationCode, item.studentId);
+          emitStudentRemoved(item.rotationCode, item.studentId);
+          continue;
+        }
         // Legacy queue items may lack updatedAt ("" here) — treat them as
         // stale so the merge guard protects whatever remote already has.
         if (remote && isNewerTimestamp(remote.updatedAt, typeof item.updatedAt === "string" ? item.updatedAt : "")) {
@@ -657,7 +815,41 @@ async function flushPendingSyncQueue(): Promise<number> {
   return remaining.length;
 }
 
+// Nothing was written — the shape setStudentData/setShared return so the
+// preview's no-op writes are indistinguishable from a real "no rotation" write.
+const PREVIEW_STUDENT_WRITE: StudentWriteResult = { status: "skipped", updatedAt: null };
+const PREVIEW_SHARED_WRITE = { applied: false, queued: false } as const;
+
 const store = {
+  // ─── Preview ("View as student") mode ────────────────────────────
+  // Seed the in-memory session (any `neph_*` keys the seed provides) and flip
+  // every write/mutation method to a no-op. The admin's real `neph_*`
+  // localStorage keys are neither read nor overwritten while preview is on.
+  enterPreview(seed?: Record<string, unknown>): void {
+    preExitRotationCode = rotationCode;
+    previewStore = new Map<string, unknown>();
+    if (seed) {
+      Object.entries(seed).forEach(([key, value]) => {
+        previewStore!.set(key, value === undefined ? null : JSON.parse(JSON.stringify(value)));
+      });
+    }
+    previewMode = true;
+    // Point shared-content reads at the previewed rotation. Falls back to the
+    // admin's connected rotation so Home/Library/Consults show real published
+    // content; the write guards keep this pointer inert for Firestore writes.
+    const seededCode = seed && typeof seed.neph_rotationCode === "string" ? seed.neph_rotationCode : null;
+    rotationCode = seededCode || preExitRotationCode;
+  },
+  exitPreview(): void {
+    previewMode = false;
+    previewStore = null;
+    rotationCode = preExitRotationCode;
+    preExitRotationCode = null;
+  },
+  isPreview(): boolean {
+    return previewMode;
+  },
+
   // ─── Private storage (always localStorage) ───────────────────────
   async get<T = unknown>(key: string): Promise<T | null> {
     return readJson<T>(key);
@@ -704,6 +896,7 @@ const store = {
   // (no rotation connected). Publish surfaces this instead of always claiming
   // success — see AdminPanel.publishSharedChanges.
   async setShared(key: string, val: FirestoreData | unknown[]): Promise<{ applied: boolean; queued: boolean }> {
+    if (previewMode) return { ...PREVIEW_SHARED_WRITE };
     const safeValue = key.startsWith("neph_shared_student_") && isPlainObject(val)
       ? withoutLegacyLoginPin(val)
       : val;
@@ -771,6 +964,13 @@ const store = {
 
   // ─── Rotation code management ────────────────────────────────────
   setRotationCode(code: string | null) {
+    // In preview the in-memory pointer may move (so shared-content reads target
+    // the previewed rotation), but the admin device's persisted `neph_rotationCode`
+    // must never change — enterPreview/exitPreview save and restore it.
+    if (previewMode) {
+      rotationCode = code;
+      return;
+    }
     rotationCode = code;
     if (code) localStorage.setItem("neph_rotationCode", code);
     else localStorage.removeItem("neph_rotationCode");
@@ -779,9 +979,13 @@ const store = {
     return rotationCode;
   },
   getPendingSyncCount(): number {
+    // The preview session never queues; surface 0 rather than the admin
+    // device's real backlog (which the student banner must not expose).
+    if (previewMode) return 0;
     return readPendingSyncQueue().length;
   },
   onPendingSyncChanged(callback: (count: number) => void): () => void {
+    if (previewMode) { callback(0); return () => {}; }
     if (typeof window === "undefined") return () => {};
     const handler = (event: Event) => {
       const nextCount = event instanceof CustomEvent && typeof event.detail?.count === "number"
@@ -794,6 +998,8 @@ const store = {
     return () => window.removeEventListener(PENDING_SYNC_EVENT, handler);
   },
   async flushPendingSyncQueue(): Promise<number> {
+    // Never drain the admin device's real retry queue while previewing.
+    if (previewMode) return 0;
     return flushPendingSyncQueue();
   },
 
@@ -945,10 +1151,19 @@ const store = {
   // brand-new student whose doc hasn't been created yet. Callers use it to
   // stop auto-saves from silently resurrecting the deleted record.
   onStudentDataChanged(studentId: string, callback: (data: FirestoreData) => void, onRemoved?: () => void): () => void {
+    // The preview student has no cloud doc; skip the listener so its snapshots
+    // (or a deleted-doc callback) can't perturb the sandbox.
+    if (previewMode) return () => {};
     if (!rotationCode || !studentId) return () => {};
     let unsub: (() => void) | null = null;
     let sawDoc = false;
     const code = rotationCode;
+    // The doc cache proves this student synced before. If the FIRST snapshot
+    // already says the doc is gone, the delete happened while this device was
+    // away — a tombstone check (cold-start counterpart of the sawDoc path)
+    // tells an admin delete apart from a student who simply never synced.
+    const hadPriorSync = !!readJson(studentDocCacheKey(code, studentId));
+    let checkedColdStartTombstone = false;
     getFirebase().then(({ db, fs }) => {
       unsub = fs.onSnapshot(fs.doc(db, "rotations", code, "students", studentId), (snap) => {
         if (snap.exists()) {
@@ -958,6 +1173,13 @@ const store = {
         } else if (sawDoc) {
           sawDoc = false;
           onRemoved?.();
+        } else if (hadPriorSync && !checkedColdStartTombstone) {
+          checkedColdStartTombstone = true;
+          readStudentTombstone(fs, db, code, studentId)
+            .then((tombstonePresent) => {
+              if (tombstonePresent) onRemoved?.();
+            })
+            .catch((err) => console.warn("Cold-start tombstone check failed:", err));
         }
       }, (err) => {
         console.warn("Student data listener error:", err);
@@ -973,6 +1195,7 @@ const store = {
   // merged field-wise under the flush-guard rules instead of overwriting, so
   // a stale device's full-doc save can't erase newer cloud progress.
   async setStudentData(studentId: string, data: Record<string, unknown>, options?: { baseUpdatedAt: string | null }): Promise<StudentWriteResult> {
+    if (previewMode) return { ...PREVIEW_STUDENT_WRITE };
     if (!rotationCode) return { status: "skipped", updatedAt: null };
     let payload = stripUndefinedDeep(withoutLegacyLoginPin(data));
     cacheStudentDoc(rotationCode, studentId, payload);
@@ -995,7 +1218,17 @@ const store = {
       const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
       if (options) {
         const remote = await readFlushRemoteDoc(fs, studentRef);
-        if (remote && isNewerTimestamp(remote.updatedAt, options.baseUpdatedAt ?? "")) {
+        if (!remote) {
+          // Doc missing: one extra read distinguishes "never synced" (proceed
+          // as a first write) from "admin deleted this student" (tombstone) —
+          // a tombstoned device must stop cleanly, not resurrect the doc or
+          // park the payload in the queue to fail forever.
+          if (await readStudentTombstone(fs, db, rotationCode, studentId)) {
+            discardQueuedStudentSyncItems(rotationCode, studentId);
+            emitStudentRemoved(rotationCode, studentId);
+            return { status: "skipped", updatedAt: null };
+          }
+        } else if (isNewerTimestamp(remote.updatedAt, options.baseUpdatedAt ?? "")) {
           payload = mergeStudentFlushPayload(remote, payload);
           if (Object.keys(payload).length === 0) {
             // Every queued field was superseded by newer remote data — the
@@ -1037,17 +1270,14 @@ const store = {
   // while this device was live — re-flushing them would silently resurrect
   // the deleted doc.
   discardQueuedStudentSync(studentId: string): void {
-    if (!rotationCode || !studentId) return;
-    const queue = readPendingSyncQueue();
-    const next = queue.filter((item) =>
-      !((item.kind === "setStudentData" || item.kind === "setTeamSnapshot")
-        && item.rotationCode === rotationCode
-        && item.studentId === studentId));
-    if (next.length !== queue.length) writePendingSyncQueue(next);
+    if (previewMode) return;
+    if (!rotationCode) return;
+    discardQueuedStudentSyncItems(rotationCode, studentId);
   },
 
   // ─── Write sanitized team snapshot to Firestore ──────────────────
   async setTeamSnapshot(studentId: string, data: object): Promise<void> {
+    if (previewMode) return;
     if (!rotationCode || !studentId) return;
     const payload = data as Record<string, unknown>;
     cacheTeamDoc(rotationCode, studentId, payload);
@@ -1101,6 +1331,7 @@ const store = {
   },
 
   async setStudentAssignment(studentId: string, data: { activeRotationCode: string; email?: string }): Promise<void> {
+    if (previewMode) return;
     const activeRotationCode = normalizeRotationCodeValue(data.activeRotationCode);
     if (!studentId || !activeRotationCode) return;
 
@@ -1200,6 +1431,7 @@ const store = {
 
   // ─── Update rotation metadata ───────────────────────────────────
   async updateRotation(code: string, data: Record<string, unknown>): Promise<void> {
+    if (previewMode) return;
     cacheRotationDoc(code, data);
     const queued: PendingSyncItem = { kind: "updateRotation", rotationCode: code, data, updatedAt: new Date().toISOString() };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -1219,9 +1451,19 @@ const store = {
 
   // ─── Delete a single student document ───────────────────────────
   async deleteStudentData(studentId: string): Promise<void> {
+    if (previewMode) return;
     if (!rotationCode || !studentId) return;
     try {
       const { db, fs } = await getFirebase();
+      // Tombstone FIRST: from this moment the security rules reject student
+      // creates/updates for this id, so there is no gap in which a concurrent
+      // device write (or a later offline-queue flush) recreates the doc.
+      const adminUser = await getCurrentAdminUser();
+      await fs.setDoc(fs.doc(db, "rotations", rotationCode, "studentTombstones", studentId), {
+        studentId,
+        deletedAt: new Date().toISOString(),
+        deletedBy: adminUser?.uid || "",
+      });
       await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "students", studentId));
       await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "team", studentId));
     } catch (e) {
@@ -1230,8 +1472,18 @@ const store = {
     }
   },
 
+  // Remove a student's deletion tombstone so admin flows (recovery target,
+  // re-adding a removed student) can write the doc again. Student joins never
+  // call this — a removed student cannot un-remove themselves.
+  async clearStudentTombstone(studentId: string): Promise<void> {
+    if (!rotationCode || !studentId) return;
+    const { db, fs } = await getFirebase();
+    await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "studentTombstones", studentId));
+  },
+
   // ─── Delete rotation and its students ───────────────────────────
   async deleteRotation(code: string): Promise<void> {
+    if (previewMode) return;
     try {
       const { db, fs } = await getFirebase();
       // Delete all students in subcollection first
@@ -1242,6 +1494,12 @@ const store = {
       const teamSnap = await fs.getDocs(fs.collection(db, "rotations", code, "team"));
       for (const s of teamSnap.docs) {
         await fs.deleteDoc(fs.doc(db, "rotations", code, "team", s.id));
+      }
+      // Tombstones go after the student docs so students stay blocked from
+      // recreating their docs while the rotation is being torn down.
+      const tombstonesSnap = await fs.getDocs(fs.collection(db, "rotations", code, "studentTombstones"));
+      for (const s of tombstonesSnap.docs) {
+        await fs.deleteDoc(fs.doc(db, "rotations", code, "studentTombstones", s.id));
       }
       // Delete rotation doc
       await fs.deleteDoc(fs.doc(db, "rotations", code));

@@ -663,7 +663,12 @@ export const LANDMARK_TRIALS = {
 };
 
 // ── Flat array of all trials for the Trial Library ──
-export const ALL_LANDMARK_TRIALS = Object.entries(LANDMARK_TRIALS)
+// /*#__PURE__*/ marks this computed initializer side-effect-free so bundlers can
+// tree-shake the whole trials module out of chunks that only pull it in via the
+// data/constants barrel re-export (e.g. any eager module importing T) — without
+// it, Object.entries(...).flatMap(...) reads as potentially side-effecting and
+// the ~85 kB trials dataset leaks into the always-loaded boot chunk.
+export const ALL_LANDMARK_TRIALS = /*#__PURE__*/ Object.entries(LANDMARK_TRIALS)
   .flatMap(([week, trials]) => trials.map(t => ({ ...t, week: parseInt(week) })));
 
 // ── Ordered category list for consistent rendering ──
