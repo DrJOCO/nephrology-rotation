@@ -4,7 +4,13 @@ export const TOPICS = [
   "Kidney Stones","AIN","Urinalysis","Hypertension","Diuretics","Fluid Management",
   "Calcium/Phosphorus","Proteinuria","Polycystic Kidney Disease",
   "APOL1-Associated Kidney Disease","Hepatorenal Syndrome","Contrast-Associated AKI","Rhabdomyolysis","Cardiorenal Syndrome","Diabetic Kidney Disease","SGLT2 Inhibitors","Peritoneal Dialysis",
-  "Nephron Physiology","GFR Assessment","Nephrotoxins","Other"
+  "GFR Assessment","Nephrotoxins","Other"
+  // "Nephron Physiology" was removed from the selectable list: it had zero linked
+  // content anywhere in the app, so offering it created a dead promise (a logged
+  // consult with no matching learning). Historical entries that already carry the
+  // string still render fine — it is retained in curriculum/competency mappings
+  // (competency.ts) so past coverage scoring is unchanged; it is simply no longer
+  // offered for new logs.
 ];
 
 export const COMMON_PATIENT_TOPICS = [
@@ -72,8 +78,10 @@ export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWee
   "Dialysis Access":      { studySheets: ["dialysis-cheatsheet"],           quizWeeks: [4] },
   "Transplant":           { studySheets: ["transplant-stones-drugs-cheatsheet"], quizWeeks: [4] },
   "Kidney Stones":        { studySheets: ["transplant-stones-drugs-cheatsheet"], quizWeeks: [4] },
+  "Nephrotoxins":         { studySheets: ["transplant-stones-drugs-cheatsheet"], quizWeeks: [4] },
   "AIN":                  { studySheets: ["aki-cheatsheet"],                quizWeeks: [1] },
   "Urinalysis":           { studySheets: ["gfr-urinalysis-cheatsheet"],     quizWeeks: [1] },
+  "GFR Assessment":       { studySheets: ["gfr-urinalysis-cheatsheet"],     quizWeeks: [1] },
   "Hypertension":         { studySheets: ["ckd-sglt2i-cheatsheet"],         quizWeeks: [3] },
   "Diuretics":            { studySheets: ["dialysis-cheatsheet"],           quizWeeks: [4] },
   "Fluid Management":     { studySheets: ["sodium-cheatsheet"],             quizWeeks: [2] },

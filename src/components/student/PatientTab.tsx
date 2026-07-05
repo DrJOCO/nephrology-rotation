@@ -5,7 +5,7 @@ import { inputLabel, inputStyle, EduDisclaimer, ConfirmSheet } from "./shared";
 import { useIsMobile } from "../../utils/helpers";
 import { getFollowUpState } from "../../utils/patient";
 import { getPatientSuggestedTopicGroups, type PatientSuggestedTopicGroup } from "../../utils/patientRecommendations";
-import { createQuickLogEntry, summarizeSuggestedGroup } from "../../utils/quickLog";
+import { createQuickLogEntry, summarizeSuggestedGroup, isDuplicateQuickLog, clearQuickLogGuard, OTHER_QUICK_LOG_SUMMARY } from "../../utils/quickLog";
 import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
 import type { CompletedItems, Patient, SubView } from "../../types";
 
@@ -390,17 +390,45 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
   // visible at the moment of effort instead of hiding on another tab.
   const [quickLogExpanded, setQuickLogExpanded] = useState(false);
   const [quickLogQuery, setQuickLogQuery] = useState("");
-  const [quickLogConfirm, setQuickLogConfirm] = useState<{ topic: string; summary: string } | null>(null);
+  const [quickLogConfirm, setQuickLogConfirm] = useState<{ topic: string; summary: string; entryId: string | number } | null>(null);
+  // Undo stays offered for a few seconds after a log, then the entry stands.
+  const [undoOffered, setUndoOffered] = useState(false);
+  useEffect(() => {
+    if (!quickLogConfirm) {
+      setUndoOffered(false);
+      return;
+    }
+    setUndoOffered(true);
+    const timer = window.setTimeout(() => setUndoOffered(false), 5000);
+    return () => window.clearTimeout(timer);
+  }, [quickLogConfirm]);
 
   const quickLogTopic = (topic: string) => {
+    // Double-tap guard: swallow an accidental repeat tap of the same topic.
+    if (isDuplicateQuickLog(topic)) return;
     const entry = createQuickLogEntry(topic);
     onMarkPatientDirty?.(entry.id);
     setPatients(prev => [entry, ...prev]);
     onLogActivity?.("patient", "Consult topic logged", topic);
     const [group] = getPatientSuggestedTopicGroups([entry], completedItems);
-    setQuickLogConfirm({ topic, summary: group ? summarizeSuggestedGroup(group) : "matched learning appears on Today" });
+    // Honesty: "Other" is filtered out of every recommendation surface, so it
+    // never earns linked learning — don't promise it.
+    const summary = topic === "Other"
+      ? OTHER_QUICK_LOG_SUMMARY
+      : (group ? summarizeSuggestedGroup(group) : "matched learning appears on Today");
+    setQuickLogConfirm({ topic, summary, entryId: entry.id });
     setQuickLogExpanded(false);
     setQuickLogQuery("");
+  };
+
+  const undoQuickLog = () => {
+    if (!quickLogConfirm) return;
+    const { topic, entryId } = quickLogConfirm;
+    onMarkPatientRemoved?.(entryId);
+    setPatients(prev => prev.filter(p => p.id !== entryId));
+    onLogActivity?.("patient", "Consult topic undone", topic);
+    clearQuickLogGuard(topic);
+    setQuickLogConfirm(null);
   };
 
   const toggleTopic = (t: string) => {
@@ -656,6 +684,12 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
                 {quickLogConfirm.topic} logged ✓ — {quickLogConfirm.summary}
               </div>
               <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                {undoOffered && (
+                  <button onClick={undoQuickLog}
+                    style={{ padding: "6px 12px", minHeight: 36, background: "none", color: T.success, border: `1px solid ${T.success}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                    Undo
+                  </button>
+                )}
                 {navigate && (
                   <button onClick={() => navigate("today")}
                     style={{ padding: "6px 12px", minHeight: 36, background: T.success, color: T.successInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
