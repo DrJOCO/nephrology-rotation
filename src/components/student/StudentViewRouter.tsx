@@ -137,6 +137,10 @@ function StudentViewRouter({
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Module ${subView.week} Quiz`}
             onBack={goBack}
             onFinish={(score) => {
+              // Record the attempt and seed spaced repetition, but do NOT navigate
+              // away — QuizEngine renders its own results screen on finish (score +
+              // missed-question review). Its Done button calls onBack (goBack) to
+              // return, matching the app's back convention.
               setWeeklyScores(prev => ({...prev, [subView.week]: [...(prev[subView.week]||[]), score]}));
               setSrQueue(prev => {
                 const afterQuiz = processQuizResults(score.answers || [], "weekly", subView.week, prev);
@@ -146,7 +150,6 @@ function StudentViewRouter({
                   : afterQuiz;
               });
               logActivity("quiz", `Module ${subView.week} Quiz`, `${score.correct}/${score.total}`);
-              navigate("today");
             }} />
         )}
         {tab === "today" && subView?.type === "reviewMissed" && (() => {

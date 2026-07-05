@@ -93,15 +93,26 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
       // Validate saved progress: indices must be in-bounds AND the question
       // set must be the same (fingerprint match).  This guards against dynamic
       // quizzes whose content changes between sessions.
+      // A snapshot marked done is a COMPLETED quiz — never resume it. Restoring
+      // into a finished state would drop the student back on the answered final
+      // question and record a duplicate attempt on finish. Reopening a completed
+      // quiz must start a fresh attempt, so we discard the stale snapshot and
+      // fall through to a new shuffle. (Belt-and-braces: handleNext already
+      // clears on completion; this also cleans up snapshots persisted by app
+      // versions that predate that fix.)
       const savedValid = saved?.shuffledOrder &&
+        !saved.done &&
         saved.fingerprint === questionsFingerprint &&
         saved.shuffledOrder.every(idx => idx >= 0 && idx < questions.length);
+      if (saved?.done) store.set(quizKey, null);
       if (savedValid) {
         setCurrent(saved.current || 0);
         setSelected(saved.selected ?? null);
         setAnswers(saved.answered || []);
         setCorrectCount(saved.score || 0);
-        setFinished(saved.done || false);
+        // savedValid guarantees !saved.done, so a restored quiz is always
+        // in-progress — never resume into the finished screen.
+        setFinished(false);
         setShowExplanation(saved.showExplanation || false);
         setShowResult(saved.showExplanation || false);
         setShuffledOrder(saved.shuffledOrder);
@@ -144,6 +155,14 @@ export default function QuizEngine({ questions, title, onBack, onFinish, questio
 
   const handleNext = () => {
     if (current + 1 >= quizLen) {
+      // Clear saved progress synchronously as the quiz completes — do NOT rely
+      // solely on the save effect, whose clear can be skipped if onFinish's
+      // parent state update unmounts us before the effect commits. A lingering
+      // snapshot would restore a completed quiz to its answered final question
+      // in a "finished" state and record a DUPLICATE attempt on every reopen.
+      // Duplicate weeklyScores can never be merged away (progressMerge unions
+      // by attempt date), so leaving one behind is permanently harmful.
+      store.set(quizKey, null);
       setFinished(true);
       onFinish({ correct: correctCount, total: quizLen, date: new Date().toISOString(), answers });
     } else {
