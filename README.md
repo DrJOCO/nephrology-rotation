@@ -47,6 +47,18 @@ Start the local app:
 npm run dev
 ```
 
+> **Dev safety:** plain `npm run dev` talks to the **production** Firebase
+> project — live cohort data. For development, prefer the local emulators:
+> run `npm run emulators` in one terminal and `npm run dev:safe` in another
+> (auth :9099, Firestore :8080, emulator UI at :4000). Nothing you do there
+> touches production. `npm run dev` prints a console warning as a reminder.
+
+To stage a deploy on a temporary preview URL before releasing to students:
+
+```bash
+npm run deploy:preview
+```
+
 Build production assets:
 
 ```bash
