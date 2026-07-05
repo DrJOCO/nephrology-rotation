@@ -1,6 +1,7 @@
 import { useState, lazy, Suspense, Component, ErrorInfo, ReactNode } from "react";
 import { T } from "./data/constants";
 import StudentApp from "./components/StudentApp";
+import UpdateToast from "./components/UpdateToast";
 const AdminPanel = lazy(() => import("./components/AdminPanel"));
 
 // One-reload-per-session guard. After a mid-rotation deploy, a stale open tab
@@ -120,6 +121,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AppInner />
+      {/* App-level so the SW update toast shows in both student and admin shells. */}
+      <UpdateToast />
     </ErrorBoundary>
   );
 }
