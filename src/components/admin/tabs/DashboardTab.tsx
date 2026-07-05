@@ -1,5 +1,5 @@
-import React from "react";
-import { ArrowRight, Check, GraduationCap } from "lucide-react";
+import React, { useEffect } from "react";
+import { ArrowRight, Check, GraduationCap, MessageCircle, RefreshCw, X } from "lucide-react";
 import { T, TOPICS } from "../../../data/constants";
 import type { NavigateFn, ArticlesData } from "../types";
 import type { AdminStudent, SharedSettings } from "../../../types";
@@ -8,8 +8,106 @@ import { buildCohortTeachingSignals, buildCohortCompetencyNeeds } from "../lib/c
 import { buildAdminAssessmentSignal } from "../lib/student-analytics";
 import { buildExposureCurriculumGap } from "../lib/exposure";
 import { buildDuplicateNameGroups } from "../lib/duplicates";
+import { getMinutesSince } from "../lib/format";
 import { Icon } from "../../student/Icon";
 import { HeadlineMetric, Section } from "../../student/shared";
+import type { StoredFeedbackEntry } from "../../../utils/feedback";
+
+// Coarse relative-time label for feedback entries — mirrors the granularity
+// admins already see via getSyncTone (minutes / hours / days), no need for a
+// full formatting library here.
+function relativeTimeLabel(createdAt: string): string {
+  const minutes = getMinutesSince(createdAt);
+  if (minutes === null) return "";
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
+
+function FeedbackSection({
+  rotationCode, studentFeedback, studentFeedbackLoaded, studentFeedbackLoading, onLoadStudentFeedback, onDismissStudentFeedback,
+}: {
+  rotationCode: string;
+  studentFeedback: StoredFeedbackEntry[];
+  studentFeedbackLoaded: boolean;
+  studentFeedbackLoading: boolean;
+  onLoadStudentFeedback: () => void;
+  onDismissStudentFeedback: (entryId: string) => void;
+}) {
+  // Load on section open (mount) — cheap one-shot fetch rather than a
+  // realtime listener, per spec.
+  useEffect(() => {
+    if (!rotationCode || studentFeedbackLoaded) return;
+    onLoadStudentFeedback();
+  }, [rotationCode, studentFeedbackLoaded, onLoadStudentFeedback]);
+
+  if (!rotationCode) return null;
+
+  return (
+    <Section
+      eyebrow="Student feedback"
+      title={
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <Icon as={MessageCircle} size={18} color={T.ink} />
+          What students are flagging.
+          {studentFeedback.length > 0 && (
+            <span style={{ fontFamily: T.mono, fontSize: 12, fontWeight: 700, color: T.brandInk, background: T.brand, borderRadius: 999, padding: "2px 8px" }}>
+              {studentFeedback.length}
+            </span>
+          )}
+        </span>
+      }
+      description="One-tap in-app reports, newest first. Dismiss once reviewed."
+      action={
+        <button
+          onClick={onLoadStudentFeedback}
+          disabled={studentFeedbackLoading}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: T.card, color: T.ink, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: studentFeedbackLoading ? "wait" : "pointer" }}
+        >
+          <Icon as={RefreshCw} size={14} color={T.ink} />
+          {studentFeedbackLoading ? "Refreshing…" : "Refresh"}
+        </button>
+      }
+    >
+      {studentFeedback.length === 0 ? (
+        <div style={{ padding: "14px 4px", fontSize: 13, color: T.sub, fontStyle: "italic" }}>
+          {studentFeedbackLoaded ? "No feedback yet." : "Loading…"}
+        </div>
+      ) : (
+        <div style={{ display: "grid", gap: 8 }}>
+          {studentFeedback.map((entry) => (
+            <div key={entry.id} style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "flex-start", background: T.card, border: `1px solid ${T.line}`, borderRadius: 10, padding: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 11, fontWeight: 700, color: T.info, background: T.infoBg, borderRadius: 6, padding: "2px 8px", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                    {entry.tag}
+                  </span>
+                  <span style={{ fontSize: 12, color: T.muted }}>{entry.page}</span>
+                  <span style={{ fontSize: 12, color: T.muted }}>· {relativeTimeLabel(entry.createdAt)}</span>
+                </div>
+                {entry.note && (
+                  <div style={{ fontSize: 13, color: T.ink, lineHeight: 1.5, marginBottom: 4 }}>{entry.note}</div>
+                )}
+                <div style={{ fontSize: 12, color: T.sub, fontWeight: 600 }}>{entry.name}</div>
+              </div>
+              <button
+                onClick={() => onDismissStudentFeedback(entry.id)}
+                aria-label={`Dismiss feedback from ${entry.name}`}
+                title="Dismiss"
+                style={{ background: "transparent", border: `1px solid ${T.line}`, borderRadius: 8, minHeight: 32, minWidth: 32, cursor: "pointer", color: T.muted, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+              >
+                <Icon as={X} size={14} color={T.muted} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Section>
+  );
+}
 
 function TypeBlock({ eyebrow, leadWord, italicWord, helper }: { eyebrow: string; leadWord: string; italicWord: string; helper: string }) {
   return (
@@ -31,7 +129,25 @@ function TypeBlock({ eyebrow, leadWord, italicWord, helper }: { eyebrow: string;
   );
 }
 
-export function DashboardTab({ students, navigate, settings, articles }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
+export function DashboardTab({
+  students, navigate, settings, articles, rotationCode,
+  studentFeedback, studentFeedbackLoaded, studentFeedbackLoading, onLoadStudentFeedback, onDismissStudentFeedback,
+}: {
+  students: AdminStudent[];
+  setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>;
+  navigate: NavigateFn;
+  rotationCode: string;
+  settings: SharedSettings;
+  articles: ArticlesData;
+  writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void;
+  requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>;
+  showToast: (message: string, tone?: AdminToastTone) => void;
+  studentFeedback: StoredFeedbackEntry[];
+  studentFeedbackLoaded: boolean;
+  studentFeedbackLoading: boolean;
+  onLoadStudentFeedback: () => void;
+  onDismissStudentFeedback: (entryId: string) => void;
+}) {
   const activeStudents = students.filter(s => s.status === "active");
   const teachingSignals = buildCohortTeachingSignals(activeStudents);
   const domainNeeds = buildCohortCompetencyNeeds(activeStudents, settings, articles);
@@ -70,6 +186,14 @@ export function DashboardTab({ students, navigate, settings, articles }: { stude
 
   return (
     <div style={{ padding: 16 }}>
+      <FeedbackSection
+        rotationCode={rotationCode}
+        studentFeedback={studentFeedback}
+        studentFeedbackLoaded={studentFeedbackLoaded}
+        studentFeedbackLoading={studentFeedbackLoading}
+        onLoadStudentFeedback={onLoadStudentFeedback}
+        onDismissStudentFeedback={onDismissStudentFeedback}
+      />
       {activeStudents.length > 0 && (
         <Section eyebrow="Attention queue" title="What needs you first.">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, padding: "16px 0", borderTop: `1.5px solid ${T.ink}`, borderBottom: `1px solid ${T.line}`, marginBottom: 14 }}>

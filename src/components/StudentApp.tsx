@@ -17,6 +17,7 @@ import { getStudentCurrentModule, hasRotationEnded } from "../utils/moduleProgre
 import { buildBookmarkActivityDetail, describeStudentNavigation } from "../utils/activityLog";
 import { addReflectionItemsToSrQueue, buildReflectionActivityDetail, buildReflectionEntry } from "../utils/reflections";
 import { getConsultTopicCompletionKey } from "../utils/patientRecommendations";
+import { flushPendingFeedback } from "../utils/feedback";
 import {
   useStudentAuth,
   normalizeEmail,
@@ -37,6 +38,7 @@ import OnboardingOverlay from "./student/OnboardingOverlay";
 import LoginScreen from "./student/LoginScreen";
 import GlobalSearchOverlay from "./student/GlobalSearchOverlay";
 import ProfileSheet from "./student/ProfileSheet";
+import FeedbackSheet from "./student/FeedbackSheet";
 import StudentHeader from "./student/StudentHeader";
 import OfflineSyncBanner from "./student/OfflineSyncBanner";
 import StudentBottomNav from "./student/StudentBottomNav";
@@ -75,6 +77,8 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   // Phase 2 (spec §01): profile sheet holds name, code, theme toggle, end-session.
   const [profileOpen, setProfileOpen] = useState(false);
+  // Zero-discovery in-app feedback ("this page confused me") — see FeedbackSheet.
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const online = useOnline();
   // Latest student-doc updatedAt we know about — multi-device bookkeeping shared by
   // both hooks: useStudentAuth stamps it on join/profile writes, useStudentSync stamps
@@ -190,6 +194,15 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
 
   const { searchOpen, setSearchOpen } = useGlobalSearchShortcut();
   const { installPromptVariant, handleInstallApp, dismissInstallPrompt } = useInstallPrompt({ nameSet, joinedAt });
+
+  // Retry any feedback stranded by hospital wifi: on app load, and whenever
+  // the browser regains connectivity.
+  useEffect(() => {
+    void flushPendingFeedback();
+    const onOnline = () => { void flushPendingFeedback(); };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   const logActivity = (type: string, label: string, detail = "") => {
     setActivityLog(prev => [...prev, { type, label, detail, timestamp: new Date().toISOString() }].slice(-50));
@@ -502,6 +515,9 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     && emailFlowState === "idle",
   );
   const studentViewKey = useMemo(() => tab + (subView ? JSON.stringify(subView) : ""), [tab, subView]);
+  // Auto-captured page context for feedback — current tab/view identifier,
+  // e.g. "today" or "library/guideDetail". No typing required from the student.
+  const currentPageLabel = tab + (subView ? `/${subView.type}` : "");
 
   useEffect(() => {
     if (!studentReadyForApp) return;
@@ -613,9 +629,19 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         gamification={gamification}
         onTitleActivate={() => { handleTitleTap(); navigate("today"); }}
         onOpenSearch={() => setSearchOpen(true)}
+        onOpenFeedback={() => setFeedbackOpen(true)}
         onOpenProfile={() => setProfileOpen(true)}
       />
       <OfflineSyncBanner online={online} pendingSyncCount={pendingSyncCount} />
+      {feedbackOpen && (
+        <FeedbackSheet
+          page={currentPageLabel}
+          studentId={studentId}
+          studentName={studentName}
+          rotationCode={activeRotationCode}
+          onClose={() => setFeedbackOpen(false)}
+        />
+      )}
       {profileOpen && (
         <ProfileSheet
           studentName={studentName}

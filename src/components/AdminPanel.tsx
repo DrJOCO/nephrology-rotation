@@ -8,6 +8,7 @@ import { calculatePoints } from "../utils/gamification";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { normalizeAdminStudentRecord } from "../utils/adminStudents";
+import { deleteRotationFeedback, listRotationFeedback, type StoredFeedbackEntry } from "../utils/feedback";
 import { AdminAuthScreen } from "./admin/AdminAuthScreen";
 import { AdminPinGate, AdminPinSetupGate } from "./admin/AdminPinGate";
 import { AdminShell } from "./admin/AdminShell";
@@ -81,6 +82,11 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [clinicGuides, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
   const [clinicGuideTemplates, setClinicGuideTemplates] = useState<ClinicGuideTemplates>(() => normalizeClinicGuideTemplates());
   const [rotationCode, setRotationCodeState] = useState("");
+  // Student feedback ("this page confused me") — one-shot fetch on section
+  // open + explicit refresh, per spec (no realtime listener needed here).
+  const [studentFeedback, setStudentFeedback] = useState<StoredFeedbackEntry[]>([]);
+  const [studentFeedbackLoaded, setStudentFeedbackLoaded] = useState(false);
+  const [studentFeedbackLoading, setStudentFeedbackLoading] = useState(false);
   const [lastPublishedSnapshotJson, setLastPublishedSnapshotJson] = useState("");
   const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null);
   const [publishQueued, setPublishQueued] = useState(false);
@@ -483,6 +489,40 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     setStudents(prev => prev.filter(existing => existing.studentId !== student.studentId && existing.id !== student.id));
   }, [firebaseAdmin, rotationCode]);
 
+  const refreshStudentFeedback = useCallback(async () => {
+    if (!rotationCode) return;
+    setStudentFeedbackLoading(true);
+    try {
+      const entries = await listRotationFeedback(rotationCode);
+      setStudentFeedback(entries);
+      setStudentFeedbackLoaded(true);
+    } catch (error) {
+      console.error("Failed to load student feedback:", error);
+      showToast("Could not load student feedback.", "error");
+    }
+    setStudentFeedbackLoading(false);
+  }, [rotationCode, showToast]);
+
+  const dismissStudentFeedback = useCallback(async (entryId: string) => {
+    if (!rotationCode) return;
+    const previous = studentFeedback;
+    setStudentFeedback((prev) => prev.filter((entry) => entry.id !== entryId));
+    try {
+      await deleteRotationFeedback(rotationCode, entryId);
+    } catch (error) {
+      console.error("Failed to dismiss student feedback:", error);
+      setStudentFeedback(previous);
+      showToast("Could not dismiss that feedback entry.", "error");
+    }
+  }, [rotationCode, studentFeedback, showToast]);
+
+  // Reset feedback state on rotation switch/disconnect so a new connection
+  // doesn't briefly show the previous rotation's entries.
+  useEffect(() => {
+    setStudentFeedback([]);
+    setStudentFeedbackLoaded(false);
+  }, [rotationCode]);
+
   const navigate = (t: string, sv: AdminSubView = null) => { setTab(t); setSubView(sv); };
   const activePin = (settings?.adminPin || "").trim();
 
@@ -804,7 +844,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             onPublish={() => { void publishSharedChanges(); }}
           />
         )}
-        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
+        {tab === "dashboard" && !subView && <DashboardTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} studentFeedback={studentFeedback} studentFeedbackLoaded={studentFeedbackLoaded} studentFeedbackLoading={studentFeedbackLoading} onLoadStudentFeedback={refreshStudentFeedback} onDismissStudentFeedback={dismissStudentFeedback} />}
         {tab === "dashboard" && subView?.type === "printCohort" && <PrintableReport mode="cohort" students={students} settings={settings} articles={articles} onBack={() => navigate("dashboard")} />}
         {tab === "students" && (!subView || subView.type === "reviewDuplicates") && <StudentsTab students={students} setStudents={setStudents} navigate={navigate} rotationCode={rotationCode} settings={settings} articles={articles} duplicateReview={subView?.type === "reviewDuplicates"} deleteStudentRecord={deleteStudentRecord} writeStudentToFirestore={writeStudentToFirestore} requestConfirm={requestConfirm} showToast={showToast} />}
         {tab === "students" && subView?.type === "studentDetail" && <StudentDetailView student={students.find(s => String(s.id) === subView.id)} students={students} onBack={() => navigate("students")} setStudents={setStudents} writeStudentToFirestore={writeStudentToFirestore} recoverStudentToRecord={recoverStudentToRecord} deleteStudentRecord={deleteStudentRecord} navigate={navigate} settings={settings} articles={articles} requestConfirm={requestConfirm} showToast={showToast} />}

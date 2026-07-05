@@ -1,21 +1,23 @@
-import { Search, User as UserIcon, Flame } from "lucide-react";
+import { MessageCircle, Search, User as UserIcon, Flame } from "lucide-react";
 import { T } from "../../data/constants";
 import type { Gamification } from "../../types";
 
 // ─────────────────────────────────────────────────────────────────────────
 // StudentHeader — Phase 2 (spec §01): collapsed 48px light title bar.
 // Name, rotation code, theme, end-session moved to ProfileSheet.
-// Kept inline: title, streak chip (or offline chip), search, profile button.
-// Pure move of the header block that previously lived inline in StudentApp.
+// Kept inline: title, streak chip (or offline chip), search, feedback,
+// profile button. Pure move of the header block that previously lived
+// inline in StudentApp.
 // ─────────────────────────────────────────────────────────────────────────
 function StudentHeader({
-  isMobile, online, gamification, onTitleActivate, onOpenSearch, onOpenProfile,
+  isMobile, online, gamification, onTitleActivate, onOpenSearch, onOpenFeedback, onOpenProfile,
 }: {
   isMobile: boolean;
   online: boolean;
   gamification: Gamification;
   onTitleActivate: () => void;
   onOpenSearch: () => void;
+  onOpenFeedback: () => void;
   onOpenProfile: () => void;
 }) {
   return (
@@ -71,6 +73,19 @@ function StudentHeader({
             }}
           >
             <Search size={18} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+          <button
+            onClick={onOpenFeedback}
+            aria-label="Report an issue or share feedback"
+            title="Feedback"
+            style={{
+              background: "transparent", border: "none", padding: 8,
+              minHeight: 44, minWidth: 44,
+              borderRadius: 8, cursor: "pointer",
+              color: T.ink, display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <MessageCircle size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
           <button
             onClick={onOpenProfile}
