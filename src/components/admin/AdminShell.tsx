@@ -32,6 +32,7 @@ export function AdminShell({
   onLock,
   onSignOut,
   onExit,
+  onPreview,
   themeToggle,
   contentKey,
   children,
@@ -45,6 +46,7 @@ export function AdminShell({
   onLock: () => void;
   onSignOut: () => void;
   onExit?: () => void;
+  onPreview?: () => void;
   themeToggle: React.ReactNode;
   contentKey: string;
   children: React.ReactNode;
@@ -99,6 +101,11 @@ export function AdminShell({
                   <span>Theme</span>
                   {themeToggle}
                 </div>
+                {onPreview && (
+                  <button onClick={() => { setMobileMenuOpen(false); onPreview(); }} style={{ width: "100%", padding: "10px 10px", background: "none", border: "none", color: T.ink, borderRadius: 0, textAlign: "left", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                    View as Student
+                  </button>
+                )}
                 {onExit && (
                   <button onClick={() => { setMobileMenuOpen(false); onExit(); }} style={{ width: "100%", padding: "10px 10px", background: "none", border: "none", color: T.ink, borderRadius: 0, textAlign: "left", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                     Student App
@@ -202,6 +209,11 @@ export function AdminShell({
           </div>
 
           <div style={{ marginTop: "auto", display: "grid", gap: 6, paddingTop: 24, borderTop: `1px solid ${T.line}` }}>
+            {onPreview && (
+              <button onClick={onPreview} style={{ width: "100%", padding: "9px 12px", marginBottom: 4, background: T.brand, color: T.brandInk, border: "none", borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer", textAlign: "center" }}>
+                View as Student
+              </button>
+            )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 4px", color: T.sub, fontSize: 12, fontFamily: T.mono, textTransform: "uppercase", letterSpacing: 0.8 }}>
               <span>Theme</span>
               {themeToggle}

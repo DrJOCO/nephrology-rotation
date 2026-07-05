@@ -56,6 +56,7 @@ const h = vi.hoisted(() => {
     setTeamSnapshot: vi.fn(async () => {}),
     setRotationCode: vi.fn(),
     validateRotationCode: vi.fn(async () => true),
+    isPreview: vi.fn(() => false),
   };
   return { getCurrentStudentUser, isStudentEmailLink, signOutFirebase, completeStudentSignInLink, storeMock };
 });
