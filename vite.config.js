@@ -57,7 +57,11 @@ self.addEventListener('activate', (event) => {
 
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
+  // Precached hashed chunks live in SHELL_CACHE (populated by the install
+  // handler), but the runtime cache is separate. Fall back to a global
+  // caches.match across ALL caches so offline students are served the shell's
+  // precached assets instead of erroring on a runtime-cache miss.
+  const cached = (await cache.match(request)) || (await caches.match(request));
   const networkPromise = fetch(request)
     .then((response) => {
       if (response && (response.ok || response.type === 'opaque')) cache.put(request, response.clone());
@@ -75,7 +79,9 @@ async function networkFirst(request, cacheName, fallbackUrl) {
     if (response && (response.ok || response.type === 'opaque')) cache.put(request, response.clone());
     return response;
   } catch (error) {
-    const cached = await cache.match(request);
+    // Try the runtime cache, then any other cache (e.g. the precached shell),
+    // then the navigation fallback before giving up.
+    const cached = (await cache.match(request)) || (await caches.match(request));
     if (cached) return cached;
     const fallback = await caches.match(fallbackUrl);
     if (fallback) return fallback;

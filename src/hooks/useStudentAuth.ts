@@ -654,8 +654,15 @@ export function useStudentAuth(
       }
 
       const effectiveJoinCode = await resolveAssignedRotationCode(user, normalizedJoinCode);
-      const exists = await store.validateRotationCode(effectiveJoinCode);
-      if (!exists) {
+      const codeCheck = await store.validateRotationCode(effectiveJoinCode);
+      if (!codeCheck.ok) {
+        // We couldn't reach auth/Firestore (offline, or hospital wifi blocking
+        // googleapis.com) — don't claim the code is wrong when we never checked it.
+        setJoinError("Can't reach the server. Check your connection — hospital Wi-Fi may block the app — and try again.");
+        setJoining(false);
+        return;
+      }
+      if (!codeCheck.exists) {
         // Don't increment the PIN rate-limit counter: an unknown rotation code
         // is a typo or a rotation the attending hasn't published yet, not a credential attack.
         setJoinError("Rotation not found. Check the code with your attending and try again.");

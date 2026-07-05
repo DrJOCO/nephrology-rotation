@@ -263,8 +263,11 @@ export function SettingsTab({
     setCreating(true);
     try {
       let code = newCustomCode.trim().toUpperCase() || createRotationCode(newLocation, newDates);
-      const exists = await store.validateRotationCode(code);
-      if (exists) {
+      const codeCheck = await store.validateRotationCode(code);
+      // Only dedupe on a confirmed collision. If the check couldn't reach the
+      // server (codeCheck.ok === false), fall through — the createRotation call
+      // below surfaces its own connectivity error via the surrounding catch.
+      if (codeCheck.ok && codeCheck.exists) {
         const suffix = Math.random().toString(36).slice(2, 5).toUpperCase();
         code = `${code}-${suffix}`;
       }

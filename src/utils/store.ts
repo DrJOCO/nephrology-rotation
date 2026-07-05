@@ -41,6 +41,13 @@ export interface StudentAssignmentRecord {
   email?: string;
 }
 
+// Result of validateRotationCode. `ok: false` means the check couldn't be
+// completed (offline, blocked googleapis.com, auth failure) — it does NOT mean
+// the code is missing. Only `{ ok: true, exists: false }` means "code not found".
+export type RotationCodeCheck =
+  | { ok: true; exists: boolean }
+  | { ok: false };
+
 interface RotationOwnerSession {
   uid: string;
   email?: string;
@@ -831,7 +838,12 @@ const store = {
   },
 
   // ─── Validate a rotation code exists ─────────────────────────────
-  async validateRotationCode(code: string): Promise<boolean> {
+  // Distinguishes "the code doc is genuinely missing" ({ ok: true, exists: false })
+  // from "we couldn't reach auth/Firestore" ({ ok: false }). A bare catch used to
+  // collapse both into `false`, so a student on hospital wifi that blocks
+  // googleapis.com was wrongly told the code was wrong. Callers should surface a
+  // connectivity message when ok === false rather than a "not found" message.
+  async validateRotationCode(code: string): Promise<RotationCodeCheck> {
     try {
       const { db, fs, auth, authMod } = await getFirebase();
       const existingUser = await waitForAuthUser();
@@ -841,7 +853,7 @@ const store = {
       }
       try {
         const snap = await fs.getDoc(fs.doc(db, "rotationCodes", code));
-        return snap.exists();
+        return { ok: true, exists: snap.exists() };
       } finally {
         if (createdAnonymousSession && auth.currentUser?.isAnonymous) {
           try {
@@ -851,7 +863,12 @@ const store = {
           }
         }
       }
-    } catch { return false; }
+    } catch (error) {
+      // Network/auth failure (blocked googleapis.com, offline, sign-in error) —
+      // NOT a definitive "code doesn't exist" signal.
+      console.warn("validateRotationCode could not reach the server:", error);
+      return { ok: false };
+    }
   },
 
   // ─── Real-time listener: all students in a rotation ──────────────
