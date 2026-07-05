@@ -21,6 +21,7 @@ import {
   normalizeEmail,
   setStoredStudentPinFlowMode,
   JOINED_AT_KEY,
+  STUDENT_DEFERRED_SIGNOUT_KEY,
   STUDENT_EMAIL_KEY,
   STUDENT_YEAR_KEY,
   STUDENT_PENDING_JOIN_CODE_KEY,
@@ -318,10 +319,19 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
     setLogoutConfirmOpen(false);
     if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
     await flushStudentSync();
-    try {
-      await signOutFirebase();
-    } catch (e) {
-      console.warn("Student sign-out failed:", e);
+    if (store.getPendingSyncCount() > 0) {
+      // The final flush (or earlier offline work) is parked in the pending
+      // queue. Security rules only let THIS student's session write those
+      // docs, so signing out of Firebase now would strand the queued progress
+      // forever. Keep the session alive behind a signed-out UI; useStudentSync
+      // completes the sign-out once the queue drains.
+      localStorage.setItem(STUDENT_DEFERRED_SIGNOUT_KEY, "1");
+    } else {
+      try {
+        await signOutFirebase();
+      } catch (e) {
+        console.warn("Student sign-out failed:", e);
+      }
     }
 
     clearSavedStudentSignInEmail();

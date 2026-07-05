@@ -98,20 +98,12 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
 
   const updateStudent = (updates: Partial<AdminStudent>) => {
     setStudents(prev => prev.map(st => st.id === s.id ? { ...st, ...updates } : st));
-    // Write back to Firestore so student sees admin edits
+    // Write back ONLY the edited fields so the student sees the admin edit.
+    // Sending the whole roster snapshot let a stale admin copy overwrite
+    // progress the student synced after this view rendered — e.g. adding a
+    // feedback tag could erase a quiz the student had just finished.
     if (writeStudentToFirestore && s.studentId) {
-      const merged = { ...s, ...updates };
-      writeStudentToFirestore(s.studentId, {
-        name: merged.name,
-        year: merged.year,
-        patients: merged.patients,
-        weeklyScores: merged.weeklyScores,
-        preScore: merged.preScore,
-        postScore: merged.postScore,
-        srQueue: merged.srQueue || {},
-        status: merged.status,
-        feedbackTags: merged.feedbackTags || [],
-      });
+      writeStudentToFirestore(s.studentId, updates as Record<string, unknown>);
     }
   };
 
