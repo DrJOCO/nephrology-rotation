@@ -18,6 +18,7 @@ import {
   patientRemovalWins,
   pruneRemovedPatients,
 } from "../utils/progressMerge";
+import { migrateArticleBookmarkList, migrateArticleCompletionMap } from "../utils/articleKeys";
 import {
   JOINED_AT_KEY,
   STUDENT_DEFERRED_SIGNOUT_KEY,
@@ -42,6 +43,21 @@ function patientContentKey(patient: Patient): string {
 }
 
 export const REMOVED_PATIENTS_KEY = "neph_removedPatients";
+
+// Article completion/bookmark keys migrated from URLs to stable ids: pure,
+// idempotent remap against the CURRENT article list (rotation-published when
+// available, bundled otherwise). Runs on every load and defensively when the
+// listener applies incoming maps, since old clients keep writing url keys
+// mid-rollout (mergeCompletedItems unions them in; this converts them).
+function migrateCompletedArticles(completed: CompletedItems, articlesByWeek: typeof ARTICLES): CompletedItems {
+  const migrated = migrateArticleCompletionMap(completed.articles, articlesByWeek);
+  return migrated === completed.articles ? completed : { ...completed, articles: migrated || {} };
+}
+
+function migrateBookmarkedArticles(bookmarks: Bookmarks, articlesByWeek: typeof ARTICLES): Bookmarks {
+  const migrated = migrateArticleBookmarkList(bookmarks.articles, articlesByWeek);
+  return migrated === bookmarks.articles ? bookmarks : { ...bookmarks, articles: migrated || [] };
+}
 
 // Data load/save/listener cluster for StudentApp. Owns the mount-time load effect
 // (auth bootstrap via useStudentAuth's bootstrapAuthSession, then stored/shared data),
@@ -135,6 +151,9 @@ export function useStudentSync(
   // state holds NOW (e.g. after a mid-window listener merge) rather than the
   // values captured when the timer was scheduled.
   const syncedFieldsRef = useRef<Record<string, unknown>>({});
+  // Current article list for completion-key migration — rotation-published
+  // when available (admins can customize articles), bundled otherwise.
+  const articlesRef = useRef<typeof ARTICLES>(ARTICLES);
   const markPatientDirty = (id: string | number) => {
     pendingRemovedPatientIdsRef.current.delete(id);
     delete removedPatientsRef.current[String(id)];
@@ -287,10 +306,11 @@ export function useStudentSync(
       const loadedGuides = sharedClinicGuides || [];
       const { guides: updatedGuides } = ensureCurrentClinicGuide(loadedGuides);
       setClinicGuides(updatedGuides);
+      if (sharedArticles) articlesRef.current = sharedArticles;
       const completed = await store.get<CompletedItems>("neph_completedItems");
-      if (completed) setCompletedItems(completed);
+      if (completed) setCompletedItems(migrateCompletedArticles(completed, articlesRef.current));
       const savedBookmarks = await store.get<Bookmarks>("neph_bookmarks");
-      if (savedBookmarks) setBookmarks(savedBookmarks);
+      if (savedBookmarks) setBookmarks(migrateBookmarkedArticles(savedBookmarks, articlesRef.current));
       const savedSrQueue = await store.get<SrQueue>("neph_srQueue");
       if (savedSrQueue) setSrQueue(savedSrQueue);
       const savedLog = await store.get<ActivityLogEntry[]>("neph_activityLog");
@@ -493,7 +513,14 @@ export function useStudentSync(
     if (!store.getRotationCode()) return;
     const unsub = store.onRotationChanged((data) => {
       if (data.curriculum) setCurriculum(data.curriculum);
-      if (data.articles) setArticles(data.articles);
+      if (data.articles) {
+        articlesRef.current = data.articles;
+        setArticles(data.articles);
+        // A republished list may carry ids for entries that had none (or new
+        // urls for known ids) — remap immediately; no-op when unchanged.
+        setCompletedItems((local) => migrateCompletedArticles(local, data.articles));
+        setBookmarks((local) => migrateBookmarkedArticles(local, data.articles));
+      }
       if (data.studySheets) setStudySheets(normalizeStudySheets(data.studySheets as Partial<StudySheetsData>));
       if (data.announcements) setAnnouncements(data.announcements);
       if (data.settings) setSharedSettings(data.settings);
@@ -583,11 +610,12 @@ export function useStudentSync(
       // Monotonic merge, mirroring the store's flush-guard rule ("completed
       // never un-completes"): a consult-topic Done mark or article check made
       // in the debounce window survives a remote snapshot that predates it,
-      // instead of the card resurrecting on the next echo.
+      // instead of the card resurrecting on the next echo. Article keys are
+      // re-migrated afterwards — an old client's echo may carry url keys.
       if (data.completedItems) {
-        setCompletedItems((local) => mergeCompletedItems(data.completedItems, local) as CompletedItems);
+        setCompletedItems((local) => migrateCompletedArticles(mergeCompletedItems(data.completedItems, local) as CompletedItems, articlesRef.current));
       }
-      if (data.bookmarks) setBookmarks(data.bookmarks);
+      if (data.bookmarks) setBookmarks(migrateBookmarkedArticles(data.bookmarks as Bookmarks, articlesRef.current));
       if (data.srQueue) setSrQueue(data.srQueue);
       if (data.activityLog) setActivityLog(data.activityLog);
       if (data.reflections) setReflections(data.reflections);

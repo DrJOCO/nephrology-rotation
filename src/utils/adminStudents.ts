@@ -1,6 +1,7 @@
 import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { WEEKLY_QUIZZES } from "../data/quizzes";
+import { isArticleCompleted } from "./articleKeys";
 import type { AdminStudent, Bookmarks, CompletedItems, Gamification } from "../types";
 
 type AdminStudentSource = Omit<Partial<AdminStudent>, "completedItems" | "bookmarks" | "gamification"> & {
@@ -128,7 +129,7 @@ export function buildStudentProgressSummary(
 
   const totalArticles = weeks.reduce((sum, week) => sum + (articlesByWeek[week] || []).length, 0);
   const completedArticles = weeks.reduce((sum, week) => {
-    return sum + (articlesByWeek[week] || []).filter((article) => completed.articles[article.url]).length;
+    return sum + (articlesByWeek[week] || []).filter((article) => isArticleCompleted(completed.articles, article)).length;
   }, 0);
 
   const totalStudySheets = weeks.reduce((sum, week) => sum + (STUDY_SHEETS[week] || []).length, 0);

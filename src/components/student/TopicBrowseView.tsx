@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { T, TOPICS, ARTICLES, STUDY_SHEETS, ALL_LANDMARK_TRIALS, CURRICULUM_DECKS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { getTopicContent, topicHasContent } from "../../utils/topicMapping";
+import { isArticleCompleted } from "../../utils/articleKeys";
 import { getTopicIcon } from "../../data/topicIcons";
 import { useIsMobile } from "../../utils/helpers";
 import { useBackClosesLevel } from "../../hooks/backLevelContext";
@@ -178,7 +179,7 @@ export default function TopicBrowseView({ onBack, navigate, completedItems, stud
                 {content.articles.map(a => {
                   const article = (ARTICLES[a.week] || []).find(art => art.url === a.url);
                   if (!article) return null;
-                  const done = !!completed.articles?.[a.url];
+                  const done = isArticleCompleted(completed.articles, a);
                   return (
                     <button key={a.url} onClick={() => navigate("today", { type: "articles", week: a.week })}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: done ? T.successBg : T.card, border: `1px solid ${done ? T.success : T.line}`, borderRadius: 8, marginBottom: 6, cursor: "pointer", textAlign: "left" }}>

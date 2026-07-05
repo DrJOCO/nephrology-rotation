@@ -271,6 +271,10 @@ export interface QuizQuestion {
 // ─── Data source types (for search, QUICK_REFS, etc.) ─────────────
 
 export interface Article {
+  // Stable completion/bookmark key (see utils/articleKeys.ts). Optional
+  // because rotation-published article lists may predate ids — consumers key
+  // by getArticleKey(), which falls back to the URL for those entries.
+  id?: string;
   title: string;
   journal: string;
   year: number;
@@ -392,7 +396,7 @@ export interface TopicLinkedResource {
 export interface TopicContentIndex {
   studySheets: { week: number; id: string }[];
   decks: { week: number; id: string }[];
-  articles: { week: number; url: string }[];
+  articles: { week: number; url: string; id?: string }[];
   cases: { week: number; id: string }[];
   quizWeeks: number[];
   trials: string[];

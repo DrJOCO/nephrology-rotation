@@ -3,6 +3,7 @@ import { T, WEEKLY, ARTICLES, CURRICULUM_DECKS } from "../../data/constants";
 import type { ClinicGuideTemplates } from "../../data/clinicGuides";
 import { PRE_QUIZ, POST_QUIZ, TOPIC_REINFORCEMENT_BANK, WEEKLY_QUIZZES, getQuestionByKey, resolveReinforcementTopic, topicToSlug } from "../../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems, seedTopicReinforcementSr } from "../../utils/spacedRepetition";
+import { getArticleKey } from "../../utils/articleKeys";
 import type { CompetencySummary } from "../../utils/competency";
 import type { StudySheetsData } from "../../utils/studySheets";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, Gamification, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../../types";
@@ -214,13 +215,19 @@ function StudentViewRouter({
           <AssessmentResultsView mode="post" score={postScore} comparisonScore={preScore} navigate={navigate} srDueCount={getDueItems(srQueue).length} />
         )}
         {tab === "today" && subView?.type === "articles" && (
-          <ArticlesView week={subView.week} onBack={goBack} navigate={navigate} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(url) => toggleBookmark("articles", url)} onToggleComplete={(url) => {
-            const article = (articles[subView.week] || []).find((item) => item.url === url);
-            const wasCompleted = Boolean(completedItems.articles[url]);
+          <ArticlesView week={subView.week} onBack={goBack} navigate={navigate} curriculum={curriculum} articles={articles} completedItems={completedItems} bookmarks={bookmarks} onToggleBookmark={(key) => toggleBookmark("articles", key)} onToggleComplete={(key) => {
+            const article = (articles[subView.week] || []).find((item) => getArticleKey(item) === key);
+            const wasCompleted = Boolean(completedItems.articles[key] || (article && completedItems.articles[article.url]));
             setCompletedItems(prev => {
               const next = { ...prev, articles: { ...prev.articles } };
-              if (next.articles[url]) delete next.articles[url];
-              else next.articles[url] = true;
+              if (wasCompleted) {
+                // Clear the legacy url key too — an old client's sync may have
+                // reintroduced it, and either key alone reads as completed.
+                delete next.articles[key];
+                if (article) delete next.articles[article.url];
+              } else {
+                next.articles[key] = true;
+              }
               return next;
             });
             if (!wasCompleted) {

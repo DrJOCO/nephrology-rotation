@@ -521,6 +521,43 @@ describe("dirty-field-only writes (fieldStamps)", () => {
   });
 });
 
+describe("article key migration (url → id)", () => {
+  const bundled = ARTICLES[1][0] as { id: string; url: string };
+
+  it("migrates url-keyed completions and bookmarks on load", async () => {
+    h.storedValues["neph_completedItems"] = { articles: { [bundled.url]: true }, studySheets: {}, cases: {} };
+    h.storedValues["neph_bookmarks"] = { trials: [], articles: [bundled.url], cases: [], studySheets: [] };
+    await mountHarness();
+
+    expect(api.completedItems.articles).toEqual({ [bundled.id]: true });
+
+    // The migrated map is dirty relative to the synced cache, so the next
+    // write carries id keys.
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+    const [, payload] = setStudentDataCall(0);
+    expect((payload.completedItems as CompletedItems).articles).toEqual({ [bundled.id]: true });
+    expect((payload.bookmarks as { articles: string[] }).articles).toEqual([bundled.id]);
+  });
+
+  it("re-migrates url keys arriving from an old client's echo", async () => {
+    await mountHarness();
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+
+    act(() => {
+      h.listeners.student!({
+        updatedAt: INCOMING,
+        completedItems: { articles: { [bundled.url]: true } },
+      });
+    });
+    expect(api.completedItems.articles[bundled.id]).toBe(true);
+    expect(api.completedItems.articles[bundled.url]).toBeUndefined();
+  });
+});
+
 describe("boot-time protection for never-synced local work", () => {
   it("marks local-only patients dirty at boot so the first snapshot can't drop them", async () => {
     // The tab closed before the debounce could write p-offline; it lives only
