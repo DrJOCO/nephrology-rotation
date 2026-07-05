@@ -15,21 +15,39 @@ const mocks = vi.hoisted(() => {
   const remoteDocs = new Map<string, Record<string, unknown>>();
   const setDocCalls: Array<{ path: string; data: Record<string, unknown>; options?: { merge?: boolean } }> = [];
   const updateDocCalls: Array<{ path: string; data: Record<string, unknown> }> = [];
+  const deleteDocCalls: Array<{ path: string }> = [];
+  // Interleaved write/delete order, for ordering assertions (e.g. tombstone
+  // must land before the doc deletes).
+  const opLog: string[] = [];
   const fs = {
     doc: (_db: unknown, ...segments: string[]) => ({ path: segments.join("/") }),
+    collection: (_db: unknown, ...segments: string[]) => ({ path: segments.join("/") }),
     getDoc: async (ref: { path: string }) => {
       const data = remoteDocs.get(ref.path);
       return { exists: () => data !== undefined, data: () => data };
     },
+    getDocs: async (ref: { path: string }) => {
+      const prefix = `${ref.path}/`;
+      const docs = [...remoteDocs.keys()]
+        .filter((path) => path.startsWith(prefix) && !path.slice(prefix.length).includes("/"))
+        .map((path) => ({ id: path.slice(prefix.length), data: () => remoteDocs.get(path) }));
+      return { docs, size: docs.length };
+    },
     setDoc: async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
       setDocCalls.push({ path: ref.path, data, options });
+      opLog.push(`set:${ref.path}`);
     },
     updateDoc: async (ref: { path: string }, data: Record<string, unknown>) => {
       updateDocCalls.push({ path: ref.path, data });
     },
+    deleteDoc: async (ref: { path: string }) => {
+      deleteDocCalls.push({ path: ref.path });
+      opLog.push(`delete:${ref.path}`);
+      remoteDocs.delete(ref.path);
+    },
     deleteField: () => DELETE_FIELD,
   };
-  return { remoteDocs, setDocCalls, updateDocCalls, fs };
+  return { remoteDocs, setDocCalls, updateDocCalls, deleteDocCalls, opLog, fs };
 });
 
 vi.mock("./firebase", () => ({
@@ -1062,6 +1080,121 @@ describe("setShared flush with unmapped key", () => {
       expect.anything(),
     );
     warnSpy.mockRestore();
+  });
+});
+
+// ─── Deletion tombstones ───────────────────────────────────────────
+// deleteStudentData writes a tombstone BEFORE deleting the docs; the client
+// write paths check it whenever the remote doc is missing, so a device that
+// was offline during the delete stops cleanly instead of resurrecting the
+// doc (the documented gap the live listener could not cover).
+describe("student deletion tombstones", () => {
+  const TOMBSTONE_PATH = `rotations/${ROTATION}/studentTombstones/stu-1`;
+
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+    mocks.deleteDocCalls.length = 0;
+    mocks.opLog.length = 0;
+  });
+
+  it("deleteStudentData writes the tombstone before deleting the docs (no unguarded gap)", async () => {
+    await store.deleteStudentData("stu-1");
+
+    expect(mocks.opLog).toEqual([
+      `set:${TOMBSTONE_PATH}`,
+      `delete:${STUDENT_PATH}`,
+      `delete:${TEAM_PATH}`,
+    ]);
+    const tombstoneWrite = mocks.setDocCalls.find((call) => call.path === TOMBSTONE_PATH);
+    expect(tombstoneWrite?.data.studentId).toBe("stu-1");
+    expect(typeof tombstoneWrite?.data.deletedAt).toBe("string");
+  });
+
+  it("flush drops a tombstoned student's queued writes, purges the queue, and emits the removal event", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+    const removedEvents: Array<Record<string, unknown>> = [];
+    const onRemoved = (event: Event) => removedEvents.push((event as CustomEvent).detail);
+    window.addEventListener("neph:student-removed", onRemoved);
+    seedQueue([
+      studentItem({ name: "Ghost", completedItems: { articles: { A: true } } }, OLDER),
+      { kind: "setTeamSnapshot", rotationCode: ROTATION, studentId: "stu-1", data: { points: 5, updatedAt: OLDER }, updatedAt: OLDER },
+    ]);
+
+    const remaining = await store.flushPendingSyncQueue();
+    window.removeEventListener("neph:student-removed", onRemoved);
+
+    expect(remaining).toBe(0);
+    expect(readQueue()).toHaveLength(0);
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+    // The same-flush team snapshot is dropped too, not written first.
+    expect(mocks.setDocCalls.filter((call) => call.path === TEAM_PATH)).toHaveLength(0);
+    expect(removedEvents).toEqual([{ rotationCode: ROTATION, studentId: "stu-1" }]);
+  });
+
+  it("guarded setStudentData stops cleanly on a tombstone: skipped, queue purged, event emitted", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+    seedQueue([{ kind: "setTeamSnapshot", rotationCode: ROTATION, studentId: "stu-1", data: { points: 5 }, updatedAt: OLDER }]);
+    const removedEvents: Array<Record<string, unknown>> = [];
+    const onRemoved = (event: Event) => removedEvents.push((event as CustomEvent).detail);
+    window.addEventListener("neph:student-removed", onRemoved);
+
+    const result = await store.setStudentData("stu-1", {
+      name: "Ghost",
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: OLDER });
+    window.removeEventListener("neph:student-removed", onRemoved);
+
+    expect(result).toEqual({ status: "skipped", updatedAt: null });
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+    expect(readQueue()).toHaveLength(0);
+    expect(removedEvents).toEqual([{ rotationCode: ROTATION, studentId: "stu-1" }]);
+  });
+
+  it("proceeds as a first write when the doc is missing and no tombstone exists", async () => {
+    const result = await store.setStudentData("stu-1", {
+      name: "First Sync",
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: null });
+
+    expect(result.status).toBe("applied");
+    const write = lastStudentWrite();
+    expect(write.data.name).toBe("First Sync");
+  });
+
+  it("does not tombstone-check unguarded writes (admin paths clear tombstones explicitly)", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+    const getDocSpy = vi.spyOn(mocks.fs, "getDoc");
+
+    const result = await store.setStudentData("stu-1", { name: "Restored", updatedAt: NEWER });
+
+    expect(getDocSpy).not.toHaveBeenCalled();
+    expect(result.status).toBe("applied");
+    getDocSpy.mockRestore();
+  });
+
+  it("clearStudentTombstone deletes the tombstone doc", async () => {
+    mocks.remoteDocs.set(TOMBSTONE_PATH, { studentId: "stu-1", deletedAt: NEWER, deletedBy: "admin-1" });
+
+    await store.clearStudentTombstone("stu-1");
+
+    expect(mocks.deleteDocCalls.map((call) => call.path)).toContain(TOMBSTONE_PATH);
+    expect(mocks.remoteDocs.has(TOMBSTONE_PATH)).toBe(false);
+  });
+
+  it("deleteRotation deletes the studentTombstones subcollection docs", async () => {
+    mocks.remoteDocs.set(`rotations/${ROTATION}/students/stu-9`, { name: "X" });
+    mocks.remoteDocs.set(`rotations/${ROTATION}/studentTombstones/stu-9`, { studentId: "stu-9" });
+
+    await store.deleteRotation(ROTATION);
+
+    const deleted = mocks.deleteDocCalls.map((call) => call.path);
+    expect(deleted).toContain(`rotations/${ROTATION}/students/stu-9`);
+    expect(deleted).toContain(`rotations/${ROTATION}/studentTombstones/stu-9`);
+    expect(deleted).toContain(`rotations/${ROTATION}`);
   });
 });
 

@@ -423,18 +423,26 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     const existing = students.find(student => student.studentId === studentId);
     const merged = { ...existing, ...data };
     const updatedAt = new Date().toISOString();
-    store.setStudentData(studentId, {
-      ...data,
-      ...(typeof merged.year === "string" && merged.year.trim() ? { year: merged.year } : {}),
-      updatedAt,
+    // Writing a student the live roster doesn't know is a re-add: a deletion
+    // tombstone from an earlier Remove would make the rules reject the write,
+    // so clear it first. Admin-only — student joins can't clear tombstones.
+    const clearTombstone = existing
+      ? Promise.resolve()
+      : store.clearStudentTombstone(studentId).catch((error) => console.warn("Could not clear student tombstone:", error));
+    void clearTombstone.then(() => {
+      void store.setStudentData(studentId, {
+        ...data,
+        ...(typeof merged.year === "string" && merged.year.trim() ? { year: merged.year } : {}),
+        updatedAt,
+      });
+      void store.setTeamSnapshot(studentId, buildTeamSnapshot({
+        studentId,
+        name: typeof merged.name === "string" ? merged.name : "Unknown",
+        patients: Array.isArray(merged.patients) ? merged.patients as Patient[] : [],
+        points: calculatePoints(merged as Parameters<typeof calculatePoints>[0]),
+        updatedAt,
+      }));
     });
-    void store.setTeamSnapshot(studentId, buildTeamSnapshot({
-      studentId,
-      name: typeof merged.name === "string" ? merged.name : "Unknown",
-      patients: Array.isArray(merged.patients) ? merged.patients as Patient[] : [],
-      points: calculatePoints(merged as Parameters<typeof calculatePoints>[0]),
-      updatedAt,
-    }));
   }, [rotationCode, firebaseAdmin, students]);
 
   const recoverStudentToRecord = useCallback(async (sourceStudentId: string, targetStudentId: string) => {

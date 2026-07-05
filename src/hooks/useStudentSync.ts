@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
-import store from "../utils/store";
+import store, { STUDENT_REMOVED_EVENT } from "../utils/store";
 import { getCurrentStudentUser, normalizeStudentPinInput, signOutFirebase } from "../utils/firebase";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
@@ -96,6 +96,10 @@ export function useStudentSync(
 ) {
   const [loading, setLoading] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(() => store.getPendingSyncCount());
+  // True once we learn this student's cloud record was deleted by an admin —
+  // via the live listener, a tombstone found by a write, or the cold-start
+  // check. StudentApp renders the honest removed-from-rotation state on it.
+  const [studentRemoved, setStudentRemoved] = useState(false);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks locally-mutated patients that haven't been flushed to Firestore yet.
   // Protects against multi-device "last writer wins": when another device's
@@ -504,6 +508,7 @@ export function useStudentSync(
     if (!store.getRotationCode() || !studentId || !nameSet) return;
     const unsub = store.onStudentDataChanged(studentId, (data) => {
       studentDocRemovedRef.current = false;
+      setStudentRemoved(false);
       const incomingUpdatedAt = typeof data.updatedAt === "string" ? data.updatedAt : null;
       if (incomingUpdatedAt) {
         const latestKnownUpdatedAt = latestStudentUpdateRef.current;
@@ -606,6 +611,7 @@ export function useStudentSync(
       // the device was live. Stop auto-saving and drop this student's queued
       // writes so the device doesn't silently resurrect the deleted doc.
       studentDocRemovedRef.current = true;
+      setStudentRemoved(true);
       if (syncTimerRef.current) {
         clearTimeout(syncTimerRef.current);
         syncTimerRef.current = null;
@@ -614,6 +620,26 @@ export function useStudentSync(
     });
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
+
+  // A write path found this student's deletion tombstone (offline-return or
+  // cold-start case, where the live listener's onRemoved never fired). Same
+  // handling: stop the timers and surface the removed state — the store
+  // already dropped the payload and purged the queue.
+  useEffect(() => {
+    if (typeof window === "undefined" || !studentId) return;
+    const onStudentRemoved = (event: Event) => {
+      const detail = event instanceof CustomEvent ? event.detail as { studentId?: string } | undefined : undefined;
+      if (detail?.studentId !== studentId) return;
+      studentDocRemovedRef.current = true;
+      setStudentRemoved(true);
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = null;
+      }
+    };
+    window.addEventListener(STUDENT_REMOVED_EVENT, onStudentRemoved);
+    return () => window.removeEventListener(STUDENT_REMOVED_EVENT, onStudentRemoved);
+  }, [studentId]);
 
   const flushStudentSync = async () => {
     if (!store.getRotationCode() || !studentId || !nameSet || !studentName.trim()) return;
@@ -662,6 +688,7 @@ export function useStudentSync(
   return {
     loading,
     pendingSyncCount,
+    studentRemoved,
     syncTimerRef,
     markPatientDirty,
     markPatientRemoved,

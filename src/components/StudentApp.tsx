@@ -136,6 +136,7 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
   const {
     loading,
     pendingSyncCount,
+    studentRemoved,
     syncTimerRef,
     markPatientDirty,
     markPatientRemoved,
@@ -531,6 +532,31 @@ function StudentApp({ onAdminToggle }: { onAdminToggle?: () => void }) {
         onJoinRotation={handleJoinRotation}
         onAdminToggle={onAdminToggle}
       />
+    );
+  }
+
+  // Admin removed this student's record (live delete, or discovered via a
+  // deletion tombstone after being offline): an honest end state instead of
+  // an app that silently stops saving. Sync is already stopped by the hook.
+  if (studentRemoved) {
+    return (
+      <div style={{ minHeight: "100vh", background: T.navyBg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: T.sans }}>
+        <div style={{ background: T.card, borderRadius: 16, padding: "28px 24px", maxWidth: 420, textAlign: "center", border: `1px solid ${T.line}` }}>
+          <h2 style={{ fontFamily: T.serif, color: T.ink, fontSize: 20, margin: "0 0 10px", fontWeight: 700 }}>
+            You were removed from this rotation
+          </h2>
+          <p style={{ color: T.sub, fontSize: 14, lineHeight: 1.6, margin: "0 0 20px" }}>
+            Your attending removed this student record from rotation {activeRotationCode || "this rotation"}.
+            Nothing more will sync from this device. If this is unexpected, check with your attending — they can restore your access.
+          </p>
+          <button
+            onClick={() => void handleLogout()}
+            style={{ padding: "12px 24px", background: T.brand, color: T.brandInk, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
     );
   }
 

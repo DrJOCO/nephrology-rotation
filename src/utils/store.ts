@@ -76,6 +76,10 @@ const PENDING_SYNC_KEY = "neph_pendingSyncQueue";
 // reports lost offline work.
 const PENDING_SYNC_CORRUPT_KEY = "neph_pendingSyncQueue_corrupt";
 const PENDING_SYNC_EVENT = "neph:pending-sync-changed";
+// Fired when a write discovers this student's record was deleted by an admin
+// (deletion tombstone found where the doc used to be). useStudentSync listens
+// and surfaces the removed-student state instead of retrying forever.
+export const STUDENT_REMOVED_EVENT = "neph:student-removed";
 const rotationDocCacheKey = (code: string) => `neph_rotation_doc_${code}`;
 const studentDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_student_${studentId}`;
 const teamDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_team_${studentId}`;
@@ -447,6 +451,35 @@ async function readFlushRemoteDoc(
   return isPlainObject(data) ? data : null;
 }
 
+// True when an admin deleted this student (tombstone doc present). Only read
+// in the doc-missing case, so the common write path costs no extra reads.
+async function readStudentTombstone(
+  fs: FirebaseModules["fs"],
+  db: FirebaseModules["db"],
+  code: string,
+  studentId: string,
+): Promise<boolean> {
+  const snap = await fs.getDoc(fs.doc(db, "rotations", code, "studentTombstones", studentId));
+  return snap.exists();
+}
+
+function emitStudentRemoved(code: string, studentId: string): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(STUDENT_REMOVED_EVENT, { detail: { rotationCode: code, studentId } }));
+}
+
+// Drop queued writes for a student whose cloud record an admin deleted —
+// re-flushing them would silently resurrect the deleted doc.
+function discardQueuedStudentSyncItems(code: string, studentId: string): void {
+  if (!code || !studentId) return;
+  const queue = readPendingSyncQueue();
+  const next = queue.filter((item) =>
+    !((item.kind === "setStudentData" || item.kind === "setTeamSnapshot")
+      && item.rotationCode === code
+      && item.studentId === studentId));
+  if (next.length !== queue.length) writePendingSyncQueue(next);
+}
+
 function mergeSrQueues(remote: unknown, queued: unknown): unknown {
   if (!isPlainObject(remote)) return queued;
   if (!isPlainObject(queued)) return remote;
@@ -668,10 +701,18 @@ async function flushPendingSyncQueue(): Promise<number> {
   }
 
   const failed = new Set<PendingSyncItem>();
+  // Students whose docs were found tombstoned during THIS flush: their later
+  // same-flush items (e.g. the queued team snapshot) are dropped too, since
+  // discarding the live queue doesn't rewind this loop's snapshot array.
+  const tombstoned = new Set<string>();
+  const tombstoneKey = (item: { rotationCode: string; studentId: string }) => `${item.rotationCode}/${item.studentId}`;
 
   for (const item of queue) {
     try {
       const { db, fs } = await getFirebase();
+      if ((item.kind === "setStudentData" || item.kind === "setTeamSnapshot") && tombstoned.has(tombstoneKey(item))) {
+        continue;
+      }
       if (item.kind === "setShared") {
         const field = KEY_TO_FIELD[item.key];
         if (!field) {
@@ -685,6 +726,16 @@ async function flushPendingSyncQueue(): Promise<number> {
         let payload = withoutLegacyLoginPin(item.data);
         const studentRef = fs.doc(db, "rotations", item.rotationCode, "students", item.studentId);
         const remote = await readFlushRemoteDoc(fs, studentRef);
+        if (!remote && await readStudentTombstone(fs, db, item.rotationCode, item.studentId)) {
+          // An admin deleted this student while this device was offline —
+          // flushing would resurrect the doc (this was the documented gap the
+          // live listener couldn't cover). Drop the payload, purge the
+          // student's remaining queued writes, and surface the removal.
+          tombstoned.add(tombstoneKey(item));
+          discardQueuedStudentSyncItems(item.rotationCode, item.studentId);
+          emitStudentRemoved(item.rotationCode, item.studentId);
+          continue;
+        }
         // Legacy queue items may lack updatedAt ("" here) — treat them as
         // stale so the merge guard protects whatever remote already has.
         if (remote && isNewerTimestamp(remote.updatedAt, typeof item.updatedAt === "string" ? item.updatedAt : "")) {
@@ -1032,6 +1083,12 @@ const store = {
     let unsub: (() => void) | null = null;
     let sawDoc = false;
     const code = rotationCode;
+    // The doc cache proves this student synced before. If the FIRST snapshot
+    // already says the doc is gone, the delete happened while this device was
+    // away — a tombstone check (cold-start counterpart of the sawDoc path)
+    // tells an admin delete apart from a student who simply never synced.
+    const hadPriorSync = !!readJson(studentDocCacheKey(code, studentId));
+    let checkedColdStartTombstone = false;
     getFirebase().then(({ db, fs }) => {
       unsub = fs.onSnapshot(fs.doc(db, "rotations", code, "students", studentId), (snap) => {
         if (snap.exists()) {
@@ -1041,6 +1098,13 @@ const store = {
         } else if (sawDoc) {
           sawDoc = false;
           onRemoved?.();
+        } else if (hadPriorSync && !checkedColdStartTombstone) {
+          checkedColdStartTombstone = true;
+          readStudentTombstone(fs, db, code, studentId)
+            .then((tombstonePresent) => {
+              if (tombstonePresent) onRemoved?.();
+            })
+            .catch((err) => console.warn("Cold-start tombstone check failed:", err));
         }
       }, (err) => {
         console.warn("Student data listener error:", err);
@@ -1078,7 +1142,17 @@ const store = {
       const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
       if (options) {
         const remote = await readFlushRemoteDoc(fs, studentRef);
-        if (remote && isNewerTimestamp(remote.updatedAt, options.baseUpdatedAt ?? "")) {
+        if (!remote) {
+          // Doc missing: one extra read distinguishes "never synced" (proceed
+          // as a first write) from "admin deleted this student" (tombstone) —
+          // a tombstoned device must stop cleanly, not resurrect the doc or
+          // park the payload in the queue to fail forever.
+          if (await readStudentTombstone(fs, db, rotationCode, studentId)) {
+            discardQueuedStudentSyncItems(rotationCode, studentId);
+            emitStudentRemoved(rotationCode, studentId);
+            return { status: "skipped", updatedAt: null };
+          }
+        } else if (isNewerTimestamp(remote.updatedAt, options.baseUpdatedAt ?? "")) {
           payload = mergeStudentFlushPayload(remote, payload);
           if (Object.keys(payload).length === 0) {
             // Every queued field was superseded by newer remote data — the
@@ -1120,13 +1194,8 @@ const store = {
   // while this device was live — re-flushing them would silently resurrect
   // the deleted doc.
   discardQueuedStudentSync(studentId: string): void {
-    if (!rotationCode || !studentId) return;
-    const queue = readPendingSyncQueue();
-    const next = queue.filter((item) =>
-      !((item.kind === "setStudentData" || item.kind === "setTeamSnapshot")
-        && item.rotationCode === rotationCode
-        && item.studentId === studentId));
-    if (next.length !== queue.length) writePendingSyncQueue(next);
+    if (!rotationCode) return;
+    discardQueuedStudentSyncItems(rotationCode, studentId);
   },
 
   // ─── Write sanitized team snapshot to Firestore ──────────────────
@@ -1305,12 +1374,30 @@ const store = {
     if (!rotationCode || !studentId) return;
     try {
       const { db, fs } = await getFirebase();
+      // Tombstone FIRST: from this moment the security rules reject student
+      // creates/updates for this id, so there is no gap in which a concurrent
+      // device write (or a later offline-queue flush) recreates the doc.
+      const adminUser = await getCurrentAdminUser();
+      await fs.setDoc(fs.doc(db, "rotations", rotationCode, "studentTombstones", studentId), {
+        studentId,
+        deletedAt: new Date().toISOString(),
+        deletedBy: adminUser?.uid || "",
+      });
       await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "students", studentId));
       await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "team", studentId));
     } catch (e) {
       console.warn("deleteStudentData failed:", e);
       throw e;
     }
+  },
+
+  // Remove a student's deletion tombstone so admin flows (recovery target,
+  // re-adding a removed student) can write the doc again. Student joins never
+  // call this — a removed student cannot un-remove themselves.
+  async clearStudentTombstone(studentId: string): Promise<void> {
+    if (!rotationCode || !studentId) return;
+    const { db, fs } = await getFirebase();
+    await fs.deleteDoc(fs.doc(db, "rotations", rotationCode, "studentTombstones", studentId));
   },
 
   // ─── Delete rotation and its students ───────────────────────────
@@ -1325,6 +1412,12 @@ const store = {
       const teamSnap = await fs.getDocs(fs.collection(db, "rotations", code, "team"));
       for (const s of teamSnap.docs) {
         await fs.deleteDoc(fs.doc(db, "rotations", code, "team", s.id));
+      }
+      // Tombstones go after the student docs so students stay blocked from
+      // recreating their docs while the rotation is being torn down.
+      const tombstonesSnap = await fs.getDocs(fs.collection(db, "rotations", code, "studentTombstones"));
+      for (const s of tombstonesSnap.docs) {
+        await fs.deleteDoc(fs.doc(db, "rotations", code, "studentTombstones", s.id));
       }
       // Delete rotation doc
       await fs.deleteDoc(fs.doc(db, "rotations", code));

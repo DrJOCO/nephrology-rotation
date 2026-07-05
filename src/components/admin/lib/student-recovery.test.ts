@@ -24,13 +24,23 @@ function makeStudent(overrides: Partial<AdminStudent> = {}): AdminStudent {
 }
 
 function makeFakeStore(status: StudentWriteStatus) {
+  const calls: string[] = [];
   const fake = {
-    setStudentData: vi.fn(async () => ({
-      status,
-      updatedAt: status === "applied" ? "2026-06-06T00:00:00.000Z" : null,
-    })),
+    calls,
+    setStudentData: vi.fn(async (studentId: string) => {
+      calls.push(`set:${studentId}`);
+      return {
+        status,
+        updatedAt: status === "applied" ? "2026-06-06T00:00:00.000Z" : null,
+      };
+    }),
     setTeamSnapshot: vi.fn(async () => {}),
-    deleteStudentData: vi.fn(async () => {}),
+    deleteStudentData: vi.fn(async (studentId: string) => {
+      calls.push(`delete:${studentId}`);
+    }),
+    clearStudentTombstone: vi.fn(async (studentId: string) => {
+      calls.push(`clearTombstone:${studentId}`);
+    }),
   };
   return fake as RecoverySyncStore & typeof fake;
 }
@@ -86,6 +96,18 @@ describe("performStudentRecovery", () => {
     expect(fake.setTeamSnapshot).toHaveBeenCalledWith("stu-new-device", { studentId: "stu-new-device" });
     expect(fake.deleteStudentData).toHaveBeenCalledWith("stu-old-device");
     expect(merged.preScore).toEqual(source.preScore);
+  });
+
+  it("clears the target's tombstone before writing, and only tombstones the source via delete", async () => {
+    const fake = makeFakeStore("applied");
+
+    await performStudentRecovery(fake, source, target, () => ({}));
+
+    // Order matters: a leftover tombstone on the target would make the rules
+    // reject the merged write, and the source delete (which tombstones it)
+    // must come only after the confirmed write.
+    expect(fake.calls).toEqual(["clearTombstone:stu-new-device", "set:stu-new-device", "delete:stu-old-device"]);
+    expect(fake.clearStudentTombstone).not.toHaveBeenCalledWith("stu-old-device");
   });
 
   it("does NOT delete the source when the target write only got queued (regression)", async () => {

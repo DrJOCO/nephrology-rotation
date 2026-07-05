@@ -79,7 +79,7 @@ const h = vi.hoisted(() => {
   };
 });
 
-vi.mock("../utils/store", () => ({ default: h.storeMock }));
+vi.mock("../utils/store", () => ({ default: h.storeMock, STUDENT_REMOVED_EVENT: "neph:student-removed" }));
 vi.mock("../utils/firebase", () => ({
   normalizeStudentPinInput: (value: string) => value,
   clearSavedStudentSignInEmail: () => {},
@@ -640,5 +640,41 @@ describe("deleted student record guard", () => {
       vi.advanceTimersByTime(2100);
     });
     expect(h.setStudentData).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops syncing and surfaces removal on the tombstone event (offline-return / cold-start case)", async () => {
+    await mountHarness();
+    await act(async () => {
+      vi.advanceTimersByTime(2100); // app-open save out of the way
+    });
+    h.setStudentData.mockClear();
+    expect(api.sync.studentRemoved).toBe(false);
+
+    // An event for some other student is ignored.
+    act(() => {
+      window.dispatchEvent(new CustomEvent("neph:student-removed", { detail: { rotationCode: "GS-26", studentId: "someone-else" } }));
+    });
+    expect(api.sync.studentRemoved).toBe(false);
+
+    // A mutation schedules the debounce, then a write path discovers the
+    // tombstone and fires the event: the pending write must never happen.
+    act(() => {
+      api.setPatients((prev) => [...prev, makePatient("p-1")]);
+    });
+    act(() => {
+      window.dispatchEvent(new CustomEvent("neph:student-removed", { detail: { rotationCode: "GS-26", studentId: "stu-1" } }));
+    });
+    expect(api.sync.studentRemoved).toBe(true);
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(h.setStudentData).not.toHaveBeenCalled();
+
+    // A reappearing doc (admin restored the student) clears the state.
+    act(() => {
+      h.listeners.student!({ updatedAt: INCOMING, patients: [] });
+    });
+    expect(api.sync.studentRemoved).toBe(false);
   });
 });

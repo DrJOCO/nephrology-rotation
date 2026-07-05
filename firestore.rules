@@ -239,15 +239,21 @@ service cloud.firestore {
       allow delete: if isRotationAdmin(rotationCode);
 
       // ─── Student subcollection ─────────────────────────────────
+      // Create/update additionally require the student NOT be tombstoned:
+      // an admin delete writes the tombstone first, so a device that was
+      // offline during the delete gets permission-denied when its queue
+      // later flushes, instead of silently resurrecting the deleted doc.
       match /students/{studentId} {
         allow get: if isRotationAdmin(rotationCode) || isStudentOwner(studentId);
         allow list: if isRotationAdmin(rotationCode);
         allow create: if (isRotationAdmin(rotationCode) || isStudentOwner(studentId))
                       && exists(/databases/$(database)/documents/rotationCodes/$(rotationCode))
+                      && !exists(/databases/$(database)/documents/rotations/$(rotationCode)/studentTombstones/$(studentId))
                       && request.resource.data.keys().hasAll(['name'])
                       && hasValidStudentName()
                       && hasNoLegacyStudentLoginPin();
         allow update: if (isRotationAdmin(rotationCode) || isStudentOwner(studentId))
+                      && !exists(/databases/$(database)/documents/rotations/$(rotationCode)/studentTombstones/$(studentId))
                       && hasValidStudentName()
                       && hasNoLegacyStudentLoginPin();
         allow delete: if isRotationAdmin(rotationCode);
@@ -257,8 +263,22 @@ service cloud.firestore {
         allow get, list: if isRotationAdmin(rotationCode) || isRotationStudent(rotationCode);
         allow create, update: if (isRotationAdmin(rotationCode) || isStudentOwner(studentId))
                               && exists(/databases/$(database)/documents/rotationCodes/$(rotationCode))
+                              && !exists(/databases/$(database)/documents/rotations/$(rotationCode)/studentTombstones/$(studentId))
                               && hasValidTeamSnapshot(studentId);
         allow delete: if isRotationAdmin(rotationCode) || isStudentOwner(studentId);
+      }
+
+      // ─── Deletion tombstones ───────────────────────────────────
+      // Written by admin deletes BEFORE the student/team docs are removed, so
+      // there is no gap in which a concurrent write recreates the doc. Only
+      // admin paths may create or clear them — a removed student must not be
+      // able to un-remove themselves by rejoining.
+      match /studentTombstones/{studentId} {
+        allow get: if isRotationAdmin(rotationCode) || isStudentOwner(studentId);
+        // deleteRotation enumerates this subcollection client-side.
+        allow list: if isRotationAdmin(rotationCode);
+        allow create, delete: if isRotationAdmin(rotationCode);
+        allow update: if false;
       }
     }
 
