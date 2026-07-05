@@ -7,6 +7,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { getTopicContent } from "./topicMapping";
+import { isArticleCompleted } from "./articleKeys";
 import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { ALL_LANDMARK_TRIALS } from "../data/trials";
@@ -131,7 +132,7 @@ export function getPatientRecommendations(
       d => !completed.decks?.[d.id]
     );
     const unreadArticles = content.articles.filter(
-      a => !completed.articles?.[a.url]
+      a => !isArticleCompleted(completed.articles, a)
     );
     const untriedCases = content.cases.filter(
       c => !completed.cases?.[c.id]

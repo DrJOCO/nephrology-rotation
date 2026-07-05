@@ -173,9 +173,15 @@ export function getStudentExposureTopics(student: AdminStudent): string[] {
 }
 
 export function getStudentStudiedTopics(student: AdminStudent, articlesByWeek: ArticlesData): string[] {
-  const articleTopicByUrl = new Map<string, string>(
+  // Completion keys are article ids going forward, urls for legacy entries
+  // and not-yet-migrated docs — index topics under both.
+  const articleTopicByKey = new Map<string, string>(
     Object.values(articlesByWeek).flatMap((items) =>
-      (items || []).map((article) => [article.url, article.topic] as const)
+      (items || []).flatMap((article) => {
+        const entries: Array<readonly [string, string]> = [[article.url, article.topic] as const];
+        if (article.id) entries.push([article.id, article.topic] as const);
+        return entries;
+      })
     )
   );
   const articleTopicByTitle = new Map<string, string>(
@@ -199,8 +205,8 @@ export function getStudentStudiedTopics(student: AdminStudent, articlesByWeek: A
     (WEEKLY[week as keyof typeof WEEKLY]?.topics || []).forEach((topic) => addTopic(topic));
   });
 
-  Object.keys(student.completedItems?.articles || {}).forEach((url) => {
-    addTopic(articleTopicByUrl.get(url));
+  Object.keys(student.completedItems?.articles || {}).forEach((key) => {
+    addTopic(articleTopicByKey.get(key));
   });
 
   Object.keys(student.completedItems?.studySheets || {}).forEach((id) => {

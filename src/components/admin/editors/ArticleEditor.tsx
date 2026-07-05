@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { T } from "../../../data/constants";
 import { adminInput, adminLabel, type AdminConfirmOptions } from "../shared";
+import { generateUniqueArticleId } from "../../../utils/articleKeys";
 import type { ArticlesData } from "../types";
 import { backBtn, tinyBtn } from "../lib/styles";
 
@@ -13,10 +14,21 @@ export function ArticleEditor({ week, articles, setArticles, onBack, requestConf
 
   const save = () => {
     if (!form.title.trim() || !form.url.trim()) return;
-    const entry = { ...form, year: parseInt(form.year) || 2024 };
     setArticles(prev => {
       const copy = { ...prev };
       const arr = [...(copy[week] || [])];
+      // The id is the students' completion/bookmark key: PRESERVE it when a
+      // URL/title is edited (that's the whole point of ids), and mint a
+      // unique one for new articles — or for legacy rotation entries that
+      // predate ids, so their next publish carries one.
+      const existingIds = Object.values(prev).flatMap((weekArticles) =>
+        (weekArticles || []).map((article) => article.id).filter((id): id is string => Boolean(id)));
+      const preservedId = editIdx !== null ? arr[editIdx]?.id : undefined;
+      const entry = {
+        ...form,
+        year: parseInt(form.year) || 2024,
+        id: preservedId || generateUniqueArticleId(form.title, existingIds),
+      };
       if (editIdx !== null) { arr[editIdx] = entry; }
       else { arr.push(entry); }
       copy[week] = arr;

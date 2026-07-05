@@ -104,7 +104,7 @@ export function getTopicContent(topic: string): TopicContentIndex {
     const week = Number(weekStr);
     for (const article of ARTICLES[week] || []) {
       if (article.topic === topic) {
-        result.articles.push({ week, url: article.url });
+        result.articles.push({ week, url: article.url, ...(article.id ? { id: article.id } : {}) });
       }
     }
   }

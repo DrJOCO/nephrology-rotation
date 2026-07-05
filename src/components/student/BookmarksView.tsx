@@ -1,6 +1,7 @@
 import { T, ARTICLES as DEFAULT_ARTICLES, ALL_LANDMARK_TRIALS, STUDY_SHEETS } from "../../data/constants";
 import { WEEKLY_CASES } from "../../data/cases";
 import { BackButton } from "./shared";
+import { getArticleKey } from "../../utils/articleKeys";
 import type { Bookmarks, StudySheet, SubView } from "../../types";
 import type { StudySheetsData } from "../../utils/studySheets";
 
@@ -8,8 +9,15 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
   const bk = bookmarks || {};
   const articleData = liveArticles || DEFAULT_ARTICLES;
   const bookmarkedTrials = ALL_LANDMARK_TRIALS.filter(t => (bk.trials || []).includes(t.name));
-  const bookmarkedArticles: (typeof DEFAULT_ARTICLES[1][0] & { _week: number })[] = [];
-  [1,2,3,4].forEach(w => (articleData[w] || []).forEach(a => { if ((bk.articles || []).includes(a.url)) bookmarkedArticles.push({ ...a, _week: w }); }));
+  // Bookmarks are keyed by article id going forward; url entries are legacy
+  // (old clients mid-rollout, or a rotation list without ids). Track which
+  // key is actually stored so removal removes the right entry.
+  const bookmarkedArticles: (typeof DEFAULT_ARTICLES[1][0] & { _week: number; _bookmarkKey: string })[] = [];
+  [1,2,3,4].forEach(w => (articleData[w] || []).forEach(a => {
+    const list = bk.articles || [];
+    const storedKey = list.includes(getArticleKey(a)) ? getArticleKey(a) : list.includes(a.url) ? a.url : null;
+    if (storedKey) bookmarkedArticles.push({ ...a, _week: w, _bookmarkKey: storedKey });
+  }));
   const bookmarkedCases: (typeof WEEKLY_CASES[1][0] & { _week: number })[] = [];
   [1,2,3,4].forEach(w => (WEEKLY_CASES[w] || []).forEach(c => { if ((bk.cases || []).includes(c.id)) bookmarkedCases.push({ ...c, _week: w }); }));
   const bookmarkedSheets: (StudySheet & { _week: number })[] = [];
@@ -41,7 +49,7 @@ export default function BookmarksView({ bookmarks, onBack, onNavigate, onToggleB
       ))}
       {renderSection("Articles", bookmarkedArticles, (a, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: T.card, borderRadius: 10, padding: 12, marginBottom: 6, border: `1px solid ${T.line}` }}>
-          <button onClick={() => onToggleBookmark("articles", a.url)} aria-label={`Remove ${a.title} from saved items`} title="Remove from saved" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0, width: 44, height: 44, margin: "-10px 0 -10px -12px", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2605"}</button>
+          <button onClick={() => onToggleBookmark("articles", a._bookmarkKey)} aria-label={`Remove ${a.title} from saved items`} title="Remove from saved" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: T.warning, padding: 0, flexShrink: 0, width: 44, height: 44, margin: "-10px 0 -10px -12px", display: "flex", alignItems: "center", justifyContent: "center" }}>{"\u2605"}</button>
           <button onClick={() => onNavigate("today", { type: "articles", week: a._week })} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.ink, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{a.title}</div>
             <div style={{ fontSize: 13, color: T.muted }}>Module {a._week} {"\u2022"} {a.type || "Article"}</div>

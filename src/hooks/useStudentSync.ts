@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
-import store from "../utils/store";
+import store, { STUDENT_REMOVED_EVENT } from "../utils/store";
 import { getCurrentStudentUser, normalizeStudentPinInput, signOutFirebase } from "../utils/firebase";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
@@ -10,7 +10,15 @@ import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
-import { mergeCompletedItems, mergeWeeklyScores } from "../utils/progressMerge";
+import {
+  mergeCompletedItems,
+  mergeRemovedPatientMaps,
+  mergeWeeklyScores,
+  patientEntryStamp,
+  patientRemovalWins,
+  pruneRemovedPatients,
+} from "../utils/progressMerge";
+import { migrateArticleBookmarkList, migrateArticleCompletionMap } from "../utils/articleKeys";
 import {
   JOINED_AT_KEY,
   STUDENT_DEFERRED_SIGNOUT_KEY,
@@ -20,6 +28,36 @@ import {
   normalizeEmail,
 } from "./useStudentAuth";
 import type { Patient, QuizScore, WeeklyScores, Announcement, SharedSettings, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../types";
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+// Content key for a patient entry — the entry minus its own stamp, so
+// re-stamping never reads as another content change (which would re-stamp on
+// every run).
+function patientContentKey(patient: Patient): string {
+  const content: Partial<Patient> = { ...patient };
+  delete content.updatedAt;
+  return JSON.stringify(content);
+}
+
+export const REMOVED_PATIENTS_KEY = "neph_removedPatients";
+
+// Article completion/bookmark keys migrated from URLs to stable ids: pure,
+// idempotent remap against the CURRENT article list (rotation-published when
+// available, bundled otherwise). Runs on every load and defensively when the
+// listener applies incoming maps, since old clients keep writing url keys
+// mid-rollout (mergeCompletedItems unions them in; this converts them).
+function migrateCompletedArticles(completed: CompletedItems, articlesByWeek: typeof ARTICLES): CompletedItems {
+  const migrated = migrateArticleCompletionMap(completed.articles, articlesByWeek);
+  return migrated === completed.articles ? completed : { ...completed, articles: migrated || {} };
+}
+
+function migrateBookmarkedArticles(bookmarks: Bookmarks, articlesByWeek: typeof ARTICLES): Bookmarks {
+  const migrated = migrateArticleBookmarkList(bookmarks.articles, articlesByWeek);
+  return migrated === bookmarks.articles ? bookmarks : { ...bookmarks, articles: migrated || [] };
+}
 
 // Data load/save/listener cluster for StudentApp. Owns the mount-time load effect
 // (auth bootstrap via useStudentAuth's bootstrapAuthSession, then stored/shared data),
@@ -74,6 +112,10 @@ export function useStudentSync(
 ) {
   const [loading, setLoading] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(() => store.getPendingSyncCount());
+  // True once we learn this student's cloud record was deleted by an admin —
+  // via the live listener, a tombstone found by a write, or the cold-start
+  // check. StudentApp renders the honest removed-from-rotation state on it.
+  const [studentRemoved, setStudentRemoved] = useState(false);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Tracks locally-mutated patients that haven't been flushed to Firestore yet.
   // Protects against multi-device "last writer wins": when another device's
@@ -83,13 +125,44 @@ export function useStudentSync(
   // flushes — at that point our state is canonical until the next mutation.
   const pendingDirtyPatientIdsRef = useRef<Set<string | number>>(new Set());
   const pendingRemovedPatientIdsRef = useRef<Set<string | number>>(new Set());
+  // ── Per-field write bookkeeping (fieldStamps / dirty-field-only writes) ──
+  // Serialized last-known value per synced field, diffed inside the save
+  // effect so every mutation is caught centrally without call-site marking.
+  // null until the first post-load run, which baselines against the last
+  // synced doc cache instead — never-synced offline work starts dirty at
+  // boot, while a routine reopen of an in-sync device writes nothing.
+  const lastFieldValuesRef = useRef<Record<string, string> | null>(null);
+  // Fields changed locally since the last write Firestore confirmed — the
+  // only fields the auto-save and flush write.
+  const dirtyFieldsRef = useRef<Set<string>>(new Set());
+  // Per-field authorship stamps: local mutations stamp "now"; listener
+  // snapshots contribute the remote's newer stamps. Synced as the doc's
+  // fieldStamps map so the store's flush merge can decide scalar conflicts
+  // by authorship time instead of the app-open-inflated doc updatedAt.
+  const fieldStampsRef = useRef<Record<string, string>>({});
+  // patientId → removedAt for student-deleted patients; synced as the doc's
+  // removedPatients map so a deletion sticks on every device instead of
+  // being resurrected by the id union.
+  const removedPatientsRef = useRef<Record<string, string>>({});
+  // Content snapshot per patient id (stamp excluded) — entries whose content
+  // changed since the last run get a fresh per-entry updatedAt.
+  const lastPatientContentsRef = useRef<Map<string, string> | null>(null);
+  // Latest synced-field values, so the debounce timer and flush write what
+  // state holds NOW (e.g. after a mid-window listener merge) rather than the
+  // values captured when the timer was scheduled.
+  const syncedFieldsRef = useRef<Record<string, unknown>>({});
+  // Current article list for completion-key migration — rotation-published
+  // when available (admins can customize articles), bundled otherwise.
+  const articlesRef = useRef<typeof ARTICLES>(ARTICLES);
   const markPatientDirty = (id: string | number) => {
     pendingRemovedPatientIdsRef.current.delete(id);
+    delete removedPatientsRef.current[String(id)];
     pendingDirtyPatientIdsRef.current.add(id);
   };
   const markPatientRemoved = (id: string | number) => {
     pendingDirtyPatientIdsRef.current.delete(id);
     pendingRemovedPatientIdsRef.current.add(id);
+    removedPatientsRef.current[String(id)] = new Date().toISOString();
   };
   // The remote updatedAt our local state is known to incorporate — hydrated
   // from the doc cache on load, advanced by applied listener snapshots and by
@@ -172,6 +245,21 @@ export function useStudentSync(
       // device (cloud advanced past what this device last saw) merges.
       const guardStudentId = sessionStudentId || sidFromStore || "";
       if (guardStudentId) advanceSyncBase(store.getCachedStudentUpdatedAt(guardStudentId));
+      const cachedDoc = guardStudentId ? store.getCachedStudentDoc(guardStudentId) : null;
+      if (cachedDoc && isPlainObject(cachedDoc.fieldStamps)) {
+        for (const [field, stamp] of Object.entries(cachedDoc.fieldStamps)) {
+          if (typeof stamp === "string") fieldStampsRef.current[field] = stamp;
+        }
+      }
+      // Removals survive a tab close even when the deleting write never left
+      // this device (still queued or inside the debounce window).
+      const storedRemovals = await store.get<Record<string, string>>(REMOVED_PATIENTS_KEY);
+      removedPatientsRef.current = mergeRemovedPatientMaps(cachedDoc?.removedPatients, storedRemovals);
+      // Per-entry stamp baseline: entries matching the last synced copy keep
+      // their stamps; entries that differ are offline edits and get restamped
+      // by the save effect's first run.
+      const cachedPatients = Array.isArray(cachedDoc?.patients) ? cachedDoc.patients as Patient[] : [];
+      lastPatientContentsRef.current = new Map(cachedPatients.map((patient) => [String(patient?.id), patientContentKey(patient)]));
       const storedJoinedAt = await store.get<string>(JOINED_AT_KEY);
       const pts = await store.get<Patient[]>("neph_patients");
       const ws = await store.get<WeeklyScores>("neph_weeklyScores");
@@ -198,8 +286,6 @@ export function useStudentSync(
         // reflects a cloud doc that predates them — can't silently drop them;
         // the next flush unions them into the cloud copy.
         if (guardStudentId) {
-          const cachedDoc = store.getCachedStudentDoc(guardStudentId);
-          const cachedPatients = Array.isArray(cachedDoc?.patients) ? cachedDoc.patients as Patient[] : [];
           const cachedIds = new Set(cachedPatients.map((patient) => patient?.id));
           pts.forEach((patient) => {
             if (!cachedIds.has(patient.id)) markPatientDirty(patient.id);
@@ -220,10 +306,11 @@ export function useStudentSync(
       const loadedGuides = sharedClinicGuides || [];
       const { guides: updatedGuides } = ensureCurrentClinicGuide(loadedGuides);
       setClinicGuides(updatedGuides);
+      if (sharedArticles) articlesRef.current = sharedArticles;
       const completed = await store.get<CompletedItems>("neph_completedItems");
-      if (completed) setCompletedItems(completed);
+      if (completed) setCompletedItems(migrateCompletedArticles(completed, articlesRef.current));
       const savedBookmarks = await store.get<Bookmarks>("neph_bookmarks");
-      if (savedBookmarks) setBookmarks(savedBookmarks);
+      if (savedBookmarks) setBookmarks(migrateBookmarkedArticles(savedBookmarks, articlesRef.current));
       const savedSrQueue = await store.get<SrQueue>("neph_srQueue");
       if (savedSrQueue) setSrQueue(savedSrQueue);
       const savedLog = await store.get<ActivityLogEntry[]>("neph_activityLog");
@@ -238,10 +325,108 @@ export function useStudentSync(
   // but we only want bootstrap once.
   }, []);
 
+  // Shared write path for the debounced auto-save and flushStudentSync: sends
+  // ONLY the fields dirtied since the last confirmed write, their fieldStamps
+  // as a partial map (setDoc merge:true merges those keys into the remote map
+  // without clobbering unrelated stamps), and a fresh updatedAt. `name` and
+  // the auth identity ride on every write so a merge write that has to CREATE
+  // the doc can never fail the security rules' name requirement.
+  const writeStudentSnapshot = async () => {
+    if (dirtyFieldsRef.current.size === 0) return;
+    const fields = syncedFieldsRef.current;
+    const serializedAtBuild = lastFieldValuesRef.current || {};
+    const baseUpdatedAt = syncBaseRef.current;
+    const updatedAt = new Date().toISOString();
+    const payload: Record<string, unknown> = {};
+    const stamps: Record<string, string> = {};
+    const writtenSnapshots = new Map<string, string>();
+    for (const field of dirtyFieldsRef.current) {
+      if (!(field in fields)) continue;
+      payload[field] = fields[field];
+      writtenSnapshots.set(field, serializedAtBuild[field] ?? "");
+      const stamp = fieldStampsRef.current[field];
+      // removedPatients carries its own per-id stamps.
+      if (field !== "removedPatients" && typeof stamp === "string") stamps[field] = stamp;
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, "removedPatients")) {
+      removedPatientsRef.current = pruneRemovedPatients(removedPatientsRef.current, updatedAt);
+      payload.removedPatients = removedPatientsRef.current;
+    }
+    payload.name = fields.name;
+    payload.authType = fields.authType;
+    if (typeof fields.email === "string") payload.email = fields.email;
+    if (Object.keys(stamps).length > 0) payload.fieldStamps = stamps;
+    payload.updatedAt = updatedAt;
+
+    const points = calculatePoints({
+      patients: fields.patients,
+      weeklyScores: fields.weeklyScores,
+      preScore: fields.preScore,
+      postScore: fields.postScore,
+      gamification: fields.gamification,
+      completedItems: fields.completedItems,
+      srQueue: fields.srQueue,
+    } as Parameters<typeof calculatePoints>[0]);
+    noteStudentUpdatedAt(updatedAt);
+
+    await Promise.all([
+      store.setStudentData(studentId, payload, { baseUpdatedAt }).then((result) => {
+        advanceSyncBase(result.updatedAt);
+        // A queued payload keeps its fields dirty: it is parked in the pending
+        // queue, and later payloads must keep carrying the fields (the queue
+        // dedup merges same-scope payloads key-wise).
+        if (result.status === "queued") return;
+        // Clear only fields unchanged since this payload was built — anything
+        // re-dirtied mid-flight stays dirty for the next write.
+        const current = lastFieldValuesRef.current || {};
+        for (const [field, snapshot] of writtenSnapshots) {
+          if ((current[field] ?? "") === snapshot) dirtyFieldsRef.current.delete(field);
+        }
+      }),
+      store.setTeamSnapshot(studentId, buildTeamSnapshot({
+        studentId,
+        name: typeof fields.name === "string" ? fields.name : studentName,
+        patients: Array.isArray(fields.patients) ? fields.patients as Patient[] : [],
+        points,
+        updatedAt,
+      })),
+    ]);
+  };
+
   // Save on changes (consolidated)
   useEffect(() => {
     if (loading) return;
-    store.set("neph_patients", patients);
+
+    const nowIso = new Date().toISOString();
+    const suppressed = suppressNextAutoSyncRef.current;
+    suppressNextAutoSyncRef.current = false;
+
+    // Central per-entry patient stamping: any entry whose content changed
+    // since the last run (its own stamp excluded) gets a fresh updatedAt.
+    // Stamping here rather than at the mutation call sites guarantees no
+    // path is missed; listener-applied entries keep the stamps they arrived
+    // with (suppressed runs skip this).
+    let syncPatients = patients;
+    const patientContents = new Map<string, string>();
+    for (const patient of patients) patientContents.set(String(patient.id), patientContentKey(patient));
+    if (!suppressed) {
+      const prevContents = lastPatientContentsRef.current;
+      let restamped = false;
+      const stamped = patients.map((patient) => {
+        if (prevContents?.get(String(patient.id)) === patientContents.get(String(patient.id))) return patient;
+        restamped = true;
+        return { ...patient, updatedAt: nowIso };
+      });
+      if (restamped) {
+        syncPatients = stamped;
+        // Re-renders once with the stamped entries; the follow-up run sees
+        // identical content keys, so this can't loop.
+        setPatients(stamped);
+      }
+    }
+    lastPatientContentsRef.current = patientContents;
+
+    store.set("neph_patients", syncPatients);
     store.set("neph_weeklyScores", weeklyScores);
     store.set("neph_preScore", preScore);
     store.set("neph_postScore", postScore);
@@ -254,49 +439,67 @@ export function useStudentSync(
     store.set("neph_activityLog", activityLog);
     store.set("neph_reflections", reflections);
     store.set("neph_gamification", gamification);
+    store.set(REMOVED_PATIENTS_KEY, removedPatientsRef.current);
+
+    const syncedFields: Record<string, unknown> = {
+      name: studentName,
+      ...studentSyncIdentity,
+      patients: syncPatients,
+      weeklyScores,
+      preScore,
+      postScore,
+      gamification,
+      completedItems,
+      bookmarks,
+      srQueue,
+      activityLog,
+      reflections,
+      removedPatients: removedPatientsRef.current,
+    };
+    syncedFieldsRef.current = syncedFields;
+
+    // Diff every synced field against its last-known serialization. The first
+    // post-load run baselines against the last synced doc cache: fields that
+    // differ from it hold never-synced local work and start dirty; no cached
+    // doc at all means a first-ever sync, so everything is dirty and the
+    // first write sends the whole doc.
+    let baseline = lastFieldValuesRef.current;
+    if (baseline === null) {
+      const cachedDoc = studentId ? store.getCachedStudentDoc(studentId) : null;
+      baseline = cachedDoc
+        ? Object.fromEntries(Object.keys(syncedFields).map((field) => [field, JSON.stringify(cachedDoc[field] ?? null)]))
+        : {};
+    }
+    const serialized: Record<string, string> = {};
+    const changedFields: string[] = [];
+    for (const [field, value] of Object.entries(syncedFields)) {
+      serialized[field] = JSON.stringify(value ?? null);
+      if (baseline[field] !== serialized[field]) changedFields.push(field);
+    }
+    lastFieldValuesRef.current = serialized;
 
     // Listener-applied remote state: persist it locally (above) but never echo
     // it back to Firestore — that write-back loop is how two open devices
-    // ping-pong full-doc writes at each other.
-    if (suppressNextAutoSyncRef.current) {
-      suppressNextAutoSyncRef.current = false;
-      return;
-    }
+    // ping-pong writes at each other. The changed values came from the cloud,
+    // so they are not locally dirty and keep the remote's stamps.
+    if (suppressed) return;
 
     // Admin deleted this student's cloud record mid-session: writing would
     // resurrect it, so keep changes local-only until the doc reappears.
     if (studentDocRemovedRef.current) return;
 
-    // Auto-sync to Firestore (debounced)
-    if (store.getRotationCode() && studentId && nameSet && studentName.trim()) {
+    for (const field of changedFields) {
+      dirtyFieldsRef.current.add(field);
+      if (field !== "removedPatients") fieldStampsRef.current[field] = nowIso;
+    }
+
+    // Auto-sync to Firestore (debounced) — only when something is dirty, so a
+    // routine app-open or an applied echo no longer produces a write at all.
+    if (store.getRotationCode() && studentId && nameSet && studentName.trim() && dirtyFieldsRef.current.size > 0) {
       if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
       syncTimerRef.current = setTimeout(() => {
-        const baseUpdatedAt = syncBaseRef.current;
-        const updatedAt = new Date().toISOString();
-        const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
-        noteStudentUpdatedAt(updatedAt);
-        void store.setStudentData(studentId, {
-          name: studentName,
-          ...studentSyncIdentity,
-          patients,
-          weeklyScores,
-          preScore,
-          postScore,
-          gamification,
-          completedItems,
-          bookmarks,
-          srQueue,
-          activityLog,
-          reflections,
-          updatedAt,
-        }, { baseUpdatedAt }).then((result) => advanceSyncBase(result.updatedAt));
-        store.setTeamSnapshot(studentId, buildTeamSnapshot({
-          studentId,
-          name: studentName,
-          patients,
-          points,
-          updatedAt,
-        }));
+        syncTimerRef.current = null;
+        void writeStudentSnapshot();
         // Our snapshot is the canonical state up to this point — clear pending
         // mutation tracking so future foreign writes merge normally.
         pendingDirtyPatientIdsRef.current.clear();
@@ -310,7 +513,14 @@ export function useStudentSync(
     if (!store.getRotationCode()) return;
     const unsub = store.onRotationChanged((data) => {
       if (data.curriculum) setCurriculum(data.curriculum);
-      if (data.articles) setArticles(data.articles);
+      if (data.articles) {
+        articlesRef.current = data.articles;
+        setArticles(data.articles);
+        // A republished list may carry ids for entries that had none (or new
+        // urls for known ids) — remap immediately; no-op when unchanged.
+        setCompletedItems((local) => migrateCompletedArticles(local, data.articles));
+        setBookmarks((local) => migrateBookmarkedArticles(local, data.articles));
+      }
       if (data.studySheets) setStudySheets(normalizeStudySheets(data.studySheets as Partial<StudySheetsData>));
       if (data.announcements) setAnnouncements(data.announcements);
       if (data.settings) setSharedSettings(data.settings);
@@ -325,6 +535,7 @@ export function useStudentSync(
     if (!store.getRotationCode() || !studentId || !nameSet) return;
     const unsub = store.onStudentDataChanged(studentId, (data) => {
       studentDocRemovedRef.current = false;
+      setStudentRemoved(false);
       const incomingUpdatedAt = typeof data.updatedAt === "string" ? data.updatedAt : null;
       if (incomingUpdatedAt) {
         const latestKnownUpdatedAt = latestStudentUpdateRef.current;
@@ -335,26 +546,52 @@ export function useStudentSync(
       // The setters below re-render with this snapshot applied; flag that
       // render so the auto-save effect doesn't write the echo back.
       suppressNextAutoSyncRef.current = true;
+      // A locally-newer scalar must survive the debounce window: skip a field
+      // whose local stamp is strictly newer than the snapshot's. Both stamps
+      // must exist — old clients and pre-migration docs apply as before.
+      const incomingStamps = isPlainObject(data.fieldStamps) ? data.fieldStamps : {};
+      const localFieldBeats = (field: string) => {
+        const localStamp = fieldStampsRef.current[field];
+        const incomingStamp = incomingStamps[field];
+        return typeof localStamp === "string" && typeof incomingStamp === "string" && localStamp > incomingStamp;
+      };
+      if (isPlainObject(data.removedPatients)) {
+        removedPatientsRef.current = mergeRemovedPatientMaps(removedPatientsRef.current, data.removedPatients);
+      }
       if (data.patients) {
-        const incoming = data.patients;
+        const incoming = data.patients as Patient[];
         const incomingById = new Map(incoming.map((p: Patient) => [p.id, p]));
+        const removedMap = removedPatientsRef.current;
         setPatients(currentLocal => {
-          // ID-based merge: keep local for any ID with pending dirty state,
-          // drop any ID still in pendingRemoved, and append incoming-only
-          // entries (additions made on the other device).
+          // Per-entry merge, mirroring the store's flush rule: the newer-
+          // stamped copy wins an id conflict, and a removal recorded on either
+          // device beats an entry unless the entry was edited after it.
+          // Unstamped conflicts fall back to the pending dirty/removed refs —
+          // keep local for in-flight local mutations, otherwise take incoming.
           const result: Patient[] = [];
           const seen = new Set<string | number>();
           for (const local of currentLocal) {
-            if (pendingRemovedPatientIdsRef.current.has(local.id)) continue;
             seen.add(local.id);
-            if (pendingDirtyPatientIdsRef.current.has(local.id)) {
-              result.push(local);
-            } else if (incomingById.has(local.id)) {
-              result.push(incomingById.get(local.id) as Patient);
+            if (pendingRemovedPatientIdsRef.current.has(local.id)) continue;
+            const incomingEntry = incomingById.get(local.id);
+            let winner: Patient | null;
+            if (incomingEntry === undefined) {
+              // Missing remotely with no removal record: deleted by an old
+              // client (or before removals existed) — drop unless the local
+              // copy holds unflushed work.
+              winner = pendingDirtyPatientIdsRef.current.has(local.id) ? local : null;
+            } else if (patientEntryStamp(local) !== patientEntryStamp(incomingEntry)) {
+              winner = patientEntryStamp(local) > patientEntryStamp(incomingEntry) ? local : incomingEntry;
+            } else {
+              winner = pendingDirtyPatientIdsRef.current.has(local.id) ? local : incomingEntry;
             }
+            if (winner && !patientRemovalWins(removedMap[String(local.id)], winner)) result.push(winner);
           }
           for (const inc of incoming) {
-            if (!seen.has(inc.id)) result.push(inc);
+            if (seen.has(inc.id)) continue;
+            if (pendingRemovedPatientIdsRef.current.has(inc.id)) continue;
+            if (patientRemovalWins(removedMap[String(inc.id)], inc)) continue;
+            result.push(inc);
           }
           return result;
         });
@@ -373,27 +610,36 @@ export function useStudentSync(
       // Monotonic merge, mirroring the store's flush-guard rule ("completed
       // never un-completes"): a consult-topic Done mark or article check made
       // in the debounce window survives a remote snapshot that predates it,
-      // instead of the card resurrecting on the next echo.
+      // instead of the card resurrecting on the next echo. Article keys are
+      // re-migrated afterwards — an old client's echo may carry url keys.
       if (data.completedItems) {
-        setCompletedItems((local) => mergeCompletedItems(data.completedItems, local) as CompletedItems);
+        setCompletedItems((local) => migrateCompletedArticles(mergeCompletedItems(data.completedItems, local) as CompletedItems, articlesRef.current));
       }
-      if (data.bookmarks) setBookmarks(data.bookmarks);
+      if (data.bookmarks) setBookmarks(migrateBookmarkedArticles(data.bookmarks as Bookmarks, articlesRef.current));
       if (data.srQueue) setSrQueue(data.srQueue);
       if (data.activityLog) setActivityLog(data.activityLog);
       if (data.reflections) setReflections(data.reflections);
-      if (typeof data.name === "string" && data.name.trim()) {
+      if (typeof data.name === "string" && data.name.trim() && !localFieldBeats("name")) {
         setStudentName(data.name);
         store.set("neph_name", data.name);
       }
-      if (typeof data.year === "string" && data.year.trim()) {
+      if (typeof data.year === "string" && data.year.trim() && !localFieldBeats("year")) {
         setStudentYear(data.year);
         store.set(STUDENT_YEAR_KEY, data.year);
+      }
+      // Adopt the snapshot's newer stamps so future comparisons (and the
+      // stamps the next write carries) reflect the latest authorship times.
+      for (const [field, stamp] of Object.entries(incomingStamps)) {
+        if (typeof stamp !== "string") continue;
+        const local = fieldStampsRef.current[field];
+        if (!local || stamp > local) fieldStampsRef.current[field] = stamp;
       }
     }, () => {
       // Admin removed (or recovered away) this student's cloud record while
       // the device was live. Stop auto-saving and drop this student's queued
       // writes so the device doesn't silently resurrect the deleted doc.
       studentDocRemovedRef.current = true;
+      setStudentRemoved(true);
       if (syncTimerRef.current) {
         clearTimeout(syncTimerRef.current);
         syncTimerRef.current = null;
@@ -403,39 +649,31 @@ export function useStudentSync(
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
 
+  // A write path found this student's deletion tombstone (offline-return or
+  // cold-start case, where the live listener's onRemoved never fired). Same
+  // handling: stop the timers and surface the removed state — the store
+  // already dropped the payload and purged the queue.
+  useEffect(() => {
+    if (typeof window === "undefined" || !studentId) return;
+    const onStudentRemoved = (event: Event) => {
+      const detail = event instanceof CustomEvent ? event.detail as { studentId?: string } | undefined : undefined;
+      if (detail?.studentId !== studentId) return;
+      studentDocRemovedRef.current = true;
+      setStudentRemoved(true);
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = null;
+      }
+    };
+    window.addEventListener(STUDENT_REMOVED_EVENT, onStudentRemoved);
+    return () => window.removeEventListener(STUDENT_REMOVED_EVENT, onStudentRemoved);
+  }, [studentId]);
+
   const flushStudentSync = async () => {
     if (!store.getRotationCode() || !studentId || !nameSet || !studentName.trim()) return;
     if (studentDocRemovedRef.current) return;
 
-    const baseUpdatedAt = syncBaseRef.current;
-    const updatedAt = new Date().toISOString();
-    const points = calculatePoints({ patients, weeklyScores, preScore, postScore, gamification, completedItems, srQueue });
-    noteStudentUpdatedAt(updatedAt);
-
-    await Promise.all([
-      store.setStudentData(studentId, {
-        name: studentName,
-        ...studentSyncIdentity,
-        patients,
-        weeklyScores,
-        preScore,
-        postScore,
-        gamification,
-        completedItems,
-        bookmarks,
-        srQueue,
-        activityLog,
-        reflections,
-        updatedAt,
-      }, { baseUpdatedAt }).then((result) => advanceSyncBase(result.updatedAt)),
-      store.setTeamSnapshot(studentId, buildTeamSnapshot({
-        studentId,
-        name: studentName,
-        patients,
-        points,
-        updatedAt,
-      })),
-    ]);
+    await writeStudentSnapshot();
     // Same bookkeeping as the debounced path: this snapshot is canonical, so
     // future foreign writes merge normally.
     pendingDirtyPatientIdsRef.current.clear();
@@ -478,6 +716,7 @@ export function useStudentSync(
   return {
     loading,
     pendingSyncCount,
+    studentRemoved,
     syncTimerRef,
     markPatientDirty,
     markPatientRemoved,

@@ -7,6 +7,7 @@
 
 import { TOPICS } from "../data/constants";
 import { getTopicContent } from "./topicMapping";
+import { isArticleCompleted } from "./articleKeys";
 import type { TopicExposure } from "../types";
 
 interface PatientInput {
@@ -55,7 +56,7 @@ export function getTopicExposures(
       if (completed.studySheets?.[s.id]) completedCount++;
     }
     for (const a of content.articles) {
-      if (completed.articles?.[a.url]) completedCount++;
+      if (isArticleCompleted(completed.articles, a)) completedCount++;
     }
     for (const c of content.cases) {
       if (completed.cases?.[c.id]) completedCount++;

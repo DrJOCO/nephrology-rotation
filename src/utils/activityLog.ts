@@ -3,6 +3,7 @@ import { WEEKLY_CASES } from "../data/cases";
 import { GUIDE_SECTIONS } from "../data/guides";
 import { PRE_QUIZ, POST_QUIZ, WEEKLY_QUIZZES } from "../data/quizzes";
 import { ROTATION_GUIDES } from "../data/rotationGuides";
+import { getArticleKey } from "./articleKeys";
 import type { Bookmarks, ClinicGuideRecord, SubView } from "../types";
 
 type ActivityDescriptor = {
@@ -26,7 +27,7 @@ export function buildBookmarkActivityDetail(
   }
 
   if (type === "articles") {
-    const article = Object.values(articlesByWeek).flat().find((item) => item.url === itemId);
+    const article = Object.values(articlesByWeek).flat().find((item) => getArticleKey(item) === itemId || item.url === itemId);
     return `Article: ${article?.title || itemId}`;
   }
 

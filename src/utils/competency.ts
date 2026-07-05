@@ -2,6 +2,7 @@ import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { PRE_QUIZ, POST_QUIZ, getQuestionByKey } from "../data/quizzes";
 import { todayKey } from "./date";
+import { isArticleCompleted } from "./articleKeys";
 import type { CompletedItems, Patient, QuizQuestion, QuizScore, SrQueue, SubView, WeeklyScores } from "../types";
 
 export type CompetencyDomain = "AKI" | "CKD" | "Dialysis" | "Electrolytes" | "Transplant" | "Glomerular";
@@ -96,6 +97,7 @@ interface DomainDefinition {
 interface IndexedArticle {
   week: number;
   url: string;
+  id?: string;
   title: string;
   domain: CompetencyDomain;
 }
@@ -393,7 +395,7 @@ export function buildCompetencySummary({
   for (const week of [1, 2, 3, 4]) {
     for (const article of articlesByWeek[week] || []) {
       const domain = mapTopicToDomain(article.topic) || FALLBACK_WEEK_DOMAIN[week];
-      articlesByDomain[domain].push({ week, url: article.url, title: article.title, domain });
+      articlesByDomain[domain].push({ week, url: article.url, ...(article.id ? { id: article.id } : {}), title: article.title, domain });
     }
   }
 
@@ -414,7 +416,7 @@ export function buildCompetencySummary({
     const srIntervalDays = srItems.length > 0 ? Math.max(...srItems.map(([, item]) => item.interval)) : 0;
     const dueCards = srItems.filter(([key]) => dueItems.has(key)).length;
 
-    const readArticles = articlesByDomain[domain].filter((article) => completedItems.articles?.[article.url]);
+    const readArticles = articlesByDomain[domain].filter((article) => isArticleCompleted(completedItems.articles, article));
     const solvedCases = CASES_BY_DOMAIN[domain].filter((item) => completedItems.cases?.[item.id]);
     const consultCount = consultCounts[domain];
     const recentQuizWindow = questionEvents[domain].slice(0, 10);
@@ -457,7 +459,7 @@ export function buildCompetencySummary({
         ? "One more push to reach proficient."
         : "Build the first layer of exposure and recall.";
 
-    const nextUnreadArticle = articlesByDomain[domain].find((article) => !completedItems.articles?.[article.url]);
+    const nextUnreadArticle = articlesByDomain[domain].find((article) => !isArticleCompleted(completedItems.articles, article));
     const nextCase = CASES_BY_DOMAIN[domain].find((item) => !completedItems.cases?.[item.id]);
     const primaryWeek = definition.weeks[0];
     let action: CompetencyAction;

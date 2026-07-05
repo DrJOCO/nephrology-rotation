@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { STUDY_SHEETS, CURRICULUM_DECKS } from "../../../data/constants";
 import { WEEKLY_CASES } from "../../../data/cases";
 import { ACHIEVEMENTS } from "../../../utils/gamification";
+import { isArticleCompleted } from "../../../utils/articleKeys";
 import type { AdminStudent, SharedSettings, QuizScore } from "../../../types";
 import type { ArticlesData } from "../types";
 import {
@@ -50,7 +51,7 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
   // Completed items per week
   const weeklyCompletion = [1, 2, 3, 4].map(w => {
     const refs = (articles[w] || []).length;
-    const refsDone = (articles[w] || []).filter(a => completed.articles[a.url]).length;
+    const refsDone = (articles[w] || []).filter(a => isArticleCompleted(completed.articles, a)).length;
     const sheets = (STUDY_SHEETS[w] || []).length;
     const sheetsDone = (STUDY_SHEETS[w] || []).filter(sh => completed.studySheets[sh.id]).length;
     const decks = CURRICULUM_DECKS.filter(deck => deck.week === w).length;

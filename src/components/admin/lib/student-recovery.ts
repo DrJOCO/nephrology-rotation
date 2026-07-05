@@ -116,6 +116,7 @@ export interface RecoverySyncStore {
   setStudentData(studentId: string, data: Record<string, unknown>): Promise<StudentWriteResult>;
   setTeamSnapshot(studentId: string, data: object): Promise<unknown>;
   deleteStudentData(studentId: string): Promise<unknown>;
+  clearStudentTombstone(studentId: string): Promise<unknown>;
 }
 
 // Merge source → target, write the merged record, and delete the source only
@@ -128,6 +129,11 @@ export async function performStudentRecovery(
   buildSnapshot: (merged: AdminStudent) => object,
 ): Promise<AdminStudent> {
   const merged = buildRecoveredStudent(source, target);
+  // A deletion tombstone on the target (from an earlier Remove) would make
+  // the security rules reject the merged write — clear it before writing.
+  // The source is tombstoned by deleteStudentData below, closing its
+  // resurrection path.
+  await syncStore.clearStudentTombstone(target.studentId);
   const writeResult = await syncStore.setStudentData(target.studentId, {
     name: merged.name,
     year: merged.year,

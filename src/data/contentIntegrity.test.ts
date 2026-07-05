@@ -28,6 +28,18 @@ describe("content integrity", () => {
     }
   });
 
+  it("gives every article a unique stable id (student completion keys)", () => {
+    const seen = new Set<string>();
+    for (const week of Object.values(ARTICLES)) {
+      for (const article of week) {
+        expect(typeof article.id, `missing id for "${article.title}"`).toBe("string");
+        expect(article.id, `bad id format: "${article.id}"`).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+        expect(seen.has(article.id), `duplicate article id: "${article.id}"`).toBe(false);
+        seen.add(article.id);
+      }
+    }
+  });
+
   it("keeps study-sheet topics aligned with the app topic list", () => {
     const topicSet = new Set(TOPICS);
 

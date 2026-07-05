@@ -1,5 +1,6 @@
 import { T, WEEKLY, labelChip } from "../../data/constants";
 import { BackButton } from "./shared";
+import { getArticleKey, isArticleCompleted } from "../../utils/articleKeys";
 import { getTopicContent } from "../../utils/topicMapping";
 
 const typePrefix = (type: string) => {
@@ -11,7 +12,7 @@ const typePrefix = (type: string) => {
 export default function ArticlesView({ week, onBack, navigate, curriculum, articles, completedItems, bookmarks, onToggleBookmark, onToggleComplete }) {
   const arts = articles[week] || [];
   const wk = curriculum[week] || WEEKLY[week];
-  const readCount = arts.filter(a => (completedItems?.articles || {})[a.url]).length;
+  const readCount = arts.filter(a => isArticleCompleted(completedItems?.articles, a)).length;
 
   return (
     <div style={{ padding: 16 }}>
@@ -30,7 +31,12 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
       </p>
 
       {arts.map((a, i) => {
-        const isRead = (completedItems?.articles || {})[a.url];
+        const articleKey = getArticleKey(a);
+        // Removal must target whichever key is actually stored (url entries
+        // are legacy bookmarks from before ids, or from old clients).
+        const bookmarkKey = (bookmarks?.articles || []).includes(articleKey) || !(bookmarks?.articles || []).includes(a.url) ? articleKey : a.url;
+        const isBookmarked = (bookmarks?.articles || []).includes(articleKey) || (bookmarks?.articles || []).includes(a.url);
+        const isRead = isArticleCompleted(completedItems?.articles, a);
         const topicContent = getTopicContent(a.topic);
         const linkedCount = topicContent.studySheets.length + topicContent.articles.length + topicContent.quizWeeks.length + topicContent.trials.length + topicContent.resources.length;
         return (
@@ -73,13 +79,13 @@ export default function ArticlesView({ week, onBack, navigate, curriculum, artic
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12, flexShrink: 0 }}>
-              <button onClick={() => onToggleBookmark(a.url)}
-                aria-label={(bookmarks?.articles || []).includes(a.url) ? `Unbookmark ${a.title}` : `Bookmark ${a.title}`}
-                title={(bookmarks?.articles || []).includes(a.url) ? "Bookmarked" : "Save for later"}
-                style={{ width: 40, height: 40, borderRadius: 20, border: `1.5px solid ${(bookmarks?.articles || []).includes(a.url) ? T.warning : T.line}`, background: (bookmarks?.articles || []).includes(a.url) ? T.warningBg : T.card, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: (bookmarks?.articles || []).includes(a.url) ? T.warning : T.muted }}>
-                {(bookmarks?.articles || []).includes(a.url) ? "\u2605" : "\u2606"}
+              <button onClick={() => onToggleBookmark(bookmarkKey)}
+                aria-label={isBookmarked ? `Unbookmark ${a.title}` : `Bookmark ${a.title}`}
+                title={isBookmarked ? "Bookmarked" : "Save for later"}
+                style={{ width: 40, height: 40, borderRadius: 20, border: `1.5px solid ${isBookmarked ? T.warning : T.line}`, background: isBookmarked ? T.warningBg : T.card, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: isBookmarked ? T.warning : T.muted }}>
+                {isBookmarked ? "\u2605" : "\u2606"}
               </button>
-              <button onClick={() => onToggleComplete(a.url)}
+              <button onClick={() => onToggleComplete(articleKey)}
                 aria-label={isRead ? `Mark ${a.title} unreviewed` : `Mark ${a.title} as reviewed`}
                 title={isRead ? "Reviewed — click to undo" : "Mark reviewed"}
                 style={{ width: 40, height: 40, borderRadius: 20, border: `2px solid ${isRead ? T.success : T.brand}`, background: isRead ? T.success : "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 15, fontWeight: 700, color: isRead ? T.successInk : T.brand }}>
