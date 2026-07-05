@@ -4,6 +4,7 @@ import { WEEKLY_CASES } from "../../data/cases";
 import { getCaseScenarioImage, getCaseQuestionImage } from "../../data/images";
 import store from "../../utils/store";
 import type { CompletedItems, Bookmarks } from "../../types";
+import { useBackClosesLevel } from "../../hooks/backLevelContext";
 import { BackButton, EduDisclaimer, HeadlineMetric, Section } from "./shared";
 
 const caseImgStyle: CSSProperties = { width: "100%", borderRadius: 10, marginTop: 12, border: `1px solid ${T.line}` };
@@ -299,10 +300,17 @@ export default function CasesView({ week, onBack, completedItems, bookmarks, onT
   const cases = WEEKLY_CASES[week] || [];
   const doneCount = cases.filter((item) => completedItems?.cases?.[item.id]).length;
 
+  // Opening a case (CaseDetail) is a local detail level held in state, not a
+  // pushed subView, so hardware Back would skip it and navigate the tab
+  // underneath. Register it so Back returns to the case list first; `closeCase`
+  // is used by CaseDetail's on-screen Back so it pops the pushed entry rather
+  // than leaving a dead one (mirroring the search overlay's two close paths).
+  const closeCase = useBackClosesLevel(Boolean(activeCase), () => setActiveCase(null));
+
   if (activeCase) {
     return <CaseDetail
       caseData={activeCase}
-      onBack={() => setActiveCase(null)}
+      onBack={closeCase}
       completedItems={completedItems}
       onCaseComplete={onCaseComplete}
     />;
