@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { T, WEEKLY, STUDY_SHEETS } from "../../../data/constants";
 import type { StudySheet } from "../../../types";
 import { cloneStudySheet, normalizeStudySheet, normalizeStudySheets, type StudySheetsData } from "../../../utils/studySheets";
-import { adminInput, adminLabel, type AdminToastTone } from "../shared";
+import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone } from "../shared";
 
 const textAreaStyle: React.CSSProperties = {
   ...adminInput,
@@ -34,11 +34,13 @@ export function StudySheetsEditor({
   setStudySheets,
   onBack,
   showToast,
+  requestConfirm,
 }: {
   studySheets: StudySheetsData;
   setStudySheets: React.Dispatch<React.SetStateAction<StudySheetsData>>;
   onBack: () => void;
   showToast?: (message: string, tone?: AdminToastTone) => void;
+  requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>;
 }) {
   const weeks = useMemo(() => Object.keys(studySheets).map(Number).sort((a, b) => a - b), [studySheets]);
   const [selectedWeek, setSelectedWeek] = useState(weeks[0] || 1);
@@ -96,7 +98,14 @@ export function StudySheetsEditor({
     setDirty(true);
   };
 
-  const resetAllToDefault = () => {
+  const resetAllToDefault = async () => {
+    const confirmed = await requestConfirm({
+      title: "Reset all study sheets?",
+      message: "This replaces ALL study sheets across all modules with the built-in defaults. This cannot be undone.",
+      confirmLabel: "Reset All",
+      tone: "danger",
+    });
+    if (!confirmed) return;
     setStudySheets(normalizeStudySheets());
     showToast?.("All study sheets reset to the source defaults. Publish to students when ready.", "info");
   };
@@ -127,7 +136,7 @@ export function StudySheetsEditor({
             Edit the actual student-facing sheet text. IDs stay fixed so bookmarks and completion history still work.
           </div>
         </div>
-        <button onClick={resetAllToDefault} style={buttonStyle("danger")}>Reset All Defaults</button>
+        <button onClick={() => { void resetAllToDefault(); }} style={buttonStyle("danger")}>Reset All Defaults</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>

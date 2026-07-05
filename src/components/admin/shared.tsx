@@ -16,6 +16,11 @@ export type AdminConfirmOptions = {
   confirmLabel?: string;
   cancelLabel?: string;
   tone?: "default" | "danger";
+  // When set, the confirm button stays disabled until the admin types this
+  // exact string. Used to gate irreversible deletes (e.g. a rotation code)
+  // behind a deliberate, typed acknowledgement.
+  requireText?: string;
+  requireTextLabel?: string;
 };
 
 export const adminLabel: React.CSSProperties = {
@@ -117,6 +122,16 @@ function AdminConfirmDialogBody({
   const isDanger = options.tone === "danger";
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const [typedConfirm, setTypedConfirm] = React.useState("");
+
+  // Reset the typed value whenever a new confirm request opens so a prior
+  // rotation code can't carry over and satisfy the gate.
+  useEffect(() => {
+    setTypedConfirm("");
+  }, [options.requireText, options.title]);
+
+  const requiresText = Boolean(options.requireText);
+  const textSatisfied = !requiresText || typedConfirm.trim() === options.requireText;
 
   // Initial focus lands on Cancel so Enter can't instantly confirm a delete.
   useFocusTrap(dialogRef, cancelRef);
@@ -140,13 +155,29 @@ function AdminConfirmDialogBody({
         style={{ background: T.card, borderRadius: 18, width: "100%", maxWidth: 420, padding: 22, boxShadow: "0 24px 64px rgba(0,0,0,0.28)" }}
       >
         <div id="admin-confirm-title" style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 700, color: T.ink, marginBottom: 8 }}>{options.title}</div>
-        <div id="admin-confirm-message" style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginBottom: 18 }}>{options.message}</div>
+        <div id="admin-confirm-message" style={{ fontSize: 13, color: T.sub, lineHeight: 1.6, marginBottom: requiresText ? 14 : 18 }}>{options.message}</div>
+        {requiresText && (
+          <div style={{ marginBottom: 18 }}>
+            <label htmlFor="admin-confirm-text" style={{ ...adminLabel, marginBottom: 6 }}>
+              {options.requireTextLabel || `Type ${options.requireText} to confirm`}
+            </label>
+            <input
+              id="admin-confirm-text"
+              value={typedConfirm}
+              onChange={(e) => setTypedConfirm(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              style={{ ...adminInput, fontFamily: T.mono, letterSpacing: 1 }}
+            />
+          </div>
+        )}
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button ref={cancelRef} onClick={onCancel} style={{ padding: "10px 14px", background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, color: T.sub, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
             {options.cancelLabel || "Cancel"}
           </button>
           <button
             onClick={onConfirm}
+            disabled={!textSatisfied}
             style={{
               padding: "10px 14px",
               background: isDanger ? T.danger : T.brand,
@@ -155,7 +186,8 @@ function AdminConfirmDialogBody({
               color: isDanger ? T.dangerInk : T.brandInk,
               fontSize: 13,
               fontWeight: 700,
-              cursor: "pointer",
+              cursor: textSatisfied ? "pointer" : "not-allowed",
+              opacity: textSatisfied ? 1 : 0.5,
             }}
           >
             {options.confirmLabel || "Confirm"}

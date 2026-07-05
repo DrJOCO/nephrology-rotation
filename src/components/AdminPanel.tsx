@@ -30,7 +30,7 @@ import { StudentDetailView } from "./admin/views/StudentDetailView";
 import { getAdminPinValidationError } from "./admin/pinValidation";
 import { adminScopedKey, getStoredAdminRotationCode, setStoredAdminRotationCode } from "./admin/storage";
 import { getAdminAuthErrorMessage } from "./admin/lib/auth-errors";
-import { buildPublishSnapshot, serializePublishSnapshot } from "./admin/lib/publish";
+import { buildPublishSnapshot, fingerprintRemoteSharedDoc, serializePublishSnapshot } from "./admin/lib/publish";
 import { performStudentRecovery } from "./admin/lib/student-recovery";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import type { WeeklyData, ArticlesData, AdminSession, AdminAuthMode } from "./admin/types";
@@ -79,9 +79,14 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   const [rotationCode, setRotationCodeState] = useState("");
   const [lastPublishedSnapshotJson, setLastPublishedSnapshotJson] = useState("");
   const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null);
+  const [publishQueued, setPublishQueued] = useState(false);
   const [publishingSharedData, setPublishingSharedData] = useState(false);
   const [publishBaselineResetToken, setPublishBaselineResetToken] = useState(0);
   const publishBaselineHandledRef = useRef(0);
+  // Fingerprint of the remote rotation doc at the moment this session hydrated.
+  // Publish compares the live remote against this to detect a co-admin who
+  // published in the meantime, so we never silently revert their work.
+  const hydratedRemoteFingerprintRef = useRef<string>("");
 
   const publishSnapshot = useMemo(() => buildPublishSnapshot({
     curriculum,
@@ -142,6 +147,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     publishBaselineHandledRef.current = publishBaselineResetToken;
     setLastPublishedSnapshotJson(publishSnapshotJson);
     setLastPublishedAt(null);
+    setPublishQueued(false);
   }, [loading, publishBaselineResetToken, publishSnapshotJson]);
 
   const loadLocalAdminData = useCallback(async (uid: string) => {
@@ -183,6 +189,9 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     }
     const remote = await store.getRotationData(code);
     if (!remote) return false;
+    // Record what the remote looked like at hydration so publish can tell if a
+    // co-admin changed it since.
+    hydratedRemoteFingerprintRef.current = fingerprintRemoteSharedDoc(remote);
     if (remote.curriculum) setCurriculum(remote.curriculum);
     if (remote.articles) setArticles(remote.articles);
     setStudySheets(normalizeStudySheets(remote.studySheets as Partial<StudySheetsData> | undefined));
@@ -311,11 +320,45 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
       return;
     }
 
+    // Staleness guard: if another device/co-admin published since this session
+    // hydrated, publishing now would silently revert their edits. Re-read the
+    // remote doc and compare against the hydration baseline before writing.
+    const baseline = hydratedRemoteFingerprintRef.current;
+    if (baseline) {
+      let liveRemote: Awaited<ReturnType<typeof store.getRotationData>> = null;
+      try {
+        liveRemote = await store.getRotationData(rotationCode);
+      } catch (error) {
+        console.warn("Could not check remote before publishing:", error);
+      }
+      // Only act on a definite change. If the fetch failed (liveRemote is null),
+      // don't block publishing — the retry queue still protects the write.
+      if (liveRemote && fingerprintRemoteSharedDoc(liveRemote) !== baseline) {
+        const overwrite = await requestConfirm({
+          title: "Newer changes on the server",
+          message: "Another device published changes since you loaded this page — publishing now may overwrite them. Publish anyway, or reload their changes first?",
+          confirmLabel: "Publish anyway",
+          cancelLabel: "Reload their changes",
+          tone: "danger",
+        });
+        if (!overwrite) {
+          const rehydrated = await hydrateRotationData(rotationCode, firebaseAdmin);
+          showToast(
+            rehydrated
+              ? "Reloaded the latest published changes. Review, then publish again."
+              : "Could not reload the latest changes. Try again.",
+            rehydrated ? "info" : "error",
+          );
+          return;
+        }
+      }
+    }
+
     const snapshot = publishSnapshot;
     const serialized = serializePublishSnapshot(snapshot);
     setPublishingSharedData(true);
     try {
-      await Promise.all([
+      const results = await Promise.all([
         store.setShared(SHARED_KEYS.curriculum, snapshot.curriculum),
         store.setShared(SHARED_KEYS.articles, snapshot.articles),
         store.setShared(SHARED_KEYS.studySheets, snapshot.studySheets),
@@ -324,16 +367,34 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         store.setShared(SHARED_KEYS.clinicGuideTemplates, snapshot.clinicGuideTemplates),
         store.setShared(SHARED_KEYS.settings, snapshot.settings),
       ]);
+      // Every write reached Firestore only if none of them were queued for retry.
+      const anyQueued = results.some((result) => result.queued);
       setLastPublishedSnapshotJson(serialized);
       setLastPublishedAt(new Date().toISOString());
-      showToast("Published settings and content to students.", "success");
+      setPublishQueued(anyQueued);
+      if (anyQueued) {
+        showToast("Saved locally — will retry when back online.", "info");
+      } else {
+        // This session is now the newest writer — advance the staleness
+        // baseline so a follow-up publish doesn't warn about our own write.
+        hydratedRemoteFingerprintRef.current = fingerprintRemoteSharedDoc({
+          curriculum: snapshot.curriculum,
+          articles: snapshot.articles,
+          studySheets: snapshot.studySheets,
+          announcements: snapshot.announcements,
+          settings: snapshot.settings,
+          clinicGuides: snapshot.clinicGuides,
+          clinicGuideTemplates: snapshot.clinicGuideTemplates,
+        });
+        showToast("Published settings and content to students.", "success");
+      }
     } catch (error) {
       console.error("Publish shared changes failed:", error);
       showToast("Publish failed. Check your connection and try again.", "error");
     } finally {
       setPublishingSharedData(false);
     }
-  }, [firebaseAdmin, publishSnapshot, rotationCode, showToast]);
+  }, [firebaseAdmin, publishSnapshot, rotationCode, showToast, requestConfirm, hydrateRotationData]);
 
   // Real-time listener: students auto-appear when connected to a rotation
   useEffect(() => {
@@ -719,6 +780,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
             rotationCode={rotationCode}
             dirty={sharedDataDirty}
             publishing={publishingSharedData}
+            queued={publishQueued && !sharedDataDirty}
             lastPublishedAt={lastPublishedAt}
             onPublish={() => { void publishSharedChanges(); }}
           />
@@ -733,7 +795,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} studySheets={studySheets} />}
         {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} requestConfirm={requestConfirm} />}
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
-        {tab === "content" && subView?.type === "editStudySheets" && <StudySheetsEditor studySheets={studySheets} setStudySheets={setStudySheets} onBack={() => navigate("content")} showToast={showToast} />}
+        {tab === "content" && subView?.type === "editStudySheets" && <StudySheetsEditor studySheets={studySheets} setStudySheets={setStudySheets} onBack={() => navigate("content")} showToast={showToast} requestConfirm={requestConfirm} />}
         {tab === "content" && subView?.type === "announcements" && <AnnouncementsEditor announcements={announcements} setAnnouncements={setAnnouncements} onBack={() => navigate("content")} requestConfirm={requestConfirm} />}
         {tab === "content" && subView?.type === "clinicGuides" && <ClinicGuidesEditor clinicGuides={clinicGuides} setClinicGuides={setClinicGuides} clinicGuideTemplates={clinicGuideTemplates} setClinicGuideTemplates={setClinicGuideTemplates} onBack={() => navigate("content")} showToast={showToast} requestConfirm={requestConfirm} />}
         {tab === "rotation" && firebaseAdmin && (
