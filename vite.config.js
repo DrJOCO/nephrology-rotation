@@ -125,16 +125,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // vendor-react stays a dedicated chunk for long-term caching. The old
+        // monolithic `data` chunk is gone: the heavy content datasets
+        // (guides/quizzes/cases/trials/studySheets/inpatientGuides/…) are now
+        // reached only through lazy views (StudentViewRouter, GlobalSearchOverlay,
+        // AdminPanel), so Rollup splits each dataset into its consuming view's
+        // chunk instead of forcing all of it into the always-loaded boot graph.
         manualChunks: {
           'vendor-react': ['react', 'react-dom'],
-          'data': [
-            './src/data/constants.ts',
-            './src/data/guides.ts',
-            './src/data/quizzes.ts',
-            './src/data/cases.ts',
-            './src/data/trials.ts',
-            './src/data/images.ts',
-          ],
         },
       },
     },

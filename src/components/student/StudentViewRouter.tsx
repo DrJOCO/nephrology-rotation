@@ -1,9 +1,15 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { T, WEEKLY, ARTICLES, CURRICULUM_DECKS } from "../../data/constants";
 import type { ClinicGuideTemplates } from "../../data/clinicGuides";
 import { PRE_QUIZ, POST_QUIZ, TOPIC_REINFORCEMENT_BANK, WEEKLY_QUIZZES, getQuestionByKey, resolveReinforcementTopic, topicToSlug } from "../../data/quizzes";
 import { processQuizResults, processReviewResults, getDueItems, seedTopicReinforcementSr } from "../../utils/spacedRepetition";
-import type { CompetencySummary } from "../../utils/competency";
+// competency + moduleProgression each statically import the bulk content datasets.
+// They live here (inside the lazy router chunk) rather than in the always-loaded
+// StudentApp shell so that content stays out of the boot graph. The derived
+// values (currentWeek / rotationEnded / competencySummary) are consumed only by
+// HomeTab, LibraryHub, and ProgressTab — all rendered by this router.
+import { buildCompetencySummary, type CompetencySummary } from "../../utils/competency";
+import { getStudentCurrentModule, hasRotationEnded } from "../../utils/moduleProgression";
 import type { StudySheetsData } from "../../utils/studySheets";
 import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, Gamification, SrQueue, CompletedItems, Bookmarks, ClinicGuideRecord, ReflectionEntry } from "../../types";
 
@@ -85,10 +91,8 @@ export interface StudentViewRouterProps {
   announcements: Announcement[];
   clinicGuides: ClinicGuideRecord[];
   clinicGuideTemplates: ClinicGuideTemplates;
-  currentWeek: number | null;
+  rotationStart?: string | null;
   totalWeeks: number;
-  rotationEnded: boolean;
-  competencySummary: CompetencySummary;
   online: boolean;
   studentId: string;
   installPromptVariant: "native" | "ios" | null;
@@ -121,14 +125,38 @@ function StudentViewRouter({
   reflections,
   curriculum, articles, studySheets, announcements,
   clinicGuides, clinicGuideTemplates,
-  currentWeek, totalWeeks, rotationEnded,
-  competencySummary,
+  rotationStart, totalWeeks,
   online, studentId,
   installPromptVariant, onInstallApp, onDismissInstallPrompt,
   onSubmitReflection, onCompleteConsultTopic,
   logActivity, toggleBookmark,
   markPatientDirty, markPatientRemoved,
 }: StudentViewRouterProps) {
+  // Derived progression/competency state — moved out of the always-loaded
+  // StudentApp shell so its heavy data deps (cases/quizzes) ride this lazy chunk.
+  // Same inputs and memo dependencies as the original StudentApp memos, so the
+  // computed values (and their identity-based re-render behavior) are unchanged.
+  const currentWeek = useMemo(() => getStudentCurrentModule({
+    rotationStart,
+    totalWeeks,
+    completedItems,
+    weeklyScores,
+  }), [completedItems, rotationStart, totalWeeks, weeklyScores]);
+  const rotationEnded = useMemo(
+    () => hasRotationEnded(rotationStart, totalWeeks),
+    [rotationStart, totalWeeks],
+  );
+  const competencySummary = useMemo(() => buildCompetencySummary({
+    weeklyScores,
+    preScore,
+    postScore,
+    completedItems,
+    srQueue,
+    currentWeek,
+    totalWeeks,
+    articlesByWeek: articles,
+    patients,
+  }), [weeklyScores, preScore, postScore, completedItems, srQueue, currentWeek, totalWeeks, articles, patients]);
   return (
     <>
         {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} studySheets={studySheets} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} setPatients={setPatients} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} onLogActivity={logActivity} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={onSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={onInstallApp} onDismissInstallPrompt={onDismissInstallPrompt} onCompleteConsultTopic={onCompleteConsultTopic} />}

@@ -7,11 +7,15 @@
 // ═══════════════════════════════════════════════════════════════════════
 
 import { getTopicContent } from "./topicMapping";
+import { getConsultTopicCompletionKey } from "./consultTopicKey";
 import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { ALL_LANDMARK_TRIALS } from "../data/trials";
 import { INPATIENT_GUIDES, type InpatientGuideTopic } from "../data/inpatientGuides";
 import type { TopicRecommendation } from "../types";
+
+// Re-exported for backward compatibility with existing importers.
+export { getConsultTopicCompletionKey };
 
 interface PatientInput {
   topics?: string[];
@@ -30,14 +34,6 @@ interface CompletedItemsInput {
 
 interface ConsultTopicCompletionInput {
   completedAt?: string;
-}
-
-export function getConsultTopicCompletionKey(topic: string): string {
-  return topic
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "topic";
 }
 
 function getPatientTopics(patient: PatientInput): string[] {
