@@ -193,4 +193,41 @@ describe("Hyponatremia differential vignettes", () => {
     const assessment = buildHyponatremiaAssessment(baseInputs({ serumNa: "120", duration: "unknown" }));
     expect(assessment.summary).toMatch(/chronic/i);
   });
+
+  // ── Blank-as-zero regression guards (clinical-safety bug class) ──────────
+  it("keeps the 'get urine sodium' prompt and fabricates no 'UNa <20' line when urine Na is blank", () => {
+    const assessment = buildHyponatremiaAssessment(
+      baseInputs({
+        serumNa: "126",
+        urineOsm: "600",
+        urineNa: "", // not entered — must NOT be read as 0
+        selectedHistory: ["heart_failure"],
+        selectedVolumeClues: ["edema", "jvd"],
+      }),
+    );
+    // The missing-data prompt must still surface (previously suppressed because "" → 0).
+    expect(assessment.nextSteps.some((s) => /Get urine sodium/i.test(s))).toBe(true);
+    // No support line may claim a UNa value when none was entered.
+    const allSupports = assessment.differentials.flatMap((d) => d.supports);
+    expect(allSupports.some((s) => /UNa\b.*<20/i.test(s))).toBe(false);
+    expect(allSupports.some((s) => /UNa 0\b/.test(s))).toBe(false);
+  });
+
+  it("uses an explicit urine Na of 0 as a real value (suppresses the prompt, allows the UNa <20 support line)", () => {
+    const assessment = buildHyponatremiaAssessment(
+      baseInputs({
+        serumNa: "126",
+        urineOsm: "600",
+        urineNa: "0", // explicitly measured, sodium-avid kidneys
+        selectedHistory: ["heart_failure"],
+        selectedVolumeClues: ["edema", "jvd"],
+      }),
+    );
+    // A real value was entered, so the "get urine sodium" prompt should NOT fire.
+    expect(assessment.nextSteps.some((s) => /Get urine sodium/i.test(s))).toBe(false);
+    // With a genuine UNa 0 (<20) in an HF picture, the sodium-avidity support line is legitimate.
+    const hf = assessment.differentials.find((d) => d.id === "hf");
+    expect(hf).toBeDefined();
+    expect(hf?.supports.some((s) => /UNa\b.*<20/i.test(s))).toBe(true);
+  });
 });
