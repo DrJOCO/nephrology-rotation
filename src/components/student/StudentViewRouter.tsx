@@ -10,6 +10,7 @@ import type { Patient, QuizScore, WeeklyScores, SubView, Announcement, Gamificat
 // Critical-path components (eager)
 import HomeTab from "./HomeTab";
 import LibraryHub from "./LibraryHub";
+import { BackButton } from "./shared";
 
 // Lazy-loaded sub-views
 const BookmarksView = lazy(() => import("./BookmarksView"));
@@ -130,7 +131,7 @@ function StudentViewRouter({
 }: StudentViewRouterProps) {
   return (
     <>
-        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} studySheets={studySheets} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} setPatients={setPatients} onMarkPatientDirty={markPatientDirty} onLogActivity={logActivity} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={onSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={onInstallApp} onDismissInstallPrompt={onDismissInstallPrompt} onCompleteConsultTopic={onCompleteConsultTopic} />}
+        {tab === "today" && !subView && <HomeTab navigate={navigate} preScore={preScore} postScore={postScore} curriculum={curriculum} articles={articles} studySheets={studySheets} announcements={announcements} currentWeek={currentWeek} totalWeeks={totalWeeks} rotationEnded={rotationEnded} weeklyScores={weeklyScores} completedItems={completedItems} bookmarks={bookmarks} srDueCount={getDueItems(srQueue).length} patients={patients} setPatients={setPatients} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} onLogActivity={logActivity} online={online} competencySummary={competencySummary} gamification={gamification} reflections={reflections} onSubmitReflection={onSubmitReflection} installPromptVariant={installPromptVariant} onInstallApp={onInstallApp} onDismissInstallPrompt={onDismissInstallPrompt} onCompleteConsultTopic={onCompleteConsultTopic} />}
         <Suspense fallback={<LazyFallback />}>
         {tab === "today" && subView?.type === "weeklyQuiz" && (
           <QuizEngine questions={WEEKLY_QUIZZES[subView.week]} title={`Module ${subView.week} Quiz`}
@@ -160,7 +161,16 @@ function StudentViewRouter({
                 logActivity("review_missed", `Module ${subView.week} Review`, `${score.correct}/${score.total}`);
                 navigate("today");
               }} />
-          ) : null;
+          ) : (
+            <div style={{ padding: 16 }}>
+              <BackButton onClick={goBack} />
+              <div style={{ textAlign: "center", padding: "40px 16px" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🎉</div>
+                <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 700, color: T.ink, marginBottom: 4 }}>Nothing to review</div>
+                <div style={{ fontSize: 14, color: T.sub }}>You didn't miss any questions on this quiz.</div>
+              </div>
+            </div>
+          );
         })()}
         {tab === "today" && subView?.type === "preQuiz" && (
           <QuizEngine questions={PRE_QUIZ} title="Pre-Rotation Assessment"
@@ -367,6 +377,7 @@ function StudentViewRouter({
         {tab === "library" && !subView && (
           <LibraryHub
             navigate={navigate}
+            goBack={goBack}
             clinicGuides={clinicGuides}
             clinicGuideTemplates={clinicGuideTemplates}
             currentWeek={currentWeek}
@@ -416,7 +427,7 @@ function StudentViewRouter({
         {tab === "library" && subView?.type === "faq" && (
           <FaqView onBack={goBack} />
         )}
-        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} />}
+        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} goBack={goBack} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} completedItems={completedItems} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} onCompleteConsultTopic={onCompleteConsultTopic} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}

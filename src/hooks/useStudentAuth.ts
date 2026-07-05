@@ -24,6 +24,28 @@ export const STUDENT_EMAIL_KEY = "neph_studentEmail";
 export const STUDENT_YEAR_KEY = "neph_studentYear";
 const STUDENT_PIN_FLOW_MODE_KEY = "neph_studentPinFlowMode";
 export const STUDENT_PENDING_JOIN_CODE_KEY = "neph_studentPendingJoinCode";
+// Set when a logout happened while the final progress flush was still queued
+// (offline / transient failure): the Firebase session is kept alive so the
+// queue can still be written (security rules only allow this student's own
+// account to write its doc), and useStudentSync completes the sign-out once
+// the queue drains. Cleared by any genuine sign-in.
+export const STUDENT_DEFERRED_SIGNOUT_KEY = "neph_studentDeferredSignOut";
+
+// Local progress state that must never leak from one student account into
+// another on a shared device (localStorage is not namespaced per student).
+const RESIDUAL_PROGRESS_KEYS = [
+  "neph_patients",
+  "neph_weeklyScores",
+  "neph_preScore",
+  "neph_postScore",
+  "neph_completedItems",
+  "neph_bookmarks",
+  "neph_srQueue",
+  "neph_activityLog",
+  "neph_reflections",
+  "neph_gamification",
+  JOINED_AT_KEY,
+] as const;
 export type StudentLoginMode = "first_time" | "returning";
 export type StudentAuthSessionKind = "none" | "guest" | "verified";
 export type StudentEmailFlowState = "idle" | "link_sent" | "needs_completion" | "pin_setup";
@@ -168,12 +190,42 @@ export function useStudentAuth(
     latestStudentUpdateRef.current = updatedAt;
   };
 
+  // Wipe the previous account's progress from localStorage AND React state.
+  // Without this, a first-time join on a shared device seeded the new
+  // student's cloud doc with the previous user's patients/scores (the join
+  // payload reads the residual state), and a same-rotation restore auto-saved
+  // the residue into the new account two seconds after sign-in.
+  const clearResidualStudentProgress = () => {
+    RESIDUAL_PROGRESS_KEYS.forEach((key) => localStorage.removeItem(key));
+    setPatients([]);
+    setWeeklyScores({});
+    setPreScore(null);
+    setPostScore(null);
+    setGamification({ points: 0, achievements: [], streaks: { currentDays: 0, longestDays: 0, lastActiveDate: null } });
+    setCompletedItems({ articles: {}, studySheets: {}, cases: {}, decks: {}, consultTopics: {} });
+    setBookmarks({ trials: [], articles: [], cases: [], studySheets: [] });
+    setSrQueue({});
+    setActivityLog([]);
+    setReflections([]);
+    setJoinedAt(null);
+  };
+
   const applyStudentUser = async (user: User | null) => {
     if (!user) {
       setStudentId("");
       setAuthSessionKind("none");
       return;
     }
+
+    // A different account than the one this device last held: the local
+    // progress belongs to the previous user, not this one.
+    const previousStudentId = await store.get<string>("neph_studentId");
+    if (previousStudentId && previousStudentId !== user.uid) {
+      clearResidualStudentProgress();
+    }
+    // A genuine sign-in supersedes any deferred sign-out still waiting on a
+    // drained queue.
+    localStorage.removeItem(STUDENT_DEFERRED_SIGNOUT_KEY);
 
     setStudentId(user.uid);
     await store.set("neph_studentId", user.uid);
@@ -236,6 +288,19 @@ export function useStudentAuth(
     try {
       const pendingEmailLink = await isStudentEmailLink();
       if (pendingEmailLink) {
+        if (localStorage.getItem(STUDENT_DEFERRED_SIGNOUT_KEY) === "1") {
+          // A deferred sign-out kept the previous student's session alive only
+          // so their queue could flush. A new email-link sign-in supersedes it:
+          // end the old session NOW, or completeStudentSignInLink would link
+          // this email onto the previous (possibly anonymous) account and the
+          // new student would inherit the old identity and cloud doc.
+          localStorage.removeItem(STUDENT_DEFERRED_SIGNOUT_KEY);
+          try {
+            await signOutFirebase();
+          } catch (error) {
+            console.warn("Failed to end deferred-sign-out session before email link:", error);
+          }
+        }
         const activePinFlowMode = savedPinFlowMode || "create";
         setPinFlowMode(activePinFlowMode);
         setLoginMode(activePinFlowMode === "create" ? "first_time" : "returning");
@@ -269,6 +334,13 @@ export function useStudentAuth(
         }
       } else {
         const user = await getCurrentStudentUser();
+        if (user && localStorage.getItem(STUDENT_DEFERRED_SIGNOUT_KEY) === "1") {
+          // The previous logout is still waiting on its queued final flush;
+          // this Firebase session exists only so the pending queue can be
+          // written. Keep the UI signed out — useStudentSync flushes the queue
+          // and then completes the sign-out.
+          return "";
+        }
         sessionStudentId = user?.uid || "";
         await applyStudentUser(user);
         if (user && !user.isAnonymous) {
@@ -400,6 +472,12 @@ export function useStudentAuth(
     localStorage.removeItem("neph_pin");
     localStorage.removeItem("neph_name");
     localStorage.removeItem(STUDENT_PENDING_JOIN_CODE_KEY);
+    // The explicit sign-out above ends any session a deferred sign-out was
+    // keeping alive; the flag must not linger and sign out a future session.
+    localStorage.removeItem(STUDENT_DEFERRED_SIGNOUT_KEY);
+    // The next person on this device is a different student: don't let the
+    // previous user's local progress seed their account.
+    clearResidualStudentProgress();
     setStudentName("");
     setStudentId("");
     setStudentEmail("");
@@ -576,8 +654,15 @@ export function useStudentAuth(
       }
 
       const effectiveJoinCode = await resolveAssignedRotationCode(user, normalizedJoinCode);
-      const exists = await store.validateRotationCode(effectiveJoinCode);
-      if (!exists) {
+      const codeCheck = await store.validateRotationCode(effectiveJoinCode);
+      if (!codeCheck.ok) {
+        // We couldn't reach auth/Firestore (offline, or hospital wifi blocking
+        // googleapis.com) — don't claim the code is wrong when we never checked it.
+        setJoinError("Can't reach the server. Check your connection — hospital Wi-Fi may block the app — and try again.");
+        setJoining(false);
+        return;
+      }
+      if (!codeCheck.exists) {
         // Don't increment the PIN rate-limit counter: an unknown rotation code
         // is a typo or a rotation the attending hasn't published yet, not a credential attack.
         setJoinError("Rotation not found. Check the code with your attending and try again.");

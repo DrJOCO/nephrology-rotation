@@ -1,4 +1,5 @@
 import { getBootstrapAdminLegacyUids, getCurrentAdminUser, getFirebase, isBootstrapAdminEmail, waitForAuthUser } from "./firebase";
+import { mergeCompletedItems, mergeWeeklyScores } from "./progressMerge";
 
  
 type FirestoreData = Record<string, any>;
@@ -40,6 +41,13 @@ export interface StudentAssignmentRecord {
   email?: string;
 }
 
+// Result of validateRotationCode. `ok: false` means the check couldn't be
+// completed (offline, blocked googleapis.com, auth failure) — it does NOT mean
+// the code is missing. Only `{ ok: true, exists: false }` means "code not found".
+export type RotationCodeCheck =
+  | { ok: true; exists: boolean }
+  | { ok: false };
+
 interface RotationOwnerSession {
   uid: string;
   email?: string;
@@ -57,6 +65,10 @@ const KEY_TO_FIELD: Record<string, string> = {
 };
 
 const PENDING_SYNC_KEY = "neph_pendingSyncQueue";
+// Where a corrupted queue blob is stashed instead of being silently wiped by
+// the next queue write — recoverable by hand from localStorage if a student
+// reports lost offline work.
+const PENDING_SYNC_CORRUPT_KEY = "neph_pendingSyncQueue_corrupt";
 const PENDING_SYNC_EVENT = "neph:pending-sync-changed";
 const rotationDocCacheKey = (code: string) => `neph_rotation_doc_${code}`;
 const studentDocCacheKey = (code: string, studentId: string) => `neph_rotation_${code}_student_${studentId}`;
@@ -122,8 +134,50 @@ function emitPendingSyncChanged(queue: PendingSyncItem[]): void {
   window.dispatchEvent(new CustomEvent(PENDING_SYNC_EVENT, { detail: { count: queue.length } }));
 }
 
+function isPendingSyncItemShaped(value: unknown): value is PendingSyncItem {
+  return isPlainObject(value) && typeof value.kind === "string" && typeof value.rotationCode === "string";
+}
+
 function readPendingSyncQueue(): PendingSyncItem[] {
-  return readJson<PendingSyncItem[]>(PENDING_SYNC_KEY) || [];
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(PENDING_SYNC_KEY);
+  } catch (error) {
+    console.warn(`Failed to read ${PENDING_SYNC_KEY}:`, error);
+    return [];
+  }
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error("pending sync queue is not an array");
+    const valid = parsed.filter(isPendingSyncItemShaped);
+    if (valid.length !== parsed.length) {
+      // Some entries are unreadable; keep the raw blob so nothing is lost when
+      // the next queue write persists only the valid entries.
+      stashCorruptPendingSyncQueue(raw, "entries with unexpected shape");
+    }
+    return valid;
+  } catch (error) {
+    // A corrupted queue used to silently discard ALL queued offline work (the
+    // parse failure read as an empty queue, and the next write made that
+    // permanent). Stash the blob for recovery instead.
+    console.warn("Pending sync queue is corrupted; stashing raw payload for recovery:", error);
+    stashCorruptPendingSyncQueue(raw, "unparseable JSON");
+    try {
+      localStorage.removeItem(PENDING_SYNC_KEY);
+    } catch { /* leave the corrupt blob in place rather than throw */ }
+    return [];
+  }
+}
+
+function stashCorruptPendingSyncQueue(raw: string, reason: string): void {
+  try {
+    if (localStorage.getItem(PENDING_SYNC_CORRUPT_KEY) === raw) return;
+    localStorage.setItem(PENDING_SYNC_CORRUPT_KEY, raw);
+    console.warn(`Pending sync queue preserved at ${PENDING_SYNC_CORRUPT_KEY} (${reason}).`);
+  } catch (error) {
+    console.warn("Failed to stash corrupted pending sync queue:", error);
+  }
 }
 
 function writePendingSyncQueue(queue: PendingSyncItem[]): void {
@@ -167,10 +221,49 @@ function queuePendingSync(item: PendingSyncItem): void {
   writePendingSyncQueue(nextQueue);
 }
 
-function clearQueuedSync(item: PendingSyncItem): void {
+// Serialized snapshot of the queue entry for `item`'s scope, captured BEFORE
+// a network write so settleQueuedSync can tell "leftover we just superseded"
+// from "new work queued while the write was in flight".
+function readQueuedSyncSnapshot(item: PendingSyncItem): string | null {
+  const match = readPendingSyncQueue().find((queued) => sameQueueScope(queued, item));
+  return match ? JSON.stringify(match) : null;
+}
+
+// Settle the pending queue after a SUCCESSFUL direct write. The old
+// clearQueuedSync deleted the whole scope, which silently discarded (a) writes
+// queued during the in-flight network call and (b) residual fields from an
+// earlier failed write that the fresh payload never carried (e.g. a queued
+// { year } profile edit vs. the auto-save payload, which has no `year`).
+// Rules: an entry that changed since `priorSnapshot` is kept whole (it holds
+// newer work; the flush clobber guard makes re-writing it safe); an unchanged
+// entry only loses the fields the successful payload covered.
+function settleQueuedSync(written: PendingSyncItem, priorSnapshot: string | null): void {
   const queue = readPendingSyncQueue();
-  const nextQueue = queue.filter((queued) => !sameQueueScope(queued, item));
-  if (nextQueue.length !== queue.length) writePendingSyncQueue(nextQueue);
+  const next: PendingSyncItem[] = [];
+  let changed = false;
+  for (const queued of queue) {
+    if (!sameQueueScope(queued, written)) {
+      next.push(queued);
+      continue;
+    }
+    if (JSON.stringify(queued) !== priorSnapshot) {
+      // Queued (or re-queued with more data) while the write was in flight.
+      next.push(queued);
+      continue;
+    }
+    if (isPlainObject(queued.data) && isPlainObject(written.data)) {
+      const residual = Object.fromEntries(
+        Object.entries(queued.data).filter(([key]) => !Object.prototype.hasOwnProperty.call(written.data, key)),
+      );
+      if (Object.keys(residual).length > 0) {
+        next.push({ ...queued, data: residual } as PendingSyncItem);
+        changed = true;
+        continue;
+      }
+    }
+    changed = true; // fully superseded → dropped
+  }
+  if (changed || next.length !== queue.length) writePendingSyncQueue(next);
 }
 
 function cacheRotationDoc(code: string, data: Record<string, unknown>): void {
@@ -307,43 +400,18 @@ function isNewerTimestamp(a: unknown, b: unknown): boolean {
   return typeof a === "string" && typeof b === "string" && a > b;
 }
 
+// Read the remote doc a guarded write must be compared against. Returns null
+// only when the doc genuinely does not exist; a READ FAILURE is rethrown so
+// the guard fails CLOSED — the caller queues the payload for the 30s retry
+// loop instead of writing blind over remote progress it couldn't inspect.
 async function readFlushRemoteDoc(
   fs: FirebaseModules["fs"],
   ref: ReturnType<FirebaseModules["fs"]["doc"]>,
 ): Promise<Record<string, unknown> | null> {
-  try {
-    const snap = await fs.getDoc(ref);
-    if (!snap.exists()) return null;
-    const data = snap.data();
-    return isPlainObject(data) ? data : null;
-  } catch (error) {
-    // Can't compare against remote (transient read failure): fall back to the
-    // pre-guard write-as-is behavior rather than blocking the flush forever.
-    console.warn("Pending sync remote read failed, writing queued data as-is:", error);
-    return null;
-  }
-}
-
-function unionCompletionRecord(remote: unknown, queued: unknown): unknown {
-  if (!isPlainObject(remote)) return queued;
-  if (!isPlainObject(queued)) return remote;
-  const merged: Record<string, unknown> = { ...queued };
-  for (const [key, remoteValue] of Object.entries(remote)) {
-    // Union of keys; on a per-key conflict the newer remote copy wins, except
-    // a `true` completion flag is never downgraded (completed stays completed).
-    merged[key] = merged[key] === true && remoteValue === false ? true : remoteValue;
-  }
-  return merged;
-}
-
-function mergeCompletedItems(remote: unknown, queued: unknown): unknown {
-  if (!isPlainObject(remote)) return queued;
-  if (!isPlainObject(queued)) return remote;
-  const merged: Record<string, unknown> = { ...remote, ...queued };
-  for (const section of Object.keys(merged)) {
-    merged[section] = unionCompletionRecord(remote[section], queued[section]);
-  }
-  return merged;
+  const snap = await fs.getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return isPlainObject(data) ? data : null;
 }
 
 function mergeSrQueues(remote: unknown, queued: unknown): unknown {
@@ -404,28 +472,43 @@ function unionRecordsById(remote: unknown, queued: unknown): unknown {
   return merged;
 }
 
-function mergeWeeklyScores(remote: unknown, queued: unknown): unknown {
+// Quiz scores carry their own `date` stamp, so unlike other scalar fields the
+// real winner IS knowable: an offline pre/post-test must survive another
+// device merely opening the app (which re-stamps the doc's updatedAt without
+// representing new quiz work).
+function mergeQuizScores(remote: unknown, queued: unknown): unknown {
+  if (!isPlainObject(queued)) return remote; // ambiguous queued null → keep the score that exists
+  if (!isPlainObject(remote)) return queued; // remote has no score → queued is the only real attempt
+  return isNewerTimestamp(queued.date, remote.date) ? queued : remote;
+}
+
+// Bookmark curation is real offline work: union each category so ids added on
+// either device survive. Losing a removal beats losing a saved reference —
+// the same tradeoff unionRecordsById documents. Returns the remote reference
+// unchanged when the queued copy adds nothing, so the caller can skip the
+// field entirely.
+function mergeBookmarks(remote: unknown, queued: unknown): unknown {
   if (!isPlainObject(remote)) return queued;
   if (!isPlainObject(queued)) return remote;
-  const merged: Record<string, unknown> = { ...queued };
-  for (const [week, remoteAttempts] of Object.entries(remote)) {
-    const queuedAttempts = merged[week];
-    if (!Array.isArray(remoteAttempts) || !Array.isArray(queuedAttempts)) {
-      merged[week] = remoteAttempts;
+  let changed = false;
+  const merged: Record<string, unknown> = { ...remote };
+  for (const [category, queuedList] of Object.entries(queued)) {
+    if (!Array.isArray(queuedList)) continue;
+    const remoteList = merged[category];
+    if (!Array.isArray(remoteList)) {
+      if (!Object.prototype.hasOwnProperty.call(merged, category)) {
+        merged[category] = queuedList;
+        changed = true;
+      }
       continue;
     }
-    // Attempts are append-only per week: union by attempt date so neither
-    // device's quiz attempts vanish.
-    const seenDates = new Set(
-      remoteAttempts.map((attempt) => (isPlainObject(attempt) && typeof attempt.date === "string" ? attempt.date : "")),
-    );
-    merged[week] = [
-      ...remoteAttempts,
-      ...queuedAttempts.filter((attempt) =>
-        !(isPlainObject(attempt) && typeof attempt.date === "string" && seenDates.has(attempt.date))),
-    ];
+    const additions = queuedList.filter((id) => !remoteList.includes(id));
+    if (additions.length > 0) {
+      merged[category] = [...remoteList, ...additions];
+      changed = true;
+    }
   }
-  return merged;
+  return changed ? merged : remote;
 }
 
 function mergeGamification(remote: unknown, queued: unknown): unknown {
@@ -462,10 +545,25 @@ function mergeStudentFlushPayload(remote: Record<string, unknown>, payload: Reco
       case "reflections":
         merged[field] = unionRecordsById(remoteValue, queuedValue);
         break;
+      case "preScore":
+      case "postScore": {
+        // Per-score `date` comparison — the doc-level updatedAt is inflated by
+        // routine app-open saves and must not decide whether a student's
+        // offline quiz survives. Omit the field when the remote copy wins so
+        // the merge write leaves it untouched.
+        const winner = mergeQuizScores(remoteValue, queuedValue);
+        if (winner !== remoteValue) merged[field] = winner;
+        break;
+      }
+      case "bookmarks": {
+        const union = mergeBookmarks(remoteValue, queuedValue);
+        if (union !== remoteValue) merged[field] = union;
+        break;
+      }
       default:
-        // Scalar or toggleable field (name, pre/post scores, bookmarks, …)
-        // with no safe union: newest updatedAt wins, so the newer remote copy
-        // is kept by omitting the stale queued value from the merge write.
+        // Scalar field with no per-item timestamp or safe union (name, year,
+        // authType, …): newest doc updatedAt wins, so the newer remote copy is
+        // kept by omitting the stale queued value from the merge write.
         break;
     }
   }
@@ -486,14 +584,19 @@ async function flushPendingSyncQueue(): Promise<number> {
     return queue.length;
   }
 
-  const remaining: PendingSyncItem[] = [];
+  const failed = new Set<PendingSyncItem>();
 
   for (const item of queue) {
     try {
       const { db, fs } = await getFirebase();
       if (item.kind === "setShared") {
         const field = KEY_TO_FIELD[item.key];
-        if (!field) continue;
+        if (!field) {
+          // Unmapped keys can never flush (no Firestore field to write). Say
+          // so instead of silently discarding the payload.
+          console.warn(`Dropping queued setShared for unmapped key "${item.key}" — no Firestore field mapping:`, item.data);
+          continue;
+        }
         await fs.updateDoc(fs.doc(db, "rotations", item.rotationCode), { [field]: item.data });
       } else if (item.kind === "setStudentData") {
         let payload = withoutLegacyLoginPin(item.data);
@@ -521,8 +624,33 @@ async function flushPendingSyncQueue(): Promise<number> {
       }
     } catch (error) {
       console.warn("Queued sync flush failed:", error);
-      remaining.push(item);
+      failed.add(item);
     }
+  }
+
+  // Reconcile against the LIVE queue instead of overwriting it wholesale:
+  // writes queued while the flush's awaits were in flight used to be silently
+  // deleted by the final overwrite. A flushed entry is dropped only if it is
+  // byte-identical to the snapshot we actually wrote; anything newer (a new
+  // scope, or a scope entry that absorbed more data mid-flush) survives for
+  // the next flush, where the clobber guard makes re-writing it safe.
+  const live = readPendingSyncQueue();
+  const remaining: PendingSyncItem[] = [];
+  for (const current of live) {
+    const processed = queue.find((item) => sameQueueScope(item, current));
+    if (!processed) {
+      remaining.push(current); // queued during the flush
+      continue;
+    }
+    if (failed.has(processed)) {
+      remaining.push(current); // keep for retry (current is a superset of the failed snapshot)
+      continue;
+    }
+    if (JSON.stringify(current) !== JSON.stringify(processed)) remaining.push(current);
+  }
+  // Failed items another tab removed from the live queue still need a retry.
+  for (const item of failed) {
+    if (!live.some((current) => sameQueueScope(current, item))) remaining.push(item);
   }
 
   writePendingSyncQueue(remaining);
@@ -570,20 +698,26 @@ const store = {
     }
   },
 
-  async setShared(key: string, val: FirestoreData | unknown[]): Promise<void> {
+  // Reports whether the write actually reached Firestore. `applied` means the
+  // remote write succeeded; `queued` means it was deferred to the retry queue
+  // (offline or a transient failure). Both false means there was nothing to do
+  // (no rotation connected). Publish surfaces this instead of always claiming
+  // success — see AdminPanel.publishSharedChanges.
+  async setShared(key: string, val: FirestoreData | unknown[]): Promise<{ applied: boolean; queued: boolean }> {
     const safeValue = key.startsWith("neph_shared_student_") && isPlainObject(val)
       ? withoutLegacyLoginPin(val)
       : val;
     cacheSharedValue(key, safeValue);
     if (!rotationCode) {
-      return;
+      return { applied: false, queued: false };
     }
     const queued: PendingSyncItem = { kind: "setShared", rotationCode, key, data: safeValue, updatedAt: new Date().toISOString() };
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       queuePendingSync(queued);
-      return;
+      return { applied: false, queued: true };
     }
     try {
+      const priorQueued = readQueuedSyncSnapshot(queued);
       const { db, fs } = await getFirebase();
       // Student data goes to subcollection
       if (key.startsWith("neph_shared_student_")) {
@@ -595,19 +729,24 @@ const store = {
           { merge: true },
         );
         cacheStudentDoc(rotationCode, studentId, payload);
-        clearQueuedSync(queued);
-        return;
+        settleQueuedSync(queued, priorQueued);
+        return { applied: true, queued: false };
       }
       // Rotation-level data. Write safeValue (not raw val) so the online path
       // can never diverge from the sanitized cache/offline-queue payloads.
       const field = KEY_TO_FIELD[key];
       if (field) {
         await fs.updateDoc(fs.doc(db, "rotations", rotationCode), { [field]: safeValue });
-        clearQueuedSync(queued);
+        settleQueuedSync(queued, priorQueued);
+        return { applied: true, queued: false };
       }
+      // Unknown key: cached locally but there is no remote target for it, so
+      // report it as neither applied nor queued rather than falsely "applied".
+      return { applied: false, queued: false };
     } catch (e) {
       console.warn("Firestore setShared failed, queueing for retry:", e);
       queuePendingSync(queued);
+      return { applied: false, queued: true };
     }
   },
 
@@ -709,7 +848,12 @@ const store = {
   },
 
   // ─── Validate a rotation code exists ─────────────────────────────
-  async validateRotationCode(code: string): Promise<boolean> {
+  // Distinguishes "the code doc is genuinely missing" ({ ok: true, exists: false })
+  // from "we couldn't reach auth/Firestore" ({ ok: false }). A bare catch used to
+  // collapse both into `false`, so a student on hospital wifi that blocks
+  // googleapis.com was wrongly told the code was wrong. Callers should surface a
+  // connectivity message when ok === false rather than a "not found" message.
+  async validateRotationCode(code: string): Promise<RotationCodeCheck> {
     try {
       const { db, fs, auth, authMod } = await getFirebase();
       const existingUser = await waitForAuthUser();
@@ -719,7 +863,7 @@ const store = {
       }
       try {
         const snap = await fs.getDoc(fs.doc(db, "rotationCodes", code));
-        return snap.exists();
+        return { ok: true, exists: snap.exists() };
       } finally {
         if (createdAnonymousSession && auth.currentUser?.isAnonymous) {
           try {
@@ -729,7 +873,12 @@ const store = {
           }
         }
       }
-    } catch { return false; }
+    } catch (error) {
+      // Network/auth failure (blocked googleapis.com, offline, sign-in error) —
+      // NOT a definitive "code doesn't exist" signal.
+      console.warn("validateRotationCode could not reach the server:", error);
+      return { ok: false };
+    }
   },
 
   // ─── Real-time listener: all students in a rotation ──────────────
@@ -791,15 +940,24 @@ const store = {
   },
 
   // ─── Real-time listener: single student document ─────────────────
-  onStudentDataChanged(studentId: string, callback: (data: FirestoreData) => void): () => void {
+  // `onRemoved` fires when the doc disappears AFTER this listener has seen it
+  // exist — i.e. an in-session admin delete (Remove / recovery-away), never a
+  // brand-new student whose doc hasn't been created yet. Callers use it to
+  // stop auto-saves from silently resurrecting the deleted record.
+  onStudentDataChanged(studentId: string, callback: (data: FirestoreData) => void, onRemoved?: () => void): () => void {
     if (!rotationCode || !studentId) return () => {};
     let unsub: (() => void) | null = null;
+    let sawDoc = false;
     const code = rotationCode;
     getFirebase().then(({ db, fs }) => {
       unsub = fs.onSnapshot(fs.doc(db, "rotations", code, "students", studentId), (snap) => {
         if (snap.exists()) {
+          sawDoc = true;
           cacheStudentDoc(code, studentId, snap.data());
           callback(snap.data());
+        } else if (sawDoc) {
+          sawDoc = false;
+          onRemoved?.();
         }
       }, (err) => {
         console.warn("Student data listener error:", err);
@@ -832,6 +990,7 @@ const store = {
       return { status: "queued", updatedAt: null };
     }
     try {
+      const priorQueued = readQueuedSyncSnapshot(queued);
       const { db, fs } = await getFirebase();
       const studentRef = fs.doc(db, "rotations", rotationCode, "students", studentId);
       if (options) {
@@ -839,14 +998,17 @@ const store = {
         if (remote && isNewerTimestamp(remote.updatedAt, options.baseUpdatedAt ?? "")) {
           payload = mergeStudentFlushPayload(remote, payload);
           if (Object.keys(payload).length === 0) {
-            clearQueuedSync(queued);
+            // Every queued field was superseded by newer remote data — the
+            // original payload's fields are settled even though nothing was
+            // written.
+            settleQueuedSync(queued, priorQueued);
             return { status: "skipped", updatedAt: null };
           }
           cacheStudentDoc(rotationCode, studentId, payload);
         }
       }
       await fs.setDoc(studentRef, { ...payload, loginPin: fs.deleteField() }, { merge: true });
-      clearQueuedSync(queued);
+      settleQueuedSync(queued, priorQueued);
       return { status: "applied", updatedAt: typeof payload.updatedAt === "string" ? payload.updatedAt : null };
     } catch (e) {
       console.warn("setStudentData failed, queueing for retry:", e);
@@ -863,6 +1025,27 @@ const store = {
     return cached && typeof cached.updatedAt === "string" ? cached.updatedAt : null;
   },
 
+  // The full cached copy of the student's synced doc — what this device last
+  // believed the cloud held. The sync hook compares boot-loaded local patients
+  // against it to spot never-synced offline work.
+  getCachedStudentDoc(studentId: string): Record<string, unknown> | null {
+    if (!rotationCode || !studentId) return null;
+    return readJson<Record<string, unknown>>(studentDocCacheKey(rotationCode, studentId));
+  },
+
+  // Drop queued writes for a student whose cloud record an admin deleted
+  // while this device was live — re-flushing them would silently resurrect
+  // the deleted doc.
+  discardQueuedStudentSync(studentId: string): void {
+    if (!rotationCode || !studentId) return;
+    const queue = readPendingSyncQueue();
+    const next = queue.filter((item) =>
+      !((item.kind === "setStudentData" || item.kind === "setTeamSnapshot")
+        && item.rotationCode === rotationCode
+        && item.studentId === studentId));
+    if (next.length !== queue.length) writePendingSyncQueue(next);
+  },
+
   // ─── Write sanitized team snapshot to Firestore ──────────────────
   async setTeamSnapshot(studentId: string, data: object): Promise<void> {
     if (!rotationCode || !studentId) return;
@@ -874,10 +1057,11 @@ const store = {
       return;
     }
     try {
+      const priorQueued = readQueuedSyncSnapshot(queued);
       const { db, fs } = await getFirebase();
       const teamRef = fs.doc(db, "rotations", rotationCode, "team", studentId);
       await fs.setDoc(teamRef, payload, { merge: true });
-      clearQueuedSync(queued);
+      settleQueuedSync(queued, priorQueued);
     } catch (e) {
       console.warn("setTeamSnapshot failed, queueing for retry:", e);
       queuePendingSync(queued);
@@ -1023,9 +1207,10 @@ const store = {
       return;
     }
     try {
+      const priorQueued = readQueuedSyncSnapshot(queued);
       const { db, fs } = await getFirebase();
       await fs.updateDoc(fs.doc(db, "rotations", code), data);
-      clearQueuedSync(queued);
+      settleQueuedSync(queued, priorQueued);
     } catch (e) {
       console.warn("updateRotation failed, queueing for retry:", e);
       queuePendingSync(queued);

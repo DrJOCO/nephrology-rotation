@@ -26,6 +26,20 @@ function normalizeDate(date: Date): Date {
   return next;
 }
 
+/**
+ * Whole calendar days between two dates, counted from their y/m/d components
+ * via Date.UTC so wall-clock DST shifts (spring-forward/fall-back) can't
+ * shave a day off (or add a day to) the diff. Do NOT compute this by
+ * subtracting two local-time Date objects' getTime() and dividing by
+ * 86400000 — that includes the DST offset delta and is off by one around
+ * the transition.
+ */
+function calendarDaysBetween(start: Date, end: Date): number {
+  const startUtc = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+  const endUtc = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+  return Math.round((endUtc - startUtc) / (1000 * 60 * 60 * 24));
+}
+
 export function isCoreModuleComplete(
   week: number,
   completedItems: CompletedItems = { articles: {}, studySheets: {}, cases: {}, decks: {} },
@@ -62,7 +76,7 @@ export function getCalendarWeek(rotationStart?: string | null, totalWeeks = 4, t
   if (!rotationStart) return null;
   const start = new Date(`${rotationStart}T00:00:00`);
   const normalizedToday = normalizeDate(today);
-  const diffDays = Math.floor((normalizedToday.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const diffDays = calendarDaysBetween(start, normalizedToday);
   if (diffDays < 0) return null;
 
   const week = Math.floor(diffDays / 7) + 1;
@@ -74,7 +88,7 @@ export function hasRotationEnded(rotationStart?: string | null, totalWeeks = 4, 
   if (!rotationStart) return false;
   const start = new Date(`${rotationStart}T00:00:00`);
   const normalizedToday = normalizeDate(today);
-  const diffDays = Math.floor((normalizedToday.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const diffDays = calendarDaysBetween(start, normalizedToday);
   return Math.floor(diffDays / 7) + 1 > normalizeRotationWeeks(totalWeeks);
 }
 

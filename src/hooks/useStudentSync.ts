@@ -3,15 +3,17 @@ import type { Dispatch, SetStateAction } from "react";
 import { WEEKLY, ARTICLES } from "../data/constants";
 import type { ClinicGuideTemplates } from "../data/clinicGuides";
 import store from "../utils/store";
-import { normalizeStudentPinInput } from "../utils/firebase";
+import { getCurrentStudentUser, normalizeStudentPinInput, signOutFirebase } from "../utils/firebase";
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
+import { mergeCompletedItems, mergeWeeklyScores } from "../utils/progressMerge";
 import {
   JOINED_AT_KEY,
+  STUDENT_DEFERRED_SIGNOUT_KEY,
   STUDENT_EMAIL_KEY,
   STUDENT_PENDING_JOIN_CODE_KEY,
   STUDENT_YEAR_KEY,
@@ -105,6 +107,11 @@ export function useStudentSync(
   // Consumed by the next auto-save effect run, which persists to localStorage
   // only and skips the write-back.
   const suppressNextAutoSyncRef = useRef(false);
+  // Set when the listener sees this student's cloud record deleted mid-session
+  // (admin Remove / recovery-away). While set, auto-saves and flushes are
+  // blocked so this device doesn't silently resurrect the deleted doc; a
+  // reappearing doc (e.g. admin re-adds the student) clears it.
+  const studentDocRemovedRef = useRef(false);
 
   const noteStudentUpdatedAt = (updatedAt: string) => {
     latestStudentUpdateRef.current = updatedAt;
@@ -128,6 +135,24 @@ export function useStudentSync(
     }, 30_000);
     return () => clearInterval(timer);
   }, [online, pendingSyncCount]);
+
+  // Complete a deferred sign-out. A logout while the final flush was still
+  // queued (offline / transient failure) keeps the Firebase session alive,
+  // because security rules only let THIS student's own account write its doc —
+  // signing out immediately would strand the queued progress forever. Once the
+  // queue drains (and no user has signed back in meanwhile, which clears the
+  // flag), finish the sign-out the student asked for.
+  useEffect(() => {
+    if (pendingSyncCount > 0 || studentId) return;
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem(STUDENT_DEFERRED_SIGNOUT_KEY) !== "1") return;
+    window.localStorage.removeItem(STUDENT_DEFERRED_SIGNOUT_KEY);
+    void getCurrentStudentUser()
+      // A null user means the session is already gone or belongs to an admin —
+      // nothing student-scoped left to sign out.
+      .then((user) => (user ? signOutFirebase() : undefined))
+      .catch((error) => console.warn("Deferred student sign-out failed:", error));
+  }, [pendingSyncCount, studentId]);
 
   // Load from storage on mount
   useEffect(() => {
@@ -166,7 +191,22 @@ export function useStudentSync(
       if (pin) setStudentPin(normalizeStudentPinInput(pin));
       if (pendingJoinCode) setJoinCode(pendingJoinCode.trim().toUpperCase());
       if (storedJoinedAt) setJoinedAt(storedJoinedAt);
-      if (pts) setPatients(pts);
+      if (pts) {
+        // Local patients the synced-doc cache has never seen are never-synced
+        // offline work (the tab closed before the debounce or write could
+        // run). Mark them dirty so the first listener snapshot — which
+        // reflects a cloud doc that predates them — can't silently drop them;
+        // the next flush unions them into the cloud copy.
+        if (guardStudentId) {
+          const cachedDoc = store.getCachedStudentDoc(guardStudentId);
+          const cachedPatients = Array.isArray(cachedDoc?.patients) ? cachedDoc.patients as Patient[] : [];
+          const cachedIds = new Set(cachedPatients.map((patient) => patient?.id));
+          pts.forEach((patient) => {
+            if (!cachedIds.has(patient.id)) markPatientDirty(patient.id);
+          });
+        }
+        setPatients(pts);
+      }
       if (ws) setWeeklyScores(ws);
       if (pre) setPreScore(pre);
       if (post) setPostScore(post);
@@ -222,6 +262,10 @@ export function useStudentSync(
       suppressNextAutoSyncRef.current = false;
       return;
     }
+
+    // Admin deleted this student's cloud record mid-session: writing would
+    // resurrect it, so keep changes local-only until the doc reappears.
+    if (studentDocRemovedRef.current) return;
 
     // Auto-sync to Firestore (debounced)
     if (store.getRotationCode() && studentId && nameSet && studentName.trim()) {
@@ -280,6 +324,7 @@ export function useStudentSync(
   useEffect(() => {
     if (!store.getRotationCode() || !studentId || !nameSet) return;
     const unsub = store.onStudentDataChanged(studentId, (data) => {
+      studentDocRemovedRef.current = false;
       const incomingUpdatedAt = typeof data.updatedAt === "string" ? data.updatedAt : null;
       if (incomingUpdatedAt) {
         const latestKnownUpdatedAt = latestStudentUpdateRef.current;
@@ -314,12 +359,24 @@ export function useStudentSync(
           return result;
         });
       }
-      if (data.weeklyScores) setWeeklyScores(data.weeklyScores);
+      // Merge (union per week by attempt date) instead of replacing wholesale:
+      // a snapshot stamped between a just-finished quiz and its 2s debounce
+      // flush must not erase the attempt. No admin or student flow deletes an
+      // attempt, so the union never resurrects removed data.
+      if (data.weeklyScores) {
+        setWeeklyScores((local) => mergeWeeklyScores(data.weeklyScores, local) as WeeklyScores);
+      }
       // Use hasOwnProperty so admin resets that null-out scores still apply
       if (Object.prototype.hasOwnProperty.call(data, "preScore")) setPreScore(data.preScore);
       if (Object.prototype.hasOwnProperty.call(data, "postScore")) setPostScore(data.postScore);
       if (data.gamification) setGamification(data.gamification);
-      if (data.completedItems) setCompletedItems(data.completedItems);
+      // Monotonic merge, mirroring the store's flush-guard rule ("completed
+      // never un-completes"): a consult-topic Done mark or article check made
+      // in the debounce window survives a remote snapshot that predates it,
+      // instead of the card resurrecting on the next echo.
+      if (data.completedItems) {
+        setCompletedItems((local) => mergeCompletedItems(data.completedItems, local) as CompletedItems);
+      }
       if (data.bookmarks) setBookmarks(data.bookmarks);
       if (data.srQueue) setSrQueue(data.srQueue);
       if (data.activityLog) setActivityLog(data.activityLog);
@@ -332,12 +389,23 @@ export function useStudentSync(
         setStudentYear(data.year);
         store.set(STUDENT_YEAR_KEY, data.year);
       }
+    }, () => {
+      // Admin removed (or recovered away) this student's cloud record while
+      // the device was live. Stop auto-saving and drop this student's queued
+      // writes so the device doesn't silently resurrect the deleted doc.
+      studentDocRemovedRef.current = true;
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = null;
+      }
+      store.discardQueuedStudentSync(studentId);
     });
     return () => unsub();
   }, [studentId, nameSet, rotationCode]);
 
   const flushStudentSync = async () => {
     if (!store.getRotationCode() || !studentId || !nameSet || !studentName.trim()) return;
+    if (studentDocRemovedRef.current) return;
 
     const baseUpdatedAt = syncBaseRef.current;
     const updatedAt = new Date().toISOString();
@@ -368,7 +436,44 @@ export function useStudentSync(
         updatedAt,
       })),
     ]);
+    // Same bookkeeping as the debounced path: this snapshot is canonical, so
+    // future foreign writes merge normally.
+    pendingDirtyPatientIdsRef.current.clear();
+    pendingRemovedPatientIdsRef.current.clear();
   };
+
+  // Latest flush closure for the unload-path listeners below (they register
+  // once with [] deps, but must always call the current-state flush).
+  const flushOnHideRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    flushOnHideRef.current = () => {
+      // Only when a debounced save is pending — the timer is set exactly when
+      // local changes haven't been written yet.
+      if (!syncTimerRef.current) return;
+      clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = null;
+      void flushStudentSync();
+    };
+  });
+
+  // Flush the pending debounce when the tab hides or closes: without this the
+  // last ~2s of work (the debounce window) rides on a race whenever a student
+  // closes the tab on a shared hospital workstation. pagehide is the reliable
+  // close/navigate-away signal; visibilitychange→hidden fires earlier (tab
+  // switch, minimize) while the network is still likely to finish the write.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onPageHide = () => flushOnHideRef.current();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushOnHideRef.current();
+    };
+    window.addEventListener("pagehide", onPageHide);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, []);
 
   return {
     loading,

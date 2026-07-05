@@ -9,6 +9,7 @@ import { isBootstrapAdminEmail, type AdminInviteRecord } from "../../utils/fireb
 import type { AdminSubView, Announcement, ClinicGuideRecord, SharedSettings } from "../../types";
 import type { ArticlesData, AdminSession, WeeklyData } from "./types";
 import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone } from "./shared";
+import { buildRotationDeleteConfirm, canManageRotation } from "./lib/rotation-access";
 import { setStoredAdminRotationCode } from "./storage";
 import { getAdminPinValidationError } from "./pinValidation";
 import { Button } from "./ui/Button";
@@ -76,6 +77,7 @@ function RotationRecordCard({
   rotation,
   active,
   note,
+  canManage = true,
   onConnect,
   onDelete,
   onDraftFieldChange,
@@ -84,18 +86,34 @@ function RotationRecordCard({
   rotation: RotationInfo;
   active?: boolean;
   note?: string;
+  // When false, this rotation belongs to another attending: destructive field
+  // edits and Delete are hidden so a master admin can view but not mutate it.
+  canManage?: boolean;
   onConnect?: () => void;
   onDelete?: () => void;
   onDraftFieldChange: (field: "dates" | "location", value: string) => void;
   onCommitField: (field: "dates" | "location", value: string) => void;
 }) {
+  const readOnly = !canManage;
+  const fieldStyle: React.CSSProperties = {
+    flex: 1,
+    padding: "6px 10px",
+    borderRadius: 6,
+    border: `1px solid ${T.line}`,
+    fontSize: 13,
+    color: readOnly ? T.muted : T.ink,
+    background: readOnly ? T.bg : T.card,
+  };
+  const showDelete = Boolean(onDelete) && canManage;
   return (
     <div style={{ background: active ? T.surface2 : T.bg, borderRadius: 14, padding: 14, border: active ? `2px solid ${T.brand}` : `1px solid ${T.line}` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
         <div style={{ fontFamily: T.mono, fontWeight: 700, fontSize: 16, color: T.ink, letterSpacing: 2 }}>{rotation.code}</div>
-        {active && (
+        {active ? (
           <span style={{ fontSize: 13, fontWeight: 700, color: T.success, background: T.successBg, border: `1px solid ${T.success}`, padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Active</span>
-        )}
+        ) : readOnly ? (
+          <span style={{ fontSize: 13, fontWeight: 700, color: T.muted, background: T.bg, border: `1px solid ${T.line}`, padding: "3px 8px", borderRadius: 6, textTransform: "uppercase" }}>Read-only</span>
+        ) : null}
       </div>
       {note && <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.5, marginBottom: 10 }}>{note}</div>}
       <div style={{ display: "grid", gap: 6, marginBottom: 10 }}>
@@ -110,7 +128,8 @@ function RotationRecordCard({
             onChange={(event) => onDraftFieldChange("dates", event.target.value)}
             onBlur={(event) => onCommitField("dates", event.target.value)}
             placeholder="e.g. Mar 1-28, 2026"
-            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, background: T.card }}
+            readOnly={readOnly}
+            style={fieldStyle}
           />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -120,22 +139,23 @@ function RotationRecordCard({
             onChange={(event) => onDraftFieldChange("location", event.target.value)}
             onBlur={(event) => onCommitField("location", event.target.value)}
             placeholder="e.g. City Medical Center"
-            style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: `1px solid ${T.line}`, fontSize: 13, color: T.ink, background: T.card }}
+            readOnly={readOnly}
+            style={fieldStyle}
           />
         </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.muted, marginBottom: onConnect || onDelete ? 10 : 0, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.muted, marginBottom: onConnect || showDelete ? 10 : 0, flexWrap: "wrap" }}>
         <span>{rotation.studentCount} student{rotation.studentCount !== 1 ? "s" : ""}</span>
         {rotation.createdAt && <span>Created {new Date(rotation.createdAt).toLocaleDateString()}</span>}
       </div>
-      {(onConnect || onDelete) && (
+      {(onConnect || showDelete) && (
         <div style={{ display: "flex", gap: 8 }}>
           {onConnect && (
             <button onClick={onConnect} style={{ flex: 1, padding: "8px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               Connect
             </button>
           )}
-          {onDelete && (
+          {showDelete && (
             <button onClick={onDelete} style={{ minWidth: 88, padding: "8px 12px", background: T.dangerBg, color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
               Delete
             </button>
@@ -263,8 +283,11 @@ export function SettingsTab({
     setCreating(true);
     try {
       let code = newCustomCode.trim().toUpperCase() || createRotationCode(newLocation, newDates);
-      const exists = await store.validateRotationCode(code);
-      if (exists) {
+      const codeCheck = await store.validateRotationCode(code);
+      // Only dedupe on a confirmed collision. If the check couldn't reach the
+      // server (codeCheck.ok === false), fall through — the createRotation call
+      // below surfaces its own connectivity error via the surrounding catch.
+      if (codeCheck.ok && codeCheck.exists) {
         const suffix = Math.random().toString(36).slice(2, 5).toUpperCase();
         code = `${code}-${suffix}`;
       }
@@ -298,12 +321,23 @@ export function SettingsTab({
   };
 
   const handleDeleteRotation = async (code: string) => {
-    const confirmed = await requestConfirm({
-      title: `Delete ${code}?`,
-      message: "This permanently deletes the rotation and all student data inside it.",
-      confirmLabel: "Delete Rotation",
-      tone: "danger",
-    });
+    const target = rotationHistory.find((rotation) => rotation.code === code);
+    // Guard against deleting another attending's rotation even if a Delete
+    // control somehow reached this handler.
+    if (target && !canManageRotation(target, { uid: firebaseAdmin.uid, email: firebaseAdmin.email || "" })) {
+      showToast("This rotation belongs to another attending and is read-only.", "error");
+      return;
+    }
+    const confirmed = await requestConfirm(
+      target
+        ? buildRotationDeleteConfirm(target)
+        : {
+            title: `Delete ${code}?`,
+            message: "This permanently deletes the rotation and all student data inside it. This cannot be undone.",
+            confirmLabel: "Delete Rotation",
+            tone: "danger",
+          },
+    );
     if (!confirmed) return;
 
     try {
@@ -327,6 +361,12 @@ export function SettingsTab({
   };
 
   const handleUpdateRotationField = async (code: string, field: string, value: string) => {
+    const target = rotationHistory.find((rotation) => rotation.code === code);
+    // Read-only cards already block edits in the UI; this stops a stray commit
+    // from writing to another attending's rotation.
+    if (target && !canManageRotation(target, { uid: firebaseAdmin.uid, email: firebaseAdmin.email || "" })) {
+      return;
+    }
     await store.updateRotation(code, { [field]: value });
     setRotationHistory((prev) => prev.map((rotation) => rotation.code === code ? { ...rotation, [field]: value } : rotation));
   };
@@ -553,6 +593,7 @@ export function SettingsTab({
               <RotationRecordCard
                 rotation={activeRotation}
                 active
+                canManage={canManageRotation(activeRotation, { uid: firebaseAdmin.uid, email: firebaseAdmin.email || "" })}
                 note="This is the live workspace students are currently joining. To switch blocks, choose a different rotation below."
                 onDraftFieldChange={(field, value) => updateRotationHistoryDraft(activeRotation.code, field, value)}
                 onCommitField={(field, value) => { void handleUpdateRotationField(activeRotation.code, field, value); }}
@@ -603,6 +644,7 @@ export function SettingsTab({
                 {selectedRotation && (
                   <RotationRecordCard
                     rotation={selectedRotation}
+                    canManage={canManageRotation(selectedRotation, { uid: firebaseAdmin.uid, email: firebaseAdmin.email || "" })}
                     note="Review this saved block before connecting. Connecting will switch the live admin workspace."
                     onConnect={() => { void handleConnectRotation(selectedRotation.code); }}
                     onDelete={() => { void handleDeleteRotation(selectedRotation.code); }}

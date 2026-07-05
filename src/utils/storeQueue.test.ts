@@ -88,6 +88,17 @@ describe("offline queueing", () => {
     expect(readQueue()).toHaveLength(0);
   });
 
+  it("reports setShared as queued (not applied) while offline", async () => {
+    const result = await store.setShared("neph_shared_announcements", [{ id: 1 }]);
+    expect(result).toEqual({ applied: false, queued: true });
+  });
+
+  it("reports setShared as neither applied nor queued when no rotation is connected", async () => {
+    store.setRotationCode(null);
+    const result = await store.setShared("neph_shared_announcements", []);
+    expect(result).toEqual({ applied: false, queued: false });
+  });
+
   it("dedupes repeat writes to the same scope instead of growing the queue", async () => {
     await store.setStudentData("stu_1", { name: "A" });
     await store.setStudentData("stu_1", { name: "B" });
@@ -206,11 +217,15 @@ describe("flushPendingSyncQueue clobber guard", () => {
     expect(store.getPendingSyncCount()).toBe(0);
     const write = lastStudentWrite();
     expect(write.options).toEqual({ merge: true });
-    // Ambiguous fields: newest updatedAt wins → stale values are omitted so
-    // the merge write leaves the newer remote copies untouched.
+    // Ambiguous scalar: newest updatedAt wins → the stale value is omitted so
+    // the merge write leaves the newer remote copy untouched.
     expect(write.data).not.toHaveProperty("name");
+    // Queued preScore is null (no offline quiz work) → remote's real score
+    // wins and the field is omitted from the write.
     expect(write.data).not.toHaveProperty("preScore");
-    expect(write.data).not.toHaveProperty("bookmarks");
+    // Bookmarks are real curation work: union instead of dropping the queued
+    // adds (finding: offline scalar work must survive a mere app-open echo).
+    expect(write.data.bookmarks).toEqual({ trials: ["t-remote", "t-stale"], articles: [], cases: [], studySheets: [] });
     // Monotonic union still flows through.
     expect(write.data.completedItems).toEqual({ articles: { a1: true, a2: true } });
     // Merge produces a fresh updatedAt newer than the remote's.
@@ -356,6 +371,22 @@ describe("flushPendingSyncQueue clobber guard", () => {
     expect(writes[0].data.points).toBe(40);
   });
 
+  it("reports setShared as applied when the online write reaches Firestore", async () => {
+    const result = await store.setShared("neph_shared_announcements", [{ id: 1 }]);
+    expect(result).toEqual({ applied: true, queued: false });
+    expect(mocks.updateDocCalls.some((call) => "announcements" in call.data)).toBe(true);
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it("reports setShared as queued when the online write throws", async () => {
+    const failing = vi.spyOn(mocks.fs, "updateDoc").mockRejectedValueOnce(new Error("wifi dropped"));
+    const result = await store.setShared("neph_shared_curriculum", { title: "AKI" });
+    failing.mockRestore();
+    expect(result).toEqual({ applied: false, queued: true });
+    // The failed write is parked in the retry queue, not silently lost.
+    expect(readQueue().some((item) => item.key === "neph_shared_curriculum")).toBe(true);
+  });
+
   it("keeps a stale direct write out of the loop too: guarded setStudentData queued offline flushes merged", async () => {
     // A guarded auto-save that went to the offline queue carries its base
     // stamp, so the flush guard later merges against anything the device
@@ -456,11 +487,14 @@ describe("setStudentData clobber guard (direct auto-save/flush path)", () => {
 
     const write = lastStudentWrite();
     expect(write.options).toEqual({ merge: true });
-    // Ambiguous fields: newest updatedAt wins → the stale copies are omitted
-    // so the merge write leaves the newer remote values untouched.
+    // Ambiguous scalar: newest updatedAt wins → the stale copy is omitted
+    // so the merge write leaves the newer remote value untouched.
     expect(write.data).not.toHaveProperty("name");
+    // Local preScore is null (no local quiz work) → remote's real score wins
+    // and the field is omitted.
     expect(write.data).not.toHaveProperty("preScore");
-    expect(write.data).not.toHaveProperty("bookmarks");
+    // Bookmark adds from the stale device are unioned in, not dropped.
+    expect(write.data.bookmarks).toEqual({ trials: ["t-remote", "t-stale"], articles: [], cases: [], studySheets: [] });
     // Progress collections union: nothing from either device is lost.
     const patients = write.data.patients as Array<{ id: string; notes?: string }>;
     expect(patients.map((p) => p.id).sort()).toEqual(["p1", "p2", "p3"]);
@@ -537,6 +571,296 @@ describe("setStudentData clobber guard (direct auto-save/flush path)", () => {
     expect(store.getCachedStudentUpdatedAt("stu-1")).toBeNull();
     localStorage.setItem(`neph_rotation_${ROTATION}_student_stu-1`, JSON.stringify({ updatedAt: NEWER, name: "Cached" }));
     expect(store.getCachedStudentUpdatedAt("stu-1")).toBe(NEWER);
+  });
+});
+
+// ─── Offline scalar work preservation ──────────────────────────────
+// The doc-level updatedAt is inflated by routine app-open auto-saves, so it
+// must not decide whether a student's offline quiz or bookmark work survives.
+// Quiz scores are compared by their own `date`; bookmarks are unioned.
+describe("flush guard preserves real offline scalar work", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+    mocks.updateDocCalls.length = 0;
+  });
+
+  it("keeps an offline pre-test when the remote doc is fresher only from an app-open echo", async () => {
+    // Another device opened the app (fresh updatedAt, no quiz work, preScore
+    // still null); this device took the pre-test offline.
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, preScore: null, name: "Same Name" });
+    const offlineScore = { correct: 8, total: 10, date: OLDER, answers: [] };
+    seedQueue([studentItem({ preScore: offlineScore, updatedAt: OLDER }, OLDER)]);
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(0);
+    const write = lastStudentWrite();
+    expect(write.data.preScore).toEqual(offlineScore);
+  });
+
+  it("keeps an offline post-test the remote doc has never seen", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, name: "Same Name" });
+    const offlineScore = { correct: 7, total: 10, date: OLDER, answers: [] };
+    seedQueue([studentItem({ postScore: offlineScore, updatedAt: OLDER }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.postScore).toEqual(offlineScore);
+  });
+
+  it("resolves conflicting quiz scores by the score's own date, not the doc stamp", async () => {
+    const remoteScore = { correct: 5, total: 10, date: "2026-06-01T09:00:00.000Z", answers: [] };
+    const queuedScore = { correct: 9, total: 10, date: "2026-06-01T15:00:00.000Z", answers: [] };
+    // Remote doc stamp is fresher, but the queued attempt was taken later.
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, preScore: remoteScore });
+    seedQueue([studentItem({ preScore: queuedScore, updatedAt: OLDER }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.preScore).toEqual(queuedScore);
+  });
+
+  it("drops the queued score when the remote attempt is genuinely newer", async () => {
+    const remoteScore = { correct: 9, total: 10, date: "2026-06-02T09:00:00.000Z", answers: [] };
+    const queuedScore = { correct: 5, total: 10, date: "2026-06-01T09:00:00.000Z", answers: [] };
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, preScore: remoteScore });
+    seedQueue([studentItem({ preScore: queuedScore, updatedAt: OLDER }, OLDER)]);
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    // Everything superseded → no write at all.
+    expect(remaining).toBe(0);
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+  });
+
+  it("unions bookmarks so offline curation survives", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, {
+      updatedAt: NEWER,
+      bookmarks: { trials: ["t-remote"], articles: ["a-remote"], cases: [], studySheets: [] },
+    });
+    seedQueue([studentItem({
+      bookmarks: { trials: ["t-offline"], articles: ["a-remote"], cases: [], studySheets: [] },
+      updatedAt: OLDER,
+    }, OLDER)]);
+
+    await store.flushPendingSyncQueue();
+
+    const write = lastStudentWrite();
+    expect(write.data.bookmarks).toEqual({
+      trials: ["t-remote", "t-offline"],
+      articles: ["a-remote"],
+      cases: [],
+      studySheets: [],
+    });
+  });
+});
+
+// ─── Queue bookkeeping races ───────────────────────────────────────
+// Writes queued while a flush or direct write is in flight must never be
+// silently deleted by the flush's final queue write or by the post-success
+// scope clearing.
+describe("pending queue race safety", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+    mocks.updateDocCalls.length = 0;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function queueWhileOffline(fn: () => Promise<unknown>): Promise<unknown> {
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+    return fn().finally(() => {
+      Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    });
+  }
+
+  it("keeps a write queued for another scope while a flush is in flight", async () => {
+    seedQueue([studentItem({ name: "Flushing" }, OLDER)]);
+    vi.spyOn(mocks.fs, "setDoc").mockImplementationOnce(async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
+      mocks.setDocCalls.push({ path: ref.path, data, options });
+      // A different student's write lands mid-flush (e.g. another hook).
+      await queueWhileOffline(() => store.setStudentData("stu-2", { name: "Mid-flight" }));
+    });
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    // The old wholesale overwrite deleted the mid-flight item.
+    expect(remaining).toBe(1);
+    const queue = readQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].studentId).toBe("stu-2");
+  });
+
+  it("keeps same-scope data queued while its own flush is in flight", async () => {
+    seedQueue([studentItem({ name: "Flushing" }, OLDER)]);
+    vi.spyOn(mocks.fs, "setDoc").mockImplementationOnce(async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
+      mocks.setDocCalls.push({ path: ref.path, data, options });
+      await queueWhileOffline(() => store.setStudentData("stu-1", { year: "MS4" }));
+    });
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(1);
+    const queue = readQueue();
+    expect(queue).toHaveLength(1);
+    expect((queue[0].data as Record<string, unknown>).year).toBe("MS4");
+  });
+
+  it("keeps residual queued fields a successful write did not cover", async () => {
+    // Leftover from an earlier failed profile save — the auto-save payload
+    // never carries `year`, so the old scope-wide clear silently lost it.
+    seedQueue([studentItem({ year: "MS4" }, OLDER)]);
+
+    const result = await store.setStudentData("stu-1", { name: "Ana" });
+
+    expect(result.status).toBe("applied");
+    const queue = readQueue();
+    expect(queue).toHaveLength(1);
+    expect(queue[0].data).toEqual({ year: "MS4" });
+  });
+
+  it("clears the queued entry once every field has been covered by successful writes", async () => {
+    seedQueue([studentItem({ year: "MS4", name: "Old" }, OLDER)]);
+
+    await store.setStudentData("stu-1", { name: "Ana", year: "MS4" });
+
+    expect(readQueue()).toHaveLength(0);
+  });
+
+  it("keeps a same-scope write queued during an in-flight direct write", async () => {
+    vi.spyOn(mocks.fs, "setDoc").mockImplementationOnce(async (ref: { path: string }, data: Record<string, unknown>, options?: { merge?: boolean }) => {
+      mocks.setDocCalls.push({ path: ref.path, data, options });
+      await queueWhileOffline(() => store.setStudentData("stu-1", { postScore: { correct: 9, total: 10, date: NEWER, answers: [] } }));
+    });
+
+    const result = await store.setStudentData("stu-1", { name: "Ana" });
+
+    expect(result.status).toBe("applied");
+    const queue = readQueue();
+    expect(queue).toHaveLength(1);
+    expect((queue[0].data as Record<string, unknown>).postScore).toBeTruthy();
+  });
+});
+
+// ─── Fail-closed clobber guard ─────────────────────────────────────
+// When the pre-write remote read errors, the guard cannot prove the write is
+// safe — queue and retry later instead of writing blind (failing open).
+describe("clobber guard fails closed on remote read errors", () => {
+  beforeEach(() => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    vi.setSystemTime(new Date("2026-06-03T12:00:00Z"));
+    store.setRotationCode(ROTATION);
+    mocks.remoteDocs.clear();
+    mocks.setDocCalls.length = 0;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("queues a guarded direct write instead of writing blind", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, name: "Remote Name" });
+    vi.spyOn(mocks.fs, "getDoc").mockRejectedValueOnce(new Error("transient read failure"));
+
+    const result = await store.setStudentData("stu-1", {
+      name: "Local Name",
+      updatedAt: "2026-06-03T12:00:00.000Z",
+    }, { baseUpdatedAt: OLDER });
+
+    expect(result.status).toBe("queued");
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+    expect(readQueue()).toHaveLength(1);
+  });
+
+  it("keeps a queued item for retry when the flush's remote read errors", async () => {
+    mocks.remoteDocs.set(STUDENT_PATH, { updatedAt: NEWER, name: "Remote Name" });
+    seedQueue([studentItem({ name: "Queued Name", updatedAt: OLDER }, OLDER)]);
+    vi.spyOn(mocks.fs, "getDoc").mockRejectedValueOnce(new Error("transient read failure"));
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(1);
+    expect(mocks.setDocCalls.filter((call) => call.path === STUDENT_PATH)).toHaveLength(0);
+
+    // Next poll: the read works, the guard merges as usual.
+    const remainingAfterRetry = await store.flushPendingSyncQueue();
+    expect(remainingAfterRetry).toBe(0);
+  });
+});
+
+// ─── Corrupted queue recovery ──────────────────────────────────────
+describe("corrupted pending queue", () => {
+  it("stashes an unparseable queue blob instead of silently wiping it", async () => {
+    localStorage.setItem(PENDING_SYNC_KEY, "{definitely-not-json");
+
+    expect(store.getPendingSyncCount()).toBe(0);
+    // The raw blob is preserved for recovery, and the corrupt key is cleared
+    // so queueing works again.
+    expect(localStorage.getItem("neph_pendingSyncQueue_corrupt")).toBe("{definitely-not-json");
+    expect(localStorage.getItem(PENDING_SYNC_KEY)).toBeNull();
+
+    await store.setStudentData("stu_1", { name: "Ana" }); // offline (suite default)
+    expect(readQueue()).toHaveLength(1);
+    expect(localStorage.getItem("neph_pendingSyncQueue_corrupt")).toBe("{definitely-not-json");
+  });
+
+  it("keeps readable entries and stashes the blob when some entries are malformed", () => {
+    const good = { kind: "setStudentData", rotationCode: "TEST-ROT", studentId: "stu_1", data: { name: "A" }, updatedAt: "2026-03-08T12:00:00.000Z" };
+    localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify([good, 42, "junk"]));
+
+    expect(store.getPendingSyncCount()).toBe(1);
+    expect(localStorage.getItem("neph_pendingSyncQueue_corrupt")).toContain("junk");
+  });
+});
+
+// ─── Unmapped shared keys ──────────────────────────────────────────
+describe("setShared flush with unmapped key", () => {
+  it("drops the item with a warning instead of failing silently", async () => {
+    Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    seedQueue([{ kind: "setShared", rotationCode: ROTATION, key: "neph_shared_notAThing", data: { x: 1 }, updatedAt: OLDER }]);
+
+    const remaining = await store.flushPendingSyncQueue();
+
+    expect(remaining).toBe(0);
+    expect(mocks.updateDocCalls).toHaveLength(0);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("unmapped key"),
+      expect.anything(),
+    );
+    warnSpy.mockRestore();
+  });
+});
+
+// ─── Deleted-student queue discard ─────────────────────────────────
+describe("discardQueuedStudentSync", () => {
+  it("drops only the deleted student's queued writes", async () => {
+    store.setRotationCode(ROTATION);
+    seedQueue([
+      studentItem({ name: "Gone" }, OLDER),
+      { kind: "setTeamSnapshot", rotationCode: ROTATION, studentId: "stu-1", data: { points: 5 }, updatedAt: OLDER },
+      { kind: "setStudentData", rotationCode: ROTATION, studentId: "stu-2", data: { name: "Stays" }, updatedAt: OLDER },
+      { kind: "setShared", rotationCode: ROTATION, key: "neph_shared_announcements", data: [], updatedAt: OLDER },
+    ]);
+
+    store.discardQueuedStudentSync("stu-1");
+
+    const queue = readQueue();
+    expect(queue).toHaveLength(2);
+    expect(queue.map((item) => item.kind).sort()).toEqual(["setShared", "setStudentData"]);
+    expect(queue.find((item) => item.kind === "setStudentData")?.studentId).toBe("stu-2");
   });
 });
 

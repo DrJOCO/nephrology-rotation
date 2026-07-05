@@ -105,11 +105,11 @@ function GuideDetailView({ sectionId, onBack }: { sectionId: string; onBack: () 
   );
 }
 
-export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideTemplates = CLINIC_GUIDES }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null; clinicGuides?: ClinicGuideRecord[]; clinicGuideTemplates?: ClinicGuideTemplates }) {
+export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideTemplates = CLINIC_GUIDES, goBack }: { navigate: (tab: string, sv?: Record<string, unknown> | null) => void; subView: Record<string, unknown> | null; clinicGuides?: ClinicGuideRecord[]; clinicGuideTemplates?: ClinicGuideTemplates; goBack: () => void }) {
   const isMobile = useIsMobile();
 
   if (subView?.type === "guideDetail") {
-    return <GuideDetailView sectionId={subView.id as string} onBack={() => navigate("library")} />;
+    return <GuideDetailView sectionId={subView.id as string} onBack={goBack} />;
   }
 
   return (

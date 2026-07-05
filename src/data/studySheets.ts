@@ -57,7 +57,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1F52C}",
       title: "GFR & Urinalysis Decoded",
       subtitle: "What the numbers (and the urine) are telling you",
-      topics: ["Urinalysis", "CKD"],
+      topics: ["Urinalysis", "CKD", "GFR Assessment"],
       sections: [
         {
           heading: "GFR Estimation",
@@ -639,7 +639,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1F48E}",
       title: "Transplant, Stones & Nephrotoxins",
       subtitle: "The rest of week 4 in one page",
-      topics: ["Transplant", "Kidney Stones", "AIN"],
+      topics: ["Transplant", "Kidney Stones", "AIN", "Nephrotoxins"],
       sections: [
         {
           heading: "Kidney Transplant Essentials",

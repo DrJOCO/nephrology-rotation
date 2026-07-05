@@ -159,36 +159,24 @@ export function validateFollowUp(text: string | undefined | null): FollowUpValid
   return { valid: true, error: null };
 }
 
-// ── Login form validation ──────────────────────────────────────────────
+// ── Quiz score entry validation (admin manual pre/post/module scores) ──
 
 /**
- * Validate login form fields
- * @param {{ name: string, pin: string, code: string }} fields
- * @returns {{ valid: boolean, errors: Record<string, string> }}
+ * Validate a manually entered quiz score. Both fields arrive as strings from
+ * the form. Rules: both must be whole numbers, total >= 1, 0 <= correct <= total.
+ * Returns an error message for inline display, or null when valid.
  */
-export function validateLoginForm({ name, pin, code }: { name: string; pin: string; code: string }): ValidationResult {
-  const errors: Record<string, string> = {};
-
-  const trimmedName = (name || "").trim();
-  if (!trimmedName) {
-    errors.name = "Name is required";
-  } else if (trimmedName.length > LIMITS.NAME_MAX) {
-    errors.name = `Max ${LIMITS.NAME_MAX} characters`;
+export function validateQuizScoreEntry(correctRaw: string, totalRaw: string): string | null {
+  const correctText = (correctRaw || "").trim();
+  const totalText = (totalRaw || "").trim();
+  if (!correctText || !totalText) return "Enter both correct and total";
+  if (!/^\d+$/.test(correctText) || !/^\d+$/.test(totalText)) {
+    return "Scores must be whole numbers (no negatives or decimals)";
   }
-
-  if (pin && pin.length !== LIMITS.PIN_LENGTH) {
-    errors.pin = "PIN must be exactly 4 digits";
-  } else if (pin && !/^\d{4}$/.test(pin)) {
-    errors.pin = "PIN must be 4 digits";
-  }
-
-  if (code) {
-    if (code.length < LIMITS.ROTATION_CODE_MIN) {
-      errors.code = `At least ${LIMITS.ROTATION_CODE_MIN} characters`;
-    } else if (code.length > LIMITS.ROTATION_CODE_MAX) {
-      errors.code = `Max ${LIMITS.ROTATION_CODE_MAX} characters`;
-    }
-  }
-
-  return { valid: Object.keys(errors).length === 0, errors };
+  const correct = Number(correctText);
+  const total = Number(totalText);
+  if (!Number.isSafeInteger(correct) || !Number.isSafeInteger(total)) return "Score is too large";
+  if (total < 1) return "Total questions must be at least 1";
+  if (correct > total) return `Correct (${correct}) can't exceed total (${total})`;
+  return null;
 }
