@@ -99,11 +99,16 @@ export const DEFAULT_AKI_INPUTS: AkiToolInputs = {
 };
 
 function parsePositiveNumber(value: string): number | null {
+  // A blank / whitespace-only field means "not entered", NOT 0 (Number("") === 0).
+  if (value.trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function parseNonNegativeNumber(value: string): number | null {
+  // A blank / whitespace-only field means "not entered", NOT 0 (Number("") === 0).
+  // An explicit "0" is a legitimate clinical value (e.g. true anuria) and still parses to 0.
+  if (value.trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : null;
 }

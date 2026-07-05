@@ -140,11 +140,16 @@ export const DEFAULT_HYPO_INPUTS: HyponatremiaInputs = {
 };
 
 function parsePositive(value: string): number | null {
+  // A blank / whitespace-only field means "not entered", NOT 0 (Number("") === 0).
+  if (value.trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function parseNonNegative(value: string): number | null {
+  // A blank / whitespace-only field means "not entered", NOT 0 (Number("") === 0).
+  // An explicit "0" is a legitimate clinical value and still parses to 0.
+  if (value.trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
