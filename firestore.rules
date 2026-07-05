@@ -135,6 +135,27 @@ service cloud.firestore {
         && request.resource.data.updatedAt is string;
     }
 
+    // Student-submitted "this page confused me" feedback. Create-only for
+    // students (no update — a submission is a point-in-time signal, not an
+    // editable record); admins get/list/delete to triage.
+    function hasValidStudentFeedback(studentId) {
+      return request.resource.data.studentId == studentId
+        && request.resource.data.keys().hasOnly(['studentId', 'name', 'page', 'tag', 'note', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 50
+        && request.resource.data.page is string
+        && request.resource.data.page.size() > 0
+        && request.resource.data.page.size() <= 100
+        && request.resource.data.tag in ['Confusing', 'Broken', 'Idea', 'Love it']
+        && request.resource.data.createdAt is string
+        && request.resource.data.createdAt.size() <= 40
+        && (!request.resource.data.keys().hasAny(['note']) || (
+          request.resource.data.note is string
+          && request.resource.data.note.size() <= 500
+        ));
+    }
+
     match /admins/{uid} {
       allow get: if isSignedIn() && request.auth.uid == uid;
       allow list: if false;
@@ -259,6 +280,19 @@ service cloud.firestore {
                               && exists(/databases/$(database)/documents/rotationCodes/$(rotationCode))
                               && hasValidTeamSnapshot(studentId);
         allow delete: if isRotationAdmin(rotationCode) || isStudentOwner(studentId);
+      }
+
+      // ─── Student feedback subcollection ───────────────────────────
+      // One-tap "this page confused me" reports. Students can only create
+      // their own entries and can never read them back (avoids one student
+      // seeing another's feedback); only a rotation admin can triage.
+      match /feedback/{entryId} {
+        allow get, list: if isRotationAdmin(rotationCode);
+        allow create: if isRotationStudent(rotationCode)
+                      && request.resource.data.studentId == request.auth.uid
+                      && hasValidStudentFeedback(request.auth.uid);
+        allow update: if false;
+        allow delete: if isRotationAdmin(rotationCode);
       }
     }
 
