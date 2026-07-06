@@ -316,6 +316,14 @@ service cloud.firestore {
       }
     }
 
+    // ─── Trigger Email extension outbox (WS-4) ─────────────────────
+    // Written ONLY by the onAdminInviteCreated Cloud Function via the Admin SDK
+    // (which bypasses these rules). No client ever reads or writes `mail`:
+    // clients must not be able to enqueue arbitrary outbound email.
+    match /mail/{docId} {
+      allow read, write: if false;
+    }
+
     // ─── Deny everything else ──────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
