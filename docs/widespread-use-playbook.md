@@ -187,9 +187,9 @@ their final commit).
 
 | Item | Status | Landed / notes |
 |---|---|---|
-| D1 compliance decision | ☐ pending | |
+| D1 compliance decision | ✅ decided 2026-07-05 | De-identification route (WS-11b): no free-text patient data |
 | D2 tenancy decision | ☐ pending (default: single project) | |
-| D3 Blaze + budget alerts | ☐ pending | |
+| D3 Blaze + budget alerts | ☐ in progress | Needs Dr. Cheng in the console (billing link is account-interactive); steps in §2 |
 | D4 distribution | ☐ deferred by default | |
 | WS-1 rules test harness | ☐ | |
 | WS-2 observability | ☐ | |

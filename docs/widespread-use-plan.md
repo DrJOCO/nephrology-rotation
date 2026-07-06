@@ -35,9 +35,10 @@ gated behind a feature flag until a rotation gap.**
 
 ## Phase 0 — Decisions (human, not agent work)
 
-- **D1 — Compliance posture.** Students enter patient initials, room numbers,
-  and free-text diagnoses (`src/components/student/PatientTab.tsx`,
-  `Patient` in `src/types.ts`). Choose ONE:
+- **D1 — Compliance posture. ✅ DECIDED 2026-07-05: route (b), structural
+  de-identification** — Dr. Cheng confirmed free-text patient descriptions can
+  be given up. WS-11b is the binding spec; WS-9 and WS-14 should assume no
+  patient free text in the data model. Original options for the record:
   - (a) **BAA route**: sign the Google Cloud BAA, restrict the project to
     HIPAA-eligible services, add audit logging → WS-11a.
   - (b) **Structural de-identification**: redesign the consult log so PHI cannot
