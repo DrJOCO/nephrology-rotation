@@ -83,6 +83,7 @@ npm run preview
 | `npm run test:watch` | Run Vitest in watch mode. |
 | `npm run check:links` | Check external content/resource links. |
 | `npm run preview` | Serve the built app locally. |
+| `npm run test:rules` | Run the Firestore rules test suite against the emulator (see below). |
 
 `npm run check:links` reaches external websites and can fail because of network or upstream site behavior. Treat failures as items to review, not automatic proof that a source is unusable.
 
@@ -115,6 +116,7 @@ npm run check:links
 | `docs/` | Project documentation, audits, app-store notes, and the project master file. |
 | `firebase.json` | Firebase Hosting and Firestore configuration. |
 | `firestore.rules` | Firestore security rules. |
+| `rules-tests/` | Firestore rules test suite (emulator-based, see "Firestore Rules Tests" below). |
 
 ## Firebase Notes
 
@@ -126,6 +128,31 @@ npm run check:links
 - Student sign-in uses email verification plus a PIN-backed Firebase credential.
 - Raw student login PINs should not be stored in student documents.
 - The admin PIN is a local second lock for an already signed-in admin device and is intentionally stripped from shared rotation settings.
+
+## Firestore Rules Tests
+
+`firestore.rules` is covered by an automated test suite in `rules-tests/`,
+separate from the unit-test suite (`vitest.rules.config.ts` vs.
+`vitest.config.ts`) so the Firestore-emulator-dependent tests never slow down
+`npm test`.
+
+Run locally:
+
+```bash
+npm run test:rules
+```
+
+This boots the Firestore emulator (`firebase emulators:exec --only firestore`)
+and runs `rules-tests/**/*.test.ts` against it with
+`@firebase/rules-unit-testing`.
+
+**Requires a JDK at version 21 or newer** (the Firestore emulator will refuse
+to start on anything older, including Java 8/11). If `java -version` reports
+something below 21, install a current JDK (e.g. via
+[Adoptium Temurin](https://adoptium.net/)) before running this script; it is
+not required for any other local dev workflow. CI runs this suite in its own
+`rules` job with `actions/setup-java` (temurin 21), independent of the main
+`verify` job.
 
 ## Deployment
 
