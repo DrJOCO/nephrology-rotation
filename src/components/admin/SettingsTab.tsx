@@ -6,6 +6,7 @@ import { normalizeClinicGuideTemplates } from "../../utils/clinicGuideTemplates"
 import { normalizeStudySheets, type StudySheetsData } from "../../utils/studySheets";
 import store, { RotationInfo } from "../../utils/store";
 import { isBootstrapAdminEmail, type AdminInviteRecord } from "../../utils/firebase";
+import { FLAG_DEFAULTS, getFlag, setRemoteFlags, type FlagName } from "../../utils/flags";
 import type { AdminSubView, Announcement, ClinicGuideRecord, SharedSettings } from "../../types";
 import type { ArticlesData, AdminSession, WeeklyData } from "./types";
 import { adminInput, adminLabel, type AdminConfirmOptions, type AdminToastTone } from "./shared";
@@ -166,6 +167,88 @@ function RotationRecordCard({
   );
 }
 
+// Bootstrap-admin-only card (SettingsTab gates the surrounding section by
+// masterAdmin before rendering this). Reads the FULL known-flags map on
+// mount/toggle from local state seeded off getFlag()/FLAG_DEFAULTS, and
+// writes the whole map back on every toggle (setRemoteFlags), matching
+// firestore.rules' write-the-whole-doc shape. Status is reported honestly —
+// a failed write reverts the toggle and says so, rather than pretending it
+// stuck.
+function FeatureFlagsSection({ sectionRef }: { sectionRef: React.RefObject<HTMLDivElement | null> }) {
+  const flagNames = Object.keys(FLAG_DEFAULTS) as FlagName[];
+  const [flags, setFlags] = useState<Record<FlagName, boolean>>(() => {
+    const initial = {} as Record<FlagName, boolean>;
+    flagNames.forEach((name) => { initial[name] = getFlag(name); });
+    return initial;
+  });
+  const [savingFlag, setSavingFlag] = useState<FlagName | null>(null);
+  const [status, setStatus] = useState<{ tone: "success" | "error"; message: string } | null>(null);
+
+  const handleToggle = async (name: FlagName) => {
+    const next = { ...flags, [name]: !flags[name] };
+    setFlags(next);
+    setSavingFlag(name);
+    setStatus(null);
+    try {
+      await setRemoteFlags(next);
+      setStatus({ tone: "success", message: `Saved — ${name} is now ${next[name] ? "on" : "off"}.` });
+    } catch (error) {
+      console.error("Feature flag save failed:", error);
+      // Revert the optimistic toggle — the doc was NOT updated, so the UI
+      // must not claim otherwise.
+      setFlags((prev) => ({ ...prev, [name]: !next[name] }));
+      setStatus({ tone: "error", message: `Could not save ${name}. Check your connection and try again.` });
+    } finally {
+      setSavingFlag(null);
+    }
+  };
+
+  return (
+    <SettingsSection
+      sectionRef={sectionRef}
+      sectionId="settings-feature-flags"
+      title="Feature Flags"
+      description="Toggle rollout switches for the whole app. Changes apply to clients the next time they load — no deploy needed."
+    >
+      <div style={{ display: "grid", gap: 8 }}>
+        {flagNames.map((name) => (
+          <div key={name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, background: T.bg, border: `1px solid ${T.line}`, borderRadius: 10, padding: "10px 12px" }}>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: 13, fontWeight: 700, color: T.ink }}>{name}</div>
+              <div style={{ fontSize: 12, color: T.muted }}>Default: {FLAG_DEFAULTS[name] ? "on" : "off"}</div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={flags[name]}
+              aria-label={`Toggle ${name}`}
+              disabled={savingFlag === name}
+              onClick={() => { void handleToggle(name); }}
+              style={{
+                width: 44, height: 26, borderRadius: 999, border: "none", position: "relative", flexShrink: 0,
+                background: flags[name] ? T.brand : T.muted,
+                cursor: savingFlag === name ? "default" : "pointer",
+                opacity: savingFlag === name ? 0.7 : 1,
+              }}
+            >
+              <span aria-hidden style={{
+                position: "absolute", top: 3, left: flags[name] ? 21 : 3,
+                width: 20, height: 20, borderRadius: "50%", background: T.card,
+                transition: "left 120ms ease",
+              }} />
+            </button>
+          </div>
+        ))}
+      </div>
+      {status && (
+        <div style={{ marginTop: 10, fontSize: 13, color: status.tone === "success" ? T.success : T.danger, background: status.tone === "success" ? T.successBg : T.dangerBg, borderRadius: 10, padding: "10px 12px" }}>
+          {status.message}
+        </div>
+      )}
+    </SettingsSection>
+  );
+}
+
 export function SettingsTab({
   settings,
   setSettings,
@@ -259,6 +342,7 @@ export function SettingsTab({
   const contentRef = useRef<HTMLDivElement>(null);
   const securityRef = useRef<HTMLDivElement>(null);
   const adminAccessRef = useRef<HTMLDivElement>(null);
+  const featureFlagsRef = useRef<HTMLDivElement>(null);
 
   const update = (key: string, val: string) => setSettings((prev) => ({ ...prev, [key]: val }));
 
@@ -466,7 +550,7 @@ export function SettingsTab({
         { id: "settings-profile", label: "Profile" },
         { id: "settings-content", label: "Content" },
         { id: "settings-security", label: "Security" },
-        ...(masterAdmin ? [{ id: "settings-admin-access", label: "Admin Access" }] : []),
+        ...(masterAdmin ? [{ id: "settings-admin-access", label: "Admin Access" }, { id: "settings-feature-flags", label: "Feature Flags" }] : []),
       ], [focusSection, masterAdmin]);
   const sectionIds = sectionEntries.map((entry) => entry.id);
   const activeSectionId = useActiveSectionId(sectionIds);
@@ -884,6 +968,10 @@ export function SettingsTab({
           </div>
         )}
       </SettingsSection>
+      )}
+
+      {showOtherSections && isBootstrapAdminEmail(firebaseAdmin.email || "") && (
+        <FeatureFlagsSection sectionRef={featureFlagsRef} />
       )}
 
     </div>
