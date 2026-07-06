@@ -2,6 +2,7 @@ import { useState, lazy, Suspense, Component, ErrorInfo, ReactNode } from "react
 import { T } from "./data/constants";
 import StudentApp from "./components/StudentApp";
 import UpdateToast from "./components/UpdateToast";
+import { addBreadcrumb, captureError } from "./utils/telemetry";
 const AdminPanel = lazy(() => import("./components/AdminPanel"));
 
 // One-reload-per-session guard. After a mid-rotation deploy, a stale open tab
@@ -35,6 +36,7 @@ function reloadOncePerSession(): boolean {
     // reload anyway; the worst case is one extra reload, not a loop, because a
     // truly persistent failure will keep hitting the ErrorBoundary UI instead.
   }
+  addBreadcrumb("Reloading once per session after a chunk-load error", "chunk-reload");
   window.location.reload();
   return true;
 }
@@ -67,6 +69,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Nephrology App Error:", error, errorInfo);
+    captureError(error, { componentStack: errorInfo.componentStack ? "present" : "absent" });
     // A lazy-loaded view failed to import after a deploy — students in
     // installed-PWA mode have no URL bar to reload, so auto-recover once.
     if (isChunkLoadError(error)) {

@@ -6,6 +6,7 @@ import {
   mergeWeeklyScores,
   pruneRemovedPatients,
 } from "./progressMerge";
+import { captureEvent } from "./telemetry";
 
  
 type FirestoreData = Record<string, any>;
@@ -758,11 +759,13 @@ async function flushPendingSyncQueue(): Promise<number> {
           tombstoned.add(tombstoneKey(item));
           discardQueuedStudentSyncItems(item.rotationCode, item.studentId);
           emitStudentRemoved(item.rotationCode, item.studentId);
+          captureEvent("sync.tombstone-hit", { kind: item.kind });
           continue;
         }
         // Legacy queue items may lack updatedAt ("" here) — treat them as
         // stale so the merge guard protects whatever remote already has.
         if (remote && isNewerTimestamp(remote.updatedAt, typeof item.updatedAt === "string" ? item.updatedAt : "")) {
+          captureEvent("sync.clobber-guard-merge", { fieldCount: Object.keys(payload).length });
           payload = mergeStudentFlushPayload(remote, payload);
         }
         if (Object.keys(payload).length > 0) {
@@ -782,6 +785,7 @@ async function flushPendingSyncQueue(): Promise<number> {
       }
     } catch (error) {
       console.warn("Queued sync flush failed:", error);
+      captureEvent("sync.flush-failed", { kind: item.kind });
       failed.add(item);
     }
   }
