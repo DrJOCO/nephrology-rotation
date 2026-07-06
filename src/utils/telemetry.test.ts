@@ -26,12 +26,14 @@ vi.mock("web-vitals", () => ({
   onINP: vi.fn(),
 }));
 
-// The real dynamic import() of a mocked module needs a macrotask tick (not
-// just microtasks) to settle under vitest's vmThreads pool — a bare
-// `await Promise.resolve()` chain or a zero-delay setTimeout is not reliably
-// enough here (observed flaky/deterministically-late resolution at 0ms).
-function flushAsync(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 10));
+// Waits for the module's pending dynamic import() of the (mocked) SDK to
+// settle. A fixed setTimeout is load-dependent — it passed in a 37-file run
+// and flaked in a 39-file run — so use vitest's purpose-built API plus a
+// microtask flush for the .then() chain that follows the import.
+async function flushAsync(): Promise<void> {
+  await vi.dynamicImportSettled();
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 describe("telemetry", () => {

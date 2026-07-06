@@ -136,7 +136,13 @@ export class FakeWriteBatch {
 
 export class FakeTransaction {
   constructor(private db: FakeFirestore) {}
-  async get(ref: FakeDocRef): Promise<FakeDocSnap> {
+  // Mirrors the Admin SDK's Transaction.get overloads: DocumentReference |
+  // Query (CollectionReference extends Query) — onStudentWrite's seeding path
+  // reads the students collection inside the transaction.
+  async get(ref: FakeDocRef): Promise<FakeDocSnap>;
+  async get(ref: FakeCollectionRef): Promise<{ empty: boolean; size: number; docs: FakeDocSnap[] }>;
+  async get(ref: FakeDocRef | FakeCollectionRef): Promise<FakeDocSnap | { empty: boolean; size: number; docs: FakeDocSnap[] }> {
+    if (ref instanceof FakeCollectionRef) return ref.get();
     return snapForPath(this.db, ref.path);
   }
   update(ref: FakeDocRef, data: Data): void {

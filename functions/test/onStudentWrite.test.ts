@@ -25,13 +25,41 @@ describe("studentCountDelta", () => {
 });
 
 describe("applyStudentAggregate", () => {
-  it("initializes studentCount to 1 on the first create when field is missing", async () => {
+  // Seeding: when the field is missing, the count comes from the students
+  // collection's actual size (post-write truth), NOT base 0 + delta — a
+  // rotation that predates the function's deploy already has students, and a
+  // delta-from-zero would persist a wrong count the client fallback can no
+  // longer correct once the field exists.
+  it("seeds from the students collection size when the field is missing (pre-deploy rotation)", async () => {
     const fake = new FakeFirestore();
     fake.store.set("rotations/GS", { name: "GS" });
+    // Three students already enrolled, the third being the just-written doc
+    // that fired the trigger.
+    fake.store.set("rotations/GS/students/a", { name: "A" });
+    fake.store.set("rotations/GS/students/b", { name: "B" });
+    fake.store.set("rotations/GS/students/c", { name: "C" });
     await applyStudentAggregate(asDb(fake), "GS", 1, NOW);
     const doc = fake.store.get("rotations/GS");
-    expect(doc?.studentCount).toBe(1);
+    expect(doc?.studentCount).toBe(3); // collection size, delta not applied on top
     expect(doc?.lastStudentActivityAt).toBe(NOW);
+  });
+
+  it("seeds to 1 on the first-ever create for a brand-new rotation", async () => {
+    const fake = new FakeFirestore();
+    fake.store.set("rotations/GS", { name: "GS" });
+    fake.store.set("rotations/GS/students/a", { name: "A" });
+    await applyStudentAggregate(asDb(fake), "GS", 1, NOW);
+    expect(fake.store.get("rotations/GS")?.studentCount).toBe(1);
+  });
+
+  it("seeds from collection size on a delete when the field is missing", async () => {
+    const fake = new FakeFirestore();
+    fake.store.set("rotations/GS", { name: "GS" });
+    // Two students remain after the delete that fired the trigger.
+    fake.store.set("rotations/GS/students/a", { name: "A" });
+    fake.store.set("rotations/GS/students/b", { name: "B" });
+    await applyStudentAggregate(asDb(fake), "GS", -1, NOW);
+    expect(fake.store.get("rotations/GS")?.studentCount).toBe(2);
   });
 
   it("increments an existing count", async () => {
@@ -55,11 +83,13 @@ describe("applyStudentAggregate", () => {
     expect(fake.store.get("rotations/GS")?.studentCount).toBe(0);
   });
 
-  it("treats a non-numeric stored count as 0", async () => {
+  it("re-seeds from collection size when the stored count is non-numeric", async () => {
     const fake = new FakeFirestore();
     fake.store.set("rotations/GS", { name: "GS", studentCount: "oops" });
+    fake.store.set("rotations/GS/students/a", { name: "A" });
+    fake.store.set("rotations/GS/students/b", { name: "B" });
     await applyStudentAggregate(asDb(fake), "GS", 1, NOW);
-    expect(fake.store.get("rotations/GS")?.studentCount).toBe(1);
+    expect(fake.store.get("rotations/GS")?.studentCount).toBe(2);
   });
 
   it("no-ops (writes nothing) when the rotation doc is gone", async () => {

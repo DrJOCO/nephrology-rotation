@@ -26,6 +26,15 @@ export function studentCountDelta(existedBefore: boolean, existsAfter: boolean):
 // against a fake Firestore without booting an emulator. Clamps the count at 0
 // (a stored count can drift, e.g. a delete processed before its create) and
 // no-ops when the rotation doc is gone.
+//
+// Seeding: a rotation that predates this function's deploy (e.g. a live
+// cohort with students already enrolled) has no studentCount field. Applying
+// the ±1 delta to a base of 0 would persist a WRONG count — and once the
+// field exists, the client's missing-field fallback can no longer correct it.
+// So the first write for such a rotation counts the students collection
+// inside the transaction instead; the trigger fires after the student doc
+// write, so the collection size already reflects it and the delta must NOT
+// be applied on top.
 export async function applyStudentAggregate(
   firestore: Firestore,
   code: string,
@@ -40,8 +49,9 @@ export async function applyStudentAggregate(
     if (!rotationSnap.exists) return;
 
     const prev = rotationSnap.get("studentCount");
-    const base = typeof prev === "number" && prev >= 0 ? prev : 0;
-    const next = Math.max(0, base + delta);
+    const next = typeof prev === "number" && prev >= 0
+      ? Math.max(0, prev + delta)
+      : (await tx.get(rotationRef.collection("students"))).size;
 
     tx.update(rotationRef, {
       studentCount: next,
