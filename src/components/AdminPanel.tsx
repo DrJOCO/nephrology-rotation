@@ -9,6 +9,7 @@ import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { normalizeAdminStudentRecord } from "../utils/adminStudents";
 import { deleteRotationFeedback, listRotationFeedback, type StoredFeedbackEntry } from "../utils/feedback";
+import { useFlag } from "../utils/flags";
 import { AdminAuthScreen } from "./admin/AdminAuthScreen";
 import { AdminPinGate, AdminPinSetupGate } from "./admin/AdminPinGate";
 import { AdminShell } from "./admin/AdminShell";
@@ -49,6 +50,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
   // "View as student" preview sandbox — StudentPreview enters/exits store
   // preview mode on mount/unmount, so toggling this flag is the whole control.
   const [previewOpen, setPreviewOpen] = useState(false);
+  const previewEnabled = useFlag("previewEnabled");
   const [firebaseAdmin, setFirebaseAdmin] = useState<AdminSession | null>(null);
   const [authed, setAuthed] = useState(false);
   const [pin, setPin] = useState("");
@@ -796,7 +798,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         onLock={() => setAuthed(false)}
         onSignOut={() => { void handleAdminSignOut(); }}
         onExit={onExit}
-        onPreview={() => setPreviewOpen(true)}
+        onPreview={previewEnabled ? () => setPreviewOpen(true) : undefined}
         themeToggle={<AdminThemeToggle />}
         contentKey={tab + (subView ? JSON.stringify(subView) : "")}
       >
