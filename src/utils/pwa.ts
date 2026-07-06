@@ -7,6 +7,8 @@
 // so a toast can offer the user a one-tap refresh; accepting posts SKIP_WAITING
 // and reloads once on controllerchange.
 
+import { captureEvent } from "./telemetry";
+
 type SwUpdateCallback = (accept: () => void) => void;
 
 let waitingWorker: ServiceWorker | null = null;
@@ -94,6 +96,7 @@ export function registerAppServiceWorker(): void {
       })
       .catch((error) => {
         console.warn("Service worker registration failed:", error);
+        captureEvent("sw.register-failed", { message: error instanceof Error ? error.message : String(error) });
       });
   };
 
