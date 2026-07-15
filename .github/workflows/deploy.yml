@@ -1,0 +1,80 @@
+name: Deploy
+
+# Manual-only deploys (playbook rule: production actions need an explicit go).
+# Requires the FIREBASE_SERVICE_ACCOUNT repo secret — setup and roles are
+# documented in docs/deploy-from-ci.md.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: What to deploy (order for "all" follows playbook §5 — firestore, functions, hosting)
+        type: choice
+        default: all
+        options:
+          - all
+          - firestore
+          - functions
+          - hosting
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Write service-account key
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA_JSON" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT secret is not set — see docs/deploy-from-ci.md"
+            exit 1
+          fi
+          printf '%s' "$SA_JSON" > "$GOOGLE_APPLICATION_CREDENTIALS"
+
+      - run: npm ci
+
+      - name: Deploy Firestore rules + indexes
+        if: ${{ inputs.target == 'all' || inputs.target == 'firestore' }}
+        run: npx firebase deploy --only firestore
+
+      - name: Install functions dependencies
+        if: ${{ inputs.target == 'all' || inputs.target == 'functions' }}
+        run: npm --prefix functions ci
+
+      # No --force: if a release removes a function, the CLI fails instead of
+      # silently deleting it — rerun with an explicit decision per the runbook.
+      - name: Deploy functions
+        if: ${{ inputs.target == 'all' || inputs.target == 'functions' }}
+        run: npx firebase deploy --only functions
+
+      - name: Build app
+        if: ${{ inputs.target == 'all' || inputs.target == 'hosting' }}
+        run: npm run build
+
+      - name: Deploy hosting
+        if: ${{ inputs.target == 'all' || inputs.target == 'hosting' }}
+        run: npx firebase deploy --only hosting
+
+      # Playbook §5 live-verify. The update-toast check on a real device stays manual.
+      - name: Live-verify hosting
+        if: ${{ inputs.target == 'all' || inputs.target == 'hosting' }}
+        run: |
+          set -euxo pipefail
+          SITE=https://nephrology-rotation.web.app
+          BUILT=$(grep -oE 'assets/index-[^"]+\.js' dist/index.html | head -1)
+          LIVE=$(curl -s "$SITE/index.html" | grep -oE 'assets/index-[^"]+\.js' | head -1)
+          test "$BUILT" = "$LIVE"
+          curl -sI "$SITE/index.html" | grep -i 'cache-control:.*no-cache'
+          curl -sI "$SITE/sw.js" | grep -i 'cache-control:.*no-cache'
+          test "$(curl -s "$SITE/sw.js" | grep -c SKIP_WAITING)" -eq 1

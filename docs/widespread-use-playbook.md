@@ -191,10 +191,10 @@ their final commit).
 | D2 tenancy decision | ☐ pending (default: single project) | |
 | D3 Blaze + budget alerts | ✅ done 2026-07-06 | Dr. Cheng upgraded in console; WS-4 unblocked |
 | D4 distribution | ☐ deferred by default | |
-| WS-1 rules test harness | ☐ | |
-| WS-2 observability | ☐ | |
-| WS-3 feature flags | ☐ | |
-| WS-4 functions foundation | ☐ | |
+| WS-1 rules test harness | ✅ merged 2026-07-15 | PR #18; 113 rules tests, CI `rules` job |
+| WS-2 observability | ✅ merged 2026-07-15 | PR #18; dormant until a Sentry DSN is minted (docs/observability.md) |
+| WS-3 feature flags | ✅ merged 2026-07-15 | PR #18; defaults preserve current behavior |
+| WS-4 functions foundation | ✅ merged 2026-07-15 | PR #18; **deploy pending** — runbook in functions/README.md, or the `Deploy` GitHub Action (docs/deploy-from-ci.md) |
 | WS-5 orgs (a/b/c) | ☐ | gap-deploy only |
 | WS-6 auth upgrade | ☐ | flag flip in gap |
 | WS-7 onboarding wizard | ☐ | |
