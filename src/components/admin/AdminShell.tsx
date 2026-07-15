@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { T } from "../../data/constants";
 import { Icon } from "../student/Icon";
+import { APP_VERSION } from "../../utils/telemetry";
 
 type AdminShellTab = { id: string; label: string };
 
@@ -229,6 +230,10 @@ export function AdminShell({
             <button onClick={onSignOut} style={{ width: "100%", padding: "8px 4px", background: "none", border: "none", color: T.brand, borderRadius: 0, fontSize: 13, fontWeight: 700, cursor: "pointer", textAlign: "left" }}>
               Sign Out
             </button>
+            {/* Build stamp (git short SHA) — helps map a bug report to a deploy. */}
+            <div style={{ padding: "4px 4px 0", color: T.muted, fontSize: 10, fontFamily: T.mono, letterSpacing: 0.6 }}>
+              build {APP_VERSION}
+            </div>
           </div>
         </aside>
 

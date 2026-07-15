@@ -42,6 +42,9 @@ tmp/
 # Firebase cache
 .firebase/
 
+# Cloud Functions build output (compiled on predeploy / in CI)
+functions/lib/
+
 # Legacy combined file
 nephrology_combined.jsx
 

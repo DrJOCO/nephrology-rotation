@@ -316,6 +316,24 @@ service cloud.firestore {
       }
     }
 
+    // ─── Trigger Email extension outbox (WS-4) ─────────────────────
+    // Written ONLY by the onAdminInviteCreated Cloud Function via the Admin SDK
+    // (which bypasses these rules). No client ever reads or writes `mail`:
+    // clients must not be able to enqueue arbitrary outbound email.
+    match /mail/{docId} {
+      allow read, write: if false;
+    }
+
+    // ─── App-wide feature flags (WS-3) ─────────────────────────────
+    // Flat boolean map read by every signed-in client at boot (stale-while-
+    // revalidate in src/utils/flags.ts); write access is bootstrap-admin-only
+    // for now (org-owner write access is a WS-5 follow-up).
+    match /appConfig/{docId} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow write: if isBootstrapAdminEmail();
+    }
+
     // ─── Deny everything else ──────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

@@ -6,6 +6,7 @@ import {
   mergeWeeklyScores,
   pruneRemovedPatients,
 } from "./progressMerge";
+import { captureEvent } from "./telemetry";
 
  
 type FirestoreData = Record<string, any>;
@@ -758,11 +759,13 @@ async function flushPendingSyncQueue(): Promise<number> {
           tombstoned.add(tombstoneKey(item));
           discardQueuedStudentSyncItems(item.rotationCode, item.studentId);
           emitStudentRemoved(item.rotationCode, item.studentId);
+          captureEvent("sync.tombstone-hit", { kind: item.kind });
           continue;
         }
         // Legacy queue items may lack updatedAt ("" here) — treat them as
         // stale so the merge guard protects whatever remote already has.
         if (remote && isNewerTimestamp(remote.updatedAt, typeof item.updatedAt === "string" ? item.updatedAt : "")) {
+          captureEvent("sync.clobber-guard-merge", { fieldCount: Object.keys(payload).length });
           payload = mergeStudentFlushPayload(remote, payload);
         }
         if (Object.keys(payload).length > 0) {
@@ -782,6 +785,7 @@ async function flushPendingSyncQueue(): Promise<number> {
       }
     } catch (error) {
       console.warn("Queued sync flush failed:", error);
+      captureEvent("sync.flush-failed", { kind: item.kind });
       failed.add(item);
     }
   }
@@ -1403,12 +1407,22 @@ const store = {
 
       const rotations = await Promise.all(Array.from(docs.values()).map(async d => {
         const data = d.data() as FirestoreData;
-        let studentCount = 0;
-        try {
-          const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", d.id, "students"));
-          studentCount = studentsSnap.size;
-        } catch (e) {
-          console.warn("listRotations student count failed:", e);
+        // Prefer the server-maintained aggregate (onStudentWrite, WS-4) to avoid
+        // an N+1 getDocs-per-rotation fan-out. Docs written before that function
+        // deploys won't have the field, so fall back to the per-rotation count.
+        // The fallback is permanent: legacy rotations may never gain the field
+        // (no student write happens after deploy to trigger the aggregate).
+        let studentCount: number;
+        if (typeof data.studentCount === "number" && data.studentCount >= 0) {
+          studentCount = data.studentCount;
+        } else {
+          studentCount = 0;
+          try {
+            const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", d.id, "students"));
+            studentCount = studentsSnap.size;
+          } catch (e) {
+            console.warn("listRotations student count failed:", e);
+          }
         }
         return {
           code: d.id,
@@ -1486,6 +1500,13 @@ const store = {
     if (previewMode) return;
     try {
       const { db, fs } = await getFirebase();
+      // These client-side subcollection loops are best-effort cleanup. The
+      // `onRotationDeleted` Cloud Function (WS-4) is the authoritative backstop:
+      // it sweeps students/team/studentTombstones/feedback (and feedbackAbuse)
+      // after the rotation doc is deleted, so a partial/interrupted client run
+      // — or an old client that never deleted `feedback` at all — leaves no
+      // orphans once the function is deployed. These loops stay because OLD
+      // clients (pre-function deploy) still depend on them for cleanup.
       // Delete all students in subcollection first
       const studentsSnap = await fs.getDocs(fs.collection(db, "rotations", code, "students"));
       for (const s of studentsSnap.docs) {

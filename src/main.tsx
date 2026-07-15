@@ -4,6 +4,12 @@ import App from "./App";
 import { applyTheme, ensureThemeStyles } from "./utils/helpers";
 import store from "./utils/store";
 import { registerAppServiceWorker, requestPersistentStorage } from "./utils/pwa";
+import { initTelemetry, startWebVitalsReporting } from "./utils/telemetry";
+import { refreshFlags } from "./utils/flags";
+
+// No-op unless PROD + VITE_SENTRY_DSN are both set (see src/utils/telemetry.ts).
+initTelemetry();
+startWebVitalsReporting();
 
 // Inject theme CSS variables before first render (FOUC prevention)
 ensureThemeStyles();
@@ -17,6 +23,10 @@ if (savedTheme === "dark" || savedTheme === "light") {
 registerAppServiceWorker();
 requestPersistentStorage();
 void store.flushPendingSyncQueue();
+// Stale-while-revalidate: components already render off defaults/cache
+// synchronously (src/utils/flags.ts); this just kicks off the background
+// refresh so a fresh doc value is available for the rest of the session.
+void refreshFlags();
 window.addEventListener("online", () => {
   void store.flushPendingSyncQueue();
 });

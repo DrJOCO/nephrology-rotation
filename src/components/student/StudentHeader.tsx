@@ -1,6 +1,7 @@
 import { MessageCircle, Search, User as UserIcon, Flame } from "lucide-react";
 import { T } from "../../data/constants";
 import type { Gamification } from "../../types";
+import { useFlag } from "../../utils/flags";
 
 // ─────────────────────────────────────────────────────────────────────────
 // StudentHeader — Phase 2 (spec §01): collapsed 48px light title bar.
@@ -20,6 +21,7 @@ function StudentHeader({
   onOpenFeedback: () => void;
   onOpenProfile: () => void;
 }) {
+  const feedbackEnabled = useFlag("feedbackEnabled");
   return (
     <div style={{
       background: T.surface,
@@ -74,19 +76,21 @@ function StudentHeader({
           >
             <Search size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
-          <button
-            onClick={onOpenFeedback}
-            aria-label="Report an issue or share feedback"
-            title="Feedback"
-            style={{
-              background: "transparent", border: "none", padding: 8,
-              minHeight: 44, minWidth: 44,
-              borderRadius: 8, cursor: "pointer",
-              color: T.ink, display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-          >
-            <MessageCircle size={18} strokeWidth={1.75} aria-hidden="true" />
-          </button>
+          {feedbackEnabled && (
+            <button
+              onClick={onOpenFeedback}
+              aria-label="Report an issue or share feedback"
+              title="Feedback"
+              style={{
+                background: "transparent", border: "none", padding: 8,
+                minHeight: 44, minWidth: 44,
+                borderRadius: 8, cursor: "pointer",
+                color: T.ink, display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+            >
+              <MessageCircle size={18} strokeWidth={1.75} aria-hidden="true" />
+            </button>
+          )}
           <button
             onClick={onOpenProfile}
             aria-label="Open profile"

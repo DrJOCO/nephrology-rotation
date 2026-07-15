@@ -5,6 +5,7 @@
 // the read/write-with-try/catch idiom used throughout the codebase.
 import { getFirebase } from "./firebase";
 import store from "./store";
+import { captureEvent } from "./telemetry";
 
 // Named distinctly from data/feedbackTags.ts's FEEDBACK_TAGS, which is an
 // unrelated feature (attending-authored feedback tags about a student).
@@ -112,6 +113,7 @@ export async function submitStudentFeedback(
     return { status: "sent" };
   } catch (error) {
     console.warn("Student feedback send failed; queued for retry:", error);
+    captureEvent("feedback.send-failed", { tag: entry.tag });
     queueFeedback(rotationCode, entry);
     return { status: "queued" };
   }
