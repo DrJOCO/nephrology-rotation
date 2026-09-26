@@ -227,7 +227,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "E — Electrolytes",
           items: ["Life-threatening or refractory hyperkalemia (often K⁺ ≥6.5 or any dangerous ECG changes, not responding to medical Rx)", "Remember: calcium → insulin/glucose → albuterol ± bicarbonate (if acidotic) → binder/diuretic if appropriate. If K⁺ remains dangerous or the patient is oliguric/anuric → dialysis"] },
         { heading: "I — Ingestions",
-          items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium per EXTRIP: HD recommended at level >5.0, or >4.0 with kidney impairment, or any level with seizures/coma/life-threatening dysrhythmia (Decker, CJASN 2015)", "Salicylates (severe poisoning with altered mental status)"] },
+          items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium per EXTRIP (Decker, CJASN 2015): HD recommended if level >4.0 with impaired kidney function, or at any level with decreased consciousness, seizures, or life-threatening dysrhythmia; suggested if level >5.0, significant confusion, or expected time to reach <1.0 exceeds 36 h", "Salicylates (severe poisoning with altered mental status)"] },
         { heading: "O — Overload",
           items: ["Volume overload refractory to diuretics (e.g., flash pulmonary edema in anuric patient)"] },
         { heading: "U — Uremia",
@@ -323,7 +323,7 @@ export const QUICK_REFS: QuickRef[] = [
       sections: [
         { heading: "Hemodynamic (Pre-Renal Mechanism)",
           items: [
-            "ACEi / ARBs → Reduce efferent arteriolar tone → ↓GFR. Risk ↑ with bilateral RAS, volume depletion, or combined with NSAIDs/diuretics. Cr rise <30% is acceptable and expected — hold if rise >30% or hyperkalemia develops.",
+            "ACEi / ARBs → Reduce efferent arteriolar tone → ↓GFR. Risk ↑ with bilateral RAS, volume depletion, or combined with NSAIDs/diuretics. Cr rise <30% is acceptable and expected — if it rises >30% within ~4 weeks, look for a cause (volume depletion, NSAIDs, renal artery stenosis) and reduce/hold; treat hyperkalemia (diet, diuretic, binder) before stopping (KDIGO 2024).",
             "NSAIDs (ibuprofen, ketorolac, naproxen) → Block prostaglandin-mediated afferent vasodilation → ↓GFR. Can also cause AIN, papillary necrosis, and minimal change disease. Avoid in CKD, CHF, cirrhosis. Even short courses can precipitate AKI.",
             "Calcineurin Inhibitors (tacrolimus, cyclosporine) → Afferent arteriolar vasoconstriction → dose-dependent ↓GFR. Check trough levels; chronic use causes irreversible 'striped' interstitial fibrosis. Most common nephrotoxin in transplant patients.",
           ]},
@@ -778,8 +778,8 @@ export const GUIDE_DATA = {
           "White coat effect? Consider ambulatory BP monitoring",
           "Secondary causes screen: age of onset, severity, resistant HTN",
           "Renal artery stenosis: bruit on exam? CKD + flash pulm edema?",
-          "Primary aldosteronism: low K⁺ + HTN? Check aldosterone/renin ratio",
-          "Pheochromocytoma: episodic symptoms? 24h urine catecholamines",
+          "Primary aldosteronism: check aldosterone/renin ratio — Endocrine Society 2025 suggests screening everyone with HTN, especially if resistant or low K⁺",
+          "Pheochromocytoma: episodic symptoms? Plasma free metanephrines or 24h urine fractionated metanephrines",
           "OSA: daytime somnolence, snoring, neck circumference?",
           "Lifestyle: sodium intake, alcohol, exercise, weight?",
           "End-organ damage: LVH on echo? Retinopathy? Proteinuria?",

@@ -250,9 +250,10 @@ export function calculateEstimatedDailySolute(inputs: HyponatremiaInputs): { val
   if (uun === null || uCr === null) {
     return { value: null, note: "Enter urine urea nitrogen and urine Cr to estimate daily solute load (proxy for diet)." };
   }
-  // Estimate UOP (L/day) ≈ 100/UCr (mg/dL); daily urea (mmol) = UUN(mg/dL) × 10 / 2.8 × UOP(L) per UpToDate
+  // Estimate UOP (L/day) ≈ 100/UCr (mg/dL), assuming ~1 g/day creatinine excretion.
+  // UUN (mg/dL) ÷ 2.8 = urea mmol/L (28 mg urea N per mmol), so daily urea (mmol) = UUN/2.8 × UOP(L).
   const estUop = 100 / uCr;
-  const dailyUreaMmol = (uun * 10 / 2.8) * estUop;
+  const dailyUreaMmol = (uun / 2.8) * estUop;
   let note = "";
   if (dailyUreaMmol < 150) note = "Daily urea <150 mmol/d suggests very low protein intake — predisposes to low-solute hyponatremia (beer potomania, tea-and-toast).";
   else if (dailyUreaMmol < 300) note = "Borderline solute intake.";
@@ -427,7 +428,7 @@ export function buildHyponatremiaAssessment(inputs: HyponatremiaInputs): Hyponat
     }
     if (has(inputs.selectedHistory, "cirrhosis") || has(inputs.selectedVolumeClues, "ascites")) {
       add("cirrhosis", "Hyponatremia of cirrhosis", "Hypervolemic / low EAV", 5, "Cirrhosis / ascites selected.", [
-        "Free water restriction; albumin in the right setting; midodrine/octreotide for HRS physiology; tolvaptan only if you can monitor closely.",
+        "Free water restriction; albumin in the right setting; if HRS-AKI coexists, terlipressin (or norepinephrine) with albumin; tolvaptan only if you can monitor closely.",
         "Avoid hypotonic IVF; large-volume paracentesis with albumin can paradoxically improve Na.",
       ]);
     }

@@ -24,8 +24,8 @@ export const COMMON_PATIENT_TOPICS = [
   "Acid-Base",
 ];
 
-// Keyword → topic map for auto-suggesting tags from the free-text consult reason.
-// Keys are lowercased substrings checked against the dx field.
+// Keyword → topic synonyms for the consult topic search boxes, so "siadh" or
+// "low sodium" finds Hyponatremia. Keywords are lowercased.
 export const TOPIC_KEYWORDS: Array<{ topic: string; keywords: string[] }> = [
   { topic: "AKI", keywords: ["aki", "acute kidney", "rising cr", "rising creatinine", "atn", "tubular necrosis", "oliguria", "anuria"] },
   { topic: "CKD", keywords: ["ckd", "chronic kidney", "esrd", "eskd", "kidney disease"] },

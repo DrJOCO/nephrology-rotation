@@ -428,7 +428,7 @@ export const INPATIENT_GUIDES: Record<
       "3. Potassium and acid-base: pre-dialysis values, trajectory, whether the next scheduled run is soon enough",
       "4. Access: examine it every day — thrill/bruit or exit site; protect the arm (sign above the bed)",
       "5. Dialysis plan: dialyze today vs next scheduled day; adjust for contrast studies, procedures, and OR timing",
-      "6. Anemia: Hgb, TSAT, ferritin — ESA and IV iron usually continue per the outpatient protocol; target Hgb ~10–11 g/dL, avoid >11.5; iron-replete means TSAT >20% and ferritin >200 (PIVOTAL supports proactive IV iron)",
+      "6. Anemia: Hgb, TSAT, ferritin — ESA and IV iron usually continue per the outpatient protocol. KDIGO 2026: keep Hgb below 11.5 g/dL on ESA (start ESA around Hgb 9–10); on HD, iron is indicated when ferritin ≤500 and TSAT ≤30%, and routine iron is held once ferritin >700 or TSAT ≥40% (PIVOTAL supports proactive IV iron)",
       "7. CKD-MBD: phosphorus, calcium, PTH — binders with every meal once eating; continue calcimimetic/vitamin D analog; PTH target roughly 2–9× upper normal (KDIGO)",
       "8. Nutrition: dialysis patients need protein (~1.2 g/kg/day) — do not reflexively order a low-protein 'renal' diet; K/phos restriction, yes",
       "9. Disposition: confirm the unit has a chair on the right day, and hand off dry weight and med changes",

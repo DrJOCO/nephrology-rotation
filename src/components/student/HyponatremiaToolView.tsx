@@ -449,7 +449,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
                 </div>
               )}
               <div style={{ marginTop: 8, color: T.muted, fontSize: 11.5, fontFamily: T.mono }}>
-                ΔNa/L = (fluidNa + fluidK − serumNa) / (TBW + 1); TBW ≈ weight × 0.6.
+                ΔNa/L = (fluidNa + fluidK − serumNa) / (TBW + 1); TBW ≈ weight × 0.6. Women and older adults have less body water (~0.45–0.5), so their real rise per liter is larger than shown.
               </div>
             </div>
           </Panel>

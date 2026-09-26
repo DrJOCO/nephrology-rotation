@@ -38,7 +38,7 @@ Labs: Cr 3.8 mg/dL (baseline 1.1), BUN 62 mg/dL, K+ 5.1 mEq/L, bicarb 18 mEq/L, 
             "5% albumin 500 mL bolus"
           ],
           answer: 1,
-          explanation: "The Surviving Sepsis Campaign recommends 30 mL/kg crystalloid within the first 3 hours for sepsis-induced hypoperfusion. Balanced crystalloids (LR, Plasma-Lyte) are preferred over normal saline based on the SMART trial, which showed lower rates of major adverse kidney events (MAKE-30) with balanced solutions. Normal saline's supraphysiologic chloride content can worsen hyperchloremic metabolic acidosis and may reduce renal blood flow."
+          explanation: "The Surviving Sepsis Campaign (2021) suggests at least 30 mL/kg of crystalloid within the first 3 hours for sepsis-induced hypoperfusion, and suggests balanced crystalloids (LR, Plasma-Lyte) over normal saline. SMART showed fewer major adverse kidney events (MAKE-30) with balanced solutions; the larger BaSICS and PLUS ICU trials were neutral, so the benefit is modest, but there is no downside to choosing a balanced fluid here. Normal saline's supraphysiologic chloride content can worsen hyperchloremic metabolic acidosis and may reduce renal blood flow."
         },
         {
           q: "Which finding best supports a pre-renal contribution to this patient's AKI?",
@@ -70,7 +70,7 @@ Labs: Cr 3.8 mg/dL (baseline 1.1), BUN 62 mg/dL, K+ 5.1 mEq/L, bicarb 18 mEq/L, 
       category: "Acute Kidney Injury",
       difficulty: "MS4 Applied",
       topics: ["AKI", "CKD"],
-      scenario: `A 72-year-old woman with CKD stage 3b (baseline Cr 2.1, eGFR 28) and diabetes is admitted for an acute NSTEMI. Cardiology plans urgent cardiac catheterization with possible PCI.
+      scenario: `A 72-year-old woman with CKD stage G4 (baseline Cr 2.1, eGFR 25) and diabetes is admitted for an acute NSTEMI. Cardiology plans urgent cardiac catheterization with possible PCI.
 
 Her current medications include metformin, lisinopril, and furosemide. She weighs 70 kg. Her morning labs show Cr 2.3, K+ 4.8, bicarb 20.
 
@@ -96,7 +96,7 @@ The cardiology fellow asks for your recommendations on preventing contrast-induc
             "All three medications"
           ],
           answer: 2,
-          explanation: "Metformin should be held before contrast procedures in patients with eGFR <30 (or significant AKI risk) due to the risk of lactic acidosis if AKI develops. It can be resumed 48 hours post-procedure if renal function remains stable. Furosemide (diuretic) should be held to avoid volume depletion, which increases AKI risk. ACE inhibitors are controversial — some hold them periprocedurally, but this is less well-established than metformin/diuretic cessation."
+          explanation: "Metformin should be held before contrast procedures in patients with eGFR <30 (or significant AKI risk) due to the risk of lactic acidosis if AKI develops, and resumed 48 hours post-procedure only if kidney function is stable. At an eGFR of 25, metformin is contraindicated anyway (FDA labeling: do not use below eGFR 30), so it should really be stopped, not just held — flag this for the primary team. Furosemide (diuretic) should be held to avoid volume depletion, which increases AKI risk. ACE inhibitors are controversial — some hold them periprocedurally, but this is less well-established than metformin/diuretic cessation."
         },
         {
           q: "Which factor most increases this patient's risk for contrast-associated AKI?",
@@ -107,7 +107,7 @@ The cardiology fellow asks for your recommendations on preventing contrast-induc
             "Use of ACE inhibitor"
           ],
           answer: 1,
-          explanation: "While all of these are risk factors, pre-existing CKD (especially eGFR <30) is the single strongest predictor of contrast-associated AKI. The Mehran risk score assigns the highest point values to eGFR <40 and use of intra-aortic balloon pump. Diabetes amplifies the risk but primarily because of its association with CKD. Per ACR/NKF consensus, the risk in patients with eGFR \u226530 is low and in many cases not clearly distinguishable from coincidental AKI \u2014 do not withhold clinically indicated contrast solely on this basis; hydrate when feasible and avoid other nephrotoxins around the exam."
+          explanation: "While all of these are risk factors, pre-existing CKD (especially eGFR <30) is the single strongest predictor of contrast-associated AKI. In the Mehran risk score, eGFR <20 carries the most points (6), followed by hypotension, intra-aortic balloon pump, and heart failure (5 each); eGFR 20–40 scores 4. Diabetes amplifies the risk but primarily because of its association with CKD. Per ACR/NKF consensus, the risk in patients with eGFR \u226530 is low and in many cases not clearly distinguishable from coincidental AKI \u2014 do not withhold clinically indicated contrast solely on this basis; hydrate when feasible and avoid other nephrotoxins around the exam."
         }
       ]
     },
@@ -225,7 +225,7 @@ A diagnostic paracentesis shows 380 PMNs/\u03bcL in the ascitic fluid.`,
             "MELD is used to calculate the FENa",
           ],
           answer: 1,
-          explanation: "The MELD score incorporates creatinine, bilirubin, and INR to predict 90-day mortality in cirrhosis. Rising Cr from HRS increases MELD, which raises liver transplant priority. This is critically important because liver transplant is the only definitive treatment for HRS \u2014 medical therapy with terlipressin is a bridge. All HRS-AKI patients should be evaluated for transplant candidacy.",
+          explanation: "The MELD score incorporates creatinine, bilirubin, and INR (MELD 3.0, used for US liver allocation since 2023, also adds sodium, albumin, and sex) to predict 90-day mortality in cirrhosis. Rising Cr from HRS increases MELD, which raises liver transplant priority. This is critically important because liver transplant is the only definitive treatment for HRS \u2014 medical therapy with terlipressin is a bridge. All HRS-AKI patients should be evaluated for transplant candidacy.",
         },
       ],
     },
@@ -261,7 +261,7 @@ Labs: CK 82,000 U/L, Cr 4.2 mg/dL (baseline unknown, assumed normal), BUN 52, K+
             "IV normal saline at 500 mL/h to enhance renal K+ excretion",
           ],
           answer: 1,
-          explanation: "With ECG changes (peaked T waves), the first step is ALWAYS IV calcium gluconate 1 g (10 mL of 10%) over 2\u20133 min \u2014 it stabilizes the cardiac membrane within minutes, protecting against arrhythmia. It does NOT lower K+ levels. After calcium, shift K+ intracellularly with insulin 10 U IV + D50 (onset ~15\u201330 min), \u00b1 albuterol nebs, \u00b1 sodium bicarbonate if acidemic. Removing K+ from the body (step 3) is best achieved in an emergency with IV furosemide (if urinating) or hemodialysis. Newer GI binders (sodium zirconium cyclosilicate / Lokelma, patiromer / Veltassa) work over hours. SPS / kayexalate is slow, unpredictable, and carries GI-necrosis risk; UK Kidney Association 2023 and most modern guidelines do NOT recommend it for acute emergencies. Fluids help but are not the immediate priority when ECG is abnormal.",
+          explanation: "With ECG changes (peaked T waves), the first step is ALWAYS IV calcium gluconate 1 g (10 mL of 10%) over 2\u20133 min \u2014 it stabilizes the cardiac membrane within minutes, protecting against arrhythmia. It does NOT lower K+ levels. (In rhabdomyolysis, avoid calcium for asymptomatic hypocalcemia — it deposits in injured muscle and causes rebound hypercalcemia — but hyperkalemia with ECG changes is an indication.) After calcium, shift K+ intracellularly with insulin 10 U IV + D50 (onset ~15\u201330 min), \u00b1 albuterol nebs, \u00b1 sodium bicarbonate if acidemic. Removing K+ from the body (step 3) is best achieved in an emergency with IV furosemide (if urinating) or hemodialysis. Newer GI binders (sodium zirconium cyclosilicate / Lokelma, patiromer / Veltassa) work over hours. SPS / kayexalate is slow, unpredictable, and carries GI-necrosis risk; UK Kidney Association 2023 and most modern guidelines do NOT recommend it for acute emergencies. Fluids help but are not the immediate priority when ECG is abnormal.",
         },
         {
           q: "What is the target urine output for IV fluid resuscitation in rhabdomyolysis?",
@@ -323,7 +323,7 @@ Physical exam: Appears euvolemic, no edema, JVP normal, mucous membranes moist.`
             "No limit if the patient is symptomatic"
           ],
           answer: 1,
-          explanation: "Current guidelines recommend limiting sodium correction to ≤8 mEq/L in any 24-hour period, with ≤6 mEq/L preferred for high-risk patients (liver disease, alcoholism, malnutrition, hypokalemia, chronic hyponatremia >48h). Overcorrection risks osmotic demyelination syndrome (ODS, formerly central pontine myelinolysis), which can cause devastating neurological injury. If overcorrection occurs, D5W or DDAVP can be used to re-lower sodium."
+          explanation: "Current guidelines recommend limiting sodium correction to ≤8 mEq/L in any 24-hour period, for chronic (>48h or unknown duration) hyponatremia, aiming for 4–6 mEq/L and staying lower in high-risk patients (Na ≤105, advanced liver disease, alcohol use disorder, malnutrition, hypokalemia). Overcorrection risks osmotic demyelination syndrome (ODS, formerly central pontine myelinolysis), which can cause devastating neurological injury. If overcorrection occurs, D5W or DDAVP can be used to re-lower sodium."
         },
         {
           q: "After initial stabilization, which long-term management strategy is most appropriate for this patient?",
@@ -401,13 +401,13 @@ Urine ketones: positive`,
         {
           q: "What is the anion gap in this patient?",
           choices: [
-            "29 (uncorrected); 32 (albumin-corrected)",
+            "29 (uncorrected); ~33 (albumin-corrected)",
             "29 (uncorrected); 35 (albumin-corrected)",
             "35 (uncorrected); 38 (albumin-corrected)",
             "21 (uncorrected); 25 (albumin-corrected)"
           ],
           answer: 0,
-          explanation: "AG = Na - (Cl + HCO3) = 140 - (102 + 9) = 29. Albumin correction: for every 1 g/dL albumin below 4, add 2.5 to the AG. Albumin is 2.5 (1.5 below normal), so corrected AG = 29 + (1.5 × 2.5) = 29 + 3.75 ≈ 32. Always correct for albumin — hypoalbuminemia is common in hospitalized patients and can mask a significant anion gap."
+          explanation: "AG = Na - (Cl + HCO3) = 140 - (102 + 9) = 29. Albumin correction: for every 1 g/dL albumin below 4, add 2.5 to the AG. Albumin is 2.5 (1.5 below normal), so corrected AG = 29 + (1.5 × 2.5) = 29 + 3.75 = 32.75 ≈ 33. Always correct for albumin — hypoalbuminemia is common in hospitalized patients and can mask a significant anion gap."
         },
         {
           q: "Calculate the delta-delta ratio. What does it tell you about this patient's acid-base status?",
@@ -418,7 +418,7 @@ Urine ketones: positive`,
             "Cannot be calculated without baseline bicarbonate"
           ],
           answer: 0,
-          explanation: "Delta AG = corrected AG - 12 = 32 - 12 = 20. Delta HCO3 = 24 - 9 = 15. Delta-delta = 20/15 = 1.33. Using uncorrected AG: 17/15 = 1.13. Both values fall in the 1-2 range, indicating a pure AGMA by the numbers. However, the clinical picture (alcoholism with vomiting) should make you consider a concurrent metabolic alkalosis from vomiting that may be masking an even lower HCO3 — the delta-delta would be >2 if the 'true' HCO3 were lower. Always integrate the math with clinical context."
+          explanation: "Delta AG = corrected AG - 12 = 33 - 12 = 21. Delta HCO3 = 24 - 9 = 15. Delta-delta = 21/15 = 1.4. Using uncorrected AG: 17/15 = 1.13. Both values fall in the 1-2 range, indicating a pure AGMA by the numbers. However, the clinical picture (alcoholism with vomiting) should make you consider a concurrent metabolic alkalosis from vomiting that may be masking an even lower HCO3 — the delta-delta would be >2 if the 'true' HCO3 were lower. Always integrate the math with clinical context."
         },
         {
           q: "What is the osmolal gap, and what does it suggest?",
@@ -478,7 +478,7 @@ The primary team pages nephrology because they are concerned about "acute kidney
             "Discontinue lisinopril to improve renal perfusion",
           ],
           answer: 1,
-          explanation: "This is diuretic resistance with persistent volume overload. Sequential nephron blockade (adding a thiazide like metolazone to a loop diuretic) is the standard escalation strategy. The hypochloremia (Cl 88) is contributing to diuretic resistance and metabolic alkalosis. Stopping diuretics would worsen congestion. Ultrafiltration is reserved for truly refractory cases (CARRESS-HF showed diuretics are better). Don't stop ACEi/ARB unless there's hypotension or severe AKI.",
+          explanation: "This is diuretic resistance with persistent volume overload. Sequential nephron blockade (adding a thiazide like metolazone to a loop diuretic) is the standard escalation strategy. The hypochloremia (Cl 88) is contributing to diuretic resistance and metabolic alkalosis. Stopping diuretics would worsen congestion. Doubling the loop dose (guided by spot urine sodium) is an equally reasonable first move, and acetazolamide (ADVOR) is an option when contraction alkalosis is present; with metolazone, watch closely for hyponatremia, hypokalemia, and a further creatinine rise (CLOROTIC). Ultrafiltration is reserved for truly refractory cases (CARRESS-HF favored stepped diuretic therapy). Don't stop ACEi/ARB unless there's hypotension or severe AKI.",
         },
         {
           q: "What is the most important hemodynamic driver of kidney dysfunction in this patient?",
@@ -489,7 +489,7 @@ The primary team pages nephrology because they are concerned about "acute kidney
             "NSAID-induced afferent arteriolar vasoconstriction",
           ],
           answer: 1,
-          explanation: "Studies from the ESCAPE trial and others consistently show that elevated CVP (venous congestion) is more strongly associated with worsening kidney function in HF than low cardiac output. Elevated CVP increases renal venous pressure, which directly reduces the transrenal pressure gradient and GFR. This is why aggressive decongestion (reducing CVP) often IMPROVES kidney function, even though it may transiently raise Cr.",
+          explanation: "Hemodynamic studies (Mullens et al., JACC 2009; the ESCAPE catheter analysis) consistently show that elevated CVP (venous congestion) is more strongly associated with worsening kidney function in HF than low cardiac output. Elevated CVP increases renal venous pressure, which directly reduces the transrenal pressure gradient and GFR. This is why aggressive decongestion (reducing CVP) often IMPROVES kidney function, even though it may transiently raise Cr.",
         },
       ],
     }
@@ -530,7 +530,7 @@ Renal ultrasound shows bilateral 12 cm kidneys with increased cortical echogenic
             "Focal segmental glomerulosclerosis (FSGS)"
           ],
           answer: 1,
-          explanation: "Diabetic nephropathy is the most common cause of nephrotic syndrome in adults and is the leading cause of ESRD in the US. Key clues: longstanding poorly controlled diabetes (A1c 9.2%), increased renal cortical echogenicity (suggesting chronic parenchymal disease), and heavy proteinuria without hematuria. However, importantly, not all nephrotic syndrome in diabetics is from diabetic nephropathy — an atypical presentation (sudden onset, hematuria, or low complement) warrants biopsy to evaluate for superimposed disease."
+          explanation: "Diabetic nephropathy is the most common cause of nephrotic syndrome in adults and is the leading cause of kidney failure (ESKD) in the US. Key clues: longstanding poorly controlled diabetes (A1c 9.2%), increased renal cortical echogenicity (suggesting chronic parenchymal disease), and heavy proteinuria without hematuria. However, importantly, not all nephrotic syndrome in diabetics is from diabetic nephropathy — an atypical presentation (sudden onset, hematuria, or low complement) warrants biopsy to evaluate for superimposed disease."
         },
         {
           q: "Which factor in this patient would make you consider a renal biopsy rather than empirically treating as diabetic nephropathy?",
@@ -552,7 +552,7 @@ Renal ultrasound shows bilateral 12 cm kidneys with increased cortical echogenic
             "Cyclophosphamide"
           ],
           answer: 1,
-          explanation: "RAAS blockade (ACEi or ARB) is the cornerstone of proteinuria management in diabetic nephropathy. These agents reduce intraglomerular pressure by dilating the efferent arteriole, reducing proteinuria by 30-50%. SGLT2 inhibitors (e.g., dapagliflozin, empagliflozin) are now strongly recommended as add-on therapy based on DAPA-CKD and CREDENCE trials, providing additional renal and cardiovascular protection. Immunosuppression is NOT indicated for diabetic nephropathy."
+          explanation: "RAAS blockade (ACEi or ARB) is the cornerstone of proteinuria management in diabetic nephropathy. These agents reduce intraglomerular pressure by dilating the efferent arteriole, reducing proteinuria by 30-50%. SGLT2 inhibitors (e.g., dapagliflozin, empagliflozin) are recommended for T2D with CKD and eGFR ≥20 (KDIGO 2022, 1A; CREDENCE, DAPA-CKD, EMPA-KIDNEY), with finerenone added for persistent albuminuria and a GLP-1 RA (semaglutide, FLOW) as further kidney and cardiovascular protection. Immunosuppression is NOT indicated for diabetic nephropathy."
         }
       ]
     },
@@ -571,7 +571,7 @@ CXR shows bilateral pulmonary infiltrates. Anti-MPO (p-ANCA) is strongly positiv
         {
           q: "What is the most likely diagnosis?",
           choices: [
-            "IgA nephropathy with Henoch-Schonlein purpura",
+            "IgA vasculitis (formerly Henoch-Schönlein purpura) nephritis",
             "Anti-GBM (Goodpasture's) disease",
             "ANCA-associated vasculitis (microscopic polyangiitis) with pulmonary-renal syndrome",
             "Lupus nephritis (Class IV)"
@@ -599,7 +599,7 @@ CXR shows bilateral pulmonary infiltrates. Anti-MPO (p-ANCA) is strongly positiv
             "Supportive care and monitoring, as ANCA vasculitis is self-limited"
           ],
           answer: 1,
-          explanation: "Severe ANCA vasculitis with organ-threatening disease (RPGN + pulmonary hemorrhage) requires aggressive immunosuppression: (1) Pulse IV methylprednisolone (500-1000 mg x 3 days) followed by a reduced-dose oral prednisone taper \u2014 PEXIVAS showed the reduced-dose schedule was non-inferior and had less serious infection. (2) KDIGO 2024 recommends initial induction with glucocorticoids PLUS rituximab OR cyclophosphamide (both acceptable). Rituximab is preferred in specific settings \u2014 relapsing disease, PR3-ANCA, fertility concerns, frail older adults; cyclophosphamide (or a RTX + CYC combined approach) remains reasonable for severe GN or alveolar hemorrhage at many centers. (3) Plasma exchange: PEXIVAS did NOT show an overall mortality or ESKD benefit, so PLEX was removed from routine use \u2014 it remains a 'consider' decision for hypoxemic diffuse alveolar hemorrhage, very severe kidney involvement (eg, Cr >5.7 / dialysis-requiring), or concurrent anti-GBM antibodies. (4) Add avacopan to allow rapid steroid taper (ADVOCATE). Without treatment, RPGN progresses to ESRD within weeks."
+          explanation: "Severe ANCA vasculitis with organ-threatening disease (RPGN + pulmonary hemorrhage) requires aggressive immunosuppression: (1) Pulse IV methylprednisolone (500-1000 mg x 3 days) followed by a reduced-dose oral prednisone taper \u2014 PEXIVAS showed the reduced-dose schedule was non-inferior and had less serious infection. (2) KDIGO 2024 recommends initial induction with glucocorticoids PLUS rituximab OR cyclophosphamide (both acceptable). Rituximab is preferred in specific settings \u2014 relapsing disease, PR3-ANCA, fertility concerns, frail older adults; cyclophosphamide (or a RTX + CYC combined approach) remains reasonable for severe GN or alveolar hemorrhage at many centers. (3) Plasma exchange: PEXIVAS did NOT show an overall mortality or ESKD benefit, so PLEX was removed from routine use \u2014 it remains a 'consider' decision for hypoxemic diffuse alveolar hemorrhage, very severe kidney involvement (eg, Cr >5.7 / dialysis-requiring), or concurrent anti-GBM antibodies. (4) Add avacopan to allow rapid steroid taper (ADVOCATE). Without treatment, RPGN progresses to kidney failure within weeks."
         },
         {
           q: "The renal biopsy shows crescentic glomerulonephritis with pauci-immune (no or scant immunoglobulin/complement) staining on immunofluorescence. This pattern is most consistent with:",
@@ -633,7 +633,7 @@ His renal function has been stable over the past year. He asks about "new kidney
             "Allopurinol for uric acid reduction"
           ],
           answer: 1,
-          explanation: "SGLT2 inhibitors have revolutionized CKD management. The DAPA-CKD trial demonstrated that dapagliflozin reduced the composite of sustained eGFR decline, ESRD, and renal/CV death by 39% in patients with CKD (eGFR 25-75) regardless of diabetes status. The CREDENCE trial showed similar benefits with canagliflozin. SGLT2i are now recommended by KDIGO for CKD patients with eGFR ≥20 and albuminuria. Dual RAAS blockade is harmful (ONTARGET, VA NEPHRON-D)."
+          explanation: "SGLT2 inhibitors have revolutionized CKD management. The DAPA-CKD trial demonstrated that dapagliflozin reduced the composite of sustained eGFR decline, kidney failure, and renal/CV death by 39% in patients with CKD (eGFR 25-75) regardless of diabetes status. The CREDENCE trial showed similar benefits with canagliflozin. KDIGO 2024 recommends an SGLT2i (1A) for adults with CKD and eGFR ≥20 who have type 2 diabetes, UACR ≥200 mg/g, or heart failure — this patient qualifies on the first two. Dual RAAS blockade is harmful (ONTARGET, VA NEPHRON-D)."
         },
         {
           q: "When starting an SGLT2 inhibitor, an initial dip in eGFR of 10-15% is expected. What is the mechanism?",
@@ -696,7 +696,7 @@ She has not been started on an SGLT2 inhibitor, finerenone, or GLP-1 RA.`,
             "Cyclophosphamide for immunosuppression of the proteinuria",
           ],
           answer: 1,
-          explanation: "SGLT2i is the second pillar and should be started next. DAPA-CKD showed a 39% reduction in kidney events (including non-diabetics). EMPA-KIDNEY confirmed benefits down to eGFR 20. With her eGFR of 42, she is an excellent candidate. After starting SGLT2i, consider adding finerenone (Pillar 3, per FIDELIO-DKD) and semaglutide (Pillar 4, per FLOW trial). Each pillar adds incremental benefit on top of the others.",
+          explanation: "SGLT2i is the second pillar and should be started next. DAPA-CKD showed a 39% reduction in kidney events (including non-diabetics). EMPA-KIDNEY confirmed benefits down to eGFR 20. With her eGFR of 42, she is an excellent candidate. Also reduce metformin to ≤1000 mg/day now that eGFR is <45 (KDIGO 2022). After starting SGLT2i, consider adding finerenone (Pillar 3, per FIDELIO-DKD) and semaglutide (Pillar 4, per FLOW trial). Each pillar adds incremental benefit on top of the others.",
         },
         {
           q: "Two weeks after starting empagliflozin, her eGFR drops from 42 to 38. She feels fine. Her K+ is 4.6 and BP is 120/72. What do you tell the patient?",
@@ -768,7 +768,7 @@ Exam: BP 158/92, bilateral 2+ pitting edema. AV fistula was placed 3 months ago 
             "PD is contraindicated in diabetic patients due to glucose absorption"
           ],
           answer: 2,
-          explanation: "PD is a viable home-based modality that offers lifestyle flexibility — patients perform exchanges at home (CAPD) or overnight with a cycler (APD). PD requires a Tenckhoff catheter (surgically placed, not bedside) and adequate peritoneal membrane function. PD is not contraindicated in diabetes, though glucose-based dialysate can worsen glycemic control and dyslipidemia. Outcomes between PD and HD are generally comparable in the first 2-3 years. PD may have better early survival, while HD may have better late survival."
+          explanation: "PD is a viable home-based modality that offers lifestyle flexibility — patients perform exchanges at home (CAPD) or overnight with a cycler (APD). PD requires a permanent, tunneled Tenckhoff catheter (placed surgically, laparoscopically, or percutaneously by interventional nephrology/radiology — not a temporary catheter) and adequate peritoneal membrane function. PD is not contraindicated in diabetes, though glucose-based dialysate can worsen glycemic control and dyslipidemia. Outcomes between PD and HD are generally comparable in the first 2-3 years. PD may have better early survival, while HD may have better late survival."
         },
         {
           q: "Which of the following is NOT an absolute indication for emergent dialysis?",
@@ -779,7 +779,7 @@ Exam: BP 158/92, bilateral 2+ pitting edema. AV fistula was placed 3 months ago 
             "eGFR < 10 mL/min without symptoms"
           ],
           answer: 3,
-          explanation: "Low eGFR alone, without symptoms, is NOT an absolute indication for dialysis. The IDEAL trial showed no survival benefit from early (eGFR 10-14) vs. late (eGFR 5-7) dialysis initiation. Absolute/emergent indications include: refractory hyperkalemia, refractory pulmonary edema, uremic pericarditis (risk of tamponade), uremic encephalopathy/seizures, severe refractory metabolic acidosis, and certain toxic ingestions. The decision to start dialysis should be guided by symptoms and clinical status, not by an eGFR number alone."
+          explanation: "Low eGFR alone, without symptoms, is NOT an absolute indication for dialysis. The IDEAL trial showed no survival benefit from planned early (eGFR 10-14) vs. late (eGFR 5-7) dialysis initiation — and 76% of the late group started above that target because symptoms came first. Absolute/emergent indications include: refractory hyperkalemia, refractory pulmonary edema, uremic pericarditis (risk of tamponade), uremic encephalopathy/seizures, severe refractory metabolic acidosis, and certain toxic ingestions. The decision to start dialysis should be guided by symptoms and clinical status, not by an eGFR number alone."
         }
       ]
     },
@@ -818,7 +818,7 @@ Tacrolimus trough level: 3.2 ng/mL (goal: 6-10). Urinalysis: trace protein, no b
           explanation: "Transplant kidney biopsy with Banff classification is the gold standard for diagnosing rejection. The Banff system classifies rejection into: T-cell mediated (TCMR) — tubulitis and interstitial inflammation, and antibody-mediated (ABMR) — peritubular capillaritis, C4d deposition, and donor-specific antibodies. Biopsy also helps differentiate rejection from other causes (BK virus, CNI toxicity, recurrent disease). DSA testing complements biopsy but is not sufficient alone."
         },
         {
-          q: "The biopsy confirms Banff grade IB acute TCMR (significant tubulitis with moderate interstitial inflammation). What is the first-line treatment?",
+          q: "The biopsy confirms Banff grade IB acute TCMR (interstitial inflammation in >25% of cortex with severe tubulitis). What is the first-line treatment?",
           choices: [
             "Increase tacrolimus dose and observe",
             "Pulse IV methylprednisolone (500 mg daily x 3 days)",
@@ -862,18 +862,18 @@ Vitals: BP 142/88 (likely pain), HR 92, temp 37.0°C. Labs: Cr 1.0, Ca2+ 10.8 (s
             "Milk-alkali syndrome"
           ],
           answer: 1,
-          explanation: "Elevated calcium with an inappropriately elevated (or non-suppressed) PTH is the hallmark of primary hyperparathyroidism (PHPT). In a healthy person, elevated calcium should suppress PTH via negative feedback. PHPT is the most common cause of hypercalcemia in the outpatient setting and is a well-known cause of recurrent calcium-containing kidney stones. It causes hypercalciuria by increasing calcium reabsorption from bone and GI tract, and increasing renal calcium filtration."
+          explanation: "Elevated calcium with an inappropriately elevated (or non-suppressed) PTH is the hallmark of primary hyperparathyroidism (PHPT). In a healthy person, elevated calcium should suppress PTH via negative feedback. PHPT is the most common cause of hypercalcemia in the outpatient setting and is a well-known cause of recurrent calcium-containing kidney stones. It causes hypercalciuria by increasing bone resorption and (via calcitriol) intestinal calcium absorption; the higher filtered calcium load outstrips PTH's effect on distal calcium reabsorption."
         },
         {
           q: "A 24-hour urine collection shows: calcium 380 mg/day (elevated), oxalate 28 mg/day (normal), citrate 220 mg/day (low), uric acid 850 mg/day (elevated), volume 1.2 L/day (low). What dietary and pharmacologic interventions would you recommend?",
           choices: [
             "Low-calcium diet and vitamin C supplementation",
-            "Increase fluid intake to >2.5 L/day, start thiazide diuretic, potassium citrate, and refer for parathyroidectomy evaluation",
+            "Refer for parathyroidectomy evaluation, raise fluid intake to make >2.5 L urine/day, and start potassium citrate",
             "Allopurinol only",
             "Low-sodium diet and high-dose vitamin D"
           ],
           answer: 1,
-          explanation: "Comprehensive stone prevention requires addressing all abnormalities: (1) Increase fluid intake (goal >2.5 L/day urine output — most important single intervention), (2) Thiazide diuretic (hydrochlorothiazide or chlorthalidone) — reduces urinary calcium excretion by enhancing proximal tubule calcium reabsorption, (3) Potassium citrate — corrects hypocitraturia (citrate inhibits calcium stone crystallization), (4) Refer for parathyroidectomy evaluation — PHPT is a surgical disease causing recurrent stones. Importantly, do NOT restrict dietary calcium — this paradoxically increases stone risk by allowing more oxalate absorption."
+          explanation: "Comprehensive stone prevention addresses the cause and each urine abnormality: (1) Refer for parathyroidectomy \u2014 kidney stones or hypercalciuria are an indication for surgery in primary hyperparathyroidism (Fifth International Workshop, 2022), and cure lowers stone recurrence. (2) Increase fluid intake to make >2.5 L of urine per day \u2014 the most important single intervention (AUA). (3) Potassium citrate \u2014 corrects hypocitraturia (citrate inhibits calcium stone crystallization). (4) Reduce animal protein and sodium for the hyperuricosuria and hypercalciuria; allopurinol is an option if hyperuricosuria persists with calcium oxalate stones. A thiazide is the usual drug for idiopathic hypercalciuria, but it raises serum calcium, so avoid it (or use it cautiously) until the hyperparathyroidism is treated, and revisit it if hypercalciuria persists after surgery. Do NOT restrict dietary calcium \u2014 this paradoxically increases stone risk by allowing more oxalate absorption."
         }
       ]
     },

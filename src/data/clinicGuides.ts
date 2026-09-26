@@ -93,7 +93,7 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPoints: [
       "Classify CKD by cause, GFR category, and albuminuria category.",
       "KDIGO 2024 supports SGLT2 inhibitor initiation at eGFR >=20 mL/min/1.73 m2 in appropriate patients, with continuation below that if tolerated until kidney replacement therapy begins.",
-      "Persistent metabolic acidosis in CKD is generally treated with oral alkali to maintain serum bicarbonate around >=22 mmol/L.",
+      "Metabolic acidosis in CKD: KDIGO 2024 suggests considering oral alkali when serum bicarbonate is <18 mmol/L, weighing the sodium load and not overshooting the upper limit of normal (BiCARB found no benefit from treating milder acidosis).",
     ],
 
     discussionQuestions: [],
@@ -260,6 +260,7 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
           "Active class III/IV +/- V: current ACR guidance favors triple immunosuppression: glucocorticoids plus either MPAA + belimumab, MPAA + CNI, or low-dose Euro-Lupus cyclophosphamide + belimumab.",
           "Pure class V with proteinuria >=1 g/g: ACR favors glucocorticoids + MPAA + CNI; lower proteinuria may be treated less aggressively depending on risk and systemic disease.",
           "KDIGO initial options for active class III/IV include glucocorticoids plus MPAA, low-dose IV cyclophosphamide, belimumab add-on regimens, or MPAA + CNI when kidney function is not severely impaired.",
+          "Obinutuzumab (anti-CD20; REGENCY, FDA-approved Oct 2025) added to MPAA + steroids raised complete renal response; EULAR 2025 lists it as a first-line add-on, while the KDIGO 2024 and ACR 2025 guidance predate the approval.",
           "Response goal: complete renal response generally means proteinuria around <=0.5 g/day or UPCR <=0.5 g/g with stable or improved kidney function by roughly 6-12 months; partial response trajectory matters before changing therapy.",
           "Duration: after complete response, total immunosuppressive therapy is usually continued for at least 3-5 years before cautious tapering.",
         ],
@@ -314,7 +315,9 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     discussionQuestions: [],
 
     guidelineBasis: [
-      "American College of Rheumatology 2024 Guideline Summary for the Screening, Treatment, and Management of Lupus Nephritis",
+      "American College of Rheumatology 2025 Guideline for the Screening, Treatment, and Management of Lupus Nephritis",
+      "EULAR 2025 recommendations for SLE with kidney involvement",
+      "REGENCY (NEJM 2025) — obinutuzumab add-on therapy in active lupus nephritis",
       "KDIGO 2024 Clinical Practice Guideline for the Management of Lupus Nephritis",
       "BLISS-LN (NEJM 2020) — belimumab add-on therapy in active lupus nephritis",
       "AURORA 1 (Lancet 2021) — voclosporin add-on therapy in active lupus nephritis",
@@ -417,7 +420,7 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
       "BC Transplant Medication Guidelines for Solid Organ Transplants (AMB.03.007, revised February 2026)",
       "KDIGO 2009 Clinical Practice Guideline for the Care of the Kidney Transplant Recipient",
       "SYMPHONY Trial (NEJM 2007) — low-dose tacrolimus-based regimens",
-      "BENEFIT Trial (AJT 2016) — belatacept vs cyclosporine long-term outcomes",
+      "BENEFIT Trial (AJT 2010; 7-year outcomes NEJM 2016) — belatacept vs cyclosporine",
       "DailyMed prescribing information for belatacept, everolimus, and sulfamethoxazole/trimethoprim",
     ],
   },
@@ -487,7 +490,7 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPoints: [
       "For most adults, a practical treatment goal is under 130/80 mmHg; in CKD, KDIGO supports standardized office SBP under 120 mmHg for many non-dialysis patients when tolerated.",
       "Resistant HTN requires three appropriately dosed agents, usually including a diuretic, before adding more complexity.",
-      "Primary aldosteronism is common enough to consider when hypertension is resistant or paired with hypokalemia.",
+      "Primary aldosteronism is common (5-14% of hypertension in primary care): the Endocrine Society 2025 guideline suggests screening everyone with hypertension with an aldosterone-to-renin ratio, not only resistant or hypokalemic cases.",
     ],
 
     discussionQuestions: [],

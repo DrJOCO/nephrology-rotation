@@ -329,7 +329,7 @@ async function build() {
       ],
       ["HEMO",         "2002", "Higher Kt/V or high-flux dialyzer did NOT improve mortality in maintenance HD."],
       ["ATN Trial",    "2008", "Intensive CRRT (35 mL/kg/h) = standard (20–25) in AKI. Standard is sufficient."],
-      ["IDEAL",        "2010", "Early vs late RRT start in ESRD — no mortality difference; early = more complications."],
+      ["IDEAL",        "2010", "Planned early vs late dialysis start in CKD 5 — no difference in survival or adverse events; most late starters began early for symptoms."],
       ["AKIKI",        "2016", "Delayed KRT safe in stage 3 AKI; 49% never needed dialysis."],
       ["STARRT-AKI",   "2020", "Accelerated KRT did not reduce 90-d mortality; 38% of standard arm avoided KRT."],
       ["ELAIN",        "2016", "Single-center signal favoring early KRT — not replicated in STARRT-AKI."],

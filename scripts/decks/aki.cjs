@@ -388,8 +388,8 @@ async function build() {
       ["ATN Trial",   "2008", "Intensive CRRT (35 mL/kg/h) = standard (20–25). Ended 'more is better.'"],
       ["AKIKI",       "2016", "Delayed KRT safe in stage 3 AKI; 49% never needed dialysis."],
       ["STARRT-AKI",  "2020", "Accelerated KRT did not reduce 90-d mortality; 38% of standard arm avoided KRT entirely."],
-      ["SMART",       "2018", "Balanced crystalloids reduced major adverse kidney events at 30 days (MAKE30) vs NS in ICU (NNT 91; NNT 29 in sepsis)."],
-      ["BICAR-ICU",   "2018", "IV HCO₃⁻ for pH ≤ 7.20 reduced mortality in the AKI subgroup (NNT ~6)."],
+      ["SMART",       "2018", "Balanced crystalloids reduced major adverse kidney events at 30 days (MAKE30) vs NS in ICU (NNT ~91); BaSICS and PLUS were neutral."],
+      ["BICAR-ICU",   "2018", "IV HCO₃⁻ for pH ≤ 7.20 reduced mortality in the AKI subgroup; BICARICU-2 (2025): no survival benefit, but less KRT."],
       ["PRESERVE",    "2018", "NAC does NOT prevent contrast AKI; bicarbonate is not superior to isotonic saline. Debunked two dogmas."],
     ];
 
@@ -488,7 +488,7 @@ async function build() {
         "STARRT-AKI — NEJM 2020",
         "SMART — NEJM 2018",
         "SALT-ED — NEJM 2018",
-        "BICAR-ICU — Lancet 2018",
+        "BICAR-ICU — Lancet 2018; BICARICU-2 — JAMA 2025",
         "PRESERVE — NEJM 2018",
         "AMACING — Lancet 2017",
       ],
