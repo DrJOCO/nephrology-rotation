@@ -2,7 +2,7 @@
 // /rotations/{rotationCode}, rotationAllowsAdmin, rotationAllowsOwner.
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 import { assertFails, assertSucceeds, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, getDoc, getDocs, query, setDoc, where, collection } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where, collection } from "firebase/firestore";
 import { BOOTSTRAP_ADMIN_EMAIL, makeTestEnv, minimalRotation } from "./helpers";
 
 const ROTATION = "GS-26";
@@ -202,6 +202,23 @@ describe("rotations: update affectedKeys restrictions", () => {
         { merge: true }
       )
     );
+  });
+
+  it("a co-admin can publish study sheets, clinic guide templates, and content customizations", async () => {
+    const coAdmin = testEnv.authenticatedContext(CO_ADMIN);
+    const rotationRef = doc(coAdmin.firestore(), "rotations", ROTATION);
+    await assertSucceeds(updateDoc(rotationRef, { studySheets: { 1: [{ id: "aki-cheatsheet", title: "Edited" }] } }));
+    await assertSucceeds(updateDoc(rotationRef, { clinicGuideTemplates: { CKD: { title: "Edited" } } }));
+    await assertSucceeds(updateDoc(rotationRef, {
+      contentCustomizations: { version: 1, studySheets: ["aki-cheatsheet"], clinicGuideTemplates: ["CKD"], articles: [], curriculum: [] },
+    }));
+  });
+
+  it("a non-admin outsider cannot publish content customizations", async () => {
+    const other = testEnv.authenticatedContext(OTHER_ADMIN);
+    await assertFails(updateDoc(doc(other.firestore(), "rotations", ROTATION), {
+      contentCustomizations: { version: 1, studySheets: [], clinicGuideTemplates: [], articles: [], curriculum: [] },
+    }));
   });
 
   it("a non-admin outsider cannot update at all", async () => {

@@ -1,0 +1,483 @@
+{
+ "studySheets": {
+  "1": [
+   {
+    "id": "aki-cheatsheet",
+    "icon": "🔥",
+    "title": "AKI in 5 Minutes",
+    "subtitle": "The bread & butter of nephrology consults",
+    "topics": [
+     "AKI",
+     "Post-Renal AKI",
+     "AIN"
+    ],
+    "sections": [
+     {
+      "heading": "KDIGO AKI Staging",
+      "items": [
+       "Stage 1: Cr ↑ ≥0.3 mg/dL (within 48h) OR 1.5–1.9× baseline; UOP <0.5 mL/kg/h ×6h",
+       "Stage 2: Cr 2.0–2.9× baseline; UOP <0.5 mL/kg/h ×12h",
+       "Stage 3: Cr ≥3× baseline OR ≥4.0 mg/dL OR initiation of RRT; UOP <0.3 mL/kg/h ×24h or anuria ×12h"
+      ]
+     },
+     {
+      "heading": "Pre-Renal vs. Intrinsic vs. Post-Renal",
+      "items": [
+       "Pre-renal (most common): Volume depletion, HF, cirrhosis, NSAIDs, ACEi/ARB. FENa <1%, FEUrea <35%, bland sediment",
+       "Intrinsic: ATN (muddy brown casts), AIN (WBC casts ± eosinophils; classic culprits = PPIs, NSAIDs, beta-lactams, fluoroquinolones, TMP-SMX, rifampin, AND checkpoint inhibitors — PD-1/PD-L1/CTLA-4; note UA is often BLAND with ICI-AIN), GN (RBC casts, dysmorphic RBCs)",
+       "Post-renal: Obstruction — always check a bladder scan and renal ultrasound!"
+      ]
+     },
+     {
+      "heading": "Key Workup",
+      "items": [
+       "BMP, UA with microscopy, urine Na/Cr/Urea, renal US",
+       "FENa: <1% pre-renal, >2% intrinsic (unreliable on diuretics → use FEUrea)",
+       "Urine sediment is your best friend — learn to read it or ask your attending"
+      ]
+     },
+     {
+      "heading": "Management Pearls",
+      "items": [
+       "Treat the cause: volume for pre-renal, relieve obstruction for post-renal",
+       "Hold nephrotoxins (NSAIDs, aminoglycosides, contrast if possible)",
+       "No magic RRT dose — standard dosing is fine (ATN Trial: 35 vs 20 mL/kg/h — no benefit to higher; KDIGO delivered dose target 20–25 mL/kg/h)",
+       "Don’t rush to dialysis — watchful waiting is safe unless urgent indications (STARRT-AKI)",
+       "Emergent dialysis indications = AEIOU: Acidosis, Electrolytes (K⁺), Ingestion, Overload, Uremia"
+      ]
+     }
+    ],
+    "trialCallouts": [
+     {
+      "trial": "ATN Trial",
+      "pearl": "In critically ill AKI on CKRT, intensive dose (35 mL/kg/h) matched standard (20 mL/kg/h) for 60-d mortality. Don’t chase higher CKRT doses — KDIGO target is delivered 20–25 mL/kg/h."
+     },
+     {
+      "trial": "STARRT-AKI",
+      "pearl": "In 3019 ICU patients with severe AKI but no urgent indication, early vs delayed KRT gave identical 90-d mortality (44%). 38% of the delayed arm never needed RRT — wait for clinical indications."
+     },
+     {
+      "trial": "AKIKI",
+      "pearl": "In ICU patients with KDIGO 3 AKI and no emergent indications, delayed KRT matched early KRT for 60-d mortality. 49% of delayed patients never needed RRT — treat by AEIOU, not numbers."
+     },
+     {
+      "trial": "BICAR-ICU",
+      "pearl": "In ICU severe acidemia (pH ≤7.20), IV bicarb did NOT cut 28-d mortality overall, but in the pre-specified AKIN 2–3 subgroup it reduced mortality and RRT need. Consider it when the pH is tanking in AKI."
+     },
+     {
+      "trial": "SMART",
+      "pearl": "In 15,802 ICU patients, balanced crystalloids (LR/Plasmalyte) cut the MAKE30 composite (death, new dialysis, persistent kidney dysfunction) from 15.4% to 14.3%. Default to balanced fluids, not NS."
+     },
+     {
+      "trial": "PRESERVE",
+      "pearl": "In 5177 high-risk CKD patients getting angiography, neither IV sodium bicarb nor N-acetylcysteine prevented contrast AKI vs IV saline alone. Use isotonic saline when prophylaxis is indicated; avoid NAC and routine bicarbonate."
+     }
+    ]
+   },
+   {
+    "id": "gfr-urinalysis-cheatsheet",
+    "icon": "🔬",
+    "title": "GFR & Urinalysis Decoded",
+    "subtitle": "What the numbers (and the urine) are telling you",
+    "topics": [
+     "Urinalysis",
+     "CKD",
+     "GFR Assessment"
+    ],
+    "sections": [
+     {
+      "heading": "GFR Estimation",
+      "items": [
+       "CKD-EPI 2021: The current standard — uses creatinine, age, sex (race-free equation)",
+       "Cystatin C: Add when creatinine may be inaccurate (muscle wasting, amputation, extremes of body size)",
+       "Cr-based eGFR pitfalls: Falsely low in high-muscle-mass patients; falsely high in malnutrition/liver disease",
+       "Always trend eGFR — a single value is a snapshot, the trajectory is what matters"
+      ]
+     },
+     {
+      "heading": "Urinalysis: The 30-Second Read",
+      "items": [
+       "Dipstick protein: Detects albumin only (misses light chains → use SPEP/UPEP)",
+       "Specific gravity >1.020: Concentrated urine (dehydration, pre-renal AKI)",
+       "Leukocyte esterase + nitrites: Think UTI",
+       "Blood + protein + RBC casts: Think glomerulonephritis (get nephrology on the phone)"
+      ]
+     },
+     {
+      "heading": "Urine Sediment Must-Know Casts",
+      "items": [
+       "Muddy brown granular casts → ATN (the classic!)",
+       "RBC casts → Glomerulonephritis (this is a nephrology emergency)",
+       "WBC casts → Pyelonephritis or AIN",
+       "Waxy/broad casts → Advanced CKD (‘tombstone of the nephron’)",
+       "Hyaline casts → Normal or concentrated urine (don’t panic)"
+      ]
+     }
+    ],
+    "trialCallouts": [
+     {
+      "trial": "CKD-EPI 2021",
+      "pearl": "Race-free CKD-EPI equation endorsed by NKF-ASN (2021). Replaces the 2009 version that included a Black-race coefficient — now standard of care across labs and transplant lists."
+     }
+    ]
+   },
+   {
+    "id": "hrs-contrast-rhabdo-cheatsheet",
+    "icon": "🫀",
+    "title": "HRS, Contrast AKI & Rhabdo",
+    "subtitle": "Three AKI subtypes you'll see on consults",
+    "topics": [
+     "Hepatorenal Syndrome",
+     "Contrast-Associated AKI",
+     "Rhabdomyolysis"
+    ],
+    "sections": [
+     {
+      "heading": "Hepatorenal Syndrome (HRS-AKI)",
+      "items": [
+       "Diagnosis of exclusion in cirrhosis + ascites: AKI + no shock + no nephrotoxins + no obstruction + no improvement after adequate volume resuscitation (ADQI/ICA 2024 no longer requires a fixed 48h albumin challenge; use clinical judgment based on volume status)",
+       "Old classification (Type 1/2) is retired → now HRS-AKI per ICA/ADQI consensus",
+       "Pathophysiology: Splanchnic vasodilation → ↓ effective arterial volume → ↑ RAAS/SNS → renal vasoconstriction",
+       "Treatment: Terlipressin + albumin (CONFIRM trial) — FDA-approved 2022. Alternative: norepinephrine + albumin or midodrine/octreotide + albumin",
+       "Key pearl: Always rule out SBP first (do a diagnostic paracentesis even if asymptomatic)",
+       "Definitive treatment is liver transplant — HRS is a marker of end-stage liver disease"
+      ]
+     },
+     {
+      "heading": "Contrast-Associated AKI (CA-AKI)",
+      "items": [
+       "CA-AKI vs CI-AKI: CA-AKI = any AKI after contrast (may be coincidental). CI-AKI = AKI causally linked to contrast after excluding other causes",
+       "True CI-AKI risk is much lower than historically thought — large propensity-matched studies show many cases are coincidental",
+       "Risk factors: CKD (eGFR <30), diabetes + CKD, high contrast volume, hemodynamic instability, concurrent nephrotoxins",
+       "Prevention: use IV isotonic saline hydration when prophylaxis is indicated (AKI, eGFR <30, or selected high-risk intra-arterial cases); PRESERVE showed NAC and bicarbonate are not better than saline. Minimize contrast volume",
+       "Timeline: Cr rises within 24-48h, peaks day 3-5, usually returns to baseline within 7 days",
+       "Don’t withhold life-saving contrast studies (CT angiogram for PE, emergent cardiac cath) — the risk of NOT imaging is often greater"
+      ]
+     },
+     {
+      "heading": "Rhabdomyolysis",
+      "items": [
+       "Classic triad: Myalgias + weakness + dark (tea/cola-colored) urine — but full triad present in ≤10% of cases",
+       "Diagnosis: CK >5x upper limit of normal (often >1000 U/L) + compatible symptoms or heme-positive urine with <3 RBCs/HPF (= myoglobinuria, not hematuria). CK >5000 U/L flags severe disease/high AKI risk.",
+       "AKI in 15-50% of cases: From myoglobin pigment casts, direct tubular toxicity, and volume depletion (third-spacing into injured muscle)",
+       "Electrolyte emergencies: Hyperkalemia (can be severe/rapid), hyperphosphatemia, hypocalcemia (early), hypercalcemia (late/recovery)",
+       "Treatment: AGGRESSIVE IV fluid resuscitation (target UOP 200-300 mL/h). No proven benefit to bicarbonate or mannitol over isotonic crystalloid alone",
+       "Common causes: Crush injury, immobilization (found down), statins, drugs/alcohol, seizures, extreme exertion, hypokalemia, infections"
+      ]
+     }
+    ],
+    "trialCallouts": [
+     {
+      "trial": "CONFIRM",
+      "pearl": "In 300 HRS-AKI patients, terlipressin + albumin reversed HRS in 32% vs 17% on placebo + albumin. FDA-approved 2022 — watch for respiratory failure if volume-overloaded."
+     },
+     {
+      "trial": "PRESERVE",
+      "pearl": "In 5177 high-risk CKD patients getting angiography, IV sodium bicarb and N-acetylcysteine did NOT prevent contrast AKI vs IV saline. Use isotonic saline when prophylaxis is indicated; do not add NAC or routine bicarbonate."
+     }
+    ]
+   }
+  ]
+ },
+ "clinicGuideTemplates": {
+  "CKD": {
+   "topic": "CKD",
+   "icon": "🫘",
+   "title": "CKD Outpatient Clinic Guide",
+   "subtitle": "Progression, complications, and kidney replacement therapy planning",
+   "whyItMatters": "CKD clinic visits focus on progression, symptom burden, renoprotection, complications, and preparation for dialysis or transplant. KDIGO 2024 emphasizes CKD classification by cause, GFR, and albuminuria, and recommends therapies that delay progression and reduce complications.",
+   "teachingPearl": "Dialysis is not started because of eGFR alone. Dialysis initiation is driven by symptoms, refractory complications, and inability to maintain volume, electrolyte, acid-base, or nutritional stability — not a single threshold number.",
+   "beforePresenting": [],
+   "howToPresent": "",
+   "sections": [
+    {
+     "heading": "Clinic Prep & Patient Questions",
+     "items": [
+      "Kidney trajectory: baseline and current creatinine/eGFR with timing.",
+      "Albuminuria/proteinuria category and whether it is changing.",
+      "BP and weight pattern since the last visit.",
+      "CKD complication labs: potassium, bicarbonate, calcium/phosphorus/PTH/vitamin D, hemoglobin/iron when relevant.",
+      "Disease-modifying therapy status: ACEi/ARB, SGLT2 inhibitor, finerenone when appropriate, and dose limits.",
+      "Advanced CKD planning status: modality education, access preservation/planning, and transplant referral.",
+      "Uremic symptoms: fatigue, appetite change, nausea/vomiting, weight loss, sleep disturbance, pruritus, cognitive change, restless legs, cramps.",
+      "Volume symptoms: edema, dyspnea, orthopnea, reduced exercise tolerance.",
+      "Home BP pattern and medication adherence.",
+      "NSAIDs, contrast exposure, supplements, or other nephrotoxins since the last visit.",
+      "For advanced CKD: what the patient understands about dialysis, transplant, and access planning."
+     ]
+    },
+    {
+     "heading": "Exam Focus",
+     "items": [
+      "BP measurement quality and whether repeat BP is needed.",
+      "Volume exam: JVD, lung findings, edema, weight change.",
+      "Pallor, excoriations, asterixis, or mental status change in advanced disease.",
+      "AVF/AVG exam if present."
+     ]
+    },
+    {
+     "heading": "Synthesis for the Visit",
+     "items": [
+      "Is kidney function stable, slowly progressive, or changing faster than expected?",
+      "Which active problem drives today's plan: BP, volume, proteinuria, potassium, acidosis, anemia, CKD-MBD, symptoms, or KRT planning?",
+      "Is kidney-protective therapy optimized and tolerated?",
+      "If eGFR is low, are symptoms or refractory complications pushing planning forward?"
+     ]
+    }
+   ],
+   "commonMistakes": [
+    "Not asking about symptoms of uremia",
+    "Waiting until a crisis to start modality, transplant, or access conversations",
+    "Missing access-preservation problems, especially recent PICC or midline placement",
+    "Listing CKD complications without saying which one changes today's plan"
+   ],
+   "teachingPoints": [
+    "Classify CKD by cause, GFR category, and albuminuria category.",
+    "KDIGO 2024 supports SGLT2 inhibitor initiation at eGFR >=20 mL/min/1.73 m2 in appropriate patients, with continuation below that if tolerated until kidney replacement therapy begins.",
+    "Persistent metabolic acidosis in CKD is generally treated with oral alkali to maintain serum bicarbonate around >=22 mmol/L."
+   ],
+   "discussionQuestions": [],
+   "guidelineBasis": [
+    "KDIGO 2024 Clinical Practice Guideline for CKD Evaluation and Management",
+    "KDIGO 2021 Clinical Practice Guideline for Blood Pressure Management in CKD",
+    "IDEAL Trial (NEJM 2010) — timing of dialysis initiation",
+    "CONFIDENCE (NEJM 2025) — simultaneous finerenone + empagliflozin in DKD",
+    "CKD-FIX (NEJM 2020) — allopurinol does NOT slow CKD progression"
+   ]
+  },
+  "Lupus Nephritis": {
+   "topic": "Lupus Nephritis",
+   "icon": "🦋",
+   "title": "Lupus Nephritis Clinic",
+   "subtitle": "Flare detection, biopsy context, response tracking, and immunosuppression safety",
+   "whyItMatters": "Lupus nephritis clinic visits protect kidney function by detecting relapse early, tracking proteinuria response, coordinating nephrology-rheumatology treatment, and reducing infection, steroid, reproductive, and medication-toxicity harms.",
+   "teachingPearl": "Proteinuria is the vital sign of lupus nephritis follow-up. Always pair it with creatinine/eGFR, urine sediment, complements, anti-dsDNA, medication adherence, and the biopsy class or suspected flare context.",
+   "beforePresenting": [],
+   "howToPresent": "",
+   "sections": [
+    {
+     "heading": "Clinic Prep & Patient Questions",
+     "items": [
+      "LN context: SLE history, prior kidney biopsy class/activity/chronicity, baseline creatinine/eGFR, baseline proteinuria, and prior flares.",
+      "Current kidney activity: UPCR or UACR trend, creatinine/eGFR trend, urinalysis with sediment, hematuria/casts, serum albumin, edema, and BP.",
+      "Serologic activity: complement C3/C4 and anti-dsDNA trend; check at clinic visits but avoid over-ordering more often than monthly.",
+      "Current regimen and adherence: hydroxychloroquine, glucocorticoid dose/taper, MPAA/MMF dose, cyclophosphamide history, belimumab, voclosporin/tacrolimus/cyclosporine, rituximab/other biologics, and missed doses.",
+      "Treatment phase: new diagnosis, induction/active flare, partial response, complete response, maintenance, taper, refractory disease, pregnancy planning, or ESKD/transplant planning.",
+      "Toxicity screen: infections, leukopenia, GI intolerance, tremor, hypertension, hyperkalemia, AKI, alopecia, mood/sleep changes, hyperglycemia, weight gain, bone risk, eye screening for HCQ, and malignancy/vaccine status.",
+      "Reproductive safety: pregnancy intention, contraception, teratogenic medications such as mycophenolate or cyclophosphamide, fertility preservation when cyclophosphamide is being considered, and antiphospholipid syndrome history.",
+      "Thrombosis risk: severe proteinuria, low serum albumin, antiphospholipid antibodies or prior clot, estrogen exposure, smoking, and immobility.",
+      "Supportive kidney care: RAAS inhibitor use when proteinuria is present, BP control, sodium intake, statin/ASCVD risk, bone protection, PJP or other prophylaxis when indicated, and infection-risk counseling."
+     ]
+    },
+    {
+     "heading": "When to Think Biopsy",
+     "items": [
+      "Suspected new LN: SLE with proteinuria greater than 0.5 g/g and/or otherwise unexplained impaired kidney function should prompt kidney-biopsy discussion unless contraindicated.",
+      "Suspected flare after treated LN: rising proteinuria, hematuria, active sediment, or worsening kidney function may need repeat biopsy because flare, chronic scarring, TMA, drug toxicity, and another kidney disease can look similar.",
+      "Poor response: ongoing or worsening proteinuria, hematuria, or kidney dysfunction after at least 6 months of appropriate therapy is a reason to revisit biopsy and adherence before labeling refractory disease.",
+      "Do not manage class III/IV, class V, and chronic inactive scarring as if they are the same disease; the biopsy class and activity/chronicity drive treatment intensity."
+     ]
+    },
+    {
+     "heading": "Treatment Reference",
+     "items": [
+      "All LN: use hydroxychloroquine unless contraindicated, adjust doses for kidney function, and coordinate nephrology-rheumatology care.",
+      "Glucocorticoids: modern guidance favors IV methylprednisolone pulses for active disease followed by lower-dose oral prednisone with taper toward <=5 mg/day by about 6 months when clinically feasible.",
+      "Active class III/IV +/- V: current ACR guidance favors triple immunosuppression: glucocorticoids plus either MPAA + belimumab, MPAA + CNI, or low-dose Euro-Lupus cyclophosphamide + belimumab.",
+      "Pure class V with proteinuria >=1 g/g: ACR favors glucocorticoids + MPAA + CNI; lower proteinuria may be treated less aggressively depending on risk and systemic disease.",
+      "KDIGO initial options for active class III/IV include glucocorticoids plus MPAA, low-dose IV cyclophosphamide, belimumab add-on regimens, or MPAA + CNI when kidney function is not severely impaired.",
+      "Response goal: complete renal response generally means proteinuria around <=0.5 g/day or UPCR <=0.5 g/g with stable or improved kidney function by roughly 6-12 months; partial response trajectory matters before changing therapy.",
+      "Duration: after complete response, total immunosuppressive therapy is usually continued for at least 3-5 years before cautious tapering."
+     ]
+    },
+    {
+     "heading": "Monitoring Checklist",
+     "items": [
+      "If complete response has not been achieved: quantify proteinuria at least every 3 months.",
+      "If sustained complete response: quantify proteinuria every 3-6 months.",
+      "At clinic visits: creatinine/eGFR, potassium, CBC, liver tests when relevant, complements, anti-dsDNA, urine microscopy, BP, weight, and medication-specific levels or safety labs.",
+      "For MPAA/MMF: watch leukopenia, infection, GI intolerance, and pregnancy risk.",
+      "For CNI/voclosporin/tacrolimus/cyclosporine: watch BP, creatinine rise, hyperkalemia, tremor/neurotoxicity, drug interactions, and nephrotoxicity.",
+      "For cyclophosphamide: watch cytopenias, infection, infertility risk, hemorrhagic cystitis, malignancy risk, and need for fertility/pregnancy counseling.",
+      "For belimumab or anti-CD20 therapy: watch infection risk, vaccine timing, infusion/injection reactions, mood symptoms when relevant, and immunoglobulin/B-cell monitoring per local practice."
+     ]
+    },
+    {
+     "heading": "Exam Focus",
+     "items": [
+      "BP measurement quality and repeat BP if elevated.",
+      "Volume exam: JVD, lungs, edema, weight change, ascites if severe nephrotic syndrome.",
+      "SLE activity clues: rash, oral ulcers, synovitis, serositis symptoms, neurologic symptoms, and fever or infection signs.",
+      "Medication toxicity clues: bruising/cytopenia signs, steroid features, tremor, wounds, and infection."
+     ]
+    },
+    {
+     "heading": "Synthesis for the Visit",
+     "items": [
+      "Is this active inflammatory LN, chronic damage, medication toxicity, infection, TMA/APS, or another kidney disease?",
+      "Is the patient improving, partially responding, relapsing, or refractory based on proteinuria, eGFR, sediment, and serologies?",
+      "What is the current treatment phase, and what is the next safety lab or response milestone?",
+      "What counseling is needed today: adherence, infection prevention, vaccines, bone protection, reproductive safety, thrombosis risk, or biopsy planning?"
+     ]
+    }
+   ],
+   "commonMistakes": [
+    "Calling a creatinine rise LN flare without checking sediment, proteinuria, adherence, infection, CNI toxicity, and chronicity",
+    "Following complements and anti-dsDNA without quantifying proteinuria",
+    "Forgetting the biopsy class and activity/chronicity score when discussing treatment intensity",
+    "Letting patients remain on high-dose steroids without a taper and toxicity-prevention plan",
+    "Missing pregnancy and contraception counseling for mycophenolate or cyclophosphamide"
+   ],
+   "teachingPoints": [
+    "A proteinuria threshold above 0.5 g/g in SLE is a biopsy trigger, not just a lab abnormality to watch indefinitely.",
+    "LN response is judged over months, but worsening kidney function or active sediment should accelerate reassessment.",
+    "Modern LN therapy often uses combination therapy to improve response while reducing cumulative steroid exposure.",
+    "Hydroxychloroquine, supportive kidney care, vaccine planning, and reproductive counseling are core parts of LN management, not extras."
+   ],
+   "discussionQuestions": [],
+   "guidelineBasis": [
+    "American College of Rheumatology 2024 Guideline Summary for the Screening, Treatment, and Management of Lupus Nephritis",
+    "KDIGO 2024 Clinical Practice Guideline for the Management of Lupus Nephritis",
+    "BLISS-LN (NEJM 2020) — belimumab add-on therapy in active lupus nephritis",
+    "AURORA 1 (Lancet 2021) — voclosporin add-on therapy in active lupus nephritis",
+    "Euro-Lupus Nephritis Trial — low-dose cyclophosphamide regimen",
+    "ALMS — mycophenolate vs cyclophosphamide induction and maintenance evidence"
+   ]
+  }
+ },
+ "articles": {
+  "1": [
+   {
+    "id": "ckd-epi-2021",
+    "title": "CKD-EPI 2021: New Creatinine- and Cystatin C–Based Equations",
+    "journal": "NEJM",
+    "year": 2021,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2102953",
+    "topic": "GFR Assessment",
+    "type": "Landmark Study"
+   },
+   {
+    "id": "urinalysis-review",
+    "title": "Urinalysis: A Comprehensive Review",
+    "journal": "Am Fam Physician",
+    "year": 2005,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/?term=Urinalysis%3A%20A%20Comprehensive%20Review",
+    "topic": "Urinalysis",
+    "type": "Review"
+   },
+   {
+    "id": "aki-critically-ill",
+    "title": "Diagnostic Criteria and Epidemiology of AKI in the Critically Ill",
+    "journal": "CJASN",
+    "year": 2022,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/?term=Diagnostic%20Criteria%20and%20Epidemiology%20of%20AKI%20in%20the%20Critically%20Ill",
+    "topic": "AKI",
+    "type": "Review"
+   },
+   {
+    "id": "hepatorenal-syndrome",
+    "title": "Hepatorenal Syndrome in Cirrhosis",
+    "journal": "NEJM",
+    "year": 2023,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMra2215136",
+    "topic": "Hepatorenal Syndrome",
+    "type": "Review"
+   },
+   {
+    "id": "confirm-terlipressin",
+    "title": "Terlipressin and Albumin for Hepatorenal Syndrome (CONFIRM Trial)",
+    "journal": "NEJM",
+    "year": 2021,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa2008290",
+    "topic": "Hepatorenal Syndrome",
+    "type": "Landmark Study"
+   },
+   {
+    "id": "preserve-contrast-aki",
+    "title": "Prevention of Contrast-Associated AKI Related to Angiography (PRESERVE)",
+    "journal": "NEJM",
+    "year": 2018,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMoa1710933",
+    "topic": "Contrast-Associated AKI",
+    "type": "Landmark Study"
+   },
+   {
+    "id": "acr-nkf-contrast-consensus",
+    "title": "Use of IV Contrast in Patients with Kidney Disease: Consensus from ACR and NKF",
+    "journal": "Radiology",
+    "year": 2020,
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7873723/",
+    "topic": "Contrast-Associated AKI",
+    "type": "Guideline"
+   },
+   {
+    "id": "rhabdomyolysis-aki",
+    "title": "Rhabdomyolysis and Acute Kidney Injury",
+    "journal": "NEJM",
+    "year": 2009,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/?term=10.1056%2FNEJMra0801327",
+    "topic": "Rhabdomyolysis",
+    "type": "Review"
+   }
+  ]
+ },
+ "curriculum": {
+  "1": {
+   "title": "Foundations",
+   "sub": "Anatomy, GFR, Urinalysis, AKI, HRS, Contrast AKI, Rhabdomyolysis",
+   "topics": [
+    "Nephron Physiology",
+    "GFR Assessment",
+    "Urinalysis",
+    "AKI",
+    "Post-Renal AKI",
+    "Hepatorenal Syndrome",
+    "Contrast-Associated AKI",
+    "Rhabdomyolysis"
+   ]
+  },
+  "2": {
+   "title": "Electrolytes & Acid-Base",
+   "sub": "Na⁺, K⁺, Acid-Base, Fluid Management, Ca²⁺/PO₄, Cardiorenal Syndrome",
+   "topics": [
+    "Hyponatremia",
+    "Hypernatremia",
+    "Hyperkalemia",
+    "Hypokalemia",
+    "Acid-Base",
+    "Fluid Management",
+    "Calcium/Phosphorus",
+    "CKD-MBD",
+    "Cardiorenal Syndrome"
+   ]
+  },
+  "3": {
+   "title": "Glomerular Disease & CKD",
+   "sub": "GN, Nephrotic, CKD, HTN, Biopsy, DKD, SGLT2i",
+   "topics": [
+    "Nephrotic Syndrome",
+    "Glomerulonephritis",
+    "CKD",
+    "Anemia of CKD",
+    "Hypertension",
+    "Kidney Biopsy",
+    "Diabetic Kidney Disease",
+    "SGLT2 Inhibitors"
+   ]
+  },
+  "4": {
+   "title": "Therapeutics & Integration",
+   "sub": "Dialysis, Transplant, Stones, Drugs, PD",
+   "topics": [
+    "Dialysis",
+    "Dialysis Access",
+    "Transplant",
+    "Kidney Stones",
+    "AIN",
+    "Diuretics",
+    "Nephrotoxins",
+    "Peritoneal Dialysis"
+   ]
+  }
+ }
+}

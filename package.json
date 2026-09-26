@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
+    "content:fingerprints": "node scripts/content-history/build-fingerprints.mjs",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run --config vitest.rules.config.ts\"",
     "check:links": "node scripts/check-links.mjs",
     "test:watch": "vitest",

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { fingerprintRemoteSharedDoc } from "./publish";
+import { buildPublishSnapshot, fingerprintRemoteSharedDoc } from "./publish";
+import { resolveRotationContent } from "../../../utils/contentCustomizations";
 
 describe("fingerprintRemoteSharedDoc", () => {
   it("returns an empty string for a missing remote doc", () => {
@@ -30,5 +31,33 @@ describe("fingerprintRemoteSharedDoc", () => {
     const withField = { studySheets: {} };
     const withoutField = {};
     expect(fingerprintRemoteSharedDoc(withField)).not.toBe(fingerprintRemoteSharedDoc(withoutField));
+  });
+});
+
+describe("buildPublishSnapshot content customizations", () => {
+  const base = () => ({
+    ...resolveRotationContent(null),
+    announcements: [],
+    settings: { attendingName: "", rotationStart: "", email: "", phone: "", adminPin: "1234" },
+    clinicGuides: [],
+  });
+
+  it("records no customizations for untouched built-in content", () => {
+    const snapshot = buildPublishSnapshot(base());
+    expect(snapshot.contentCustomizations).toEqual({ version: 1, studySheets: [], clinicGuideTemplates: [], articles: [], curriculum: [] });
+    expect(snapshot.settings).not.toHaveProperty("adminPin");
+  });
+
+  it("records an edited study sheet so it keeps the admin's version", () => {
+    const state = base();
+    const [first, ...rest] = state.studySheets[1];
+    state.studySheets = { ...state.studySheets, 1: [{ ...first, title: "Edited" }, ...rest] };
+    expect(buildPublishSnapshot(state).contentCustomizations.studySheets).toEqual([first.id]);
+  });
+
+  it("includes the customization list in the staleness fingerprint", () => {
+    const before = { contentCustomizations: { version: 1, studySheets: [] } };
+    const after = { contentCustomizations: { version: 1, studySheets: ["aki-cheatsheet"] } };
+    expect(fingerprintRemoteSharedDoc(before)).not.toBe(fingerprintRemoteSharedDoc(after));
   });
 });

@@ -10,6 +10,7 @@ import { useRef, useState } from "react";
 import { WEEKLY, ARTICLES } from "../data/constants";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
+import LEGACY_ROTATION from "../utils/__fixtures__/legacyRotationContent.json";
 import type {
   ActivityLogEntry,
   Announcement,
@@ -32,7 +33,8 @@ const h = vi.hoisted(() => {
   const listeners: {
     student: ((data: Record<string, unknown>) => void) | null;
     studentRemoved: (() => void) | null;
-  } = { student: null, studentRemoved: null };
+    rotation?: ((data: Record<string, unknown>) => void) | null;
+  } = { student: null, studentRemoved: null, rotation: null };
   // Values served by the mocked store.get, configurable per test.
   const storedValues: Record<string, unknown> = {};
   // Mirrors the real contract: resolves with the status and the updatedAt
@@ -54,7 +56,10 @@ const h = vi.hoisted(() => {
     getPendingSyncCount: vi.fn(() => 0),
     onPendingSyncChanged: vi.fn(() => () => {}),
     flushPendingSyncQueue: vi.fn(async () => 0),
-    onRotationChanged: vi.fn(() => () => {}),
+    onRotationChanged: vi.fn((cb: (data: Record<string, unknown>) => void) => {
+      listeners.rotation = cb;
+      return () => {};
+    }),
     onStudentDataChanged: vi.fn((_studentId: string, cb: (data: Record<string, unknown>) => void, onRemoved?: () => void) => {
       listeners.student = cb;
       listeners.studentRemoved = onRemoved ?? null;
@@ -110,6 +115,8 @@ interface HarnessApi {
   setStudentName: (name: string) => void;
   studentName: string;
   sync: ReturnType<typeof useStudentSync>;
+  studySheets: StudySheetsData;
+  clinicGuideTemplates: ReturnType<typeof normalizeClinicGuideTemplates>;
 }
 
 const api = {} as HarnessApi;
@@ -138,11 +145,11 @@ function useHarness() {
   const [reflections, setReflections] = useState<ReflectionEntry[]>([]);
   const [, setCurriculum] = useState(WEEKLY);
   const [, setArticles] = useState(ARTICLES);
-  const [, setStudySheets] = useState<StudySheetsData>(() => normalizeStudySheets({}));
+  const [studySheets, setStudySheets] = useState<StudySheetsData>(() => normalizeStudySheets({}));
   const [, setAnnouncements] = useState<Announcement[]>([]);
   const [, setSharedSettings] = useState<SharedSettings | null>(null);
   const [, setClinicGuides] = useState<ClinicGuideRecord[]>([]);
-  const [, setClinicGuideTemplates] = useState(() => normalizeClinicGuideTemplates({}));
+  const [clinicGuideTemplates, setClinicGuideTemplates] = useState(() => normalizeClinicGuideTemplates({}));
 
   const sync = useStudentSync(
     true,
@@ -199,6 +206,8 @@ function useHarness() {
   api.setStudentName = setStudentName;
   api.studentName = studentName;
   api.sync = sync;
+  api.studySheets = studySheets;
+  api.clinicGuideTemplates = clinicGuideTemplates;
   return sync;
 }
 
@@ -760,5 +769,39 @@ describe("consult de-identification (D1)", () => {
     expect(api.patients).toHaveLength(1);
     expect(JSON.stringify(api.patients)).not.toMatch(/J\.S\.|4B-12|sepsis|casts|Cr better/);
     expect(api.patients[0].topics).toEqual(["AKI"]);
+  });
+});
+
+describe("rotation content follows the latest built-in version", () => {
+  const legacyShared: Record<string, unknown> = {
+    neph_shared_studySheets: LEGACY_ROTATION.studySheets,
+    neph_shared_clinicGuideTemplates: LEGACY_ROTATION.clinicGuideTemplates,
+    neph_shared_articles: LEGACY_ROTATION.articles,
+    neph_shared_curriculum: LEGACY_ROTATION.curriculum,
+  };
+  const getSharedMock = h.storeMock.getShared as unknown as { mockImplementation: (fn: (key: string) => Promise<unknown>) => void };
+  afterEach(() => getSharedMock.mockImplementation(async () => null));
+
+  it("shows today's built-in content for a rotation saved with an old copy", async () => {
+    getSharedMock.mockImplementation(async (key: string) => legacyShared[key] ?? null);
+    await mountHarness();
+    expect(api.studySheets).toEqual(normalizeStudySheets());
+    expect(api.clinicGuideTemplates).toEqual(normalizeClinicGuideTemplates());
+  });
+
+  it("keeps an item the admin customized when the rotation doc updates live", async () => {
+    await mountHarness();
+    const edited = JSON.parse(JSON.stringify(LEGACY_ROTATION.studySheets));
+    edited[1][0].title = "Our AKI sheet";
+    act(() => {
+      h.listeners.rotation!({
+        studySheets: edited,
+        clinicGuideTemplates: LEGACY_ROTATION.clinicGuideTemplates,
+        contentCustomizations: { version: 1, studySheets: [edited[1][0].id], clinicGuideTemplates: [], articles: [], curriculum: [] },
+      });
+    });
+    expect(api.studySheets[1][0].title).toBe("Our AKI sheet");
+    expect(api.studySheets[1].slice(1)).toEqual(normalizeStudySheets()[1].slice(1));
+    expect(api.clinicGuideTemplates).toEqual(normalizeClinicGuideTemplates());
   });
 });

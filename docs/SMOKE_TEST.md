@@ -25,7 +25,7 @@ Use a private/incognito window (or a second browser) for the student steps so ad
 3. Pass the local admin PIN gate. If no PIN is set on this device, the PIN setup screen should appear — set one.
 4. Connect to the target rotation for the upcoming cohort. If no rotation is connected, a "No rotation connected" banner with a rotation picker appears on entry — choose the rotation and press Connect. (Connecting from the Rotation tab also works.) If the rotation doesn't exist yet, create it on the Rotation tab with the correct code.
 5. Review the rotation settings: start date, duration, location, attending info.
-6. Skim the content: from the Settings tab, open the "Curriculum & Content" section and confirm curriculum weeks, articles, announcements, and clinic guides look right for this cohort.
+6. Skim the content: from the Settings tab, open the "Curriculum & Content" section and confirm curriculum weeks, articles, announcements, and clinic guides look right for this cohort. The card at the top of the Content tab should say **Using the latest built-in content** unless you deliberately edited something; any listed items keep your edited version, and **Use built-in for everything** clears them (then publish).
 7. If you changed anything, publish the changes to students.
 8. Open the Students tab. If a **Privacy cleanup** card appears, this rotation still stores consult details from before the picklist redesign: press **1. Download backup**, then **2. Remove old details**. Keep the backup file private and delete it once you have checked the result.
 

@@ -7,8 +7,8 @@ import { getCurrentStudentUser, normalizeStudentPinInput, signOutFirebase } from
 import { ensureGoogleFonts, ensureLayoutStyles, ensureThemeStyles, SHARED_KEYS } from "../utils/helpers";
 import { calculatePoints } from "../utils/gamification";
 import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
-import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
-import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
+import { resolveRotationContent } from "../utils/contentCustomizations";
+import type { StudySheetsData } from "../utils/studySheets";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
 import { normalizePatients } from "../utils/patient";
 import {
@@ -269,10 +269,19 @@ export function useStudentSync(
 
       const sharedCurriculum = await store.getShared<typeof WEEKLY>(SHARED_KEYS.curriculum);
       const sharedArticles = await store.getShared<typeof ARTICLES>(SHARED_KEYS.articles);
-      const sharedStudySheets = await store.getShared<Partial<StudySheetsData>>(SHARED_KEYS.studySheets);
+      const sharedStudySheets = await store.getShared(SHARED_KEYS.studySheets);
       const sharedAnnouncements = await store.getShared<Announcement[]>(SHARED_KEYS.announcements);
       const sharedSettingsData = await store.getShared<SharedSettings>(SHARED_KEYS.settings);
       const sharedClinicGuideTemplates = await store.getShared<Partial<ClinicGuideTemplates>>(SHARED_KEYS.clinicGuideTemplates);
+      const sharedContentCustomizations = await store.getShared(SHARED_KEYS.contentCustomizations);
+      // Latest built-in content + only what the admin customized (see utils/contentCustomizations).
+      const resolvedContent = resolveRotationContent({
+        curriculum: sharedCurriculum,
+        articles: sharedArticles,
+        studySheets: sharedStudySheets,
+        clinicGuideTemplates: sharedClinicGuideTemplates,
+        contentCustomizations: sharedContentCustomizations,
+      });
 
       if (!sessionStudentId && sidFromStore) setStudentId(sidFromStore);
       if (name) { setStudentName(name); setNameSet(true); }
@@ -301,17 +310,17 @@ export function useStudentSync(
       if (ws) setWeeklyScores(ws);
       if (pre) setPreScore(pre);
       if (post) setPostScore(post);
-      if (sharedCurriculum) setCurriculum(sharedCurriculum);
-      if (sharedArticles) setArticles(sharedArticles);
-      if (sharedStudySheets) setStudySheets(normalizeStudySheets(sharedStudySheets));
+      setCurriculum(resolvedContent.curriculum);
+      setArticles(resolvedContent.articles);
+      setStudySheets(resolvedContent.studySheets);
       if (sharedAnnouncements) setAnnouncements(sharedAnnouncements);
       if (sharedSettingsData) setSharedSettings(sharedSettingsData);
-      if (sharedClinicGuideTemplates) setClinicGuideTemplates(normalizeClinicGuideTemplates(sharedClinicGuideTemplates));
+      setClinicGuideTemplates(resolvedContent.clinicGuideTemplates);
       const sharedClinicGuides = await store.getShared<ClinicGuideRecord[]>(SHARED_KEYS.clinicGuides);
       const loadedGuides = sharedClinicGuides || [];
       const { guides: updatedGuides } = ensureCurrentClinicGuide(loadedGuides);
       setClinicGuides(updatedGuides);
-      if (sharedArticles) articlesRef.current = sharedArticles;
+      articlesRef.current = resolvedContent.articles;
       const completed = await store.get<CompletedItems>("neph_completedItems");
       if (completed) setCompletedItems(migrateCompletedArticles(completed, articlesRef.current));
       const savedBookmarks = await store.get<Bookmarks>("neph_bookmarks");
@@ -517,20 +526,19 @@ export function useStudentSync(
   useEffect(() => {
     if (!store.getRotationCode()) return;
     const unsub = store.onRotationChanged((data) => {
-      if (data.curriculum) setCurriculum(data.curriculum);
-      if (data.articles) {
-        articlesRef.current = data.articles;
-        setArticles(data.articles);
-        // A republished list may carry ids for entries that had none (or new
-        // urls for known ids) — remap immediately; no-op when unchanged.
-        setCompletedItems((local) => migrateCompletedArticles(local, data.articles));
-        setBookmarks((local) => migrateBookmarkedArticles(local, data.articles));
-      }
-      if (data.studySheets) setStudySheets(normalizeStudySheets(data.studySheets as Partial<StudySheetsData>));
+      const resolved = resolveRotationContent(data);
+      setCurriculum(resolved.curriculum);
+      articlesRef.current = resolved.articles;
+      setArticles(resolved.articles);
+      // A republished list may carry ids for entries that had none (or new
+      // urls for known ids) — remap immediately; no-op when unchanged.
+      setCompletedItems((local) => migrateCompletedArticles(local, resolved.articles));
+      setBookmarks((local) => migrateBookmarkedArticles(local, resolved.articles));
+      setStudySheets(resolved.studySheets);
       if (data.announcements) setAnnouncements(data.announcements);
       if (data.settings) setSharedSettings(data.settings);
       if (data.clinicGuides) setClinicGuides(data.clinicGuides);
-      if (data.clinicGuideTemplates) setClinicGuideTemplates(normalizeClinicGuideTemplates(data.clinicGuideTemplates as Partial<ClinicGuideTemplates>));
+      setClinicGuideTemplates(resolved.clinicGuideTemplates);
     });
     return () => unsub();
   }, [rotationCode]);

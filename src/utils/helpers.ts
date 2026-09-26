@@ -322,6 +322,7 @@ export const SHARED_KEYS: Record<string, string> = {
   settings: "neph_shared_settings",
   clinicGuides: "neph_shared_clinicGuides",
   clinicGuideTemplates: "neph_shared_clinicGuideTemplates",
+  contentCustomizations: "neph_shared_contentCustomizations",
   studentPrefix: "neph_shared_student_",
 };
 

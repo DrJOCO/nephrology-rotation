@@ -1,6 +1,7 @@
 import type { ClinicGuideTemplates } from "../../../data/clinicGuides";
 import { normalizeClinicGuideTemplates } from "../../../utils/clinicGuideTemplates";
 import { normalizeStudySheets, type StudySheetsData } from "../../../utils/studySheets";
+import { computeContentCustomizations, type ContentCustomizations } from "../../../utils/contentCustomizations";
 import type { WeeklyData, ArticlesData } from "../types";
 import type { Announcement, SharedSettings, ClinicGuideRecord } from "../../../types";
 
@@ -13,6 +14,10 @@ export type PublishableSharedState = {
   clinicGuides: ClinicGuideRecord[];
   clinicGuideTemplates: ClinicGuideTemplates;
 };
+
+// What publish writes: the content plus which items the admin customized, so
+// every other item keeps following the latest built-in version.
+export type PublishSnapshot = PublishableSharedState & { contentCustomizations: ContentCustomizations };
 
 function getPublicSettings(settings: SharedSettings): SharedSettings {
   const { adminPin: _adminPin, ...publicSettings } = settings;
@@ -27,19 +32,27 @@ export function buildPublishSnapshot({
   settings,
   clinicGuides,
   clinicGuideTemplates,
-}: PublishableSharedState): PublishableSharedState {
+}: PublishableSharedState): PublishSnapshot {
+  const normalizedSheets = normalizeStudySheets(studySheets);
+  const normalizedTemplates = normalizeClinicGuideTemplates(clinicGuideTemplates);
   return {
     curriculum,
     articles,
-    studySheets: normalizeStudySheets(studySheets),
+    studySheets: normalizedSheets,
     announcements,
     settings: getPublicSettings(settings),
     clinicGuides,
-    clinicGuideTemplates: normalizeClinicGuideTemplates(clinicGuideTemplates),
+    clinicGuideTemplates: normalizedTemplates,
+    contentCustomizations: computeContentCustomizations({
+      curriculum,
+      articles,
+      studySheets: normalizedSheets,
+      clinicGuideTemplates: normalizedTemplates,
+    }),
   };
 }
 
-export function serializePublishSnapshot(snapshot: PublishableSharedState): string {
+export function serializePublishSnapshot(snapshot: PublishSnapshot): string {
   return JSON.stringify(snapshot);
 }
 
@@ -53,6 +66,7 @@ const REMOTE_SHARED_FIELDS = [
   "settings",
   "clinicGuides",
   "clinicGuideTemplates",
+  "contentCustomizations",
 ] as const;
 
 // Fingerprint the shared-content fields of a remote rotation doc. Comparing two
