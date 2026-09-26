@@ -1,19 +1,28 @@
 // Shared type definitions for the Nephrology Rotation Education App
 
+// A follow-up is only "seen again on this date" — no note, so nothing typed
+// can identify the patient.
 export interface FollowUp {
   id: number;
   date: string;
-  note: string;
 }
 
+export type ConsultSetting = "ed" | "floor" | "stepdown" | "icu";
+export type ConsultService = "medicine" | "critical-care" | "cardiology" | "surgery" | "oncology" | "transplant" | "ob" | "other";
+export type HospitalDay = "0-1" | "2-3" | "4-7" | "8+";
+
+// De-identified by construction (D1): every field is a picklist value, a date,
+// or sync bookkeeping, so there is nowhere to type patient details. Stored
+// entries from before the redesign also carried initials/room/dx/notes and
+// follow-up notes; toDeidentifiedPatient drops those wherever stored data
+// enters the app.
 export interface Patient {
   id: string | number;
-  initials: string;
-  room: string;
-  dx: string;
   topics: string[];
   topic?: string; // backwards compat: old patients had single topic
-  notes: string;
+  setting?: ConsultSetting;
+  service?: ConsultService;
+  hospitalDay?: HospitalDay;
   date: string;
   status: "active" | "discharged";
   followUps: FollowUp[];
@@ -206,6 +215,10 @@ export interface AdminStudent {
   bookmarks?: Bookmarks;
   feedbackTags?: FeedbackTag[];
   lastSyncedAt?: string | null;
+  // Consult entries whose STORED copy still holds pre-redesign free text
+  // (hidden in the app via toDeidentifiedPatient). Computed on load for the
+  // admin privacy-cleanup card; never written back.
+  legacyPatientDetailCount?: number;
 }
 
 export interface TeamSnapshot {

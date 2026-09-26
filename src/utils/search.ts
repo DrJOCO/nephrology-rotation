@@ -11,6 +11,7 @@
 
 import { CLINIC_GUIDES } from "../data/clinicGuides";
 import { CURRICULUM_DECKS } from "../data/constants";
+import { consultDetailLabels } from "../data/consultFields";
 import { INPATIENT_GUIDES } from "../data/inpatientGuides";
 import { ROTATION_GUIDES } from "../data/rotationGuides";
 import type { SearchDataSources } from "../types";
@@ -346,20 +347,17 @@ export function searchAll(
   });
 
   (patients || []).forEach((patient) => {
-    const topics = patient.topics || (patient.topic ? [patient.topic] : []);
+    const topics = patient.topics?.length ? patient.topics : (patient.topic ? [patient.topic] : []);
+    const details = consultDetailLabels(patient);
     const score = scoreItem(q, [
-      { value: patient.initials, weight: 2.5 },
-      { value: patient.dx, weight: 3 },
-      { value: topics.join(" "), weight: 2 },
-      { value: patient.notes, weight: 1 },
-      { value: patient.room, weight: 0.5 },
+      { value: topics.join(" "), weight: 3 },
+      { value: details.join(" "), weight: 1 },
     ]);
     if (score > 0) {
-      const tagParts = [patient.status === "active" ? "Active patient" : "Discharged patient"];
-      if (topics.length > 0) tagParts.push(topics.slice(0, 2).join(", "));
-      else if (patient.room) tagParts.push(`Rm ${patient.room}`);
+      const tagParts = [patient.status === "active" ? "Active consult" : "Discharged consult"];
+      if (details.length > 0) tagParts.push(details.join(" · "));
       results.patients.push({
-        label: patient.dx ? `${patient.initials} · ${patient.dx}` : patient.initials || "Patient",
+        label: topics.join(", ") || "Consult",
         kind: "My patient",
         tag: tagParts.join(" · "),
         score,

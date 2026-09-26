@@ -8,6 +8,7 @@ import { buildAdminCompetencySnapshot, buildAdminAssessmentSignal } from "../lib
 import { buildDuplicateNameGroups, buildDuplicateStudentIdSet } from "../lib/duplicates";
 import { getScorePct, getMinutesSince } from "../lib/format";
 import { findSuspiciousDuplicateAttempts } from "../../../utils/dataHealth";
+import { PatientCleanupCard } from "../PatientCleanupCard";
 
 export function StudentsTab({ students, setStudents, navigate, rotationCode, settings, articles, duplicateReview = false, deleteStudentRecord, writeStudentToFirestore, requestConfirm, showToast }: { students: AdminStudent[]; setStudents: React.Dispatch<React.SetStateAction<AdminStudent[]>>; navigate: NavigateFn; rotationCode: string; settings: SharedSettings; articles: ArticlesData; duplicateReview?: boolean; deleteStudentRecord: (student: AdminStudent) => Promise<void>; writeStudentToFirestore: (studentId: string, data: Record<string, unknown>) => void; requestConfirm: (options: AdminConfirmOptions) => Promise<boolean>; showToast: (message: string, tone?: AdminToastTone) => void }) {
   const [showAdd, setShowAdd] = useState(false);
@@ -121,6 +122,8 @@ export function StudentsTab({ students, setStudents, navigate, rotationCode, set
           📡 Connected to rotation <strong>{rotationCode}</strong>. Students appear here automatically when they join with the rotation code. Use <strong>Remove</strong> for test users, duplicates, or mistaken joins.
         </div>
       )}
+
+      <PatientCleanupCard rotationCode={rotationCode} students={students} requestConfirm={requestConfirm} showToast={showToast} />
 
       {studentsWithDupAttempts.length > 0 && (
         <div style={{ background: T.infoBg, border: `1px solid ${T.info}55`, borderRadius: 14, padding: 14, marginBottom: 16 }}>

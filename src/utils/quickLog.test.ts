@@ -15,8 +15,8 @@ describe("createQuickLogEntry", () => {
     const entry = createQuickLogEntry("AKI");
     expect(entry.topics).toEqual(["AKI"]);
     expect(entry.status).toBe("active");
-    expect(entry.initials).toBe("");
     expect(entry.followUps).toEqual([]);
+    expect(Object.keys(entry).sort()).toEqual(["date", "followUps", "id", "status", "topics"]);
   });
 });
 

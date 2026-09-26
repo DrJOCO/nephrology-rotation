@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { STUDY_SHEETS, CURRICULUM_DECKS } from "../../../data/constants";
 import { WEEKLY_CASES } from "../../../data/cases";
 import { ACHIEVEMENTS } from "../../../utils/gamification";
+import { consultDetailLabels } from "../../../data/consultFields";
 import { isArticleCompleted } from "../../../utils/articleKeys";
 import type { AdminStudent, SharedSettings, QuizScore } from "../../../types";
 import type { ArticlesData } from "../types";
@@ -205,15 +206,14 @@ export function RotationSummaryReport({ student: s, settings, articles, onBack }
           {patients.length > 0 ? (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead><tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
-                <th style={tblTh}>Patient</th><th style={tblTh}>Diagnosis</th><th style={tblTh}>Topics</th><th style={tblTh}>Date</th><th style={tblTh}>Status</th>
+                <th style={tblTh}>Topics</th><th style={tblTh}>Details</th><th style={tblTh}>Date</th><th style={tblTh}>Status</th>
               </tr></thead>
               <tbody>{patients.map((p, i) => {
                 const ts = p.topics || (p.topic ? [p.topic] : []);
                 return (
                   <tr key={i} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
-                    <td style={tblTd}>{p.initials}</td>
-                    <td style={tblTd}>{p.dx || "—"}</td>
                     <td style={tblTd}>{ts.join(", ")}</td>
+                    <td style={tblTd}>{consultDetailLabels(p).join(" · ") || "—"}</td>
                     <td style={tblTd}>{new Date(p.date).toLocaleDateString()}</td>
                     <td style={tblTd}>{p.status}</td>
                   </tr>

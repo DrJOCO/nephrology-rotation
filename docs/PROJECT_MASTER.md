@@ -56,7 +56,7 @@ Important student features:
 - Pre/post assessments and weekly quizzes.
 - Spaced repetition review for missed or reinforced questions.
 - Study sheets, articles, landmark trials, cases, resources, quick references, inpatient guides, outpatient clinic guides, rotation guides, and clinical reasoning tools (AKI Differential Tool).
-- Patient/consult topic logging with no-PHI guardrails.
+- Picklist-only consult logging: topics plus optional setting/service/hospital-day picks, no free text (D1 de-identification).
 - Bookmarks, reflections, progress, team snapshot, and global search.
 - Offline-aware local cache and pending sync queue.
 
@@ -124,7 +124,7 @@ Important rule of thumb: shared settings sent to students should not include the
 - Firestore rules live in `firestore.rules` and are part of the product, not an afterthought.
 - Admin authorization requires Firebase Auth plus an admin document.
 - Student flows should avoid storing raw PINs in student documents.
-- Patient logging is for de-identified education only. Continue to preserve no-PHI copy, validation, and review language when changing patient fields.
+- The consult log is de-identified by construction (D1): entries hold only topics, picklist values (`src/data/consultFields.ts`), dates, and status. Never add a free-text field to `Patient`. `toDeidentifiedPatient` in `src/utils/patient.ts` allow-lists entry fields wherever stored data enters the app; extend its allow-list (not a deny-list) when adding a picklist.
 - Treat localStorage as convenient state, not a secure store for sensitive clinical information.
 
 ## Testing And Verification
@@ -235,7 +235,7 @@ Treat `public/decks/` as the app-shipped asset location and `decks/` as the edit
 - Local admin PIN is set on the attending device.
 - A test student can verify email, create a PIN, join the rotation, complete an item, and sync progress.
 - Student progress appears in the admin panel.
-- Patient logging still shows no-PHI expectations.
+- Consult log still has no free-text fields, and the admin Students tab shows no "Privacy cleanup" card (if it does, run it: download backup, then remove).
 - Print/cohort reports render acceptably.
 - External link check has been reviewed.
 - `npm run build` succeeds before deploy.

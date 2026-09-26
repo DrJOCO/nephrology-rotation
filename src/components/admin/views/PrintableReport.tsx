@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { ACHIEVEMENTS } from "../../../utils/gamification";
+import { consultDetailLabels } from "../../../data/consultFields";
 import type { AdminStudent, SharedSettings, QuizScore } from "../../../types";
 import type { ArticlesData } from "../types";
 import {
@@ -253,9 +254,8 @@ export function PrintableReport({ mode, students, student, settings, articles, o
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: `2px solid ${PRINT_THEME.ink}` }}>
-                  <th style={thStyle}>Patient</th>
-                  <th style={thStyle}>Diagnosis</th>
                   <th style={thStyle}>Topics</th>
+                  <th style={thStyle}>Details</th>
                   <th style={thStyle}>Date</th>
                 </tr>
               </thead>
@@ -264,9 +264,8 @@ export function PrintableReport({ mode, students, student, settings, articles, o
                   const ts = p.topics || (p.topic ? [p.topic] : []);
                   return (
                     <tr key={i} style={{ borderBottom: `1px solid ${PRINT_THEME.line}` }}>
-                      <td style={tdStyle}>{p.initials}</td>
-                      <td style={tdStyle}>{p.dx || "—"}</td>
                       <td style={tdStyle}>{ts.join(", ")}</td>
+                      <td style={tdStyle}>{consultDetailLabels(p).join(" · ") || "—"}</td>
                       <td style={tdStyle}>{new Date(p.date).toLocaleDateString()}</td>
                     </tr>
                   );

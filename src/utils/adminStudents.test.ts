@@ -70,6 +70,29 @@ describe("normalizeAdminStudentRecord", () => {
   });
 });
 
+describe("normalizeAdminStudentRecord consult de-identification", () => {
+  const legacy = { id: 1, initials: "J.S.", room: "4B", dx: "AKI", topics: ["AKI"], notes: "pearl", date: "2026-07-01", status: "active", followUps: [] };
+
+  it("hides stored free text and counts the entries that still hold it", () => {
+    const record = normalizeAdminStudentRecord({
+      studentId: "student-1",
+      patients: [legacy, { id: 2, initials: "", topics: ["CKD"] }] as never,
+    });
+    expect(JSON.stringify(record.patients)).not.toMatch(/J\.S\.|pearl|"room"|"dx"/);
+    expect(record.patients.map(p => p.topics)).toEqual([["AKI"], ["CKD"]]);
+    expect(record.legacyPatientDetailCount).toBe(1);
+  });
+
+  it("omits the count for clean records and keeps the previous count when a partial update lacks patients", () => {
+    const clean = normalizeAdminStudentRecord({ studentId: "student-1", patients: [{ id: 2, topics: ["CKD"] }] as never });
+    expect(clean).not.toHaveProperty("legacyPatientDetailCount");
+
+    const existing = normalizeAdminStudentRecord({ studentId: "student-1", patients: [legacy] as never });
+    const partial = normalizeAdminStudentRecord({ studentId: "student-1", name: "Renamed" }, existing);
+    expect(partial.legacyPatientDetailCount).toBe(1);
+  });
+});
+
 describe("buildStudentProgressSummary", () => {
   it("counts required curriculum items separately from optional references", () => {
     const summary = buildStudentProgressSummary({

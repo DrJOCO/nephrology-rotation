@@ -191,17 +191,17 @@ their final commit).
 | D2 tenancy decision | ☐ pending (default: single project) | |
 | D3 Blaze + budget alerts | ✅ done 2026-07-06 | Dr. Cheng upgraded in console; WS-4 unblocked |
 | D4 distribution | ☐ deferred by default | |
-| WS-1 rules test harness | ☐ | |
-| WS-2 observability | ☐ | |
-| WS-3 feature flags | ☐ | |
-| WS-4 functions foundation | ☐ | |
+| WS-1 rules test harness | ✅ merged 2026-07-14 | PR #18; CI `rules` job |
+| WS-2 observability | ✅ merged 2026-07-14 | PR #18; dormant until a Sentry DSN is set |
+| WS-3 feature flags | ✅ merged 2026-07-14 | PR #18 |
+| WS-4 functions foundation | ✅ merged 2026-07-14 | PR #18; runtime moved to Node 22 on 2026-09-26 (nodejs20 decommissions 2026-10-30) |
 | WS-5 orgs (a/b/c) | ☐ | gap-deploy only |
 | WS-6 auth upgrade | ☐ | flag flip in gap |
 | WS-7 onboarding wizard | ☐ | |
 | WS-8 content packs | ☐ | design review first |
 | WS-9 server stamps + doc split | ☐ | design review first; cohort soak |
 | WS-10 aggregates | ☐ | |
-| WS-11 PHI posture | ☐ | per D1 |
+| WS-11 PHI posture | ◐ 11b code done 2026-09-26 | Picklist-only consult log. Still to do per rotation: admin Students tab → Privacy cleanup (backup, then remove) — run in a gap |
 | WS-12 legal/retention | ☐ | |
 | WS-13 a11y | ☐ | |
 | WS-14 export | ☐ | |

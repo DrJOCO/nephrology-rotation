@@ -95,7 +95,7 @@ vi.mock("../utils/firebase", () => ({
 }));
 
 function makePatient(id: string): Patient {
-  return { id, initials: "AB", room: "1", dx: "AKI", topics: [], notes: "", date: "2026-07-01", status: "active", followUps: [] };
+  return { id, topics: ["AKI"], date: "2026-07-01", status: "active", followUps: [] };
 }
 
 const SYNC_IDENTITY = { authType: "guest" };
@@ -713,5 +713,52 @@ describe("deleted student record guard", () => {
       h.listeners.student!({ updatedAt: INCOMING, patients: [] });
     });
     expect(api.sync.studentRemoved).toBe(false);
+  });
+});
+
+describe("consult de-identification (D1)", () => {
+  const LEGACY_STAMP = "2026-06-29T08:00:00.000Z";
+  const legacyEntry = () => ({
+    id: "p-legacy",
+    initials: "J.S.",
+    room: "4B-12",
+    dx: "AKI from sepsis",
+    topics: ["AKI"],
+    notes: "casts on UA",
+    date: "2026-06-29T08:00:00.000Z",
+    status: "active",
+    followUps: [{ id: 1, date: "2026-06-30T08:00:00.000Z", note: "Cr better" }],
+    updatedAt: LEGACY_STAMP,
+  });
+
+  it("scrubs pre-redesign entries on boot and writes the scrubbed, restamped copy", async () => {
+    h.storedValues["neph_patients"] = [legacyEntry()];
+    h.getCachedStudentUpdatedAt.mockReturnValue(CACHED);
+    h.getCachedStudentDoc.mockReturnValue({ ...makeInSyncCachedDoc(), patients: [legacyEntry()] });
+    await mountHarness();
+
+    const [loaded] = api.patients;
+    expect(loaded).not.toHaveProperty("initials");
+    expect(loaded.followUps).toEqual([{ id: 1, date: "2026-06-30T08:00:00.000Z" }]);
+
+    await act(async () => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(h.setStudentData).toHaveBeenCalledTimes(1);
+    const [, payload] = setStudentDataCall(0);
+    const written = payload.patients as Patient[];
+    expect(JSON.stringify(written)).not.toMatch(/J\.S\.|4B-12|sepsis|casts|Cr better/);
+    // Restamped past the stored copy, so newest-wins merges keep the scrub.
+    expect(written[0].updatedAt! > LEGACY_STAMP).toBe(true);
+  });
+
+  it("never lets an old client's free text in through the listener", async () => {
+    await mountHarness();
+    act(() => {
+      h.listeners.student!({ updatedAt: INCOMING, patients: [legacyEntry()] });
+    });
+    expect(api.patients).toHaveLength(1);
+    expect(JSON.stringify(api.patients)).not.toMatch(/J\.S\.|4B-12|sepsis|casts|Cr better/);
+    expect(api.patients[0].topics).toEqual(["AKI"]);
   });
 });

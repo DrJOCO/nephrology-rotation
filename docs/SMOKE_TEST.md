@@ -27,12 +27,14 @@ Use a private/incognito window (or a second browser) for the student steps so ad
 5. Review the rotation settings: start date, duration, location, attending info.
 6. Skim the content: from the Settings tab, open the "Curriculum & Content" section and confirm curriculum weeks, articles, announcements, and clinic guides look right for this cohort.
 7. If you changed anything, publish the changes to students.
+8. Open the Students tab. If a **Privacy cleanup** card appears, this rotation still stores consult details from before the picklist redesign: press **1. Download backup**, then **2. Remove old details**. Keep the backup file private and delete it once you have checked the result.
 
 **Expected result**
 
 - Sign-in succeeds and the PIN gate accepts the local PIN.
 - The rotation connects and shows the expected code, dates, and content.
 - Publish completes without an error toast.
+- After a cleanup (if one was needed), the Privacy cleanup card disappears.
 
 **If this fails, look at**
 

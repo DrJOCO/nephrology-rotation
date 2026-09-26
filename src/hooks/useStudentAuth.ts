@@ -15,6 +15,7 @@ import {
 } from "../utils/firebase";
 import { calculatePoints } from "../utils/gamification";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
+import { normalizePatients } from "../utils/patient";
 import { LIMITS } from "../utils/validation";
 import type { Patient, QuizScore, WeeklyScores, Gamification, ActivityLogEntry, SrQueue, CompletedItems, Bookmarks, ReflectionEntry } from "../types";
 import type { User } from "firebase/auth";
@@ -736,7 +737,7 @@ export function useStudentAuth(
           };
       if (existingData) {
         // Returning student on the same account — restore their data
-        if (existingData.patients) setPatients(existingData.patients);
+        if (existingData.patients) setPatients(normalizePatients(existingData.patients));
         if (existingData.weeklyScores) setWeeklyScores(existingData.weeklyScores);
         if (existingData.preScore) setPreScore(existingData.preScore);
         if (existingData.postScore) setPostScore(existingData.postScore);

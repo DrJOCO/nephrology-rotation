@@ -1,82 +1,43 @@
 import { describe, expect, it } from "vitest";
-import { detectPotentialPhi, validateFollowUp, validatePatientForm, validateQuizScoreEntry } from "./validation";
+import { validatePatientForm, validateQuizScoreEntry } from "./validation";
 
-describe("validation", () => {
-  it("allows normal educational patient entries", () => {
+describe("validatePatientForm", () => {
+  it("accepts topics with picklist details", () => {
     const result = validatePatientForm({
-      initials: "J.S.",
-      room: "4B-12",
-      dx: "AKI in the setting of sepsis",
       topics: ["AKI", "Hyperkalemia"],
-      notes: "Teaching point about urine sediment",
+      setting: "icu",
+      service: "critical-care",
+      hospitalDay: "2-3",
     });
 
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual({});
   });
 
-  it("flags likely PHI in diagnosis and notes", () => {
-    const result = validatePatientForm({
-      initials: "J.S.",
-      room: "4B-12",
-      dx: "DOB 03/14/1990 with AKI",
-      topics: ["AKI", "Hyperkalemia"],
-      notes: "MRN 12345678",
-    });
+  it("accepts a quick log with a single topic and no details", () => {
+    const result = validatePatientForm({ topics: ["AKI"] });
 
-    expect(result.valid).toBe(false);
-    expect(result.errors.dx).toBeTruthy();
-    expect(result.errors.notes).toBeTruthy();
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual({});
   });
 
   it("requires at least one patient topic", () => {
-    const result = validatePatientForm({
-      initials: "J.S.",
-      room: "4B-12",
-      dx: "AKI in the setting of sepsis",
-      topics: [],
-      notes: "",
-    });
+    const result = validatePatientForm({ topics: [] });
 
     expect(result.valid).toBe(false);
     expect(result.errors.topics).toContain("at least 1");
   });
 
-  it("accepts a quick log with a single topic and no initials", () => {
+  it("rejects detail values that are not picklist options", () => {
     const result = validatePatientForm({
-      initials: "",
-      room: "",
-      dx: "",
       topics: ["AKI"],
-      notes: "",
-    });
-
-    expect(result.valid).toBe(true);
-    expect(result.errors).toEqual({});
-  });
-
-  it("still validates initials format when initials are provided", () => {
-    const result = validatePatientForm({
-      initials: "J5!",
-      room: "",
-      dx: "",
-      topics: ["AKI"],
-      notes: "",
+      setting: "room 4B" as never,
+      service: "Dr. Smith's team" as never,
+      hospitalDay: "admitted 3/14" as never,
     });
 
     expect(result.valid).toBe(false);
-    expect(result.errors.initials).toBeTruthy();
-  });
-
-  it("detects contact details as likely PHI", () => {
-    expect(detectPotentialPhi("Call 555-123-4567")).toBeTruthy();
-    expect(detectPotentialPhi("email me at test@example.com")).toBeTruthy();
-  });
-
-  it("applies PHI validation to follow-up notes", () => {
-    const result = validateFollowUp("DOB 03/14/1990");
-    expect(result.valid).toBe(false);
-    expect(result.error).toBeTruthy();
+    expect(Object.keys(result.errors).sort()).toEqual(["hospitalDay", "service", "setting"]);
   });
 });
 

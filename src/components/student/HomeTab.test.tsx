@@ -26,11 +26,7 @@ const COMPETENCY_SUMMARY = {} as CompetencySummary;
 function makePatient(overrides: Partial<Patient>): Patient {
   return {
     id: overrides.id ?? Math.random(),
-    initials: "AB",
-    room: "101",
-    dx: "",
     topics: [],
-    notes: "",
     date: "2026-07-01",
     status: "active",
     followUps: [],

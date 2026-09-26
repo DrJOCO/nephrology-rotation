@@ -2,12 +2,15 @@
 //  Input Validation — centralized validation for all forms
 // ═══════════════════════════════════════════════════════════════════════
 
+import { CONSULT_SERVICES, CONSULT_SETTINGS, HOSPITAL_DAYS } from "../data/consultFields";
+import type { ConsultService, ConsultSetting, HospitalDay } from "../types";
+
+// Picklists only — the consult log has no free-text fields (D1).
 export interface PatientFormData {
-  initials: string;
-  room: string;
-  dx: string;
   topics: string[];
-  notes: string;
+  setting?: ConsultSetting;
+  service?: ConsultService;
+  hospitalDay?: HospitalDay;
 }
 
 export interface ValidationResult {
@@ -15,23 +18,8 @@ export interface ValidationResult {
   errors: Record<string, string>;
 }
 
-export interface FollowUpValidation {
-  valid: boolean;
-  error: string | null;
-}
-
-interface PhiCheck {
-  pattern: RegExp;
-  message: string;
-}
-
 // ── Field constraints ──────────────────────────────────────────────────
 export const LIMITS = {
-  INITIALS_MAX: 5,
-  ROOM_MAX: 10,
-  DIAGNOSIS_MAX: 200,
-  NOTES_MAX: 1000,
-  FOLLOWUP_MAX: 500,
   NAME_MAX: 50,
   ROTATION_CODE_MIN: 4,
   ROTATION_CODE_MAX: 20,
@@ -44,15 +32,7 @@ export const LIMITS = {
 };
 
 export const PHI_WARNING =
-  "Use initials and learning points only. Do not enter names, DOBs, MRNs, phone numbers, email addresses, or home addresses.";
-
-const PHI_CHECKS: PhiCheck[] = [
-  { pattern: /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i, message: "Remove email addresses." },
-  { pattern: /\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})\b/, message: "Remove phone numbers." },
-  { pattern: /\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b(?:19|20)\d{2}-\d{2}-\d{2}\b/, message: "Remove full dates." },
-  { pattern: /\b\d{7,}\b/, message: "Remove MRNs or other long numeric identifiers." },
-  { pattern: /\b(?:dob|date of birth|mrn|ssn|social security|address)\b/i, message: "Remove explicit identifying details." },
-];
+  "The consult log has no free-text fields by design — just topics and picklists. Keep patient details in the EHR.";
 
 // ── Sanitization helpers ───────────────────────────────────────────────
 
@@ -79,53 +59,14 @@ export function isValidUrl(str: string | undefined | null): boolean {
   }
 }
 
-export function detectPotentialPhi(text: string | undefined | null): string | null {
-  const value = (text || "").trim();
-  if (!value) return null;
-
-  for (const check of PHI_CHECKS) {
-    if (check.pattern.test(value)) return check.message;
-  }
-
-  return null;
-}
-
 // ── Patient form validation ────────────────────────────────────────────
 
-/**
- * Validate the patient form and return errors.
- * @param {{ initials: string, room: string, dx: string, topics: string[], notes: string }} form
- * @returns {{ valid: boolean, errors: Record<string, string> }}
- */
+function isOption<V extends string>(options: { value: V }[], value: unknown): boolean {
+  return options.some(option => option.value === value);
+}
+
 export function validatePatientForm(form: PatientFormData): ValidationResult {
   const errors: Record<string, string> = {};
-
-  // Initials: OPTIONAL (cohort feedback: required initials made quick topic
-  // logging feel like duplicate Cerner data entry). When present: max 5 chars,
-  // letters/periods/hyphens only.
-  const initials = (form.initials || "").trim();
-  if (initials && initials.length > LIMITS.INITIALS_MAX) {
-    errors.initials = `Max ${LIMITS.INITIALS_MAX} characters`;
-  } else if (initials && !/^[A-Za-z.\-\s]+$/.test(initials)) {
-    errors.initials = "Letters, periods, and hyphens only";
-  }
-
-  // Room: optional, max 10, alphanumeric + dash
-  const room = (form.room || "").trim();
-  if (room && room.length > LIMITS.ROOM_MAX) {
-    errors.room = `Max ${LIMITS.ROOM_MAX} characters`;
-  } else if (room && !/^[A-Za-z0-9\-\s]+$/.test(room)) {
-    errors.room = "Letters, numbers, and hyphens only";
-  }
-
-  // Diagnosis: optional, max 200
-  const dx = (form.dx || "").trim();
-  if (dx.length > LIMITS.DIAGNOSIS_MAX) {
-    errors.dx = `Max ${LIMITS.DIAGNOSIS_MAX} characters`;
-  } else {
-    const dxPhi = detectPotentialPhi(dx);
-    if (dxPhi) errors.dx = dxPhi;
-  }
 
   // Topics: at least one — the single signal the consult-linked learning loop
   // needs. (Was 2; reverted per cohort feedback that logging felt heavyweight.)
@@ -133,30 +74,12 @@ export function validatePatientForm(form: PatientFormData): ValidationResult {
     errors.topics = `Select at least ${LIMITS.PATIENT_TOPICS_MIN} topic${LIMITS.PATIENT_TOPICS_MIN !== 1 ? "s" : ""}`;
   }
 
-  // Notes: optional, max 1000
-  const notes = (form.notes || "").trim();
-  if (notes.length > LIMITS.NOTES_MAX) {
-    errors.notes = `Max ${LIMITS.NOTES_MAX} characters`;
-  } else {
-    const notesPhi = detectPotentialPhi(notes);
-    if (notesPhi) errors.notes = notesPhi;
-  }
+  // Details are optional picklists; anything else is a bug, not user input.
+  if (form.setting !== undefined && !isOption(CONSULT_SETTINGS, form.setting)) errors.setting = "Pick a setting from the list";
+  if (form.service !== undefined && !isOption(CONSULT_SERVICES, form.service)) errors.service = "Pick a service from the list";
+  if (form.hospitalDay !== undefined && !isOption(HOSPITAL_DAYS, form.hospitalDay)) errors.hospitalDay = "Pick a hospital day from the list";
 
   return { valid: Object.keys(errors).length === 0, errors };
-}
-
-/**
- * Validate a follow-up note
- * @param {string} text
- * @returns {{ valid: boolean, error: string|null }}
- */
-export function validateFollowUp(text: string | undefined | null): FollowUpValidation {
-  const trimmed = (text || "").trim();
-  if (!trimmed) return { valid: false, error: "Follow-up note cannot be empty" };
-  if (trimmed.length > LIMITS.FOLLOWUP_MAX) return { valid: false, error: `Max ${LIMITS.FOLLOWUP_MAX} characters` };
-  const phiError = detectPotentialPhi(trimmed);
-  if (phiError) return { valid: false, error: phiError };
-  return { valid: true, error: null };
 }
 
 // ── Quiz score entry validation (admin manual pre/post/module scores) ──

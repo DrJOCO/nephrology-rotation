@@ -10,6 +10,7 @@ import { ensureCurrentClinicGuide } from "../utils/clinicRotation";
 import { normalizeClinicGuideTemplates } from "../utils/clinicGuideTemplates";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import { buildTeamSnapshot } from "../utils/teamSnapshots";
+import { normalizePatients } from "../utils/patient";
 import {
   mergeCompletedItems,
   mergeRemovedPatientMaps,
@@ -280,6 +281,10 @@ export function useStudentSync(
       if (pendingJoinCode) setJoinCode(pendingJoinCode.trim().toUpperCase());
       if (storedJoinedAt) setJoinedAt(storedJoinedAt);
       if (pts) {
+        // De-identify on load: pre-redesign entries lose their free text here,
+        // and because the scrubbed content differs from the cached baseline the
+        // save effect restamps them, so the next write replaces the cloud copy.
+        const localPatients = normalizePatients(pts);
         // Local patients the synced-doc cache has never seen are never-synced
         // offline work (the tab closed before the debounce or write could
         // run). Mark them dirty so the first listener snapshot — which
@@ -287,11 +292,11 @@ export function useStudentSync(
         // the next flush unions them into the cloud copy.
         if (guardStudentId) {
           const cachedIds = new Set(cachedPatients.map((patient) => patient?.id));
-          pts.forEach((patient) => {
+          localPatients.forEach((patient) => {
             if (!cachedIds.has(patient.id)) markPatientDirty(patient.id);
           });
         }
-        setPatients(pts);
+        setPatients(localPatients);
       }
       if (ws) setWeeklyScores(ws);
       if (pre) setPreScore(pre);
@@ -559,7 +564,8 @@ export function useStudentSync(
         removedPatientsRef.current = mergeRemovedPatientMaps(removedPatientsRef.current, data.removedPatients);
       }
       if (data.patients) {
-        const incoming = data.patients as Patient[];
+        // Old clients may still write free-text fields; never let them in.
+        const incoming = normalizePatients(data.patients);
         const incomingById = new Map(incoming.map((p: Patient) => [p.id, p]));
         const removedMap = removedPatientsRef.current;
         setPatients(currentLocal => {
