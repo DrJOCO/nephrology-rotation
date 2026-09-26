@@ -79,9 +79,9 @@ describe("Hyponatremia tool calculators", () => {
     expect(target.highOdsRisk).toBe(true);
   });
 
-  it("uses the standard 10 mEq/L per 24h cap with no ODS modifiers and Na ≥120", () => {
+  it("keeps the 8 mEq/L per 24h cap even with no ODS modifiers and Na ≥120", () => {
     const target = calculateCorrectionTarget(baseInputs({ serumNa: "127" }));
-    expect(target.perDayCap).toBe(10);
+    expect(target.perDayCap).toBe(8);
     expect(target.highOdsRisk).toBe(false);
   });
 

@@ -236,7 +236,7 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
           "Current kidney activity: UPCR or UACR trend, creatinine/eGFR trend, urinalysis with sediment, hematuria/casts, serum albumin, edema, and BP.",
           "Serologic activity: complement C3/C4 and anti-dsDNA trend; check at clinic visits but avoid over-ordering more often than monthly.",
           "Current regimen and adherence: hydroxychloroquine, glucocorticoid dose/taper, MPAA/MMF dose, cyclophosphamide history, belimumab, voclosporin/tacrolimus/cyclosporine, rituximab/other biologics, and missed doses.",
-          "Treatment phase: new diagnosis, induction/active flare, partial response, complete response, maintenance, taper, refractory disease, pregnancy planning, or ESKD/transplant planning.",
+          "Treatment phase: new diagnosis, induction/active flare, partial response, complete response, maintenance, taper, refractory disease, pregnancy planning, or ESRD/transplant planning.",
           "Toxicity screen: infections, leukopenia, GI intolerance, tremor, hypertension, hyperkalemia, AKI, alopecia, mood/sleep changes, hyperglycemia, weight gain, bone risk, eye screening for HCQ, and malignancy/vaccine status.",
           "Reproductive safety: pregnancy intention, contraception, teratogenic medications such as mycophenolate or cyclophosphamide, fertility preservation when cyclophosphamide is being considered, and antiphospholipid syndrome history.",
           "Thrombosis risk: severe proteinuria, low serum albumin, antiphospholipid antibodies or prior clot, estrogen exposure, smoking, and immobility.",
@@ -490,7 +490,7 @@ export const CLINIC_GUIDES: ClinicGuideTemplates = {
     teachingPoints: [
       "For most adults, a practical treatment goal is under 130/80 mmHg; in CKD, KDIGO supports standardized office SBP under 120 mmHg for many non-dialysis patients when tolerated.",
       "Resistant HTN requires three appropriately dosed agents, usually including a diuretic, before adding more complexity.",
-      "Primary aldosteronism is common (5-14% of hypertension in primary care): the Endocrine Society 2025 guideline suggests screening everyone with hypertension with an aldosterone-to-renin ratio, not only resistant or hypokalemic cases.",
+      "Primary aldosteronism is common (5-14% of hypertension in primary care): the Endocrine Society 2025 guideline suggests screening everyone with hypertension with an aldosterone-to-renin ratio, not only resistant or hypokalemic cases. Screen on the current BP regimen (an MRA is the main exception) after correcting low K; a positive result on ACEi/ARB/diuretics strongly suggests PA, and a negative result with high suspicion is repeated after withdrawing interfering drugs.",
     ],
 
     discussionQuestions: [],

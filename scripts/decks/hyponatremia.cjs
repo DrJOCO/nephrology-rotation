@@ -198,7 +198,7 @@ async function build() {
       "Seizure, coma, respiratory arrest = brain swelling",
       { text: "3% saline 100 mL bolus IV over 10 min (may repeat ×2 until symptoms resolve)", bold: true, color: PALETTE.accent },
       "Goal: raise Na⁺ by 4–6 mEq/L quickly",
-      "Max 10–12 mEq/L in 24 h, 18 mEq/L in 48 h",
+      "Then cap at ≤ 8 mEq/L in 24 h unless clearly acute (< 48 h)",
       "Use 3% infusion 0.5–2 mL/kg/h after bolus",
     ], { fontSize: 11, paraSpaceAfter: 5 }), {
       x: 0.7, y: 1.85, w: 4.1, h: 3.0, margin: 0, valign: "top",

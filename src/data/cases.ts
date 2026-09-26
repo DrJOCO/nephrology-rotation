@@ -530,7 +530,7 @@ Renal ultrasound shows bilateral 12 cm kidneys with increased cortical echogenic
             "Focal segmental glomerulosclerosis (FSGS)"
           ],
           answer: 1,
-          explanation: "Diabetic nephropathy is the most common cause of nephrotic syndrome in adults and is the leading cause of kidney failure (ESKD) in the US. Key clues: longstanding poorly controlled diabetes (A1c 9.2%), increased renal cortical echogenicity (suggesting chronic parenchymal disease), and heavy proteinuria without hematuria. However, importantly, not all nephrotic syndrome in diabetics is from diabetic nephropathy — an atypical presentation (sudden onset, hematuria, or low complement) warrants biopsy to evaluate for superimposed disease."
+          explanation: "Diabetic nephropathy is the most common cause of nephrotic syndrome in adults and is the leading cause of ESRD in the US. Key clues: longstanding poorly controlled diabetes (A1c 9.2%), increased renal cortical echogenicity (suggesting chronic parenchymal disease), and heavy proteinuria without hematuria. However, importantly, not all nephrotic syndrome in diabetics is from diabetic nephropathy — an atypical presentation (sudden onset, hematuria, or low complement) warrants biopsy to evaluate for superimposed disease."
         },
         {
           q: "Which factor in this patient would make you consider a renal biopsy rather than empirically treating as diabetic nephropathy?",
@@ -599,7 +599,7 @@ CXR shows bilateral pulmonary infiltrates. Anti-MPO (p-ANCA) is strongly positiv
             "Supportive care and monitoring, as ANCA vasculitis is self-limited"
           ],
           answer: 1,
-          explanation: "Severe ANCA vasculitis with organ-threatening disease (RPGN + pulmonary hemorrhage) requires aggressive immunosuppression: (1) Pulse IV methylprednisolone (500-1000 mg x 3 days) followed by a reduced-dose oral prednisone taper \u2014 PEXIVAS showed the reduced-dose schedule was non-inferior and had less serious infection. (2) KDIGO 2024 recommends initial induction with glucocorticoids PLUS rituximab OR cyclophosphamide (both acceptable). Rituximab is preferred in specific settings \u2014 relapsing disease, PR3-ANCA, fertility concerns, frail older adults; cyclophosphamide (or a RTX + CYC combined approach) remains reasonable for severe GN or alveolar hemorrhage at many centers. (3) Plasma exchange: PEXIVAS did NOT show an overall mortality or ESKD benefit, so PLEX was removed from routine use \u2014 it remains a 'consider' decision for hypoxemic diffuse alveolar hemorrhage, very severe kidney involvement (eg, Cr >5.7 / dialysis-requiring), or concurrent anti-GBM antibodies. (4) Add avacopan to allow rapid steroid taper (ADVOCATE). Without treatment, RPGN progresses to kidney failure within weeks."
+          explanation: "Severe ANCA vasculitis with organ-threatening disease (RPGN + pulmonary hemorrhage) requires aggressive immunosuppression: (1) Pulse IV methylprednisolone (500-1000 mg x 3 days) followed by a reduced-dose oral prednisone taper \u2014 PEXIVAS showed the reduced-dose schedule was non-inferior and had less serious infection. (2) KDIGO 2024 recommends initial induction with glucocorticoids PLUS rituximab OR cyclophosphamide (both acceptable). Rituximab is preferred in specific settings \u2014 relapsing disease, PR3-ANCA, fertility concerns, frail older adults; cyclophosphamide (or a RTX + CYC combined approach) remains reasonable for severe GN or alveolar hemorrhage at many centers. (3) Plasma exchange: PEXIVAS did NOT show an overall mortality or ESRD benefit, so PLEX was removed from routine use \u2014 it remains a 'consider' decision for hypoxemic diffuse alveolar hemorrhage, very severe kidney involvement (eg, Cr >5.7 / dialysis-requiring), or concurrent anti-GBM antibodies. (4) Add avacopan to allow rapid steroid taper (ADVOCATE). Without treatment, RPGN progresses to ESRD within weeks."
         },
         {
           q: "The renal biopsy shows crescentic glomerulonephritis with pauci-immune (no or scant immunoglobulin/complement) staining on immunofluorescence. This pattern is most consistent with:",
@@ -633,7 +633,7 @@ His renal function has been stable over the past year. He asks about "new kidney
             "Allopurinol for uric acid reduction"
           ],
           answer: 1,
-          explanation: "SGLT2 inhibitors have revolutionized CKD management. The DAPA-CKD trial demonstrated that dapagliflozin reduced the composite of sustained eGFR decline, kidney failure, and renal/CV death by 39% in patients with CKD (eGFR 25-75) regardless of diabetes status. The CREDENCE trial showed similar benefits with canagliflozin. KDIGO 2024 recommends an SGLT2i (1A) for adults with CKD and eGFR ≥20 who have type 2 diabetes, UACR ≥200 mg/g, or heart failure — this patient qualifies on the first two. Dual RAAS blockade is harmful (ONTARGET, VA NEPHRON-D)."
+          explanation: "SGLT2 inhibitors have revolutionized CKD management. The DAPA-CKD trial demonstrated that dapagliflozin reduced the composite of sustained eGFR decline, ESRD, and renal/CV death by 39% in patients with CKD (eGFR 25-75) regardless of diabetes status. The CREDENCE trial showed similar benefits with canagliflozin. KDIGO 2024 recommends an SGLT2i (1A) for adults with CKD and eGFR ≥20 who have type 2 diabetes, UACR ≥200 mg/g, or heart failure — this patient qualifies on the first two. Dual RAAS blockade is harmful (ONTARGET, VA NEPHRON-D)."
         },
         {
           q: "When starting an SGLT2 inhibitor, an initial dip in eGFR of 10-15% is expected. What is the mechanism?",
@@ -883,7 +883,7 @@ Vitals: BP 142/88 (likely pain), HR 92, temp 37.0°C. Labs: Cr 1.0, Ca2+ 10.8 (s
       category: "Peritoneal Dialysis",
       difficulty: "MS4 Core",
       topics: ["Peritoneal Dialysis", "Dialysis"],
-      scenario: `A 48-year-old woman with ESKD from lupus nephritis has been on automated peritoneal dialysis (APD) for 2 years via a Tenckhoff catheter. She calls the PD clinic reporting that her effluent bags have been cloudy for the past 12 hours. She has mild diffuse abdominal pain and feels "achy." She denies fever, nausea, vomiting, or diarrhea. She reports no recent contamination events or breaks in sterile technique.
+      scenario: `A 48-year-old woman with ESRD from lupus nephritis has been on automated peritoneal dialysis (APD) for 2 years via a Tenckhoff catheter. She calls the PD clinic reporting that her effluent bags have been cloudy for the past 12 hours. She has mild diffuse abdominal pain and feels "achy." She denies fever, nausea, vomiting, or diarrhea. She reports no recent contamination events or breaks in sterile technique.
 
 On exam in the ED: T 37.9\u00b0C, BP 128/78, HR 92. Abdomen is mildly tender diffusely without rebound or guarding. The PD catheter exit site is clean with no erythema, drainage, or tunnel tenderness.
 

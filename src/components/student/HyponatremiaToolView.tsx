@@ -335,7 +335,7 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
           <Panel icon={AlertTriangle} title="ODS Risk Modifiers">
             <OptionGrid options={ODS_RISK_OPTIONS} selectedIds={inputs.selectedOdsRisk} onToggle={(id) => toggleArray("selectedOdsRisk", id)} />
             <div style={{ marginTop: 10, color: T.sub, fontSize: 12.5, lineHeight: 1.5 }}>
-              UpToDate high-risk groups: Na ≤105, hypoK, alcohol use disorder, malnutrition, advanced liver disease, hypophosphatemia. Cap at 8 mEq/L per 24 h.
+              UpToDate high-risk groups: Na ≤105, hypoK, alcohol use disorder, malnutrition, advanced liver disease, hypophosphatemia. The cap is ≤8 mEq/L per 24 h for everyone; in these groups aim for the low end (4–6).
             </div>
           </Panel>
         </div>
@@ -410,12 +410,12 @@ export default function HyponatremiaToolView({ onBack }: { onBack: () => void })
               <HeadlineMetric
                 value={`${assessment.correctionTarget.perDayCap}`}
                 unit="mEq/L/24h cap"
-                caption={assessment.correctionTarget.highOdsRisk ? "High ODS risk" : "Standard cap"}
+                caption={assessment.correctionTarget.highOdsRisk ? "High ODS risk — aim 4–6" : "Chronic hyponatremia cap"}
                 tone={assessment.correctionTarget.highOdsRisk ? "warning" : "info"}
                 variant="compact"
               />
               <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5 }}>
-                Target ~4–6 mEq/L rise in the first 24 h to relieve severe symptoms. Then keep total under the cap. Most ODS cases occurred with &gt;10–12 mEq/L in 24 h or &gt;18 mEq/L in 48 h.
+                Target ~4–6 mEq/L rise in the first 24 h (enough to relieve severe symptoms). Never exceed 8 mEq/L in any 24 h for chronic or unknown-duration hyponatremia. Most ODS cases occurred with &gt;10–12 mEq/L in 24 h or &gt;18 mEq/L in 48 h.
               </div>
             </div>
             {assessment.correctionTarget.reasons.length > 0 && (

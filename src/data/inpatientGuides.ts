@@ -796,7 +796,7 @@ export const INPATIENT_GUIDES: Record<
     topic: "DKD",
     icon: "🩸",
     title: "Diabetic Kidney Disease",
-    subtitle: "The #1 cause of ESKD — optimize every pillar",
+    subtitle: "The #1 cause of ESRD — optimize every pillar",
     whyWeGetConsulted:
       "Progressive CKD in a diabetic patient, rising proteinuria, or medication optimization for DKD. The team wants to know: Is this DKD or something else? Are we maximizing therapy?",
     teachingPearl:

@@ -888,7 +888,7 @@ export const GUIDE_DATA = {
         items: [
           "Give AFTER dialysis: vancomycin, many antibiotics, antiepileptics",
           "Before dialysis: do NOT routinely hold antihypertensives. Selective pre-HD holds only for patients with documented intradialytic hypotension.",
-          "Avoid: NSAIDs (even more dangerous in ESKD). Gadolinium: ACR/NKF consensus \u2014 group II agents (eg, gadobutrol, gadoteridol, gadoterate) have very low NSF risk in ESKD. Do NOT withhold clinically indicated MRI, and do NOT initiate or intensify dialysis just because gadolinium was given.",
+          "Avoid: NSAIDs (even more dangerous in ESRD). Gadolinium: ACR/NKF consensus \u2014 group II agents (eg, gadobutrol, gadoteridol, gadoterate) have very low NSF risk in ESRD. Do NOT withhold clinically indicated MRI, and do NOT initiate or intensify dialysis just because gadolinium was given.",
           "Phosphorus binders: continue with meals (calcium acetate, sevelamer, etc.)",
           "EPO/darbepoetin: being given at dialysis unit — don't duplicate",
           "Calcimimetics (cinacalcet): continue for secondary hyperparathyroidism",
@@ -1273,7 +1273,7 @@ export const GUIDE_DATA = {
         emoji: "💉",
         color: "#E67E22",
         items: [
-          "OPENING: '[Initials] is a [age] [sex] with ESKD on [HD MWF / HD TTS / PD], admitted for [reason].'",
+          "OPENING: '[Initials] is a [age] [sex] with ESRD on [HD MWF / HD TTS / PD], admitted for [reason].'",
           "DIALYSIS DETAILS: 'Dialyzes at [unit name], schedule [MWF or TTS]. Access: [AVF left forearm / AVG right upper arm / TDC right IJ]. Last HD was [date/day].'",
           "MISSED SESSIONS: 'They [made / missed] their last [X] session(s). [If missed: reason and duration].'",
           "DRY WEIGHT: 'Dry weight is [X] kg, current weight is [Y] kg — [Z kg over/under target].'",
@@ -1290,7 +1290,7 @@ export const GUIDE_DATA = {
         color: "#8E44AD",
         items: [
           "OPENING: '[Initials] is a [age] [sex] who is [X months/years] post kidney transplant from [deceased / living related / living unrelated donor], admitted for [reason].'",
-          "TRANSPLANT DETAILS: 'Transplanted on [date] at [center]. Original disease: [cause of ESKD]. Baseline Cr [X] (best post-transplant Cr [Y]).'",
+          "TRANSPLANT DETAILS: 'Transplanted on [date] at [center]. Original disease: [cause of ESRD]. Baseline Cr [X] (best post-transplant Cr [Y]).'",
           "IMMUNOSUPPRESSION: 'Current regimen: [tacrolimus X mg BID / mycophenolate X mg BID / prednisone X mg daily]. Any recent changes?'",
           "CURRENT ISSUE: 'Cr has risen from baseline [X] to [Y] over [timeframe]. Symptoms: [fever, graft tenderness, decreased UOP, or none].'",
           "DRUG LEVELS: 'Tacrolimus trough: [level] (target [range for time post-transplant]). Last dose timing: [time]. Recent med additions that interact with tacrolimus?'",

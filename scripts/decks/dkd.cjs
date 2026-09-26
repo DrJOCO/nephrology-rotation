@@ -19,7 +19,7 @@ async function build() {
   addCoverSlide(pres, {
     topic: "Diabetic Kidney Disease",
     subtitle: "The four-pillar therapy",
-    tagline: "DKD is the #1 cause of end-stage kidney disease (ESKD). Every pillar in place at every visit.",
+    tagline: "DKD is the #1 cause of end-stage renal disease (ESRD). Every pillar in place at every visit.",
   });
 
 
@@ -28,7 +28,7 @@ async function build() {
     const s = newContentSlide(pres, {
       topic: TOPIC, slideNumber: 2, totalSlides: TOTAL,
       title: "Why it matters",
-      subtitle: "Most common cause of ESKD in the US — and highly modifiable if caught early.",
+      subtitle: "Most common cause of ESRD in the US — and highly modifiable if caught early.",
       source: "KDIGO 2022 Diabetes in CKD. KDIGO 2024 CKD Guideline.",
     });
     addCard(s, {
@@ -218,7 +218,7 @@ async function build() {
     const s = newContentSlide(pres, {
       topic: TOPIC, slideNumber: 6, totalSlides: TOTAL,
       title: "BP, lipids, and CV risk",
-      subtitle: "DKD patients die from CV disease more often than ESKD.",
+      subtitle: "DKD patients die from CV disease more often than ESRD.",
       source: "KDIGO 2021 BP in CKD. KDIGO lipid recommendations.",
     });
 
@@ -321,10 +321,10 @@ async function build() {
         { text: "Takeaway", options: { bold: true, color: "FFFFFF", fill: { color: PALETTE.primary } } },
       ],
       ["Captopril Trial",   "1993", "T1DM: captopril ↓ doubling Cr 48%. Foundation of RAAS in DKD."],
-      ["RENAAL",            "2001", "T2DM: losartan ↓ ESKD/doubling Cr 25%."],
+      ["RENAAL",            "2001", "T2DM: losartan ↓ ESRD/doubling Cr 25%."],
       ["IDNT",              "2001", "T2DM: irbesartan ↓ progression 20–23%."],
       ["ONTARGET",          "2008", "Dual RAAS harmful — never combine ACEi + ARB."],
-      ["CREDENCE",          "2019", "Canagliflozin ↓ ESKD/doubling Cr/renal-CV death 30% in T2DM + CKD."],
+      ["CREDENCE",          "2019", "Canagliflozin ↓ ESRD/doubling Cr/renal-CV death 30% in T2DM + CKD."],
       ["DAPA-CKD",          "2020", "Dapagliflozin ↓ kidney failure 39% across DM + non-DM CKD."],
       ["EMPA-KIDNEY",       "2023", "Empagliflozin ↓ CKD progression 28% across eGFR 20–90."],
       ["FIDELIO-DKD",       "2020", "Finerenone ↓ CKD progression 18% on max RAAS."],

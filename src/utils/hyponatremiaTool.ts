@@ -264,12 +264,12 @@ export function calculateEstimatedDailySolute(inputs: HyponatremiaInputs): { val
 export function calculateCorrectionTarget(inputs: HyponatremiaInputs): CorrectionTargetResult {
   const na = parsePositive(inputs.serumNa);
   const reasons: string[] = [];
-  // Default per UpToDate: 10–12 mEq/L per 24h cap; tighten to 8 mEq/L if Na<120 or other ODS risk factors
-  let perDayCap = 10;
+  // Rotation teaching standard: chronic hyponatremia is capped at ≤8 mEq/L in any 24-hour period
+  // for every patient. Risk factors don't change the cap; they flag where to aim lower (4–6) and monitor closely.
+  const perDayCap = 8;
   let highOdsRisk = false;
   if (na !== null && na < 120) {
-    perDayCap = 8;
-    reasons.push("Serum Na <120 mEq/L — UpToDate caps correction at 8 mEq/L in any 24-hour period.");
+    reasons.push("Serum Na <120 mEq/L — severe hyponatremia; aim for 4–6 mEq/L and monitor Na closely.");
     highOdsRisk = true;
   }
   if (na !== null && na <= 105) {
@@ -277,7 +277,6 @@ export function calculateCorrectionTarget(inputs: HyponatremiaInputs): Correctio
     highOdsRisk = true;
   }
   if (hasAny(inputs.selectedOdsRisk, ["alcohol", "malnutrition", "liver_disease", "hypoK", "hypoP"])) {
-    perDayCap = Math.min(perDayCap, 8);
     reasons.push("ODS risk modifier selected (alcohol use disorder, malnutrition, liver disease, hypokalemia, or hypophosphatemia).");
     highOdsRisk = true;
   }

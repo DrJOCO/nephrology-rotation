@@ -376,7 +376,7 @@ async function build() {
         { text: "Year", options: { bold: true, color: "FFFFFF", fill: { color: PALETTE.primary }, align: "center" } },
         { text: "Takeaway", options: { bold: true, color: "FFFFFF", fill: { color: PALETTE.primary } } },
       ],
-      ["RENAAL",       "2001", "Losartan ↓ ESKD/doubling Cr 25–28% in T2DM nephropathy."],
+      ["RENAAL",       "2001", "Losartan ↓ ESRD/doubling Cr 25–28% in T2DM nephropathy."],
       ["IDNT",         "2001", "Irbesartan — renoprotection independent of BP lowering."],
       ["ONTARGET",     "2008", "Dual RAAS (ACEi+ARB) → harm, more hyperK and AKI."],
       ["SPRINT",       "2015", "Intensive SBP < 120 ↓ CV events 25% (non-diabetic)."],

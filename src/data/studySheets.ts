@@ -348,11 +348,11 @@ export const STUDY_SHEETS = {
       ],
       trialCallouts: [
         { trial: "MENTOR", pearl: "In 130 primary MN patients, rituximab matched cyclosporine at 12 mo (60% vs 52% remission) and BEAT it at 24 mo (60% vs 20%) because CNI patients relapsed. RTX is now first-line for high-risk MN." },
-        { trial: "TESTING", pearl: "In 503 IgAN patients with proteinuria >1 g/d on max ACEi/ARB, reduced-dose methylprednisolone cut the composite of 40% eGFR drop / ESKD / kidney death vs placebo. Use in selected high-risk patients." },
+        { trial: "TESTING", pearl: "In 503 IgAN patients with proteinuria >1 g/d on max ACEi/ARB, reduced-dose methylprednisolone cut the composite of 40% eGFR drop / ESRD / kidney death vs placebo. Use in selected high-risk patients." },
         { trial: "RAVE", pearl: "In 197 severe ANCA vasculitis patients, rituximab was non-inferior to cyclophosphamide for 6-mo remission (64% vs 53%) and SUPERIOR for relapsing disease. FDA-approved 2011." },
         { trial: "ADVOCATE (Avacopan)", pearl: "In 331 AAV patients, avacopan (C5aR inhibitor) + RTX or CYC achieved 52-wk sustained remission in 66% vs 55% with a standard prednisone taper \u2014 with far less steroid toxicity. FDA-approved 2021." },
         { trial: "STOP-IgAN", pearl: "In 162 IgAN patients on max supportive care (ACEi/ARB + BP), adding older broad immunosuppression did NOT improve eGFR at 3 years and caused more harm. Supportive care is still the foundation, but KDIGO 2025 now pairs it with safer targeted therapy in high-risk patients." },
-        { trial: "PEXIVAS", pearl: "In 704 severe AAV patients (eGFR <50 or pulmonary hemorrhage), plasma exchange did NOT reduce death or ESKD. Removed PLEX from routine AAV protocols; reduced-dose steroids were also non-inferior." },
+        { trial: "PEXIVAS", pearl: "In 704 severe AAV patients (eGFR <50 or pulmonary hemorrhage), plasma exchange did NOT reduce death or ESRD. Removed PLEX from routine AAV protocols; reduced-dose steroids were also non-inferior." },
         { trial: "BLISS-LN (Belimumab for LN)", pearl: "In 448 active LN patients, adding belimumab to MMF or CYC + steroids improved the 2-year renal response (43% vs 32% PERR). First biologic FDA-approved for LN (2020) \u2014 cornerstone of triple therapy." },
         { trial: "AURORA-1 (Voclosporin)", pearl: "In 357 active LN patients, adding voclosporin to MMF + steroids nearly doubled 1-year complete renal response (41% vs 23%). FDA-approved 2021 \u2014 use only if eGFR >45." },
         { trial: "PROTECT (Sparsentan)", pearl: "In 404 IgAN patients on max ACEi/ARB, sparsentan cut 36-wk proteinuria 49.8% vs 15.1% with irbesartan and modestly slowed eGFR decline at 2 years. FDA accelerated approval 2023, full approval 2024." },
@@ -419,14 +419,14 @@ export const STUDY_SHEETS = {
       id: "dkd-sglt2i-cheatsheet",
       icon: "\u{1F489}",
       title: "DKD & SGLT2i Deep Dive",
-      subtitle: "The #1 cause of ESKD deserves its own sheet",
+      subtitle: "The #1 cause of ESRD deserves its own sheet",
       topics: ["Diabetic Kidney Disease", "SGLT2 Inhibitors", "CKD"],
       sections: [
         {
           heading: "Diabetic Kidney Disease (DKD)",
           items: [
-            "#1 cause of ESKD worldwide \u2014 affects ~40% of patients with diabetes",
-            "Classic progression: Hyperfiltration \u2192 microalbuminuria (A2: 30-300 mg/g) \u2192 macroalbuminuria (A3: >300) \u2192 declining GFR \u2192 ESKD",
+            "#1 cause of ESRD worldwide \u2014 affects ~40% of patients with diabetes",
+            "Classic progression: Hyperfiltration \u2192 microalbuminuria (A2: 30-300 mg/g) \u2192 macroalbuminuria (A3: >300) \u2192 declining GFR \u2192 ESRD",
             "Screening: Annual UACR + eGFR for all diabetics (type 1 after 5 years, type 2 at diagnosis)",
             "When to suspect non-diabetic kidney disease in a diabetic: No retinopathy, active sediment, rapid GFR decline, onset <5 years after T1DM diagnosis \u2192 consider biopsy",
             "Pathology: Kimmelstiel-Wilson nodular glomerulosclerosis (classic but late), diffuse mesangial expansion (earlier)",
@@ -467,15 +467,15 @@ export const STUDY_SHEETS = {
       id: "adpkd-cheatsheet",
       icon: "\u{1FAE7}",
       title: "ADPKD: Genetics to Tolvaptan",
-      subtitle: "The most common monogenic cause of ESKD",
+      subtitle: "The most common monogenic cause of ESRD",
       topics: ["Polycystic Kidney Disease", "CKD", "Hypertension"],
       sections: [
         {
           heading: "Genetics & Epidemiology",
           items: [
-            "Prevalence ~1 in 1000 live births \u2014 the most common monogenic cause of CKD/ESKD",
-            "PKD1 (chromosome 16): ~78% of families. More severe, earlier ESKD (median ~55 y)",
-            "PKD2 (chromosome 4): ~14% of families. Milder, later ESKD (median ~70 y) \u2014 still not benign",
+            "Prevalence ~1 in 1000 live births \u2014 the most common monogenic cause of CKD/ESRD",
+            "PKD1 (chromosome 16): ~78% of families. More severe, earlier ESRD (median ~55 y)",
+            "PKD2 (chromosome 4): ~14% of families. Milder, later ESRD (median ~70 y) \u2014 still not benign",
             "Rare genotypes: GANAB, DNAJB11, IFT140, ALG9 \u2014 usually milder, atypical imaging",
             "Risk factors for faster progression: PKD1 truncating mutation, male sex, early symptoms, large TKV, hypertension",
           ],
@@ -516,7 +516,7 @@ export const STUDY_SHEETS = {
           heading: "Risk Stratification \u2014 Who Gets Tolvaptan?",
           items: [
             "Mayo Imaging Classification is preferred: uses age, height, and total kidney volume (TKV) on CT-no-contrast or MRI-no-gadolinium",
-            "Class 1C, 1D, 1E = HIGH RISK for progression to ESKD \u2192 tolvaptan candidates",
+            "Class 1C, 1D, 1E = HIGH RISK for progression to ESRD \u2192 tolvaptan candidates",
             "Class 2 = atypical imaging (asymmetric, unilateral, segmental) \u2014 usually slower",
             "If TKV not available: PROPKD score, rapid eGFR decline (\u22652.5\u20133 mL/min/yr), early HTN (<35 y), or early gross hematuria",
           ],
@@ -559,7 +559,7 @@ export const STUDY_SHEETS = {
             "Cyst pain: acetaminophen \u2192 tramadol; avoid chronic NSAIDs; refractory \u2192 cyst aspiration/sclerosis or laparoscopic fenestration",
             "Hematuria: usually self-limited; hydration and rest; rule out stone/infection/malignancy",
             "Cyst infection: lipophilic antibiotics (fluoroquinolone, TMP-SMX) for weeks \u2014 beta-lactams penetrate cysts poorly",
-            "ESKD: all modalities work; PD is feasible despite large kidneys; transplant outcomes equal or better than non-ADPKD",
+            "ESRD: all modalities work; PD is feasible despite large kidneys; transplant outcomes equal or better than non-ADPKD",
             "Nephrectomy: reserved for disabling mass effect, recurrent infection, suspected RCC, or to make room for transplant",
           ],
         },
@@ -589,7 +589,7 @@ export const STUDY_SHEETS = {
         {
           heading: "HD vs. PD vs. CRRT",
           items: [
-            "HD (hemodialysis): 3\u20134h sessions, 3\u00d7/week. Standard for most ESKD. Requires vascular access (AVF > AVG > TDC)",
+            "HD (hemodialysis): 3\u20134h sessions, 3\u00d7/week. Standard for most ESRD. Requires vascular access (AVF > AVG > TDC)",
             "PD (peritoneal dialysis): Patient does at home, daily exchanges. Better initial quality of life, preserves residual renal function longer",
             "CRRT: ICU only, for hemodynamically unstable patients. Slower fluid/solute removal = less hypotension",
             "Standard Kt/V target: \u22651.2 (HEMO Study showed no benefit to higher doses)",
@@ -752,7 +752,7 @@ export const STUDY_SHEETS = {
           heading: "Fabry Disease",
           items: [
             "X-linked lysosomal storage disorder: Deficiency of alpha-galactosidase A → accumulation of globotriaosylceramide (Gb3) in kidneys, heart, and nervous system",
-            "Kidney manifestations: Progressive CKD with proteinuria, can reach ESKD by age 40-50 in males. Females are variably affected (X-inactivation)",
+            "Kidney manifestations: Progressive CKD with proteinuria, can reach ESRD by age 40-50 in males. Females are variably affected (X-inactivation)",
             "Classic symptoms: Acroparesthesias (burning pain in hands/feet in childhood), angiokeratomas, corneal verticillata, hypohidrosis, cardiac (LVH, arrhythmias)",
             "Diagnosis: Alpha-galactosidase A activity (low in males), plus GLA genetic testing; a kidney gene panel can identify GLA variants and support family screening.",
             "Treatment: Enzyme replacement therapy (agalsidase beta, or pegunigalsidase alfa \u2014 FDA-approved 2023) or oral chaperone therapy (migalastat, for amenable GLA variants). Early treatment slows progression",
@@ -762,7 +762,7 @@ export const STUDY_SHEETS = {
           heading: "Alport Syndrome",
           items: [
             "Genetic collagen IV disorder: Mutations in COL4A3, COL4A4, or COL4A5 → abnormal glomerular basement membrane",
-            "X-linked (most common, COL4A5): Males → ESKD by 20s-30s, sensorineural hearing loss, anterior lenticonus. Females = carriers with variable hematuria/proteinuria",
+            "X-linked (most common, COL4A5): Males → ESRD by 20s-30s, sensorineural hearing loss, anterior lenticonus. Females = carriers with variable hematuria/proteinuria",
             "Autosomal recessive (COL4A3/A4): Both sexes affected equally, similar severity to X-linked males",
             "Biopsy: GBM thinning, splitting, and lamellation ('basket-weave' pattern on electron microscopy)",
             "Treatment: early ACEi/ARB (slows progression \u2014 start once proteinuria appears, even before eGFR drops). Consider SGLT2i in adults with albuminuric CKD when general CKD criteria are met, but direct Alport-specific outcome data remain limited. COL4A3/A4/A5 genetic testing confirms the diagnosis and guides family screening. Bardoxolone (CARDINAL trial) met eGFR endpoints but the FDA declined approval in 2022 (durability of benefit and CV/fluid-retention concerns) \u2014 no Alport-specific drug is approved.",
