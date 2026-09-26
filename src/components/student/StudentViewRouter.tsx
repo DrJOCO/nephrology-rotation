@@ -44,6 +44,7 @@ const ClinicGuideView = lazy(() => import("./ClinicGuideView"));
 const ClinicGuideHistoryView = lazy(() => import("./ClinicGuideHistoryView"));
 const InpatientGuideView = lazy(() => import("./InpatientGuideView"));
 const RotationGuideView = lazy(() => import("./RotationGuideView"));
+const WritePracticeView = lazy(() => import("./WritePracticeView"));
 
 const LazyFallback = () => (
   <div style={{ padding: 40, textAlign: "center" }}>
@@ -448,7 +449,21 @@ function StudentViewRouter({
           <ClinicGuideHistoryView guides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} onSelect={(date, topic) => navigate("library", { type: "clinicGuide", date, topic })} onBack={goBack} />
         )}
         {tab === "library" && subView?.type === "inpatientGuide" && (
-          <InpatientGuideView topic={subView.topic as import("../../data/inpatientGuides").InpatientGuideTopic} onBack={goBack} />
+          <InpatientGuideView
+            topic={subView.topic as import("../../data/inpatientGuides").InpatientGuideTopic}
+            onBack={goBack}
+            onOpenCalculator={(id) => navigate("library", { type: "refDetail", id })}
+            onPractice={(topic) => navigate("library", { type: "writePractice", topic })}
+          />
+        )}
+        {tab === "library" && subView?.type === "writePractice" && (
+          <WritePracticeView
+            topic={subView.topic as import("../../data/inpatientGuides").InpatientGuideTopic | undefined}
+            onBack={goBack}
+            onSelectTopic={(topic) => navigate("library", { type: "writePractice", topic })}
+            onOpenGuide={(topic) => navigate("library", { type: "inpatientGuide", topic })}
+            onPickAnother={() => navigate("library", { type: "writePractice" })}
+          />
         )}
         {tab === "library" && subView?.type === "akiTool" && (
           <AkiToolView onBack={goBack} onOpenCalculator={(id) => navigate("library", { type: "refDetail", id })} />
@@ -465,7 +480,7 @@ function StudentViewRouter({
         {tab === "library" && subView?.type === "faq" && (
           <FaqView onBack={goBack} />
         )}
-        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} goBack={goBack} />}
+        {tab === "library" && subView && !subView?.type?.toString().startsWith("clinic") && subView?.type !== "trialLibrary" && subView?.type !== "inpatientGuide" && subView?.type !== "writePractice" && subView?.type !== "akiTool" && subView?.type !== "hyponatremiaTool" && subView?.type !== "gnTool" && subView?.type !== "rotationGuide" && subView?.type !== "faq" && subView?.type !== "refDetail" && subView?.type !== "abbreviations" && <GuideTab navigate={navigate as (tab: string, sv?: Record<string, unknown> | null) => void} subView={subView as Record<string, unknown> | null} clinicGuides={clinicGuides} clinicGuideTemplates={clinicGuideTemplates} goBack={goBack} />}
         {tab === "patients" && <PatientTab patients={patients} setPatients={setPatients} navigate={navigate} completedItems={completedItems} onLogActivity={logActivity} onMarkPatientDirty={markPatientDirty} onMarkPatientRemoved={markPatientRemoved} onCompleteConsultTopic={onCompleteConsultTopic} />}
         {tab === "team" && <TeamTab currentStudentId={studentId} />}
         {tab === "me" && <ProgressTab navigate={navigate} patients={patients} weeklyScores={weeklyScores} preScore={preScore} postScore={postScore} gamification={gamification} currentWeek={currentWeek} competencySummary={competencySummary} />}

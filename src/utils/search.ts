@@ -13,6 +13,7 @@ import { CLINIC_GUIDES } from "../data/clinicGuides";
 import { CURRICULUM_DECKS } from "../data/constants";
 import { consultDetailLabels } from "../data/consultFields";
 import { INPATIENT_GUIDES } from "../data/inpatientGuides";
+import { INPATIENT_SKILLS } from "../data/inpatientSkills";
 import { ROTATION_GUIDES } from "../data/rotationGuides";
 import type { SearchDataSources } from "../types";
 
@@ -315,6 +316,8 @@ export function searchAll(
       { value: guide.topic, weight: 2 },
       { value: guide.subtitle, weight: 1.5 },
       { value: guide.discussionQuestions.join(" "), weight: 0.5 },
+      { value: (INPATIENT_SKILLS[guide.topic]?.historyQuestions || []).join(" "), weight: 0.4 },
+      { value: (INPATIENT_SKILLS[guide.topic]?.examFindings || []).join(" "), weight: 0.4 },
     ]);
     if (score > 0) {
       results.pearls.push({

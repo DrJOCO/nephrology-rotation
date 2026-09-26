@@ -5,8 +5,13 @@
 
 export const INPATIENT_GUIDE_TOPICS = [
   "AKI",
+  "Obstruction",
+  "AIN",
   "Hyponatremia",
+  "Hypernatremia",
   "Hyperkalemia",
+  "Acid-Base",
+  "Hypercalcemia",
   "Dialysis",
   "ESRD Inpatient",
   "GN",
@@ -15,6 +20,7 @@ export const INPATIENT_GUIDE_TOPICS = [
   "Rhabdo",
   "Cardiorenal",
   "DKD",
+  "Transplant AKI",
   "PD Peritonitis",
 ] as const;
 export type InpatientGuideTopic = (typeof INPATIENT_GUIDE_TOPICS)[number];
@@ -34,6 +40,10 @@ export interface InpatientGuideTemplate {
   commonMistakes: string[];
   assessmentFramework: string[];
   discussionQuestions: string[];
+  // Quick Reference calculators to link from the guide (QUICK_REFS ids).
+  relatedTools?: { refId: string; label: string }[];
+  // Short teaching lessons; format "example" renders as a worked-example block.
+  lessons?: { heading: string; items: string[]; format?: "example" }[];
 }
 
 export const INPATIENT_GUIDES: Record<
@@ -922,6 +932,518 @@ export const INPATIENT_GUIDES: Record<
       "What organisms suggest a surgical abdomen rather than typical PD peritonitis?",
       "When is catheter removal indicated, and can PD be resumed after?",
       "How do you distinguish chemical peritonitis from infectious peritonitis?",
+    ],
+  },
+  // ═══════════════════════════════════════════════════════════════════
+  //  ACID-BASE CONSULT
+  // ═══════════════════════════════════════════════════════════════════
+  "Acid-Base": {
+    topic: "Acid-Base",
+    icon: "⚗️",
+    title: "Acid-Base Consult",
+    subtitle: "Name every disorder, find the hidden second one, and treat the cause",
+
+    whyWeGetConsulted:
+      "Nephrology is called for severe or unexplained metabolic acidosis or alkalosis, suspected toxic alcohol ingestion, renal tubular acidosis, and acidosis that may need dialysis. The job is to name every disorder present (there is often more than one), find the cause, and decide whether bicarbonate or dialysis is needed.",
+
+    teachingPearl:
+      "Always calculate the anion gap — even when the bicarbonate looks normal. A high gap can hide behind a coexisting metabolic alkalosis.",
+
+    beforeRounds: [
+      "pH and pCO2 (a VBG is fine for pH and HCO3 trends)",
+      "BMP: Na, Cl, HCO3, K, BUN, Cr, glucose",
+      "Albumin (to correct the anion gap)",
+      "Lactate and beta-hydroxybutyrate",
+      "Serum osmolality if a toxic alcohol is possible (calculate the osmolar gap)",
+      "Ethanol, salicylate, and acetaminophen levels; methanol/ethylene glycol if available",
+      "Urine pH and urine Na/K/Cl if the gap is normal (urine anion gap) or for metabolic alkalosis (urine Cl)",
+      "Medications: metformin, SGLT2 inhibitors (euglycemic DKA), topiramate/acetazolamide, laxatives, diuretics",
+      "GI losses: diarrhea, ostomy output, vomiting, NG suction",
+      "How much normal saline has been given (hyperchloremic acidosis)",
+    ],
+
+    thirtySecondSummary:
+      "\"Primary __ (pH __, pCO2 __, HCO3 __) with appropriate/inappropriate compensation. Anion gap __ (albumin-corrected __). Adding back the delta gap gives a HCO3 of __, so there is/isn't a second metabolic disorder. Most likely cause is __; the urgent issue is __.\"",
+
+    howToPresent:
+      "\"This is a __-year-old with __ admitted for __. The blood gas shows pH __, pCO2 __, HCO3 __ — a primary __ with __ compensation by Winter's formula. The anion gap is __, or __ corrected for an albumin of __. Adding back the delta gap gives a corrected HCO3 of __, which means __. The osmolar gap is __, lactate __, and beta-hydroxybutyrate __. My leading cause is __ because __; I also considered __. I recommend __.\"",
+
+    topDifferentialBuckets: [
+      "Anion-gap acidosis: lactate, ketones (DKA, alcoholic, starvation), toxic alcohols (methanol, ethylene glycol), salicylate, kidney failure, D-lactate, pyroglutamic acid (chronic acetaminophen)",
+      "Non-gap acidosis: diarrhea or ostomy losses, saline resuscitation, renal tubular acidosis (types 1, 2, 4), early CKD, acetazolamide/topiramate",
+      "Metabolic alkalosis: vomiting or NG suction, diuretics, volume contraction, mineralocorticoid excess, milk-alkali syndrome, after correcting chronic hypercapnia",
+      "Respiratory acidosis or alkalosis — alone or mixed with the above",
+    ],
+
+    redFlags: [
+      "pH <7.1 or a rapidly falling HCO3",
+      "Osmolar gap >10 with an anion-gap acidosis → toxic alcohol until proven otherwise",
+      "Salicylate toxicity: tinnitus, respiratory alkalosis plus anion-gap acidosis",
+      "Rising lactate despite resuscitation → look for ischemia (bowel)",
+      "Euglycemic DKA on an SGLT2 inhibitor",
+      "pCO2 higher than Winter's formula predicts → the patient is tiring; impending respiratory failure",
+    ],
+
+    commonMistakes: [
+      "Not correcting the anion gap for low albumin",
+      "Stopping after one disorder — missing the second (add back the delta gap)",
+      "Skipping the compensation check (Winter's formula)",
+      "Treating a number without finding the cause",
+      "Missing an osmolar gap in an unexplained anion-gap acidosis",
+      "Giving large volumes of normal saline, then being surprised by a non-gap acidosis",
+    ],
+
+    assessmentFramework: [
+      "Primary disorder: acidemia or alkalemia; metabolic or respiratory",
+      "Compensation — appropriate, or a second respiratory disorder?",
+      "Anion gap, corrected for albumin",
+      "Add back the delta gap — hidden metabolic alkalosis or non-gap acidosis?",
+      "Osmolar gap if the anion-gap acidosis is unexplained",
+      "Urine anion gap / urine pH (non-gap) or urine Cl (alkalosis)",
+      "Cause, severity, and treatment: fluids, bicarbonate, insulin, fomepizole, or dialysis",
+    ],
+
+    discussionQuestions: [
+      "A patient with DKA has Na 138, Cl 94, HCO3 10, and albumin 4.0. What is the corrected HCO3 after adding back the delta gap, and what second disorder is present?",
+      "When does a metabolic acidosis need dialysis rather than bicarbonate?",
+    ],
+
+    relatedTools: [{ refId: "acidbase", label: "ABG Interpreter — does the add-back math for you" }],
+
+    lessons: [
+      {
+        heading: "Quick Lesson: The Add-Back Method (Delta Gap)",
+        items: [
+          "Why: an anion-gap acidosis can hide a second metabolic disorder. The add-back method asks, \"What would the HCO3 be if the extra gap acid weren't there?\"",
+          "1. Anion gap: AG = Na − (Cl + HCO3). Normal is about 12 (know your lab's normal).",
+          "2. Correct for albumin: add 2.5 for every 1 g/dL the albumin is below 4.",
+          "3. Delta gap: ΔAG = corrected AG − 12. Roughly, each extra unit of gap used up one unit of HCO3.",
+          "4. Add it back: corrected HCO3 = measured HCO3 + ΔAG.",
+          "5. Interpret: corrected HCO3 >26 → a metabolic alkalosis is also present. 22–26 → a pure anion-gap acidosis. <22 → a non-gap acidosis is also present.",
+          "Same idea as the delta-delta ratio (ΔAG ÷ [24 − HCO3]): >2 → alkalosis too; 1–2 → pure; <1 → non-gap acidosis too.",
+          "Caveat: it's an estimate. Lactic acidosis often runs a ratio near 1.6; ketoacidosis runs closer to 1 because ketones are lost in the urine. Use a borderline result as a prompt to look for a second cause, not as proof.",
+        ],
+      },
+      {
+        heading: "Worked Example 1 — DKA With 2 Days of Vomiting",
+        format: "example",
+        items: [
+          "Labs: pH 7.18, pCO2 24, Na 138, Cl 94, HCO3 10, albumin 4.0, glucose 540.",
+          "Compensation: Winter's expected pCO2 = 1.5 × 10 + 8 = 23 ± 2 → 24 fits (appropriate).",
+          "AG = 138 − (94 + 10) = 34. Albumin is normal, so no correction.",
+          "ΔAG = 34 − 12 = 22. Corrected HCO3 = 10 + 22 = 32 → above 26.",
+          "Answer: anion-gap acidosis from DKA PLUS a metabolic alkalosis from vomiting. Without the add-back, you'd miss the vomiting-related volume and K losses.",
+        ],
+      },
+      {
+        heading: "Worked Example 2 — DKA After 6 L of Normal Saline",
+        format: "example",
+        items: [
+          "Labs on day 2: Na 140, Cl 115, HCO3 13, albumin 3.0.",
+          "AG = 140 − (115 + 13) = 12. Corrected for albumin: 12 + 2.5 × (4 − 3) = 14.5.",
+          "ΔAG = 14.5 − 12 = 2.5. Corrected HCO3 = 13 + 2.5 = 15.5 → below 22.",
+          "Answer: the ketoacidosis has essentially cleared (the gap is closed); what's left is a non-gap (hyperchloremic) acidosis from saline and urinary ketone losses. Move to subcutaneous insulin per the DKA protocol and use a balanced fluid if more is needed.",
+        ],
+      },
+      {
+        heading: "Step-by-Step ABG Approach",
+        items: [
+          "1. Acidemia (pH <7.35) or alkalemia (pH >7.45)?",
+          "2. Primary process: does the HCO3 or the pCO2 explain the pH?",
+          "3. Compensation — metabolic acidosis: Winter's formula, expected pCO2 = 1.5 × HCO3 + 8 ± 2. Metabolic alkalosis: pCO2 rises ~0.7 per 1 mEq/L rise in HCO3. Respiratory acidosis: HCO3 rises 1 (acute) or 3.5 (chronic) per 10 mmHg pCO2. Respiratory alkalosis: HCO3 falls 2 (acute) or 5 (chronic) per 10 mmHg.",
+          "4. Anion gap, corrected for albumin — every time.",
+          "5. High gap: add back the delta gap, and check the osmolar gap if the cause is unclear (measured osm − [2 × Na + glucose/18 + BUN/2.8]; >10 is abnormal).",
+          "6. Non-gap acidosis: urine anion gap (Na + K − Cl). Negative → GI losses (kidneys excreting acid normally); positive → a kidney cause (RTA).",
+          "7. Metabolic alkalosis: urine Cl <20 → vomiting, NG suction, or prior diuretics (saline-responsive); >20 → current diuretics or mineralocorticoid excess (check BP, renin, aldosterone).",
+        ],
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  HYPERNATREMIA CONSULT
+  // ═══════════════════════════════════════════════════════════════════
+  Hypernatremia: {
+    topic: "Hypernatremia",
+    icon: "🧂",
+    title: "Hypernatremia Consult",
+    subtitle: "A water problem — find the loss, calculate the deficit, and correct safely",
+
+    whyWeGetConsulted:
+      "Hypernatremia almost always means the patient lost water and couldn't drink enough to replace it — usually because they are sick, sedated, intubated, or elderly. Nephrology helps find where the water is going (kidneys or elsewhere), rule out diabetes insipidus, and plan how much free water to give and how fast.",
+
+    teachingPearl:
+      "Hypernatremia is a water problem, not a sodium problem. Someone with intact thirst and access to water almost never stays hypernatremic — so always ask why this patient couldn't drink.",
+
+    beforeRounds: [
+      "Na trend and how fast it rose (acute <48 h vs chronic)",
+      "Access to water: intubated, confused, NPO, elderly with dementia?",
+      "Urine output (polyuria >3 L/day?)",
+      "Urine osmolality and urine Na/K",
+      "Glucose (osmotic diuresis) and BUN (urea diuresis from high-protein tube feeds or recovering AKI)",
+      "IV fluids and tube feeds: type, rate, free water flushes",
+      "GI losses, fever, burns, other insensible losses",
+      "Medications: lithium (nephrogenic DI), loop diuretics, mannitol, lactulose, hypertonic saline, sodium bicarbonate",
+      "Weight (for the free water deficit)",
+      "Mental status",
+    ],
+
+    thirtySecondSummary:
+      "\"Hypernatremia to __ over __ from __ water loss (urine osm __) in a patient who can't drink because __. Free water deficit is about __ L plus ongoing losses of __; plan __, aiming to lower Na by no more than 10 mEq/L in 24 h.\"",
+
+    howToPresent:
+      "\"This is a __-year-old with __, now with Na rising from __ to __ over __. They can't drink because __. Urine output is __ with a urine osm of __, which points to __ (water loss outside the kidneys / osmotic diuresis / diabetes insipidus). Volume status is __. The free water deficit is about __ L using a TBW factor of __, plus ongoing losses of __. I recommend __ (route and rate), with Na checks every __ hours, lowering Na by no more than 10 mEq/L in 24 h.\"",
+
+    topDifferentialBuckets: [
+      "Water loss outside the kidneys (urine osm >600 — kidneys are conserving water): fever, sweating, burns, osmotic diarrhea, NG suction, poor intake",
+      "Osmotic diuresis (urine osm ~300–600 with high urine output): hyperglycemia, urea (high-protein tube feeds, recovering AKI), mannitol",
+      "Central diabetes insipidus (dilute urine that concentrates with desmopressin): head injury, neurosurgery, tumors",
+      "Nephrogenic diabetes insipidus (dilute urine, no desmopressin response): lithium, hypercalcemia, hypokalemia, after relief of obstruction",
+      "Sodium gain (less common): hypertonic saline, sodium bicarbonate, salt ingestion",
+    ],
+
+    redFlags: [
+      "Na >160, or rising quickly",
+      "Confusion, seizures, or coma",
+      "Polyuria >3 L/day with dilute urine (diabetes insipidus) — Na can climb fast",
+      "Shock — restore circulation with isotonic fluid before free water",
+      "Correcting chronic hypernatremia too fast (cerebral edema)",
+    ],
+
+    commonMistakes: [
+      "Giving normal saline when the patient isn't in shock (it keeps the Na high)",
+      "Calculating the deficit but forgetting ongoing losses (urine, stool, insensible)",
+      "Not checking urine osm — it separates water loss from diabetes insipidus",
+      "Using a TBW factor of 0.6 for everyone (older women are ~0.45)",
+      "Lowering chronic hypernatremia faster than ~10 mEq/L in 24 h",
+      "Forgetting free water flushes in tube-fed patients",
+    ],
+
+    assessmentFramework: [
+      "Severity and acuity (acute vs chronic)",
+      "Why the patient couldn't drink",
+      "Source of water loss (urine osm: outside the kidneys, osmotic diuresis, or DI)",
+      "Volume status (shock needs isotonic fluid first)",
+      "Free water deficit plus ongoing losses",
+      "Route (water by mouth/tube vs D5W IV) and rate",
+      "Na monitoring schedule and target",
+    ],
+
+    discussionQuestions: [
+      "An 84-year-old woman (50 kg) from a nursing home has Na 160 and a urine osm of 720. What is her free water deficit, and how would you replace it?",
+      "How do you tell central from nephrogenic diabetes insipidus?",
+    ],
+
+    relatedTools: [{ refId: "fwd", label: "Free Water Deficit calculator" }],
+
+    lessons: [
+      {
+        heading: "Quick Lesson: Planning Free Water Replacement",
+        items: [
+          "1. Free water deficit = TBW × (Na ÷ 140 − 1). TBW = weight × 0.6 (young men), 0.5 (young women and older men), 0.45 (older women).",
+          "2. Add ongoing losses: urine free water, stool, and about 0.8–1 L/day of insensible loss (more with fever or tachypnea).",
+          "3. Rate: for chronic hypernatremia, lower Na by no more than 10 mEq/L in 24 h and replace the deficit over about 48–72 h. Acute hypernatremia (<48 h, e.g., a salt load) can be corrected faster.",
+          "4. Route: water by mouth or free water flushes when the gut works; D5W IV otherwise (watch the glucose). If the patient is in shock, restore circulation with isotonic fluid first.",
+          "5. Check the effect of one liter: change in Na = (fluid Na − serum Na) ÷ (TBW + 1). D5W in a 50-kg older woman with Na 160: (0 − 160) ÷ (22.5 + 1) ≈ −6.8 mEq/L per liter.",
+          "6. Recheck Na every 4–6 h and adjust — formulas are only estimates.",
+        ],
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  HYPERCALCEMIA CONSULT
+  // ═══════════════════════════════════════════════════════════════════
+  Hypercalcemia: {
+    topic: "Hypercalcemia",
+    icon: "🦴",
+    title: "Hypercalcemia Consult",
+    subtitle: "PTH splits the differential; fluids come first; protect the kidneys",
+
+    whyWeGetConsulted:
+      "Nephrology is consulted when high calcium causes AKI, when it won't come down with fluids, or when dialysis might be needed. The job is to confirm true hypercalcemia, split PTH-dependent from PTH-independent causes, and lower the calcium safely.",
+
+    teachingPearl:
+      "Check the PTH first — it splits the whole differential in two. A high or normal PTH means parathyroid; a suppressed PTH means look for cancer, vitamin D, or other causes.",
+
+    beforeRounds: [
+      "Calcium trend with albumin (corrected Ca) or an ionized calcium",
+      "PTH",
+      "If PTH is suppressed: PTHrP, 25-OH vitamin D, 1,25-(OH)2 vitamin D, SPEP, and serum free light chains",
+      "Cr/BUN, phosphorus, magnesium, K",
+      "Symptoms: confusion, weakness, constipation, polyuria, nausea",
+      "Medications: thiazides, lithium, calcium and vitamin D supplements, calcium carbonate antacids, vitamin A",
+      "Known cancer, granulomatous disease (sarcoidosis, TB), immobilization",
+      "ECG (short QT)",
+      "Volume status (polyuria causes dehydration)",
+    ],
+
+    thirtySecondSummary:
+      "\"Hypercalcemia (corrected Ca __, ionized __) with PTH __, so this is PTH-dependent/independent, most likely from __. It is causing __. Plan: IV fluids __, calcitonin __, an antiresorptive __, and dialysis only if __.\"",
+
+    howToPresent:
+      "\"This is a __-year-old with __, found to have a calcium of __ (albumin __, ionized __) with __ symptoms. PTH is __, PTHrP __, vitamin D levels __, and SPEP __. Cr is __ from a baseline of __, likely from __. The most likely cause is __. I recommend __.\"",
+
+    topDifferentialBuckets: [
+      "PTH high or normal: primary hyperparathyroidism, tertiary hyperparathyroidism (long CKD or after transplant), lithium, familial hypocalciuric hypercalcemia (FHH)",
+      "Malignancy (PTH suppressed): PTHrP (squamous cancers, breast, kidney), bone metastases, myeloma, lymphoma (1,25-vitamin D)",
+      "Vitamin D: supplement excess (high 25-OH D); granulomatous disease or lymphoma (high 1,25-(OH)2 D)",
+      "Milk-alkali syndrome (calcium carbonate + metabolic alkalosis + AKI)",
+      "Other: thiazides, immobilization, hyperthyroidism, vitamin A, adrenal insufficiency",
+    ],
+
+    redFlags: [
+      "Ca >14 mg/dL or neurologic symptoms",
+      "AKI or oliguria limiting how much fluid you can give",
+      "Arrhythmia or short QT",
+      "New hypercalcemia with a suppressed PTH → work up cancer and myeloma",
+      "Heart failure or dialysis dependence (can't give large fluid volumes)",
+    ],
+
+    commonMistakes: [
+      "Not checking an ionized calcium when the albumin is abnormal",
+      "Starting furosemide before volume is restored (it is not first-line)",
+      "Forgetting to stop calcium, vitamin D, thiazides, and lithium",
+      "Choosing an antiresorptive without thinking about kidney function (zoledronic acid can worsen AKI; denosumab can cause severe low calcium in advanced CKD)",
+      "Forgetting myeloma (SPEP + serum free light chains)",
+      "Missing milk-alkali syndrome from calcium carbonate antacids",
+    ],
+
+    assessmentFramework: [
+      "Confirm true hypercalcemia (corrected or ionized Ca)",
+      "Severity and symptoms",
+      "PTH-dependent vs PTH-independent",
+      "Kidney effects: AKI, polyuria (nephrogenic DI), volume depletion",
+      "Acute treatment: fluids, calcitonin, antiresorptive; dialysis if refractory",
+      "Stop contributing drugs",
+      "Workup and treatment of the cause",
+    ],
+
+    discussionQuestions: [
+      "A 70-year-old smoker has Ca 14.2, PTH 8 pg/mL, and Cr 2.1 (baseline 1.0). What is your leading diagnosis, and what do you do in the next 24 hours?",
+      "Why do patients with hypercalcemia become volume depleted?",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  OBSTRUCTIVE (POST-RENAL) AKI
+  // ═══════════════════════════════════════════════════════════════════
+  Obstruction: {
+    topic: "Obstruction",
+    icon: "🚰",
+    title: "Obstructive (Post-Renal) AKI",
+    subtitle: "Find it fast, relieve it, and manage the post-obstructive diuresis",
+
+    whyWeGetConsulted:
+      "Obstruction is one of the most reversible causes of AKI, so it has to be found early. Nephrology helps confirm it, supports the decision on decompression (Foley, stent, nephrostomy), and manages fluids and electrolytes after the blockage is relieved.",
+
+    teachingPearl:
+      "Every unexplained AKI deserves a bladder scan and a renal ultrasound. The sooner an obstruction is relieved, the more kidney function comes back.",
+
+    beforeRounds: [
+      "Urine output pattern: anuria, or alternating low and high output",
+      "Bladder scan / post-void residual",
+      "Foley: present? flushed? draining?",
+      "Renal ultrasound: hydronephrosis (one side or both), bladder distension, stones",
+      "Prostate history, pelvic or retroperitoneal cancer, stones, prior pelvic surgery or radiation",
+      "Medications that cause retention: anticholinergics, opioids, decongestants, antihistamines",
+      "Single functioning kidney or transplant?",
+      "K, HCO3, Na, Cr trend",
+      "Fever or sepsis with hydronephrosis (an infected obstructed kidney is an emergency)",
+    ],
+
+    thirtySecondSummary:
+      "\"AKI from obstruction at the level of __ (bladder outlet / both ureters / single kidney), found on __ and relieved with __. Now the issues are __ (post-obstructive diuresis, K, acidosis), and Cr is __.\"",
+
+    howToPresent:
+      "\"This is a __-year-old with __, admitted with __, with Cr rising from __ to __ and urine output of __. Bladder scan showed __ mL and ultrasound shows __ hydronephrosis, so the likely level of obstruction is __. A Foley/nephrostomy drained __. Since then urine output is __ mL/h. Electrolytes show __. I recommend __.\"",
+
+    topDifferentialBuckets: [
+      "Bladder outlet: BPH, prostate cancer, urethral stricture, blood clots, neurogenic bladder, medications (anticholinergics, opioids)",
+      "Both ureters (or one ureter with a single kidney): stones, pelvic or retroperitoneal tumor, retroperitoneal fibrosis, surgical injury",
+      "Blocked or kinked Foley",
+      "Not true obstruction (no hydronephrosis): crystals or myeloma casts inside the tubules",
+    ],
+
+    redFlags: [
+      "Fever with hydronephrosis → infected obstructed kidney; urgent decompression (urology/IR)",
+      "Anuria",
+      "Hyperkalemia or severe acidosis",
+      "Post-obstructive diuresis >200 mL/h — risk of dehydration and electrolyte loss",
+      "Clots obstructing the Foley",
+    ],
+
+    commonMistakes: [
+      "Skipping the bladder scan in a patient with little or no urine output",
+      "Assuming a Foley works without flushing it",
+      "Replacing urine output 1:1 after decompression (it keeps the diuresis going)",
+      "Forgetting that one-sided obstruction raises Cr only with a single working kidney or CKD",
+      "Not checking K, Na, Mg, and phosphorus every 6–12 h during a post-obstructive diuresis",
+      "Missing obstruction without hydronephrosis (very early, severe volume depletion, retroperitoneal encasement)",
+    ],
+
+    assessmentFramework: [
+      "Is there obstruction, and at what level?",
+      "Infection above the blockage? (emergency)",
+      "Relief: Foley vs ureteral stent vs nephrostomy",
+      "Electrolytes and acid-base (hyperkalemic acidosis is common)",
+      "Post-obstructive diuresis plan",
+      "Cause and prevention (alpha-blocker, stone workup, oncology)",
+      "Expected recovery — depends on how long it was blocked",
+    ],
+
+    discussionQuestions: [
+      "An 80-year-old man with Cr 4.5 has 1,100 mL in his bladder. After a Foley, he makes 400 mL/h. What do you monitor, and how do you manage his fluids?",
+      "Why can partial obstruction cause normal or even high urine output?",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  KIDNEY TRANSPLANT WITH AKI
+  // ═══════════════════════════════════════════════════════════════════
+  "Transplant AKI": {
+    topic: "Transplant AKI",
+    icon: "🫘",
+    title: "Kidney Transplant with AKI",
+    subtitle: "Drug levels, volume, infection, obstruction, rejection — and when to biopsy",
+
+    whyWeGetConsulted:
+      "A rising creatinine in a kidney transplant recipient threatens the graft. The job is to sort out common reversible causes (volume, drug levels, obstruction, infection) from rejection, which needs a biopsy — and to involve the transplant team early.",
+
+    teachingPearl:
+      "Never change immunosuppression on your own, and always call the transplant team. A small creatinine rise in a transplanted kidney matters more than the same rise in native kidneys.",
+
+    beforeRounds: [
+      "Transplant date, donor type (living or deceased), original kidney disease, transplant center",
+      "Baseline (best) post-transplant Cr",
+      "Immunosuppression regimen, recent changes, and the last doses actually taken",
+      "Tacrolimus (or cyclosporine) trough level and whether it was a true trough",
+      "New drugs that interact with tacrolimus: azole antifungals, clarithromycin/erythromycin, diltiazem/verapamil (raise levels); rifampin, phenytoin, carbamazepine (lower levels)",
+      "Adherence, missed doses, cost or pharmacy problems",
+      "History of donor-specific antibodies (DSA) or prior rejection",
+      "BK virus PCR (blood) and CMV PCR",
+      "UA, UPCR, urine culture",
+      "Transplant kidney ultrasound with Doppler",
+      "Volume status (diarrhea is common on mycophenolate)",
+    ],
+
+    thirtySecondSummary:
+      "\"Kidney transplant recipient __ years out (__ donor) with Cr up from a baseline of __ to __. Tacrolimus level __, BK/CMV __, ultrasound __. Most likely __; rejection is/isn't a concern, and the transplant team has been notified.\"",
+
+    howToPresent:
+      "\"This is a __-year-old __ years after a __-donor kidney transplant for __, on __, with Cr rising from a baseline of __ to __ over __. Adherence is __. Tacrolimus trough is __ (goal __). BK and CMV PCR are __. UA shows __ and UPCR is __. Transplant ultrasound shows __. The differential is prerenal vs calcineurin inhibitor toxicity vs rejection vs BK nephropathy vs obstruction. I think __ is most likely because __. I recommend __, and we discussed it with the transplant team.\"",
+
+    topDifferentialBuckets: [
+      "Prerenal/hemodynamic: volume depletion (diarrhea), NSAIDs, ACEi/ARB, high calcineurin inhibitor levels (vasoconstriction)",
+      "Calcineurin inhibitor toxicity (high trough, drug interactions)",
+      "Rejection: T-cell-mediated or antibody-mediated (low levels, missed doses, new DSA)",
+      "Infection: BK nephropathy, graft pyelonephritis, CMV",
+      "Obstruction: ureteral stricture, lymphocele, stones, urinary retention",
+      "Vascular: transplant renal artery stenosis; renal artery or vein thrombosis (early)",
+      "Recurrent or new kidney disease (FSGS, IgA, others); TMA",
+    ],
+
+    redFlags: [
+      "Sudden anuria, or a painful swollen graft → vascular thrombosis or severe rejection",
+      "Fever with a tender graft → graft pyelonephritis",
+      "Very low tacrolimus level or missed doses → rejection risk",
+      "New DSA or rising proteinuria",
+      "Cr up >20–25% from baseline without a clear reversible cause → biopsy discussion",
+    ],
+
+    commonMistakes: [
+      "Changing immunosuppression without the transplant team",
+      "Interpreting a tacrolimus level that wasn't a true trough (drawn right before the dose)",
+      "Missing a drug interaction (azoles, macrolides, diltiazem)",
+      "Forgetting the transplant ultrasound with Doppler",
+      "Using native-kidney thresholds — small Cr rises matter",
+      "Giving NSAIDs for pain",
+    ],
+
+    assessmentFramework: [
+      "Size and speed of the Cr rise from the post-transplant baseline",
+      "Volume and hemodynamics",
+      "Drug levels and interactions",
+      "Infection screen (BK, CMV, urine)",
+      "Imaging: transplant ultrasound with Doppler",
+      "Rejection risk → biopsy decision with the transplant team",
+      "Immunosuppression plan (transplant team) and supportive care",
+    ],
+
+    discussionQuestions: [
+      "A patient 8 months after transplant has Cr 2.1 (baseline 1.2) and a tacrolimus trough of 3.2 after missing doses. What is your main concern, and what is the next step?",
+      "Name three drugs that raise tacrolimus levels and two that lower them.",
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════
+  //  ACUTE INTERSTITIAL NEPHRITIS
+  // ═══════════════════════════════════════════════════════════════════
+  AIN: {
+    topic: "AIN",
+    icon: "💊",
+    title: "Acute Interstitial Nephritis",
+    subtitle: "Find the drug, stop it, and decide on biopsy and steroids",
+
+    whyWeGetConsulted:
+      "AIN is a common cause of AKI in the hospital that is often missed. The key steps are recognizing the pattern, stopping the culprit (usually a drug), and deciding with the team whether a biopsy or steroids are needed.",
+
+    teachingPearl:
+      "The classic triad of fever, rash, and eosinophilia appears in only about 10% of patients. Think AIN whenever the creatinine rises days to weeks after a new drug.",
+
+    beforeRounds: [
+      "Every drug started in the past days to months, with start dates (MAR and home list)",
+      "Top culprits: beta-lactams, PPIs, NSAIDs, sulfa drugs (TMP-SMX), rifampin, fluoroquinolones, allopurinol, immune checkpoint inhibitors",
+      "Timing of the Cr rise relative to each new drug",
+      "UA with microscopy: sterile pyuria, WBC casts, low-grade proteinuria",
+      "Rash, fever, joint pain",
+      "CBC with eosinophils; LFTs",
+      "Systemic disease: sarcoidosis, Sjögren's, IgG4-related disease, lupus; uveitis (TINU)",
+      "Renal ultrasound (to exclude obstruction)",
+    ],
+
+    thirtySecondSummary:
+      "\"AKI with Cr __ → __ starting about __ days after __ was started, with __ on the UA. Leading diagnosis is drug-induced AIN; the drug was stopped on __. Biopsy/steroid decision: __.\"",
+
+    howToPresent:
+      "\"This is a __-year-old admitted for __, with Cr rising from __ to __ starting __ days after __ was started. Exam shows __. UA shows __ WBCs with __ casts and __ protein. Ultrasound shows __. Other causes are less likely because __. I think this is drug-induced AIN from __. I recommend stopping __, listing it as an allergy, and __ (observe 3–5 days / biopsy / steroids).\"",
+
+    topDifferentialBuckets: [
+      "Drug-induced (most cases): antibiotics, PPIs, NSAIDs, immune checkpoint inhibitors, allopurinol",
+      "Infection-associated",
+      "Systemic or autoimmune: sarcoidosis, Sjögren's, IgG4-related disease, TINU",
+      "Look-alikes: ATN, pyelonephritis, GN (red cells and RBC casts), atheroemboli (eosinophilia after a catheterization)",
+    ],
+
+    redFlags: [
+      "Rapidly rising Cr or a need for dialysis",
+      "No improvement 3–5 days after stopping the drug → biopsy and steroid discussion",
+      "AKI on an immune checkpoint inhibitor → involve oncology early",
+      "Severe drug reaction: facial swelling, mucosal lesions, liver injury (DRESS, SJS)",
+    ],
+
+    commonMistakes: [
+      "Waiting for fever, rash, and eosinophilia — usually they're absent",
+      "Relying on urine eosinophils (poor sensitivity and specificity)",
+      "Not reviewing the full medication list with start dates",
+      "Continuing the PPI because it seems harmless",
+      "Starting steroids without a clear diagnosis when the picture is unclear — consider a biopsy",
+      "Forgetting to list the drug as an allergy",
+    ],
+
+    assessmentFramework: [
+      "Timeline: drug start → Cr rise",
+      "Urine pattern: sterile pyuria, WBC casts",
+      "Exclude other causes (prerenal, ATN, obstruction, GN)",
+      "Stop the culprit and list it as an allergy",
+      "Biopsy if unclear or not improving",
+      "Steroids: consider if not improving within 3–5 days of stopping the drug, or earlier for severe AKI (with the attending)",
+      "Follow Cr for recovery — some patients are left with CKD",
+    ],
+
+    discussionQuestions: [
+      "A patient on day 10 of nafcillin has Cr 1.0 → 2.8, a rash, and WBC casts. What do you do?",
+      "When would you biopsy a patient with suspected AIN?",
     ],
   },
 };

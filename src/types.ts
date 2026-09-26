@@ -75,6 +75,7 @@ export type SubView =
   | { type: "clinicGuide"; date: string; topic?: "CKD" | "DKD" | "Lupus Nephritis" | "Hypertension" | "Transplant" }
   | { type: "clinicGuideHistory" }
   | { type: "inpatientGuide"; topic: string }
+  | { type: "writePractice"; topic?: string }
   | { type: "rotationGuide"; guideId: string }
   | { type: "guideDetail"; id: string }
   | null;

@@ -56,6 +56,8 @@ Important student features:
 - Pre/post assessments and weekly quizzes.
 - Spaced repetition review for missed or reinforced questions.
 - Study sheets, articles, landmark trials, cases, resources, quick references, inpatient guides, outpatient clinic guides, rotation guides, and clinical reasoning tools (AKI Differential Tool).
+- Clinical-skills layer for MS3/MS4 (bundled content, no admin publish step): 18 inpatient consult guides, each with questions to ask the patient, exam findings, imaging & key tests, a presenting script, and a sample written A&P (`src/data/inpatientSkills.ts`); rotation guides for chart review, the full new-consult HPI, writing the A&P, kidney imaging, and SOAP follow-ups; an acid-base add-back lesson and hypernatremia free-water-deficit link.
+- "Write It, Then Compare" practice (`WritePracticeView`): students write a one-liner and A&P for a fictional case, then compare with the model answer and a self-check rubric. Typed text lives only in component state — never saved or synced.
 - Picklist-only consult logging: topics plus optional setting/service/hospital-day picks, no free text (D1 de-identification).
 - Bookmarks, reflections, progress, team snapshot, and global search.
 - Offline-aware local cache and pending sync queue.

@@ -155,6 +155,28 @@ export function GuideNumberedItem({ index, children }: { index: number; children
   );
 }
 
+// A worked example written the way it would appear in a note. "# " lines are
+// problem headings; a short "Label:" prefix (S:, Assessment:, Strong:) is bolded.
+const EXAMPLE_LABEL = /^([A-Z][A-Za-z/ ]{0,24}):(\s|$)/;
+
+export function GuideExample({ lines, label }: { lines: string[]; label?: string }) {
+  return (
+    <div role="group" aria-label={label} style={{ background: T.grayBg, borderRadius: 8, padding: "12px 14px", display: "grid", gap: 7 }}>
+      {lines.map((line, i) => {
+        if (line.startsWith("# ")) {
+          return <div key={`${i}-${line}`} style={{ fontSize: 13, fontWeight: 700, color: T.ink, lineHeight: 1.45, marginTop: i === 0 ? 0 : 4 }}>{line.slice(2)}</div>;
+        }
+        const match = line.match(EXAMPLE_LABEL);
+        return (
+          <div key={`${i}-${line}`} style={{ fontSize: 13, color: T.ink, lineHeight: 1.55, wordBreak: "break-word" }}>
+            {match ? <><strong>{match[1]}:</strong>{line.slice(match[1].length + 1)}</> : line}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function GuideFooter({ children }: { children: ReactNode }) {
   return (
     <footer style={{ textAlign: "center", padding: "2px 0 0", fontSize: 13, color: T.muted, fontStyle: "italic", lineHeight: 1.4 }}>
