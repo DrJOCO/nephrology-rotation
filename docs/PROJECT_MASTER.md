@@ -56,7 +56,10 @@ Important student features:
 - Pre/post assessments and weekly quizzes.
 - Spaced repetition review for missed or reinforced questions.
 - Study sheets, articles, landmark trials, cases, resources, quick references, inpatient guides, outpatient clinic guides, rotation guides, and clinical reasoning tools (AKI Differential Tool).
-- Patient/consult topic logging with no-PHI guardrails.
+- Clinical-skills layer for MS3/MS4 (bundled content, no admin publish step): 18 inpatient consult guides, each with questions to ask the patient, exam findings, imaging & key tests, a presenting script, and a sample written A&P (`src/data/inpatientSkills.ts`); rotation guides for chart review, the full new-consult HPI, writing the A&P, kidney imaging, and SOAP follow-ups; an acid-base add-back lesson and hypernatremia free-water-deficit link.
+- Rotation content follows the built-in version automatically: a rotation keeps its own copy only of items the admin actually edited (curriculum weeks, article weeks, study sheets, clinic guide templates), listed in the rotation doc's `contentCustomizations`. Everything else resolves to the current bundled content on every load (`src/utils/contentCustomizations.ts`), so content updates reach every rotation with no admin reset. Rotations saved before this change are inferred by comparing each stored item with every past built-in version (`src/data/contentHistoryFingerprints.json`, generated from git history by `npm run content:fingerprints`); unmatched items are kept as customizations. The admin Content tab shows what is customized and offers "Use built-in for everything".
+- "Write It, Then Compare" practice (`WritePracticeView`): students write a one-liner and A&P for a fictional case, then compare with the model answer and a self-check rubric. Typed text lives only in component state — never saved or synced.
+- Picklist-only consult logging: topics plus optional setting/service/hospital-day picks, no free text (D1 de-identification).
 - Bookmarks, reflections, progress, team snapshot, and global search.
 - Offline-aware local cache and pending sync queue.
 
@@ -124,7 +127,7 @@ Important rule of thumb: shared settings sent to students should not include the
 - Firestore rules live in `firestore.rules` and are part of the product, not an afterthought.
 - Admin authorization requires Firebase Auth plus an admin document.
 - Student flows should avoid storing raw PINs in student documents.
-- Patient logging is for de-identified education only. Continue to preserve no-PHI copy, validation, and review language when changing patient fields.
+- The consult log is de-identified by construction (D1): entries hold only topics, picklist values (`src/data/consultFields.ts`), dates, and status. Never add a free-text field to `Patient`. `toDeidentifiedPatient` in `src/utils/patient.ts` allow-lists entry fields wherever stored data enters the app; extend its allow-list (not a deny-list) when adding a picklist.
 - Treat localStorage as convenient state, not a secure store for sensitive clinical information.
 
 ## Testing And Verification
@@ -235,7 +238,7 @@ Treat `public/decks/` as the app-shipped asset location and `decks/` as the edit
 - Local admin PIN is set on the attending device.
 - A test student can verify email, create a PIN, join the rotation, complete an item, and sync progress.
 - Student progress appears in the admin panel.
-- Patient logging still shows no-PHI expectations.
+- Consult log still has no free-text fields, and the admin Students tab shows no "Privacy cleanup" card (if it does, run it: download backup, then remove).
 - Print/cohort reports render acceptably.
 - External link check has been reviewed.
 - `npm run build` succeeds before deploy.

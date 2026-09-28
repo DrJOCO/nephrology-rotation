@@ -7,16 +7,15 @@
 import { JOINED_AT_KEY, STUDENT_YEAR_KEY } from "../../../hooks/useStudentAuth";
 import type { Patient } from "../../../types";
 
-// A single, obviously-fake inpatient so the Consults/Home surfaces are
-// meaningfully previewable instead of an empty state.
+// A single demo consult so the Consults/Home surfaces are meaningfully
+// previewable instead of an empty state.
 function buildDemoPatient(now: string): Patient {
   return {
     id: "preview-demo-patient",
-    initials: "Demo Patient",
-    room: "000",
-    dx: "AKI — demo case",
     topics: ["AKI"],
-    notes: "Example inpatient shown in preview only. Nothing here is saved.",
+    setting: "floor",
+    service: "medicine",
+    hospitalDay: "2-3",
     date: now,
     status: "active",
     followUps: [],

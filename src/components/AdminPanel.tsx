@@ -34,6 +34,7 @@ import { getAdminPinValidationError } from "./admin/pinValidation";
 import { adminScopedKey, getStoredAdminRotationCode, setStoredAdminRotationCode } from "./admin/storage";
 import { getAdminAuthErrorMessage } from "./admin/lib/auth-errors";
 import { buildPublishSnapshot, fingerprintRemoteSharedDoc, serializePublishSnapshot } from "./admin/lib/publish";
+import { resolveRotationContent } from "../utils/contentCustomizations";
 import { performStudentRecovery } from "./admin/lib/student-recovery";
 import { normalizeStudySheets, type StudySheetsData } from "../utils/studySheets";
 import type { WeeklyData, ArticlesData, AdminSession, AdminAuthMode } from "./admin/types";
@@ -135,6 +136,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     setToast({ id: Date.now(), message, tone });
   }, []);
 
+
   const requestConfirm = useCallback((options: AdminConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       confirmResolverRef.current = resolve;
@@ -148,6 +150,24 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     setConfirmOptions(null);
     resolver?.(accepted);
   }, []);
+
+  // Drop every customization so the whole rotation follows the built-in
+  // content again. Takes effect for students on the next Publish.
+  const switchToBuiltInContent = useCallback(async () => {
+    const confirmed = await requestConfirm({
+      title: "Use built-in content for everything?",
+      message: "Your edited curriculum, articles, study sheets, and clinic guide text for this rotation will be replaced with the latest built-in versions. Publish afterward to update students.",
+      confirmLabel: "Use built-in",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+    const builtIn = resolveRotationContent(null);
+    setCurriculum(builtIn.curriculum);
+    setArticles(builtIn.articles);
+    setStudySheets(builtIn.studySheets);
+    setClinicGuideTemplates(builtIn.clinicGuideTemplates);
+    showToast("Switched to built-in content. Publish to update students.", "info");
+  }, [requestConfirm, showToast]);
 
   useEffect(() => {
     if (!firebaseAdmin) return;
@@ -185,12 +205,15 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         },
       )));
     }
-    if (a) setArticles(a);
-    if (ss) setStudySheets(normalizeStudySheets(ss));
-    if (c) setCurriculum(c);
+    // Local cache may hold an old full copy — resolve it so untouched items
+    // show the latest built-in version (see utils/contentCustomizations).
+    const resolvedLocal = resolveRotationContent({ curriculum: c, articles: a, studySheets: ss, clinicGuideTemplates: cgt });
+    setArticles(resolvedLocal.articles);
+    setStudySheets(resolvedLocal.studySheets);
+    setCurriculum(resolvedLocal.curriculum);
     if (an) setAnnouncements(an);
     if (cg) setClinicGuides(cg);
-    if (cgt) setClinicGuideTemplates(normalizeClinicGuideTemplates(cgt));
+    setClinicGuideTemplates(resolvedLocal.clinicGuideTemplates);
   }, []);
 
   const hydrateRotationData = useCallback(async (code: string, session: AdminSession) => {
@@ -204,13 +227,15 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
     // Record what the remote looked like at hydration so publish can tell if a
     // co-admin changed it since.
     hydratedRemoteFingerprintRef.current = fingerprintRemoteSharedDoc(remote);
-    if (remote.curriculum) setCurriculum(remote.curriculum);
-    if (remote.articles) setArticles(remote.articles);
-    setStudySheets(normalizeStudySheets(remote.studySheets as Partial<StudySheetsData> | undefined));
+    // Latest built-in content + only this rotation's customizations.
+    const resolved = resolveRotationContent(remote);
+    setCurriculum(resolved.curriculum);
+    setArticles(resolved.articles);
+    setStudySheets(resolved.studySheets);
     if (remote.announcements) setAnnouncements(remote.announcements);
     if (remote.settings) setSettings(prev => ({ ...prev, ...remote.settings }));
     setClinicGuides(Array.isArray(remote.clinicGuides) ? remote.clinicGuides as ClinicGuideRecord[] : []);
-    setClinicGuideTemplates(normalizeClinicGuideTemplates(remote.clinicGuideTemplates as Partial<ClinicGuideTemplates> | undefined));
+    setClinicGuideTemplates(resolved.clinicGuideTemplates);
     markSharedSnapshotClean();
     return true;
   }, [markSharedSnapshotClean]);
@@ -378,6 +403,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         store.setShared(SHARED_KEYS.clinicGuides, snapshot.clinicGuides),
         store.setShared(SHARED_KEYS.clinicGuideTemplates, snapshot.clinicGuideTemplates),
         store.setShared(SHARED_KEYS.settings, snapshot.settings),
+        store.setShared(SHARED_KEYS.contentCustomizations, snapshot.contentCustomizations),
       ]);
       // Every write reached Firestore only if none of them were queued for retry.
       const anyQueued = results.some((result) => result.queued);
@@ -397,6 +423,7 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
           settings: snapshot.settings,
           clinicGuides: snapshot.clinicGuides,
           clinicGuideTemplates: snapshot.clinicGuideTemplates,
+          contentCustomizations: snapshot.contentCustomizations,
         });
         showToast("Published settings and content to students.", "success");
       }
@@ -853,7 +880,17 @@ function AdminPanel({ onExit }: { onExit?: () => void }) {
         {tab === "students" && subView?.type === "printStudent" && <PrintableReport mode="individual" student={students.find(s => String(s.id) === subView.id)} students={students} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "students" && subView?.type === "exportPdf" && <RotationSummaryReport student={students.find(s => String(s.id) === subView.id)} settings={settings} articles={articles} onBack={() => navigate("students", { type: "studentDetail", id: subView.id })} />}
         {tab === "analytics" && <AnalyticsTab students={students} rotationCode={rotationCode} settings={settings} articles={articles} />}
-        {tab === "content" && !subView && <ContentTab navigate={navigate} articles={articles} curriculum={curriculum} clinicGuides={clinicGuides} studySheets={studySheets} />}
+        {tab === "content" && !subView && (
+          <ContentTab
+            navigate={navigate}
+            articles={articles}
+            curriculum={curriculum}
+            clinicGuides={clinicGuides}
+            studySheets={studySheets}
+            contentCustomizations={publishSnapshot.contentCustomizations}
+            onUseBuiltIn={switchToBuiltInContent}
+          />
+        )}
         {tab === "content" && subView?.type === "editArticles" && <ArticleEditor week={subView.week} articles={articles} setArticles={setArticles} onBack={() => navigate("content")} requestConfirm={requestConfirm} />}
         {tab === "content" && subView?.type === "editCurriculum" && <CurriculumEditor curriculum={curriculum} setCurriculum={setCurriculum} onBack={() => navigate("content")} />}
         {tab === "content" && subView?.type === "editStudySheets" && <StudySheetsEditor studySheets={studySheets} setStudySheets={setStudySheets} onBack={() => navigate("content")} showToast={showToast} requestConfirm={requestConfirm} />}

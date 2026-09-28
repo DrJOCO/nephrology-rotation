@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ROTATION_GUIDES, type RotationGuideId } from "../../data/rotationGuides";
 import { InfoBar } from "./shared";
-import { GuideAccordion, GuideBody, GuideHeader, GuideItem, GuideList, GuideNumberedItem, GuideNumberedList, GuideShell } from "./GuideShell";
+import { GuideAccordion, GuideBody, GuideExample, GuideHeader, GuideItem, GuideList, GuideNumberedItem, GuideNumberedList, GuideShell } from "./GuideShell";
 
 interface Props {
   guideId: RotationGuideId;
@@ -34,7 +34,7 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
             <GuideAccordion
               key={section.heading}
               title={section.heading}
-              count={`${section.items.length} ${section.items.length === 1 ? "item" : "items"}`}
+              count={section.format === "example" ? "Worked example" : `${section.items.length} ${section.items.length === 1 ? "item" : "items"}`}
               open={isOpen}
               onToggle={() => setCollapsedSections((prev) => {
                 const next = new Set(prev);
@@ -43,9 +43,13 @@ export default function RotationGuideView({ guideId, onBack }: Props) {
                 return next;
               })}
             >
-              <GuideList>
-                {section.items.map((item, ii) => <GuideItem key={`${ii}-${item}`} template={isTemplate(item)}>{item}</GuideItem>)}
-              </GuideList>
+              {section.format === "example" ? (
+                <GuideExample lines={section.items} label={section.heading} />
+              ) : (
+                <GuideList>
+                  {section.items.map((item, ii) => <GuideItem key={`${ii}-${item}`} template={isTemplate(item)}>{item}</GuideItem>)}
+                </GuideList>
+              )}
             </GuideAccordion>
           );
         })}

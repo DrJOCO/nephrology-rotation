@@ -250,9 +250,10 @@ export function calculateEstimatedDailySolute(inputs: HyponatremiaInputs): { val
   if (uun === null || uCr === null) {
     return { value: null, note: "Enter urine urea nitrogen and urine Cr to estimate daily solute load (proxy for diet)." };
   }
-  // Estimate UOP (L/day) ≈ 100/UCr (mg/dL); daily urea (mmol) = UUN(mg/dL) × 10 / 2.8 × UOP(L) per UpToDate
+  // Estimate UOP (L/day) ≈ 100/UCr (mg/dL), assuming ~1 g/day creatinine excretion.
+  // UUN (mg/dL) ÷ 2.8 = urea mmol/L (28 mg urea N per mmol), so daily urea (mmol) = UUN/2.8 × UOP(L).
   const estUop = 100 / uCr;
-  const dailyUreaMmol = (uun * 10 / 2.8) * estUop;
+  const dailyUreaMmol = (uun / 2.8) * estUop;
   let note = "";
   if (dailyUreaMmol < 150) note = "Daily urea <150 mmol/d suggests very low protein intake — predisposes to low-solute hyponatremia (beer potomania, tea-and-toast).";
   else if (dailyUreaMmol < 300) note = "Borderline solute intake.";
@@ -263,12 +264,12 @@ export function calculateEstimatedDailySolute(inputs: HyponatremiaInputs): { val
 export function calculateCorrectionTarget(inputs: HyponatremiaInputs): CorrectionTargetResult {
   const na = parsePositive(inputs.serumNa);
   const reasons: string[] = [];
-  // Default per UpToDate: 10–12 mEq/L per 24h cap; tighten to 8 mEq/L if Na<120 or other ODS risk factors
-  let perDayCap = 10;
+  // Rotation teaching standard: chronic hyponatremia is capped at ≤8 mEq/L in any 24-hour period
+  // for every patient. Risk factors don't change the cap; they flag where to aim lower (4–6) and monitor closely.
+  const perDayCap = 8;
   let highOdsRisk = false;
   if (na !== null && na < 120) {
-    perDayCap = 8;
-    reasons.push("Serum Na <120 mEq/L — UpToDate caps correction at 8 mEq/L in any 24-hour period.");
+    reasons.push("Serum Na <120 mEq/L — severe hyponatremia; aim for 4–6 mEq/L and monitor Na closely.");
     highOdsRisk = true;
   }
   if (na !== null && na <= 105) {
@@ -276,7 +277,6 @@ export function calculateCorrectionTarget(inputs: HyponatremiaInputs): Correctio
     highOdsRisk = true;
   }
   if (hasAny(inputs.selectedOdsRisk, ["alcohol", "malnutrition", "liver_disease", "hypoK", "hypoP"])) {
-    perDayCap = Math.min(perDayCap, 8);
     reasons.push("ODS risk modifier selected (alcohol use disorder, malnutrition, liver disease, hypokalemia, or hypophosphatemia).");
     highOdsRisk = true;
   }
@@ -427,7 +427,7 @@ export function buildHyponatremiaAssessment(inputs: HyponatremiaInputs): Hyponat
     }
     if (has(inputs.selectedHistory, "cirrhosis") || has(inputs.selectedVolumeClues, "ascites")) {
       add("cirrhosis", "Hyponatremia of cirrhosis", "Hypervolemic / low EAV", 5, "Cirrhosis / ascites selected.", [
-        "Free water restriction; albumin in the right setting; midodrine/octreotide for HRS physiology; tolvaptan only if you can monitor closely.",
+        "Free water restriction; albumin in the right setting; if HRS-AKI coexists, terlipressin (or norepinephrine) with albumin; tolvaptan only if you can monitor closely.",
         "Avoid hypotonic IVF; large-volume paracentesis with albumin can paradoxically improve Na.",
       ]);
     }

@@ -439,7 +439,7 @@ async function build() {
       ["MAINRITSAN",  "2014", "Rituximab maintenance superior to azathioprine in ANCA vasculitis."],
       ["PEXIVAS",     "2020", "Reduced-dose steroids non-inferior; PLEX not routine, but KDIGO 2024 still considers it in highest-risk AAV."],
       ["MENTOR",      "2019", "Rituximab SUPERIOR to cyclosporine at 24 mo for membranous (durable remission)."],
-      ["STOP-IgAN",   "2015", "Immunosuppression on top of supportive care did NOT slow IgAN; SC is foundation."],
+      ["STOP-IgAN",   "2015", "Adding immunosuppression to supportive care did NOT slow IgAN; KDIGO 2025 now pairs SC with IgA-targeted therapy."],
       ["TESTING",     "2022", "Methylpred slowed IgAN progression (HR 0.53 full cohort; HR 0.27 reduced-dose); more infection."],
       ["NefIgArd",    "2023", "Targeted-release budesonide ↓ proteinuria & slowed eGFR decline in IgAN."],
       ["DAPA-CKD",    "2020", "Dapagliflozin ↓ kidney failure even in non-DM CKD (including IgAN, FSGS subgroups)."],

@@ -1,15 +1,59 @@
 import React from "react";
-import { T, WEEKLY } from "../../../data/constants";
+import { STUDY_SHEETS, T, WEEKLY } from "../../../data/constants";
 import type { NavigateFn, ArticlesData, WeeklyData } from "../types";
-import type { ClinicGuideRecord } from "../../../types";
+import type { ClinicGuideRecord, StudySheet } from "../../../types";
 import type { StudySheetsData } from "../../../utils/studySheets";
+import { countCustomizations, type ContentCustomizations } from "../../../utils/contentCustomizations";
+import { Button } from "../ui/Button";
 
-export function ContentTab({ navigate, articles, curriculum, clinicGuides, studySheets }: { navigate: NavigateFn; articles: ArticlesData; curriculum: WeeklyData; clinicGuides: ClinicGuideRecord[]; studySheets: StudySheetsData }) {
+const SHEET_TITLES = new Map(
+  Object.values(STUDY_SHEETS as Record<number, StudySheet[]>).flat().map((sheet) => [sheet.id, sheet.title]),
+);
+
+function customizationLabels(customizations: ContentCustomizations): string[] {
+  return [
+    ...customizations.curriculum.map((week) => `Module ${week} curriculum`),
+    ...customizations.articles.map((week) => `Module ${week} articles`),
+    ...customizations.studySheets.map((id) => `Study sheet: ${SHEET_TITLES.get(id) || id}`),
+    ...customizations.clinicGuideTemplates.map((topic) => `Clinic guide: ${topic}`),
+  ];
+}
+
+// Shows which content this rotation keeps as its own version. Everything else
+// follows the latest built-in content automatically (utils/contentCustomizations).
+export function ContentSourceCard({ customizations, onUseBuiltIn }: { customizations: ContentCustomizations; onUseBuiltIn: () => void }) {
+  const count = countCustomizations(customizations);
+  return (
+    <div style={{ background: count ? T.warningBg : T.successBg, border: `1px solid ${count ? T.warning : T.success}55`, borderRadius: 14, padding: 14, marginBottom: 16 }}>
+      <div style={{ color: T.ink, fontSize: 15, fontWeight: 800 }}>
+        {count === 0 ? "Using the latest built-in content" : `${count} item${count === 1 ? "" : "s"} customized for this rotation`}
+      </div>
+      <div style={{ color: T.sub, fontSize: 13, lineHeight: 1.5, marginTop: 3 }}>
+        {count === 0
+          ? "Nothing here has been edited, so every app update reaches students automatically. Anything you edit below stays your version."
+          : "These keep your edited version. Everything else updates automatically whenever the app is updated."}
+      </div>
+      {count > 0 && (
+        <>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, color: T.ink, fontSize: 13, lineHeight: 1.6 }}>
+            {customizationLabels(customizations).map((label) => <li key={label}>{label}</li>)}
+          </ul>
+          <div style={{ marginTop: 10 }}>
+            <Button onClick={onUseBuiltIn}>Use built-in for everything</Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+export function ContentTab({ navigate, articles, curriculum, clinicGuides, studySheets, contentCustomizations, onUseBuiltIn }: { navigate: NavigateFn; articles: ArticlesData; curriculum: WeeklyData; clinicGuides: ClinicGuideRecord[]; studySheets: StudySheetsData; contentCustomizations?: ContentCustomizations; onUseBuiltIn?: () => void }) {
   const studySheetCount = Object.values(studySheets).reduce((count, sheets) => count + sheets.length, 0);
 
   return (
     <div style={{ padding: 16 }}>
       <h2 style={{ color: T.ink, fontSize: 20, margin: "0 0 16px", fontFamily: T.serif, fontWeight: 700 }}>Manage Content</h2>
+      {contentCustomizations && onUseBuiltIn && <ContentSourceCard customizations={contentCustomizations} onUseBuiltIn={onUseBuiltIn} />}
 
       {/* Curriculum */}
       <button onClick={() => navigate("content", { type: "editCurriculum" })}

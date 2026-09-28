@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { T, TOPICS, FEEDBACK_TAGS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS } from "../../../data/constants";
-import { validatePatientForm, validateQuizScoreEntry, clampLength, LIMITS, PHI_WARNING } from "../../../utils/validation";
+import { consultDetailLabels } from "../../../data/consultFields";
+import { validatePatientForm, validateQuizScoreEntry, LIMITS, PHI_WARNING, type PatientFormData } from "../../../utils/validation";
 import { buildStudentProgressSummary } from "../../../utils/adminStudents";
 import type { AdminStudent, Patient, QuizScore, SharedSettings, FeedbackTag } from "../../../types";
 import type { NavigateFn, ArticlesData } from "../types";
@@ -19,6 +20,7 @@ import { getScorePct } from "../lib/format";
 import { findSuspiciousDuplicateAttempts } from "../../../utils/dataHealth";
 import { Button } from "../ui/Button";
 import { StatTile } from "../ui/StatTile";
+import { ConsultDetailPickers, compactConsultDetails } from "../../student/ConsultDetailPickers";
 
 const ADMIN_YEAR_OPTIONS = ["MS3/MS4", "MS3", "MS4", "PA Student", "NP Student", "Resident"] as const;
 
@@ -30,7 +32,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
   const [scoreError, setScoreError] = useState<string>("");
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [patientStudentIds, setPatientStudentIds] = useState<string[]>(() => s?.studentId ? [s.studentId] : []);
-  const [patForm, setPatForm] = useState({ initials: "", room: "", dx: "", topics: [] as string[], notes: "" });
+  const [patForm, setPatForm] = useState<PatientFormData>({ topics: [] });
   const [patErrors, setPatErrors] = useState<Record<string, string | undefined>>({});
   const [showAllPatTopics, setShowAllPatTopics] = useState(false);
   const [showAddFeedback, setShowAddFeedback] = useState(false);
@@ -154,13 +156,14 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       students
         .filter(student => selectedStudentIds.includes(student.studentId))
         .map((student, index) => {
-          const nextPatient = {
-            ...patForm,
+          const nextPatient: Patient = {
             id: `${Date.now()}-${index}-${student.studentId}`,
+            topics: patForm.topics,
+            ...compactConsultDetails(patForm),
             date: assignedAt,
-            status: "active" as const,
+            status: "active",
             followUps: [],
-          } as Patient;
+          };
           return [student.studentId, {
             patients: [...(student.patients || []), nextPatient],
             lastSyncedAt: assignedAt,
@@ -176,7 +179,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
       writeStudentToFirestore(studentId, { patients: assignment.patients });
     });
 
-    setPatForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
+    setPatForm({ topics: [] });
     setPatErrors({});
     setShowAllPatTopics(false);
     setShowAddPatient(false);
@@ -494,11 +497,6 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
             {patErrors.assignment && <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.assignment}</div>}
           </div>
           <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Initials</label>
-            <input value={patForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => { setPatForm({...patForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setPatErrors(prev => ({ ...prev, initials: undefined })); }} placeholder="J.S." style={adminInput} />
-            {patErrors.initials && <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.initials}</div>}
-          </div>
-          <div style={{ marginBottom: 10 }}>
             <label style={adminLabel}>Learning Tags (2+ if relevant)</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
               {visibleAdminTopics.map(t => {
@@ -532,11 +530,7 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
               </div>
             )}
           </div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={adminLabel}>Diagnosis</label>
-            <input value={patForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => { setPatForm({...patForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setPatErrors(prev => ({ ...prev, dx: undefined })); }} placeholder="e.g. AKI from sepsis" style={adminInput} />
-            {patErrors.dx && <div style={{ fontSize: 13, color: T.warning, marginTop: 4 }}>{patErrors.dx}</div>}
-          </div>
+          <ConsultDetailPickers value={patForm} onChange={details => setPatForm(prev => ({ ...prev, ...details }))} accent={T.warning} accentInk={T.warningInk} />
           <div style={{ display: "flex", gap: 8 }}>
             <Button block variant="primary" onClick={addPatient} style={{ flex: 1 }}>
               {patientStudentIds.length > 1 ? `Add to ${patientStudentIds.length} Students` : "Add Consult"}
@@ -663,14 +657,14 @@ export function StudentDetailView({ student: s, students, onBack, setStudents, w
         <div style={{ background: T.card, borderRadius: 12, padding: 14, border: `1px solid ${T.line}` }}>
           {patients.map((p, i) => {
             const ts = p.topics || (p.topic ? [p.topic] : []);
+            const details = consultDetailLabels(p);
             return (
             <div key={i} style={{ padding: "8px 0", borderBottom: i < patients.length - 1 ? `1px solid ${T.line}` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                <span style={{ fontWeight: 600, color: T.ink, fontSize: 13 }}>{p.initials}</span>
                 {ts.map(t => <span key={t} style={{ fontSize: 13, color: T.brandInk, background: T.brand, padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>{t}</span>)}
                 <span style={{ fontSize: 13, color: T.muted, marginLeft: "auto" }}>{new Date(p.date).toLocaleDateString()}</span>
               </div>
-              {p.dx && <div style={{ fontSize: 13, color: T.sub, marginTop: 2, wordBreak: "break-word" }}>{p.dx}</div>}
+              {details.length > 0 && <div style={{ fontSize: 13, color: T.sub, marginTop: 2 }}>{details.join(" · ")}</div>}
             </div>
             );
           })}

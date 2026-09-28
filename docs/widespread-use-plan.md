@@ -355,6 +355,19 @@ live reads. **DoD:** dashboard render cost independent of student count
   needs Dr. Cheng sign-off + export first). Update `EduDisclaimer` copy,
   PatientTab UI, team snapshots (already PHI-free by design — verify), and the
   moonlighter/signout adjacent tooling expectations.
+  **✅ Implemented 2026-09-26.** Consult entries are topics + optional
+  picklists (setting ED/Floor/Step-down/ICU, requesting service, bucketed
+  hospital day — `src/data/consultFields.ts`); follow-ups are date-only
+  "seen again" marks. `toDeidentifiedPatient` (`src/utils/patient.ts`)
+  allow-lists entry fields on every load path (student boot, listener,
+  sign-in restore, admin roster), so legacy free text is never shown and is
+  overwritten on the next write. Stored copies are removed by the admin
+  **Privacy cleanup** card on the Students tab (per connected rotation):
+  counts shown first, backup download required before "Remove", re-read
+  + backup-coverage check at apply time, guarded writes, idempotent. The
+  notes points bonus / "Teaching Pearls" badge became a setting+service
+  detail bonus ("Thorough Logger", same `note_taker` id). Team snapshots and
+  the activity log were verified PHI-free (topics only).
 
 ### WS-12 — Legal, retention, offboarding _(human + sonnet drafting, S)_
 

@@ -163,7 +163,7 @@ function uopLabel(status: AkiUopStatus): string {
     low_6_12: "UOP <0.5 mL/kg/hr for 6-12 hr",
     low_12: "UOP <0.5 mL/kg/hr for >=12 hr",
     very_low_24: "UOP <0.3 mL/kg/hr for >=24 hr",
-    anuria: "Anuria or near-anuria",
+    anuria: "Anuria for >=12 hr",
   };
   return labels[status];
 }
@@ -489,9 +489,9 @@ export function buildAkiAssessment(inputs: AkiToolInputs): AkiAssessmentResult {
   }
 
   if (has(inputs.selectedContext, "cirrhosis")) {
-    add("hrs", "HRS-AKI physiology", "Perfusion/cirrhosis", 4, "Cirrhosis/ascites selected.", ["Exclude shock, nephrotoxins, obstruction, and active urinary sediment before labeling HRS.", "Check albumin challenge context, infection/SBP status, and vasoconstrictor candidacy."]);
-    if (has(inputs.selectedContext, "sepsis_infection")) add("hrs", "HRS-AKI physiology", "Perfusion/cirrhosis", 1, "Infection in cirrhosis can precipitate HRS physiology but also raises ATN risk.", ["Exclude shock, nephrotoxins, obstruction, and active urinary sediment before labeling HRS.", "Check albumin challenge context, infection/SBP status, and vasoconstrictor candidacy."]);
-    if (blandSediment || fenaLow || feureaLow) add("hrs", "HRS-AKI physiology", "Perfusion/cirrhosis", 1, "Bland/low-index pattern can fit HRS physiology.", ["Exclude shock, nephrotoxins, obstruction, and active urinary sediment before labeling HRS.", "Check albumin challenge context, infection/SBP status, and vasoconstrictor candidacy."]);
+    add("hrs", "HRS-AKI physiology", "Perfusion/cirrhosis", 4, "Cirrhosis/ascites selected.", ["Exclude shock, nephrotoxins, obstruction, and active urinary sediment before labeling HRS.", "Check response to clinically indicated volume resuscitation (ICA-ADQI 2024 dropped the fixed 48-hour albumin challenge), infection/SBP status, and vasoconstrictor candidacy."]);
+    if (has(inputs.selectedContext, "sepsis_infection")) add("hrs", "HRS-AKI physiology", "Perfusion/cirrhosis", 1, "Infection in cirrhosis can precipitate HRS physiology but also raises ATN risk.", ["Exclude shock, nephrotoxins, obstruction, and active urinary sediment before labeling HRS.", "Check response to clinically indicated volume resuscitation (ICA-ADQI 2024 dropped the fixed 48-hour albumin challenge), infection/SBP status, and vasoconstrictor candidacy."]);
+    if (blandSediment || fenaLow || feureaLow) add("hrs", "HRS-AKI physiology", "Perfusion/cirrhosis", 1, "Bland/low-index pattern can fit HRS physiology.", ["Exclude shock, nephrotoxins, obstruction, and active urinary sediment before labeling HRS.", "Check response to clinically indicated volume resuscitation (ICA-ADQI 2024 dropped the fixed 48-hour albumin challenge), infection/SBP status, and vasoconstrictor candidacy."]);
   }
 
   const pigmentNext = ["Check CK, uric acid, phosphorus, calcium, potassium, LDH/haptoglobin when clinically relevant.", "Treat the underlying pigment or crystal driver and protect kidney perfusion."];

@@ -1,24 +1,37 @@
 import { useState, useEffect, CSSProperties } from "react";
-import { Pencil, RotateCcw, Check, X, Plus, ChevronRight, Lightbulb } from "lucide-react";
+import { Pencil, RotateCcw, Check, X, Plus, ChevronRight } from "lucide-react";
 import { T, TOPICS, TOPIC_RESOURCE_MAP, STUDY_SHEETS, COMMON_PATIENT_TOPICS, ADDITIONAL_PATIENT_TOPICS, TOPIC_KEYWORDS, labelChip } from "../../data/constants";
+import { consultDetailLabels } from "../../data/consultFields";
 import { inputLabel, inputStyle, EduDisclaimer, ConfirmSheet } from "./shared";
+import { ConsultDetailPickers, compactConsultDetails, type ConsultDetails } from "./ConsultDetailPickers";
 import { useIsMobile } from "../../utils/helpers";
+import { dateKey } from "../../utils/date";
 import { getFollowUpState } from "../../utils/patient";
 import { getPatientSuggestedTopicGroups, type PatientSuggestedTopicGroup } from "../../utils/patientRecommendations";
 import { createQuickLogEntry, summarizeSuggestedGroup, isDuplicateQuickLog, clearQuickLogGuard, OTHER_QUICK_LOG_SUMMARY } from "../../utils/quickLog";
-import { validatePatientForm, validateFollowUp, clampLength, LIMITS, PHI_WARNING } from "../../utils/validation";
+import { validatePatientForm, LIMITS, PHI_WARNING } from "../../utils/validation";
 import type { CompletedItems, Patient, SubView } from "../../types";
 
 const errorStyle: CSSProperties = { fontSize: 13, color: T.danger, marginTop: 3, fontWeight: 500 };
-const charCountStyle = (current: number, max: number): CSSProperties => ({ fontSize: 13, color: current > max * 0.9 ? T.danger : T.muted, textAlign: "right", marginTop: 2 });
-const inputErrorBorder = { borderColor: T.danger };
 
-interface PatientForm {
-  initials: string;
-  room: string;
-  dx: string;
+// Topics plus optional picklist details — no free-text fields (D1).
+interface PatientForm extends ConsultDetails {
   topics: string[];
-  notes: string;
+}
+
+const EMPTY_FORM: PatientForm = { topics: [] };
+
+function patientTopics(p: Patient): string[] {
+  return p.topics?.length ? p.topics : (p.topic ? [p.topic] : []);
+}
+
+// Applies a saved form to an entry, clearing any detail the student unset.
+function applyPatientForm(p: Patient, form: PatientForm): Patient {
+  const next: Patient = { ...p, topics: form.topics };
+  delete next.setting;
+  delete next.service;
+  delete next.hospitalDay;
+  return { ...next, ...compactConsultDetails(form) };
 }
 
 type ActivityLogger = (type: string, label: string, detail?: string) => void;
@@ -47,17 +60,6 @@ function searchQuickLogTopics(query: string): string[] {
   });
 }
 
-function suggestTopicsFromText(text: string, alreadySelected: string[]): string[] {
-  const q = text.toLowerCase();
-  if (q.trim().length < 2) return [];
-  const matches: string[] = [];
-  for (const { topic, keywords } of TOPIC_KEYWORDS) {
-    if (alreadySelected.includes(topic)) continue;
-    if (keywords.some(k => q.includes(k))) matches.push(topic);
-  }
-  return matches.slice(0, 5);
-}
-
 function summarizeTopics(topics: string[]): string {
   const cleanTopics = topics.filter(Boolean);
   if (cleanTopics.length === 0) return "No topics";
@@ -75,30 +77,22 @@ function getSuggestedGroupTarget(group: PatientSuggestedTopicGroup): [string, Su
 
 function buildPatientUpdateDetail(previous: Patient | undefined, next: PatientForm): string {
   if (!previous) return summarizeTopics(next.topics);
-
-  const previousTopics = previous.topics || (previous.topic ? [previous.topic] : []);
-  const topicsChanged = previousTopics.join("|") !== next.topics.join("|");
-  const notesChanged = (previous.notes || "").trim() !== next.notes.trim();
-  const diagnosisChanged = (previous.dx || "").trim() !== next.dx.trim();
-
-  if (notesChanged && next.notes.trim() && !(previous.notes || "").trim()) return "Teaching note added";
-  if (topicsChanged) return summarizeTopics(next.topics);
-  if (diagnosisChanged) return "Diagnosis updated";
-  if (notesChanged) return "Teaching note updated";
-  return "Details updated";
+  const topicsChanged = patientTopics(previous).join("|") !== next.topics.join("|");
+  return topicsChanged ? summarizeTopics(next.topics) : "Details updated";
 }
 
-function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editErrors, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; editErrors: Record<string, string | undefined>; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: string | number, note: string) => void; onRemoveFollowUp: (patientId: string | number, followUpId: number) => void }) {
+function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editErrors, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onEditToggleTopic, onAddFollowUp, onRemoveFollowUp }: { p: Patient; onToggle: () => void; onRemove: () => void; dimmed?: boolean; isEditing: boolean; editForm: PatientForm; editErrors: Record<string, string | undefined>; onStartEdit: () => void; onCancelEdit: () => void; onSaveEdit: () => void; onEditChange: (form: PatientForm) => void; onEditToggleTopic: (topic: string) => void; onAddFollowUp: (patientId: string | number) => void; onRemoveFollowUp: (patientId: string | number, followUpId: number) => void }) {
   const isMobile = useIsMobile();
-  const [followUpText, setFollowUpText] = useState("");
-  const [followUpError, setFollowUpError] = useState<string | null>(null);
   const [showFollowUps, setShowFollowUps] = useState(false);
   const [showAllEditTopics, setShowAllEditTopics] = useState(false);
 
-  // Backwards compat: old patients have p.topic (string), new have p.topics (array)
-  const topics = p.topics || (p.topic ? [p.topic] : []);
+  const topics = patientTopics(p);
+  const title = topics.join(", ") || "Consult";
+  const details = consultDetailLabels(p);
   const followUps = p.followUps || [];
   const followUpState = getFollowUpState(p);
+  const today = dateKey();
+  const seenToday = followUps.some(f => dateKey(new Date(f.date)) === today);
   const visibleEditTopics = getVisibleTopicOptions(editForm.topics, showAllEditTopics);
   const hiddenEditTopicCount = getHiddenTopicCount(editForm.topics, showAllEditTopics);
 
@@ -106,50 +100,10 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
     if (!isEditing) setShowAllEditTopics(false);
   }, [isEditing]);
 
-  const handleAddFollowUp = () => {
-    const { valid, error } = validateFollowUp(followUpText);
-    if (!valid) { setFollowUpError(error); return; }
-    onAddFollowUp(p.id, followUpText.trim());
-    setFollowUpText("");
-    setFollowUpError(null);
-  };
-
   if (isEditing) {
     return (
       <div style={{ background: T.card, borderRadius: 10, padding: 12, marginBottom: 10, border: `2px solid ${T.brand}` }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 8 }}>Editing Inpatient</div>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
-          <div>
-            <label style={inputLabel}>Initials</label>
-            <input value={editForm.initials} maxLength={LIMITS.INITIALS_MAX} onChange={e => onEditChange({...editForm, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)})} style={{...inputStyle, ...(editErrors.initials ? inputErrorBorder : {})}} />
-            {editErrors.initials && <div style={errorStyle}>{editErrors.initials}</div>}
-          </div>
-          <div>
-            <label style={inputLabel}>Room #</label>
-            <input value={editForm.room} maxLength={LIMITS.ROOM_MAX} onChange={e => onEditChange({...editForm, room: clampLength(e.target.value, LIMITS.ROOM_MAX)})} style={{...inputStyle, ...(editErrors.room ? inputErrorBorder : {})}} />
-            {editErrors.room && <div style={errorStyle}>{editErrors.room}</div>}
-          </div>
-        </div>
-        <div style={{ marginBottom: 10 }}>
-          <label style={inputLabel}>Diagnosis</label>
-          <input value={editForm.dx} maxLength={LIMITS.DIAGNOSIS_MAX} onChange={e => onEditChange({...editForm, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)})} style={{...inputStyle, ...(editErrors.dx ? inputErrorBorder : {})}} />
-          {editErrors.dx && <div style={errorStyle}>{editErrors.dx}</div>}
-          {(() => {
-            const suggested = suggestTopicsFromText(editForm.dx, editForm.topics);
-            if (suggested.length === 0) return null;
-            return (
-              <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-                <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
-                {suggested.map(t => (
-                  <button key={t} type="button" onClick={() => onEditToggleTopic(t)}
-                    style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.infoBg, color: T.info, border: `1px dashed ${T.info}` }}>
-                    + {t}
-                  </button>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: T.brand, marginBottom: 8 }}>Editing Consult</div>
         <div style={{ marginBottom: 10 }}>
           <label style={inputLabel}>Learning Tags (2+ if relevant)</label>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
@@ -184,15 +138,8 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
             </button>
           )}
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={inputLabel}>Notes</label>
-          <textarea value={editForm.notes} maxLength={LIMITS.NOTES_MAX} onChange={e => onEditChange({...editForm, notes: clampLength(e.target.value, LIMITS.NOTES_MAX)})} rows={2} style={{...inputStyle, resize: "vertical", ...(editErrors.notes ? inputErrorBorder : {})}} />
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            {editErrors.notes ? <div style={errorStyle}>{editErrors.notes}</div> : <div />}
-            <div style={charCountStyle(editForm.notes.length, LIMITS.NOTES_MAX)}>{editForm.notes.length}/{LIMITS.NOTES_MAX}</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <ConsultDetailPickers value={editForm} onChange={details => onEditChange({ ...editForm, ...details })} />
+        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
           <button onClick={onSaveEdit} style={{ flex: 1, padding: "10px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Save</button>
           <button onClick={onCancelEdit} style={{ flex: 1, padding: "10px 0", background: T.bg, color: T.sub, border: `1px solid ${T.line}`, borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: "pointer" }}>Cancel</button>
         </div>
@@ -208,29 +155,19 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
       <div style={{ padding: isMobile ? "9px 10px 8px" : "10px 12px 8px" }}>
         <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "stretch" : "flex-start", gap: isMobile ? 7 : 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3, flexWrap: "wrap" }}>
-              <span style={{ fontWeight: 700, color: dimmed ? T.muted : T.ink, fontSize: 14 }}>{p.initials?.trim() || `${topics[0] || "Consult"} (quick log)`}</span>
-              {p.room && <span style={{ fontSize: 12, color: T.sub, background: T.bg, padding: "1px 7px", borderRadius: 4 }}>Rm {p.room}</span>}
+            <div style={{ fontWeight: 700, color: dimmed ? T.muted : T.ink, fontSize: 14, lineHeight: 1.35, marginBottom: 4, wordBreak: "break-word" }}>{title}</div>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
+              {details.map(label => (
+                <span key={label} style={{ ...labelChip, fontSize: 10.5, padding: "2px 6px", borderRadius: 5 }}>{label}</span>
+              ))}
               <span style={{ fontSize: 12, color: T.muted }}>Added {new Date(p.date).toLocaleDateString()}</span>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 3 }}>
-              {topics.map(t => (
-                <span key={t} style={{ ...labelChip, fontSize: 10.5, padding: "2px 6px", borderRadius: 5 }}>{t}</span>
-              ))}
-            </div>
-            {p.dx && <div style={{ fontSize: 13, color: dimmed ? T.muted : T.ink, marginBottom: 0, lineHeight: 1.35, wordBreak: "break-word" }}>{p.dx}</div>}
-            {p.notes && (
-              <div style={{ fontSize: 12, color: T.sub, fontStyle: "italic", marginTop: 3, wordBreak: "break-word", display: "flex", alignItems: "flex-start", gap: 4, lineHeight: 1.35 }}>
-                <Lightbulb size={12} strokeWidth={1.75} color={T.warning} aria-hidden="true" style={{ flexShrink: 0, marginTop: 2 }} />
-                <span>{p.notes}</span>
-              </div>
-            )}
           </div>
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "flex-end", flexShrink: 0 }}>
             {!dimmed && (
               <button
                 onClick={onStartEdit}
-                aria-label={`Edit inpatient ${p.initials || ""}`.trim()}
+                aria-label={`Edit consult: ${title}`}
                 style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, padding: "5px 8px", minHeight: 36, fontSize: 11, cursor: "pointer", color: T.brand, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}
               >
                 <Pencil size={12} strokeWidth={1.75} aria-hidden="true" /> Edit
@@ -238,14 +175,14 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
             )}
             <button
               onClick={onToggle}
-              aria-label={dimmed ? `Reactivate inpatient ${p.initials || ""}`.trim() : `Discharge inpatient ${p.initials || ""}`.trim()}
+              aria-label={dimmed ? `Reactivate consult: ${title}` : `Discharge consult: ${title}`}
               style={{ background: "none", border: `1px solid ${dimmed ? T.success : T.muted}`, borderRadius: 6, padding: "5px 8px", minHeight: 36, fontSize: 11, cursor: "pointer", color: dimmed ? T.success : T.sub, display: "inline-flex", alignItems: "center", gap: 4 }}
             >
               {dimmed ? <><RotateCcw size={12} strokeWidth={1.75} aria-hidden="true" /> Reactivate</> : <><Check size={12} strokeWidth={2} aria-hidden="true" /> Discharge</>}
             </button>
             <button
               onClick={onRemove}
-              aria-label={`Remove inpatient ${p.initials || ""} — added in error`.trim()}
+              aria-label={`Remove consult: ${title} — added in error`}
               title="Remove (added in error)"
               style={{ background: "none", border: `1px solid ${T.line}`, borderRadius: 6, minHeight: 36, padding: "5px 8px", fontSize: 11, cursor: "pointer", color: T.muted, display: "inline-flex", alignItems: "center", gap: 4 }}
             >
@@ -255,25 +192,49 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
         </div>
       </div>
 
-      {/* Follow-ups section */}
+      {/* Follow-ups: date-only "seen again" marks — no notes, so nothing typed can identify the patient */}
       <div style={{ borderTop: `1px solid ${T.line}`, padding: "6px 10px" }}>
-        {followUps.length > 0 && (
-          <button
-            onClick={() => setShowFollowUps(!showFollowUps)}
-            aria-expanded={showFollowUps}
-            aria-label={`${showFollowUps ? "Collapse" : "Expand"} follow-ups`}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: T.brand, fontWeight: 600, padding: "4px 0", marginBottom: 4, display: "flex", alignItems: "center", gap: 4, minHeight: 36 }}
-          >
-            <ChevronRight size={14} strokeWidth={2} aria-hidden="true" style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }} />
-            Follow-ups ({followUps.length})
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          {followUps.length > 0 ? (
+            <button
+              onClick={() => setShowFollowUps(!showFollowUps)}
+              aria-expanded={showFollowUps}
+              aria-label={`${showFollowUps ? "Collapse" : "Expand"} follow-up dates`}
+              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: T.brand, fontWeight: 600, padding: "4px 0", display: "flex", alignItems: "center", gap: 4, minHeight: 36 }}
+            >
+              <ChevronRight size={14} strokeWidth={2} aria-hidden="true" style={{ transform: showFollowUps ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.2s" }} />
+              Seen again ({followUps.length})
+            </button>
+          ) : (
+            <span style={{ fontSize: 12, color: T.muted }}>Not seen again yet</span>
+          )}
+          {!dimmed && (
+            <button
+              onClick={() => onAddFollowUp(p.id)}
+              disabled={seenToday}
+              aria-label={seenToday ? "Already marked seen today" : `Mark ${title} seen again today`}
+              style={{
+                padding: "5px 10px",
+                minHeight: 36,
+                background: seenToday ? T.surface2 : T.card,
+                color: seenToday ? T.muted : T.brand,
+                border: `1px solid ${seenToday ? T.line : T.brand}`,
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: seenToday ? "default" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              {seenToday ? <><Check size={13} strokeWidth={2} aria-hidden="true" /> Seen today</> : <><Plus size={13} strokeWidth={2.25} aria-hidden="true" /> Seen again today</>}
+            </button>
+          )}
+        </div>
         {showFollowUps && followUps.map(f => (
-          <div key={f.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "4px 0", marginLeft: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, color: T.muted }}>{new Date(f.date).toLocaleDateString()} {new Date(f.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
-              <div style={{ fontSize: 13, color: T.ink, wordBreak: "break-word" }}>{f.note}</div>
-            </div>
+          <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 0", marginLeft: 18 }}>
+            <div style={{ flex: 1, minWidth: 0, fontSize: 13, color: T.ink }}>{new Date(f.date).toLocaleDateString()}</div>
             <button
               onClick={() => onRemoveFollowUp(p.id, f.id)}
               aria-label="Remove follow-up"
@@ -284,49 +245,6 @@ function PatientCard({ p, onToggle, onRemove, dimmed, isEditing, editForm, editE
             </button>
           </div>
         ))}
-        {!dimmed && (
-          <div style={{ marginTop: followUps.length > 0 ? 6 : 0 }}>
-            <div style={{ display: "flex", gap: 6 }}>
-              <input value={followUpText} maxLength={LIMITS.FOLLOWUP_MAX}
-                onChange={e => { setFollowUpText(clampLength(e.target.value, LIMITS.FOLLOWUP_MAX)); setFollowUpError(null); }}
-                onKeyDown={e => { if (e.key === "Enter") handleAddFollowUp(); }}
-                placeholder="Add follow-up note..."
-                style={{
-                  flex: 1,
-                  padding: "6px 9px",
-                  fontSize: 12,
-                  border: `1px solid ${followUpError ? T.danger : T.line}`,
-                  borderRadius: 6,
-                  fontFamily: T.sans,
-                  background: T.surface2,
-                  color: T.ink,
-                  boxSizing: "border-box",
-                }} />
-              <button
-                onClick={handleAddFollowUp}
-                aria-label="Add follow-up note"
-                title="Add follow-up"
-                disabled={!followUpText.trim()}
-                style={{
-                  padding: "6px 9px",
-                  minHeight: 36,
-                  minWidth: 34,
-                  background: followUpText.trim() ? T.brand : T.surface2,
-                  color: followUpText.trim() ? T.brandInk : T.muted,
-                  border: `1px solid ${followUpText.trim() ? T.brand : T.line}`,
-                  borderRadius: 6,
-                  cursor: followUpText.trim() ? "pointer" : "not-allowed",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Plus size={16} strokeWidth={2.25} aria-hidden="true" />
-              </button>
-            </div>
-            {followUpError && <div style={errorStyle}>{followUpError}</div>}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -375,10 +293,10 @@ const GN_WORKFLOW_SUGGESTION_TOPICS = new Set([
 export default function PatientTab({ patients, setPatients, navigate, completedItems, onLogActivity, onMarkPatientDirty, onMarkPatientRemoved, onCompleteConsultTopic }: { patients: Patient[]; setPatients: React.Dispatch<React.SetStateAction<Patient[]>>; navigate?: (tab: string, sv?: SubView) => void; completedItems?: CompletedItems; onLogActivity?: ActivityLogger; onMarkPatientDirty?: (id: string | number) => void; onMarkPatientRemoved?: (id: string | number) => void; onCompleteConsultTopic?: (payload: { topic: string; sheetIds: string[]; trialNames: string[] }) => void }) {
   const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
+  const [form, setForm] = useState<PatientForm>(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
   const [editingId, setEditingId] = useState<string | number | null>(null);
-  const [editForm, setEditForm] = useState<PatientForm>({ initials: "", room: "", dx: "", topics: [], notes: "" });
+  const [editForm, setEditForm] = useState<PatientForm>(EMPTY_FORM);
   const [editErrors, setEditErrors] = useState<Record<string, string | undefined>>({});
   const [pendingRemoveId, setPendingRemoveId] = useState<string | number | null>(null);
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
@@ -450,17 +368,10 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
   const addPatient = () => {
     const { valid, errors } = validatePatientForm(form);
     if (!valid) { setFormErrors(errors); return; }
-    const sanitized = {
-      initials: form.initials.trim(),
-      room: form.room.trim(),
-      dx: form.dx.trim(),
-      topics: form.topics,
-      notes: form.notes.trim(),
-    };
     const newId = Date.now();
     onMarkPatientDirty?.(newId);
-    setPatients(prev => [{ ...sanitized, id: newId, date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
-    onLogActivity?.("patient", "Inpatient added", summarizeTopics(sanitized.topics));
+    setPatients(prev => [{ id: newId, topics: form.topics, ...compactConsultDetails(form), date: new Date().toISOString(), status: "active", followUps: [] }, ...prev]);
+    onLogActivity?.("patient", "Inpatient added", summarizeTopics(form.topics));
 
     // Compute topic suggestions
     if (navigate) {
@@ -509,7 +420,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
       }
     }
 
-    setForm({ initials: "", room: "", dx: "", topics: [], notes: "" });
+    setForm(EMPTY_FORM);
     setFormErrors({});
     setShowAllTopics(false);
     setAddTopicQuery("");
@@ -522,29 +433,23 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
     const nextStatus = patient.status === "active" ? "discharged" : "active";
     onMarkPatientDirty?.(id);
     setPatients(prev => prev.map(p => p.id === id ? { ...p, status: nextStatus } : p));
-    onLogActivity?.("patient", nextStatus === "discharged" ? "Inpatient discharged" : "Inpatient reactivated", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
+    onLogActivity?.("patient", nextStatus === "discharged" ? "Inpatient discharged" : "Inpatient reactivated", summarizeTopics(patientTopics(patient)));
   };
   const remove = (id: string | number) => {
     const patient = patients.find(p => p.id === id);
     onMarkPatientRemoved?.(id);
     setPatients(prev => prev.filter(p => p.id !== id));
     if (patient) {
-      onLogActivity?.("patient", "Inpatient removed", summarizeTopics(patient.topics || (patient.topic ? [patient.topic] : [])));
+      onLogActivity?.("patient", "Inpatient removed", summarizeTopics(patientTopics(patient)));
     }
   };
 
   const startEdit = (patient: Patient) => {
     setEditingId(patient.id);
-    setEditForm({
-      initials: patient.initials || "",
-      room: patient.room || "",
-      dx: patient.dx || "",
-      topics: patient.topics || (patient.topic ? [patient.topic] : []),
-      notes: patient.notes || "",
-    });
+    setEditForm({ topics: patientTopics(patient), ...compactConsultDetails(patient) });
   };
 
-  const cancelEdit = () => { setEditingId(null); setEditForm({ initials: "", room: "", dx: "", topics: [], notes: "" }); setEditErrors({}); };
+  const cancelEdit = () => { setEditingId(null); setEditForm(EMPTY_FORM); setEditErrors({}); };
 
   const saveEdit = () => {
     const { valid, errors } = validatePatientForm(editForm);
@@ -553,29 +458,21 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
       return;
     }
     setEditErrors({});
-    const sanitized = {
-      initials: editForm.initials.trim(),
-      room: editForm.room.trim(),
-      dx: editForm.dx.trim(),
-      topics: editForm.topics,
-      notes: editForm.notes.trim(),
-    };
     const existing = patients.find(p => p.id === editingId);
     if (editingId != null) onMarkPatientDirty?.(editingId);
-    setPatients(prev => prev.map(p => p.id === editingId ? { ...p, ...sanitized } : p));
-    onLogActivity?.("patient", "Inpatient updated", buildPatientUpdateDetail(existing, sanitized));
+    setPatients(prev => prev.map(p => p.id === editingId ? applyPatientForm(p, editForm) : p));
+    onLogActivity?.("patient", "Inpatient updated", buildPatientUpdateDetail(existing, editForm));
     cancelEdit();
   };
 
-  const addFollowUp = (patientId: string | number, noteText: string) => {
-    if (!noteText.trim()) return;
+  const addFollowUp = (patientId: string | number) => {
     const patient = patients.find(p => p.id === patientId);
     onMarkPatientDirty?.(patientId);
     setPatients(prev => prev.map(p => p.id === patientId ? {
       ...p,
-      followUps: [...(p.followUps || []), { id: Date.now(), date: new Date().toISOString(), note: noteText.trim() }]
+      followUps: [...(p.followUps || []), { id: Date.now(), date: new Date().toISOString() }]
     } : p));
-    onLogActivity?.("follow_up", "Follow-up added", summarizeTopics(patient?.topics || (patient?.topic ? [patient.topic] : [])));
+    onLogActivity?.("follow_up", "Follow-up added", summarizeTopics(patient ? patientTopics(patient) : []));
   };
 
   const removeFollowUp = (patientId: string | number, followUpId: number) => {
@@ -585,7 +482,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
       ...p,
       followUps: (p.followUps || []).filter(f => f.id !== followUpId)
     } : p));
-    onLogActivity?.("follow_up", "Follow-up removed", summarizeTopics(patient?.topics || (patient?.topic ? [patient.topic] : [])));
+    onLogActivity?.("follow_up", "Follow-up removed", summarizeTopics(patient ? patientTopics(patient) : []));
   };
 
   const active = patients.filter(p => p.status === "active");
@@ -633,7 +530,7 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
       >
         <div style={{ fontSize: 13, fontWeight: 700, color: T.warning, marginBottom: showCompactPhiWarning ? 0 : 4, flexShrink: 0 }}>No PHI</div>
         <div style={{ fontSize: 13, color: T.sub, lineHeight: showCompactPhiWarning ? 1.35 : 1.5 }}>
-          {showCompactPhiWarning ? "Initials and learning points only." : PHI_WARNING}
+          {showCompactPhiWarning ? "Topics and picklists only — no patient details." : PHI_WARNING}
         </div>
       </div>
 
@@ -754,44 +651,6 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
 
       {showAdd && (
         <div style={{ background: T.card, borderRadius: 12, padding: 14, marginBottom: 16, border: `2px solid ${T.brand}` }}>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10, marginBottom: 10 }}>
-            <div>
-              <label style={inputLabel}>Initials (optional)</label>
-              <input value={form.initials} maxLength={LIMITS.INITIALS_MAX}
-                onChange={e => { setForm({...form, initials: clampLength(e.target.value, LIMITS.INITIALS_MAX)}); setFormErrors(prev => ({...prev, initials: undefined})); }}
-                placeholder="e.g. J.S." style={{...inputStyle, ...(formErrors.initials ? inputErrorBorder : {})}} />
-              {formErrors.initials && <div style={errorStyle}>{formErrors.initials}</div>}
-            </div>
-            <div>
-              <label style={inputLabel}>Room #</label>
-              <input value={form.room} maxLength={LIMITS.ROOM_MAX}
-                onChange={e => { setForm({...form, room: clampLength(e.target.value, LIMITS.ROOM_MAX)}); setFormErrors(prev => ({...prev, room: undefined})); }}
-                placeholder="e.g. 4B-12" style={{...inputStyle, ...(formErrors.room ? inputErrorBorder : {})}} />
-              {formErrors.room && <div style={errorStyle}>{formErrors.room}</div>}
-            </div>
-          </div>
-          <div style={{ marginBottom: 10 }}>
-            <label style={inputLabel}>Consult Reason / Diagnosis</label>
-            <input value={form.dx} maxLength={LIMITS.DIAGNOSIS_MAX}
-              onChange={e => { setForm({...form, dx: clampLength(e.target.value, LIMITS.DIAGNOSIS_MAX)}); setFormErrors(prev => ({...prev, dx: undefined})); }}
-              placeholder="e.g. AKI in setting of sepsis" style={{...inputStyle, ...(formErrors.dx ? inputErrorBorder : {})}} />
-            {formErrors.dx && <div style={errorStyle}>{formErrors.dx}</div>}
-            {(() => {
-              const suggested = suggestTopicsFromText(form.dx, form.topics);
-              if (suggested.length === 0) return null;
-              return (
-                <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: T.sub, fontWeight: 600 }}>Suggested:</span>
-                  {suggested.map(t => (
-                    <button key={t} type="button" onClick={() => toggleTopic(t)}
-                      style={{ padding: "4px 10px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", background: T.infoBg, color: T.info, border: `1px dashed ${T.info}` }}>
-                      + {t}
-                    </button>
-                  ))}
-                </div>
-              );
-            })()}
-          </div>
           <div style={{ marginBottom: 10 }}>
             <label style={inputLabel}>Learning Tags (2+ if relevant)</label>
             <input
@@ -839,19 +698,9 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
               </div>
             )}
           </div>
-          <div style={{ marginBottom: 14 }}>
-            <label style={inputLabel}>Teaching Notes (optional)</label>
-            <textarea value={form.notes} maxLength={LIMITS.NOTES_MAX}
-              onChange={e => { setForm({...form, notes: clampLength(e.target.value, LIMITS.NOTES_MAX)}); setFormErrors(prev => ({...prev, notes: undefined})); }}
-              placeholder="Key learning point..."
-              rows={2} style={{...inputStyle, resize: "vertical", ...(formErrors.notes ? inputErrorBorder : {})}} />
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              {formErrors.notes ? <div style={errorStyle}>{formErrors.notes}</div> : <div />}
-              <div style={charCountStyle(form.notes.length, LIMITS.NOTES_MAX)}>{form.notes.length}/{LIMITS.NOTES_MAX}</div>
-            </div>
-          </div>
-          <button onClick={addPatient} style={{ width: "100%", padding: "12px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            Add to Inpatient List
+          <ConsultDetailPickers value={form} onChange={details => setForm(prev => ({ ...prev, ...details }))} />
+          <button onClick={addPatient} style={{ width: "100%", marginTop: 4, padding: "12px 0", background: T.brand, color: T.brandInk, border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+            Add to Consult Log
           </button>
         </div>
       )}
@@ -905,11 +754,12 @@ export default function PatientTab({ patients, setPatients, navigate, completedI
 
       {pendingRemoveId != null && (() => {
         const pendingPatient = patients.find(p => p.id === pendingRemoveId);
-        const label = pendingPatient?.initials?.trim() || "this consult";
+        const topicLabel = pendingPatient ? summarizeTopics(patientTopics(pendingPatient)) : "";
+        const label = topicLabel && topicLabel !== "No topics" ? `the ${topicLabel} consult` : "this consult";
         return (
           <ConfirmSheet
             title="Remove this consult?"
-            message={`This permanently deletes ${label} and any follow-up notes — it can't be undone. If you've finished the consult, use "Discharge" instead to keep it in your log.`}
+            message={`This permanently deletes ${label} and its follow-up dates — it can't be undone. If you've finished the consult, use "Discharge" instead to keep it in your log.`}
             confirmLabel="Remove"
             cancelLabel="Keep"
             tone="danger"

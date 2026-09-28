@@ -19,7 +19,7 @@ function makeStudent(): AdminStudent {
     status: "active",
     addedDate: "2026-07-01T08:00:00.000Z",
     patients: [
-      { id: "p1", initials: "AB", room: "1", dx: "AKI", topics: [], notes: "", date: "2026-07-01", status: "active", followUps: [] },
+      { id: "p1", topics: ["AKI"], date: "2026-07-01", status: "active", followUps: [] },
     ],
     // Progress the STUDENT owns — a fresh quiz the admin's copy might not
     // even have yet. None of it may ride along on an unrelated admin edit.

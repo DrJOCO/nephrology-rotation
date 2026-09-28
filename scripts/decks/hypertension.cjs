@@ -226,7 +226,7 @@ async function build() {
       [
         { text: "Hypokalemia (spontaneous or diuretic-exaggerated)", options: { fontFace: FONT.body } },
         "Primary aldosteronism",
-        "Aldosterone/renin ratio (morning, off mineralocorticoid receptor antagonist (MRA) 4 wk)",
+        "Aldosterone/renin ratio (morning; OK on most BP meds except an MRA; correct low K first)",
       ],
       [
         { text: "HTN in young adult or resistant, with renal asymmetry", options: { fontFace: FONT.body } },
@@ -402,8 +402,8 @@ async function build() {
   // Clinical case — answer
   addCaseAnswerSlide(pres, {
     topic: TOPIC, slideNumber: 11, totalSlides: TOTAL,
-    answer: "Yes (uncontrolled on 3 appropriate agents incl. diuretic). Primary aldosteronism — spontaneous hypokalemia + resistant HTN. Check aldosterone/renin ratio (morning, off MRA 4 wk).",
-    teaching: "True resistant HTN requires 3 appropriately-dosed agents including a diuretic. Before adding a 4th drug, always work up secondary causes. Primary aldosteronism is the #1 secondary cause in resistant HTN, especially if spontaneous or diuretic-exaggerated hypokalemia. Testing: aldosterone/renin ratio AM, ideally off MRA × 4 weeks when safe. Other secondary causes: OSA (she snores!), RAS (younger women → FMD), pheo, Cushing, CKD, CoA. Next step after workup: add spironolactone 25 mg (PATHWAY-2 NNT 4 for resistant HTN). Also: weight loss, sleep study.",
+    answer: "Yes (uncontrolled on 3 appropriate agents incl. diuretic). Primary aldosteronism — spontaneous hypokalemia + resistant HTN. Check aldosterone/renin ratio (morning; she can stay on her current meds; correct K first).",
+    teaching: "True resistant HTN requires 3 appropriately-dosed agents including a diuretic. Before adding a 4th drug, always work up secondary causes. Primary aldosteronism is the #1 secondary cause in resistant HTN, especially if spontaneous or diuretic-exaggerated hypokalemia. Testing (Endocrine Society 2025): AM aldosterone/renin ratio on current meds except an MRA; correct K first. A positive screen on ACEi/ARB/diuretic strongly suggests PA; if negative but suspicion stays high, retest after 4 wk off MRA/diuretic/amiloride and ~2 wk off ACEi/ARB/DHP CCB (bridge with verapamil or doxazosin). Other secondary causes: OSA (she snores!), RAS (younger women → FMD), pheo, Cushing, CKD, CoA. Next step after workup: add spironolactone 25 mg (PATHWAY-2 NNT 4 for resistant HTN). Also: weight loss, sleep study.",
   });
 
   // 11. References

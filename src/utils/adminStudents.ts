@@ -2,6 +2,7 @@ import { ARTICLES, CURRICULUM_DECKS, STUDY_SHEETS } from "../data/constants";
 import { WEEKLY_CASES } from "../data/cases";
 import { WEEKLY_QUIZZES } from "../data/quizzes";
 import { isArticleCompleted } from "./articleKeys";
+import { countLegacyPatientDetails, normalizePatients } from "./patient";
 import type { AdminStudent, Bookmarks, CompletedItems, Gamification } from "../types";
 
 type AdminStudentSource = Omit<Partial<AdminStudent>, "completedItems" | "bookmarks" | "gamification"> & {
@@ -83,6 +84,10 @@ export function normalizeAdminStudentRecord(
   options: NormalizeAdminStudentOptions = {},
 ): AdminStudent {
   const merged = { ...existing, ...source };
+  // Counted on the raw stored list, before normalizePatients hides it.
+  const legacyPatientDetailCount = Array.isArray(source.patients)
+    ? countLegacyPatientDetails(source.patients)
+    : existing?.legacyPatientDetailCount ?? 0;
   const addedDate = typeof source.joinedAt === "string" && source.joinedAt
     ? source.joinedAt
     : typeof merged.addedDate === "string" && merged.addedDate
@@ -101,7 +106,7 @@ export function normalizeAdminStudentRecord(
     email: typeof merged.email === "string" ? merged.email : "",
     status: merged.status === "completed" ? "completed" : "active",
     addedDate,
-    patients: Array.isArray(merged.patients) ? merged.patients : [],
+    patients: normalizePatients(merged.patients),
     weeklyScores: isRecord(merged.weeklyScores) ? (merged.weeklyScores as AdminStudent["weeklyScores"]) : {},
     preScore: merged.preScore ?? null,
     postScore: merged.postScore ?? null,
@@ -117,6 +122,7 @@ export function normalizeAdminStudentRecord(
       : typeof merged.lastSyncedAt === "string"
         ? merged.lastSyncedAt
         : null,
+    ...(legacyPatientDetailCount > 0 ? { legacyPatientDetailCount } : {}),
   };
 }
 

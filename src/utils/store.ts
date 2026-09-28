@@ -69,6 +69,7 @@ const KEY_TO_FIELD: Record<string, string> = {
   neph_shared_settings: "settings",
   neph_shared_clinicGuides: "clinicGuides",
   neph_shared_clinicGuideTemplates: "clinicGuideTemplates",
+  neph_shared_contentCustomizations: "contentCustomizations",
 };
 
 const PENDING_SYNC_KEY = "neph_pendingSyncQueue";

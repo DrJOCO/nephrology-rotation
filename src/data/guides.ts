@@ -47,9 +47,10 @@ export const QUICK_REFS: QuickRef[] = [
       { key: "hco3", label: "HCO₃⁻ (mEq/L)", placeholder: "e.g. 14" },
       { key: "na", label: "Na⁺ (mEq/L, optional for AG)", placeholder: "e.g. 140" },
       { key: "cl", label: "Cl⁻ (mEq/L, optional for AG)", placeholder: "e.g. 105" },
+      { key: "alb", label: "Albumin (g/dL, optional — corrects the AG)", placeholder: "e.g. 3.0" },
     ],
     calculate: (v) => {
-      const { ph, pco2, hco3, na, cl } = v;
+      const { ph, pco2, hco3, na, cl, alb } = v;
       if (!ph || !pco2 || !hco3) return null;
       const steps: string[] = [];
       // Step 1: acidemia vs alkalemia
@@ -105,14 +106,20 @@ export const QUICK_REFS: QuickRef[] = [
       }
       // Step 4: Anion gap
       if (na && cl) {
-        const ag = na - cl - hco3;
-        steps.push("Step 4: Anion Gap = " + na + " - " + cl + " - " + hco3 + " = " + ag.toFixed(0));
-        steps.push("  → If albumin is low, correct AG upward by ~2.5 for each 1 g/dL albumin below 4.");
+        const rawAg = na - cl - hco3;
+        steps.push("Step 4: Anion Gap = " + na + " - " + cl + " - " + hco3 + " = " + rawAg.toFixed(0));
+        let ag = rawAg;
+        if (alb > 0 && alb < 4) {
+          ag = rawAg + 2.5 * (4 - alb);
+          steps.push("  → Albumin-corrected AG = " + rawAg.toFixed(0) + " + 2.5 × (4 − " + alb + ") = " + ag.toFixed(1));
+        } else if (!(alb > 0)) {
+          steps.push("  → Enter albumin to correct the AG (+2.5 for each 1 g/dL below 4).");
+        }
         if (ag > 12) {
           steps.push("  → ELEVATED AG (>12) → AG metabolic acidosis (MUDPILES)");
           const delta = ag - 12;
           const corrBicarb = hco3 + delta;
-          steps.push("Step 5: Delta-delta: ΔAG=" + delta.toFixed(0) + ", corrected HCO₃⁻=" + corrBicarb.toFixed(0));
+          steps.push("Step 5: Add back the delta gap: ΔAG = " + delta.toFixed(1) + ", corrected HCO₃⁻ = " + hco3 + " + " + delta.toFixed(1) + " = " + corrBicarb.toFixed(1));
           if (corrBicarb > 26) steps.push("  → Corrected HCO₃⁻ >26 → Concurrent METABOLIC ALKALOSIS");
           else if (corrBicarb < 22) steps.push("  → Corrected HCO₃⁻ <22 → Concurrent NON-AG METABOLIC ACIDOSIS");
           else steps.push("  → Corrected HCO₃⁻ normal → Pure AG metabolic acidosis");
@@ -227,7 +234,7 @@ export const QUICK_REFS: QuickRef[] = [
         { heading: "E — Electrolytes",
           items: ["Life-threatening or refractory hyperkalemia (often K⁺ ≥6.5 or any dangerous ECG changes, not responding to medical Rx)", "Remember: calcium → insulin/glucose → albuterol ± bicarbonate (if acidotic) → binder/diuretic if appropriate. If K⁺ remains dangerous or the patient is oliguric/anuric → dialysis"] },
         { heading: "I — Ingestions",
-          items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium per EXTRIP: HD recommended at level >5.0, or >4.0 with kidney impairment, or any level with seizures/coma/life-threatening dysrhythmia (Decker, CJASN 2015)", "Salicylates (severe poisoning with altered mental status)"] },
+          items: ["Toxic alcohols: methanol, ethylene glycol (fomepizole first, but dialysis if severe)", "Lithium per EXTRIP (Decker, CJASN 2015): HD recommended if level >4.0 with impaired kidney function, or at any level with decreased consciousness, seizures, or life-threatening dysrhythmia; suggested if level >5.0, significant confusion, or expected time to reach <1.0 exceeds 36 h", "Salicylates (severe poisoning with altered mental status)"] },
         { heading: "O — Overload",
           items: ["Volume overload refractory to diuretics (e.g., flash pulmonary edema in anuric patient)"] },
         { heading: "U — Uremia",
@@ -323,7 +330,7 @@ export const QUICK_REFS: QuickRef[] = [
       sections: [
         { heading: "Hemodynamic (Pre-Renal Mechanism)",
           items: [
-            "ACEi / ARBs → Reduce efferent arteriolar tone → ↓GFR. Risk ↑ with bilateral RAS, volume depletion, or combined with NSAIDs/diuretics. Cr rise <30% is acceptable and expected — hold if rise >30% or hyperkalemia develops.",
+            "ACEi / ARBs → Reduce efferent arteriolar tone → ↓GFR. Risk ↑ with bilateral RAS, volume depletion, or combined with NSAIDs/diuretics. Cr rise <30% is acceptable and expected — if it rises >30% within ~4 weeks, look for a cause (volume depletion, NSAIDs, renal artery stenosis) and reduce/hold; treat hyperkalemia (diet, diuretic, binder) before stopping (KDIGO 2024).",
             "NSAIDs (ibuprofen, ketorolac, naproxen) → Block prostaglandin-mediated afferent vasodilation → ↓GFR. Can also cause AIN, papillary necrosis, and minimal change disease. Avoid in CKD, CHF, cirrhosis. Even short courses can precipitate AKI.",
             "Calcineurin Inhibitors (tacrolimus, cyclosporine) → Afferent arteriolar vasoconstriction → dose-dependent ↓GFR. Check trough levels; chronic use causes irreversible 'striped' interstitial fibrosis. Most common nephrotoxin in transplant patients.",
           ]},
@@ -778,8 +785,8 @@ export const GUIDE_DATA = {
           "White coat effect? Consider ambulatory BP monitoring",
           "Secondary causes screen: age of onset, severity, resistant HTN",
           "Renal artery stenosis: bruit on exam? CKD + flash pulm edema?",
-          "Primary aldosteronism: low K⁺ + HTN? Check aldosterone/renin ratio",
-          "Pheochromocytoma: episodic symptoms? 24h urine catecholamines",
+          "Primary aldosteronism: check aldosterone/renin ratio — Endocrine Society 2025 suggests screening everyone with HTN, especially if resistant or low K⁺",
+          "Pheochromocytoma: episodic symptoms? Plasma free metanephrines or 24h urine fractionated metanephrines",
           "OSA: daytime somnolence, snoring, neck circumference?",
           "Lifestyle: sodium intake, alcohol, exercise, weight?",
           "End-organ damage: LVH on echo? Retinopathy? Proteinuria?",
@@ -888,7 +895,7 @@ export const GUIDE_DATA = {
         items: [
           "Give AFTER dialysis: vancomycin, many antibiotics, antiepileptics",
           "Before dialysis: do NOT routinely hold antihypertensives. Selective pre-HD holds only for patients with documented intradialytic hypotension.",
-          "Avoid: NSAIDs (even more dangerous in ESKD). Gadolinium: ACR/NKF consensus \u2014 group II agents (eg, gadobutrol, gadoteridol, gadoterate) have very low NSF risk in ESKD. Do NOT withhold clinically indicated MRI, and do NOT initiate or intensify dialysis just because gadolinium was given.",
+          "Avoid: NSAIDs (even more dangerous in ESRD). Gadolinium: ACR/NKF consensus \u2014 group II agents (eg, gadobutrol, gadoteridol, gadoterate) have very low NSF risk in ESRD. Do NOT withhold clinically indicated MRI, and do NOT initiate or intensify dialysis just because gadolinium was given.",
           "Phosphorus binders: continue with meals (calcium acetate, sevelamer, etc.)",
           "EPO/darbepoetin: being given at dialysis unit — don't duplicate",
           "Calcimimetics (cinacalcet): continue for secondary hyperparathyroidism",
@@ -995,7 +1002,7 @@ export const GUIDE_DATA = {
         items: [
           "Lead with the consult question: 'We were consulted for...'",
           "One-liner: '[Age] [sex] with [key PMH] admitted for [reason] found to have [nephrology problem]'",
-          "Brief relevant HPI: what happened and when? Key timeline only",
+          "HPI: the full story in time order, with pertinent positives and negatives",
           "Relevant PMH: kidney-relevant only (CKD, DM, HTN, transplant)",
           "Medications: focus on nephrotoxins, ACEi/ARB, diuretics, immunosuppressants",
           "Key vitals: BP, UOP, weight trend",
@@ -1062,7 +1069,7 @@ export const GUIDE_DATA = {
         color: "#2980B9",
         items: [
           "CONSULT REASON: 'Nephrology consulted for [specific question]'",
-          "HPI: Focused on the kidney problem — timeline, events, relevant context",
+          "HPI: The full story in time order with pertinent positives and negatives, ending with the kidney-relevant hospital course (worked example: Rotation Workflow → Initial Consult: Presentation)",
           "KIDNEY-RELEVANT PMH: CKD (baseline Cr, etiology), DM, HTN, transplant, stones, dialysis history",
           "MEDICATIONS: Full list, HIGHLIGHT nephrotoxins and renal-dosed meds",
           "ALLERGIES: Important for contrast and antibiotics",
@@ -1079,12 +1086,12 @@ export const GUIDE_DATA = {
         emoji: "📝",
         color: "#16A085",
         items: [
-          "SUBJECTIVE: Brief — overnight events, patient symptoms, any complaints",
-          "OBJECTIVE: Vitals, I&Os (last 24h), daily weight, UOP",
-          "LABS: Today's BMP, compare Cr to yesterday and baseline",
-          "UA / Urine studies: if new results",
-          "DIALYSIS: If applicable — date, UF removed, bath, complications",
-          "ASSESSMENT/PLAN: Problem-based, concise",
+          "S (Subjective): overnight events and the patient's symptoms today",
+          "O (Objective): vitals, I&Os and urine output, daily weight vs admission/dry weight, focused exam (volume, access)",
+          "O (cont.): today's labs as trends — Cr today vs yesterday vs baseline",
+          "O (cont.): new urine studies or imaging; dialysis if applicable — date, UF removed, bath, tolerance",
+          "A/P: one line per problem (better, worse, or same, and why), then numbered, specific recommendations with monitoring and contingencies",
+          "Worked written and spoken SOAP examples: Rotation Workflow → Consult Follow-Up Guide",
           "Example: 'AKI — Cr 2.8 from 3.2 yesterday (baseline 1.0), trending down. Likely ATN from sepsis. UOP improving to 60 mL/hr. Continue gentle IVF, hold nephrotoxins, recheck Cr AM.'",
           "Address each active nephrology problem separately",
           "Include concrete recommendations: specific lab timing, med changes, when to escalate",
@@ -1244,7 +1251,7 @@ export const GUIDE_DATA = {
         color: "#2980B9",
         items: [
           "OPENING: '[Initials] is a [age] [sex] with [relevant PMH: CKD stage, DM, HTN] admitted for [reason], and we were consulted for [specific question].'",
-          "RELEVANT HPI: Focus on kidney-relevant timeline only — when did Cr start rising? What is baseline Cr? Volume status changes? Recent medications, procedures, or contrast?",
+          "HPI: The full story in time order — baseline, what changed and when, volume changes, medications, procedures, contrast — with pertinent positives and negatives.",
           "KEY LABS: 'Baseline Cr was X, now Y (peaked at Z). BMP: Na [X], K [Y], bicarb [Z], BUN/Cr ratio. UA: [proteinuria, hematuria, casts].'",
           "URINE STUDIES: 'Urine lytes: UNa [X], UCr [Y], FENa [Z]% (or FEUrea if on diuretics). Microscopy: [specific findings or bland/inactive].'",
           "IMAGING: 'Renal US: [kidney size, echogenicity, hydronephrosis present/absent, Doppler if relevant].'",
@@ -1259,12 +1266,12 @@ export const GUIDE_DATA = {
         color: "#16A085",
         items: [
           "OPENING: '[Initials] is our [AKI / CKD / electrolyte / GN] consult, hospital day [X].'",
-          "OVERNIGHT EVENTS: 'Overnight: [any events, vitals changes, new symptoms — or nothing significant].'",
-          "TREND DATA: 'Cr trending [up/down/stable]: [yesterday] → [today]. UOP [X mL] over [Y hours]. I&Os [net positive/negative by Z liters].'",
+          "S — OVERNIGHT/SUBJECTIVE: 'Overnight: [any events, vitals changes, new symptoms — or nothing significant].'",
+          "O — TREND DATA: 'Cr trending [up/down/stable]: [yesterday] → [today]. UOP [X mL] over [Y hours]. I&Os [net positive/negative by Z liters].'",
           "KEY LABS: Only report what CHANGED or MATTERS. 'K normalized to 4.2 (was 6.1). Bicarb improved from 18 → 22. Na stable at 138.'",
           "VOLUME STATUS: 'On exam: [euvolemic / volume overloaded / dry]. Findings: [JVP, edema, lung sounds, weight trend].'",
-          "ASSESSMENT: 'The [AKI is improving / electrolyte is correcting / issue persists], likely because [brief reasoning].'",
-          "PLAN: 'Continue current plan / Make specific changes. Can consider discharge from consult service when [criteria: Cr trending down, K stable, etc.].'",
+          "A — ASSESSMENT: 'The [AKI is improving / electrolyte is correcting / issue persists], likely because [brief reasoning].'",
+          "P — PLAN: 'Continue current plan / Make specific changes. Can consider discharge from consult service when [criteria: Cr trending down, K stable, etc.].'",
           "⚠️ Keep follow-ups SHORT — 30-60 seconds max. Your attending wants: Is the patient better, worse, or the same? Why? What's the plan?",
         ],
       },
@@ -1273,7 +1280,7 @@ export const GUIDE_DATA = {
         emoji: "💉",
         color: "#E67E22",
         items: [
-          "OPENING: '[Initials] is a [age] [sex] with ESKD on [HD MWF / HD TTS / PD], admitted for [reason].'",
+          "OPENING: '[Initials] is a [age] [sex] with ESRD on [HD MWF / HD TTS / PD], admitted for [reason].'",
           "DIALYSIS DETAILS: 'Dialyzes at [unit name], schedule [MWF or TTS]. Access: [AVF left forearm / AVG right upper arm / TDC right IJ]. Last HD was [date/day].'",
           "MISSED SESSIONS: 'They [made / missed] their last [X] session(s). [If missed: reason and duration].'",
           "DRY WEIGHT: 'Dry weight is [X] kg, current weight is [Y] kg — [Z kg over/under target].'",
@@ -1290,7 +1297,7 @@ export const GUIDE_DATA = {
         color: "#8E44AD",
         items: [
           "OPENING: '[Initials] is a [age] [sex] who is [X months/years] post kidney transplant from [deceased / living related / living unrelated donor], admitted for [reason].'",
-          "TRANSPLANT DETAILS: 'Transplanted on [date] at [center]. Original disease: [cause of ESKD]. Baseline Cr [X] (best post-transplant Cr [Y]).'",
+          "TRANSPLANT DETAILS: 'Transplanted on [date] at [center]. Original disease: [cause of ESRD]. Baseline Cr [X] (best post-transplant Cr [Y]).'",
           "IMMUNOSUPPRESSION: 'Current regimen: [tacrolimus X mg BID / mycophenolate X mg BID / prednisone X mg daily]. Any recent changes?'",
           "CURRENT ISSUE: 'Cr has risen from baseline [X] to [Y] over [timeframe]. Symptoms: [fever, graft tenderness, decreased UOP, or none].'",
           "DRUG LEVELS: 'Tacrolimus trough: [level] (target [range for time post-transplant]). Last dose timing: [time]. Recent med additions that interact with tacrolimus?'",

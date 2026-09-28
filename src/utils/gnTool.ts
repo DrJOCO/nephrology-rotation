@@ -1,6 +1,7 @@
 // GN (glomerulonephritis) differential reasoning helper.
 // Algorithm structure follows UpToDate "Evaluation of glomerular disease in adults"
-// and the KDIGO 2021 Clinical Practice Guideline for the Management of Glomerular Diseases.
+// and the KDIGO 2021 Clinical Practice Guideline for the Management of Glomerular Diseases,
+// with its focused updates (lupus nephritis 2024, ANCA vasculitis 2024, IgAN/IgAV 2025).
 // Differential framing also pulls from "Comprehensive Clinical Nephrology" (Floege/Johnson) and
 // standard nephrology teaching.
 // This is a teaching/reasoning aid, not a diagnostic device.
@@ -411,7 +412,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   // ── Lupus nephritis ────────────────────────────────────────────────
   const lupusNext = [
     "Reflex anti-dsDNA, anti-Smith, anti-Ro/La, complement trend; document SLE classification criteria.",
-    "Biopsy with light, IF, and EM is the gold standard — class drives therapy (steroids ± MMF or cyclophosphamide; voclosporin or belimumab as add-on per KDIGO 2024 update).",
+    "Biopsy with light, IF, and EM is the gold standard — class drives therapy (steroids + MMF or low-dose cyclophosphamide; belimumab or a CNI such as voclosporin as add-on per KDIGO 2024; obinutuzumab is FDA-approved since 2025).",
   ];
   if (cLowLow && (isNephritic || syndrome === "asymptomatic")) {
     add("lupus", "Lupus nephritis", "Low C3 + Low C4 (immune complex)", 5, "Low C3 + low C4 with a nephritic-flavored picture is the classic lupus pattern.", lupusNext);
@@ -429,7 +430,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   // ── ANCA-associated vasculitis ─────────────────────────────────────
   const ancaNext = [
     "Confirm ANCA subtype (PR3 vs MPO) and immunofluorescence pattern; document organ involvement.",
-    "Biopsy shows pauci-immune crescentic GN. Induction: steroids + rituximab or cyclophosphamide; PLEX in selected severe cases (KDIGO + PEXIVAS framework).",
+    "Biopsy shows pauci-immune crescentic GN. Induction: reduced-dose steroids (PEXIVAS) + rituximab or cyclophosphamide, ± avacopan to spare steroids; consider PLEX for Cr >5.7 mg/dL or dialysis, hypoxemic alveolar hemorrhage, or anti-GBM overlap (KDIGO 2024).",
   ];
   if (has(positive, "anca_pr3")) {
     add("anca_aav", "ANCA-associated vasculitis (PR3 — likely GPA)", "Pauci-immune", 8, "PR3-ANCA positive — pauci-immune crescentic GN, classically GPA phenotype.", ancaNext);
@@ -473,7 +474,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   // ── IgA nephropathy ─────────────────────────────────────────────────
   const igaNext = [
     "Diagnosis is biopsy-based: mesangial IgA-dominant deposits.",
-    "Risk-stratify with MEST-C score and proteinuria trajectory; KDIGO 2021 emphasizes optimized supportive care (RAS blockade + SGLT2i) before adding immunosuppression.",
+    "Risk-stratify with MEST-C score and proteinuria. KDIGO 2025 treats IgA-driven injury and nephron loss together (target proteinuria <0.5, ideally <0.3 g/day): RAS blockade or sparsentan + SGLT2i, plus disease-targeting therapy (e.g., 9-month targeted-release budesonide; newer approved agents include iptacopan, atrasentan, sibeprenlimab, atacicept).",
   ];
   if (cNormal && (syndrome === "nephritic" || syndrome === "asymptomatic")) {
     add("iga", "IgA nephropathy", "Normal complement / mesangial", 4, "Most common primary GN worldwide; nephritic or asymptomatic hematuria with normal complement is the typical pattern.", igaNext);
@@ -491,7 +492,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
     "Most adult cases need only supportive care; immunosuppression for crescentic or nephrotic-range disease.",
   ];
   if (has(history, "palpable_purpura") || has(history, "abdominal_pain_purpura")) {
-    add("iga_vasculitis", "IgA vasculitis (Henoch–Schönlein purpura)", "Normal complement / mesangial + small-vessel", 6, "Palpable purpura ± abdominal pain or arthralgia is the systemic IgA vasculitis tetrad.", igavNext);
+    add("iga_vasculitis", "IgA vasculitis (formerly Henoch–Schönlein purpura)", "Normal complement / mesangial + small-vessel", 6, "Palpable purpura ± abdominal pain or arthralgia is the systemic IgA vasculitis tetrad.", igavNext);
   }
 
   // ── Post-infectious GN ──────────────────────────────────────────────
@@ -550,7 +551,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   // ── MPGN immune-complex / C3 glomerulopathy ────────────────────────
   const mpgnNext = [
     "Workup for monoclonal gammopathy (SPEP/UPEP/SFLC), HCV/HBV, autoimmune disease.",
-    "C3GN/DDD: send complement function studies (C3 nephritic factor, factor H/I autoantibodies). Treatment depends on the driver — eculizumab in selected DDD.",
+    "C3GN/DDD: send complement function studies (C3 nephritic factor, factor H/I autoantibodies). Exclude a monoclonal gammopathy; supportive care ± MMF + steroids, and complement inhibitors are now FDA-approved (iptacopan for C3G, 2025; pegcetacoplan for C3G and primary IC-MPGN, 2025).",
   ];
   if (cLowLow && !has(positive, "cryoglobulin") && !has(positive, "anti_dsdna")) {
     add("mpgn_ic", "MPGN — immune-complex type", "Low C3 + Low C4 (immune complex)", 3, "Low C3 + low C4 with no clear lupus/cryo/endocarditis driver leaves idiopathic immune-complex MPGN on the differential.", mpgnNext);
@@ -563,7 +564,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   if (has(history, "tma_features")) {
     add("tma", "Thrombotic microangiopathy (HUS / aHUS / drug-induced)", "Endothelial injury", 6, "MAHA + thrombocytopenia + AKI selected — TMA is in the differential of acute renal injury with mild proteinuria/hematuria.", [
       "ADAMTS13, complement factor H/I/MCP, Shiga toxin testing; review drug list (calcineurins, anti-VEGF, gemcitabine, quinine).",
-      "Plasma exchange for TTP; eculizumab for confirmed aHUS.",
+      "TTP: plasma exchange + steroids ± caplacizumab and rituximab. aHUS: complement C5 blockade (eculizumab or ravulizumab).",
     ]);
   }
 
@@ -621,7 +622,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
   // ── Diabetic nephropathy / DKD ────────────────────────────────────
   if (isNephrotic && has(history, "long_dm_retinopathy")) {
     add("dkd", "Diabetic nephropathy", "Nephrotic / glomerular thickening", 4, "Long-standing diabetes with progressive proteinuria — UpToDate calls diabetic kidney disease the most common cause of nephrotic syndrome overall, and allows deferring biopsy when the etiology is obvious. Retinopathy is supportive; its absence raises suspicion for a superimposed primary GN.", [
-      "Maximize RAS blockade + SGLT2i; finerenone if persistent albuminuria on RAS blockade.",
+      "Maximize RAS blockade + SGLT2i; finerenone if persistent albuminuria on RAS blockade; GLP-1 RA (semaglutide, FLOW) adds kidney/CV benefit in T2D.",
       "Biopsy if atypical features (rapid Cr decline, nephritic features, no retinopathy) suggest superimposed primary GN.",
     ]);
   }
@@ -674,7 +675,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
     alerts.push("Anti-GBM positive: treat as emergency — plasmapheresis + steroids + cyclophosphamide. Outcomes track tightly with dialysis-independent Cr at presentation.");
   }
   if (has(positive, "anca_pr3") || has(positive, "anca_mpo")) {
-    alerts.push("ANCA positive: organ-threatening AAV needs prompt induction (steroids + rituximab or cyclophosphamide). Consider PLEX in the PEXIVAS-defined high-risk subgroups.");
+    alerts.push("ANCA positive: organ-threatening AAV needs prompt induction (steroids + rituximab or cyclophosphamide). Consider PLEX for Cr >5.7 mg/dL or dialysis, or hypoxemic alveolar hemorrhage (KDIGO 2024).");
   }
   // Gate VTE alert on quantified proteinuria — a 4+ dipstick alone shouldn't drive
   // anticoagulation counseling without a UPCR or 24h collection to back it up.

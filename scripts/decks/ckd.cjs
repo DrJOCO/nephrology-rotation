@@ -277,7 +277,7 @@ async function build() {
       topic: TOPIC, slideNumber: 7, totalSlides: TOTAL,
       title: "Complications — screen and treat",
       subtitle: "The reasons patients feel bad and the reasons they die.",
-      source: "KDIGO 2017 CKD-MBD update. KDIGO 2012 Anemia of CKD (2026 update pending).",
+      source: "KDIGO 2017 CKD-MBD update. KDIGO 2026 Anemia in CKD Guideline.",
     });
 
     const rows = [
@@ -289,7 +289,7 @@ async function build() {
       [
         { text: "Anemia", options: { bold: true, color: PALETTE.primary, fontFace: FONT.body } },
         "Hgb, ferritin, TSAT (q6–12 mo stage 3+)",
-        "Iron first (TSAT < 30 or ferritin < 100). erythropoiesis-stimulating agent (ESA) if Hgb < 10 after iron (target 10–11.5). Daprodustat (HIF-PHI) emerging.",
+        "Iron if ferritin < 100 (TSAT < 40%) or ferritin 100–300 with TSAT < 25%. ESA after iron by shared decision (~Hb 8.5–10); keep Hb < 11.5 (KDIGO 2026).",
       ],
       [
         { text: "CKD-MBD", options: { bold: true, color: PALETTE.primary, fontFace: FONT.body } },
@@ -376,7 +376,7 @@ async function build() {
         { text: "Year", options: { bold: true, color: "FFFFFF", fill: { color: PALETTE.primary }, align: "center" } },
         { text: "Takeaway", options: { bold: true, color: "FFFFFF", fill: { color: PALETTE.primary } } },
       ],
-      ["RENAAL",       "2001", "Losartan ↓ ESKD/doubling Cr 25–28% in T2DM nephropathy."],
+      ["RENAAL",       "2001", "Losartan ↓ ESRD/doubling Cr 25–28% in T2DM nephropathy."],
       ["IDNT",         "2001", "Irbesartan — renoprotection independent of BP lowering."],
       ["ONTARGET",     "2008", "Dual RAAS (ACEi+ARB) → harm, more hyperK and AKI."],
       ["SPRINT",       "2015", "Intensive SBP < 120 ↓ CV events 25% (non-diabetic)."],
@@ -407,8 +407,8 @@ async function build() {
   // Clinical case — answer
   addCaseAnswerSlide(pres, {
     topic: TOPIC, slideNumber: 11, totalSlides: TOTAL,
-    answer: "Missing: SGLT2i, finerenone, GLP-1 RA. Also anemia workup needed. (1) Add dapagliflozin 10 mg, (2) add finerenone 10 mg if K+ remains acceptable, (3) IV iron then consider ESA if Hb stays < 10.",
-    teaching: "CGA classification: G3b-A3 (very high risk). DKD pillars should be on-board when eligible. Stop metformin at eGFR < 30; he's still OK at 38. BP target is standardized office SBP < 120 when tolerated; routine/home readings are often managed closer to <130/80. Also: retinal exam annually, vaccinate (flu, COVID, pneumococcal, HBV), modality education at eGFR < 30, nephrology follow-up q3-4 months for very-high-risk.",
+    answer: "Missing: SGLT2i, finerenone, GLP-1 RA. Also anemia workup needed. (1) Add dapagliflozin 10 mg, (2) add finerenone 10 mg if K+ remains acceptable, (3) Iron (ferritin 90 meets KDIGO 2026 criteria), then discuss an ESA if Hb keeps falling.",
+    teaching: "CGA classification: G3b-A3 (very high risk). DKD pillars should be on-board when eligible. Metformin: cut to ≤ 1000 mg/day at eGFR 30–44 (he's on 2000), stop at < 30. BP target is standardized office SBP < 120 when tolerated; routine/home readings are often managed closer to <130/80. Also: retinal exam annually, vaccinate (flu, COVID, pneumococcal, HBV), modality education at eGFR < 30, nephrology follow-up q3-4 months for very-high-risk.",
   });
 
   // 11. References

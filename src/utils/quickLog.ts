@@ -2,10 +2,10 @@ import type { Patient } from "../types";
 import type { PatientSuggestedTopicGroup } from "./patientRecommendations";
 
 // One-tap consult logging (cohort feedback): a quick-log entry is a consult
-// record with only a topic — no initials, no form. Shared by the Consults tab
-// and the Today quick-log card so both log identically.
+// record with only a topic — no form. Shared by the Consults tab and the Today
+// quick-log card so both log identically.
 export function createQuickLogEntry(topic: string): Patient {
-  return { id: Date.now(), initials: "", room: "", dx: "", topics: [topic], notes: "", date: new Date().toISOString(), status: "active", followUps: [] };
+  return { id: Date.now(), topics: [topic], date: new Date().toISOString(), status: "active", followUps: [] };
 }
 
 // Double-tap guard: a one-tap control is easy to hit twice by accident, which

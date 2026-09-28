@@ -46,12 +46,19 @@ describe("calculatePoints", () => {
     expect(calculatePoints(state)).toBe(8);
   });
 
-  it("awards +3 clinical notes bonus", () => {
+  it("awards +3 detail bonus when setting and service are both picked", () => {
     const state = makeState({
-      patients: [{ topics: [], notes: "Some notes" }],
+      patients: [{ topics: [], setting: "icu", service: "cardiology" }],
     });
-    // 5 base + 3 notes = 8
+    // 5 base + 3 detail = 8
     expect(calculatePoints(state)).toBe(8);
+  });
+
+  it("gives no detail bonus for only one of setting/service", () => {
+    const state = makeState({
+      patients: [{ topics: [], setting: "icu" }, { topics: [], service: "surgery" }],
+    });
+    expect(calculatePoints(state)).toBe(10);
   });
 
   it("awards 10 pts per quiz attempt", () => {
@@ -165,7 +172,7 @@ describe("calculatePoints", () => {
 
   it("accumulates points from all sources", () => {
     const state = makeState({
-      patients: [{ topics: ["AKI", "CKD"], notes: "detailed" }],
+      patients: [{ topics: ["AKI", "CKD"], setting: "floor", service: "medicine" }],
       weeklyScores: { "1": [{ correct: 5, total: 5 }] },
       preScore: { correct: 3, total: 5 },
       postScore: { correct: 4, total: 5 },
@@ -175,7 +182,7 @@ describe("calculatePoints", () => {
         q1: { questionKey: "q1", easeFactor: 2.5, interval: 1, nextReviewDate: "2026-03-09", repetitions: 1, lastReviewed: "2026-03-08", addedDate: "2026-03-01" },
       },
     });
-    // Patient: 5 + 3(multi-topic) + 3(notes) = 11
+    // Patient: 5 + 3(multi-topic) + 3(detail) = 11
     // Quiz: 10 + 5(>=80%) + 10(perfect) = 25
     // Assessments: 15 + 15 + 20(improvement) = 50
     // Streak: 2*3 = 6
@@ -301,9 +308,9 @@ describe("checkAchievements", () => {
     expect(checkAchievements(state)).toContain("sr_starter");
   });
 
-  it("detects note_taker achievement (5 patients with notes)", () => {
+  it("detects note_taker achievement (5 consults with setting and service)", () => {
     const state = makeState({
-      patients: Array.from({ length: 5 }, () => ({ topics: [], notes: "pearl" })),
+      patients: Array.from({ length: 5 }, () => ({ topics: [], setting: "floor", service: "medicine" })),
     });
     expect(checkAchievements(state)).toContain("note_taker");
   });

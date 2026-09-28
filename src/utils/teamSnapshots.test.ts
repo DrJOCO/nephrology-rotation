@@ -8,8 +8,8 @@ describe("teamSnapshots", () => {
       name: "A Student",
       points: 88,
       patients: [
-        { id: 1, initials: "J.S.", room: "4B", dx: "AKI", topics: ["AKI", "Hyponatremia"], notes: "", date: "2026-03-01", status: "active", followUps: [] },
-        { id: 2, initials: "L.M.", room: "", dx: "CKD", topics: ["CKD", "Other"], notes: "", date: "2026-03-02", status: "discharged", followUps: [] },
+        { id: 1, topics: ["AKI", "Hyponatremia"], setting: "icu", date: "2026-03-01", status: "active", followUps: [] },
+        { id: 2, topics: ["CKD", "Other"], date: "2026-03-02", status: "discharged", followUps: [] },
       ],
     });
 

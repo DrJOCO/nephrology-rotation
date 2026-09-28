@@ -144,6 +144,8 @@ export function describeStudentNavigation(
       return { type: "guide_open", label: "Opened Clinic Guide History", detail: "Past clinic guides" };
     case "inpatientGuide":
       return { type: "guide_open", label: "Opened Inpatient Guide", detail: subView.topic };
+    case "writePractice":
+      return { type: "guide_open", label: "Opened Write It, Then Compare", detail: subView.topic || "Case list" };
     case "rotationGuide":
       return {
         type: "guide_open",

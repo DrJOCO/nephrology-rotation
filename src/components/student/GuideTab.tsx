@@ -175,7 +175,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
         <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.brand}`, padding: 14 }}>
           <div style={{ fontWeight: 700, color: T.ink, fontSize: 15 }}>Inpatient Consult Guides</div>
           <div style={{ fontSize: 13, color: T.sub, marginTop: 2, marginBottom: 12, lineHeight: 1.45 }}>
-            What to gather, how to present, red flags, and the assessment framework — by topic.
+            What to gather, ask, examine, and image; how to present; and a sample written assessment & plan — by topic.
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
             {INPATIENT_GUIDE_TOPICS.map(t => {
@@ -198,6 +198,21 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
             })}
           </div>
         </div>
+      </div>
+
+      {/* Write It, Then Compare — practice mode */}
+      <div style={{ marginBottom: 14 }}>
+        <button onClick={() => navigate("library", { type: "writePractice" })}
+          style={{ display: "flex", width: "100%", alignItems: "center", gap: 12, padding: 14,
+            background: T.card, borderRadius: 14, border: `1px solid ${T.line}`, borderLeft: `4px solid ${T.success}`,
+            cursor: "pointer", textAlign: "left" }}>
+          <span style={{ fontSize: 22, flexShrink: 0 }}>📝</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, color: T.ink, fontSize: 14 }}>Write It, Then Compare</div>
+            <div style={{ fontSize: 13, color: T.sub, marginTop: 2, lineHeight: 1.4 }}>Practice writing a one-liner and assessment & plan on a short case, then compare with a model answer.</div>
+          </div>
+          <span style={{ color: T.muted, fontSize: 16, flexShrink: 0 }}>{"\u203A"}</span>
+        </button>
       </div>
 
       {/* Clinic Guides */}
@@ -243,7 +258,7 @@ export default function GuideTab({ navigate, subView, clinicGuides, clinicGuideT
       <div style={{ marginBottom: 14 }}>
         <div style={{ fontWeight: 700, color: T.ink, fontSize: 14, marginBottom: 4, fontFamily: T.serif }}>Rotation Workflow</div>
         <div style={{ fontSize: 13, color: T.sub, lineHeight: 1.4, marginBottom: 8 }}>
-          Use these for the new-consult workup, presentation, and daily follow-up.
+          Chart review, the new-consult workup and full HPI, writing the assessment & plan, kidney imaging, and daily SOAP follow-ups.
         </div>
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8 }}>
           {ROTATION_GUIDE_IDS.map(id => {

@@ -49,7 +49,7 @@ const UOP_OPTIONS: Option<AkiUopStatus>[] = [
   { id: "low_6_12", label: "<0.5 x 6-12 hr" },
   { id: "low_12", label: "<0.5 x >=12 hr" },
   { id: "very_low_24", label: "<0.3 x >=24 hr" },
-  { id: "anuria", label: "Anuria" },
+  { id: "anuria", label: "Anuria >=12 hr" },
 ];
 
 const HISTORY_OPTIONS: Option[] = [
@@ -399,7 +399,7 @@ export default function AkiToolView({ onBack, onOpenCalculator }: { onBack: () =
               <NumberInput label="Urine Na" value={inputs.urineNa} placeholder="20" onChange={(value) => updateField("urineNa", value)} />
               <NumberInput label="Urine Cr" value={inputs.urineCr} placeholder="80" onChange={(value) => updateField("urineCr", value)} />
               <NumberInput label="Serum Cr for urine sample" value={inputs.serumCrForUrine} placeholder="uses current Cr" onChange={(value) => updateField("serumCrForUrine", value)} />
-              <NumberInput label="Urine urea" value={inputs.urineUrea} placeholder="400" onChange={(value) => updateField("urineUrea", value)} />
+              <NumberInput label="Urine urea nitrogen" value={inputs.urineUrea} placeholder="400" onChange={(value) => updateField("urineUrea", value)} />
               <NumberInput label="BUN" value={inputs.serumBun} placeholder="40" onChange={(value) => updateField("serumBun", value)} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>

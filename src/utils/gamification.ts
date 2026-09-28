@@ -43,7 +43,7 @@ export interface GamificationData {
 }
 
 export interface StudentState {
-  patients?: Array<{ topics?: string[]; notes?: string }>;
+  patients?: Array<{ topics?: string[]; setting?: string; service?: string }>;
   weeklyScores?: Record<string, QuizAttempt[]>;
   preScore?: QuizAttempt | null;
   postScore?: QuizAttempt | null;
@@ -80,7 +80,7 @@ export function calculatePoints(state: StudentState): number {
   // Patient points (5 per patient, bonuses for detail)
   pts += patients.length * 5;
   pts += patients.filter(p => (p.topics || []).length >= 2).length * 3;  // multi-topic bonus
-  pts += patients.filter(p => p.notes && p.notes.trim()).length * 3;     // clinical notes bonus
+  pts += patients.filter(hasSettingAndService).length * 3;               // detail bonus (picklists)
 
   // Quiz points (10 per attempt, bonuses for performance)
   const ws = state.weeklyScores || {};
@@ -154,8 +154,13 @@ function hasPerfectQuiz(state: StudentState): boolean {
   return Object.values(ws).flat().some(a => a.total > 0 && a.correct === a.total);
 }
 
-function patientsWithNotes(state: StudentState): number {
-  return (state.patients || []).filter(p => p.notes && p.notes.trim()).length;
+// Replaced the free-text notes bonus when the consult log went picklist-only.
+function hasSettingAndService(patient: { setting?: string; service?: string }): boolean {
+  return !!patient.setting && !!patient.service;
+}
+
+function detailedConsults(state: StudentState): number {
+  return (state.patients || []).filter(hasSettingAndService).length;
 }
 
 function totalCasesCompleted(state: StudentState): number {
@@ -193,8 +198,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     check: (s) => (s.gamification?.streaks?.currentDays || 0) >= 3 },
   { id: "streak_7", icon: "🔥", title: "Week Warrior", desc: "7-day activity streak",
     check: (s) => (s.gamification?.streaks?.currentDays || 0) >= 7 },
-  { id: "note_taker", icon: "💡", title: "Teaching Pearls", desc: "Added notes to 5 patients",
-    check: (s) => patientsWithNotes(s) >= 5 },
+  { id: "note_taker", icon: "📋", title: "Thorough Logger", desc: "Added setting and service to 5 consults",
+    check: (s) => detailedConsults(s) >= 5 },
   { id: "case_cracker", icon: "🧩", title: "Case Cracker", desc: "Completed your first clinical case",
     check: (s) => totalCasesCompleted(s) >= 1 },
   { id: "case_master", icon: "🧠", title: "Case Master", desc: "Completed 8+ clinical cases",

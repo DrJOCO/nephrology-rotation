@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { computeContentCustomizations } from "../../utils/contentCustomizations";
 import { T } from "../../data/constants";
 import type { ClinicGuideTemplates } from "../../data/clinicGuides";
 import { createRotationCode } from "../../utils/helpers";
@@ -385,6 +386,13 @@ export function SettingsTab({
         studySheets: normalizeStudySheets(studySheets),
         announcements,
         clinicGuideTemplates,
+        // Only real edits carry over; everything else follows the built-in content.
+        contentCustomizations: computeContentCustomizations({
+          curriculum,
+          articles,
+          studySheets: normalizeStudySheets(studySheets),
+          clinicGuideTemplates,
+        }),
         dates: newDates,
         location: newLocation,
       }, firebaseAdmin);

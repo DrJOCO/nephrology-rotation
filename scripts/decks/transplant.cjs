@@ -130,7 +130,7 @@ async function build() {
       { color: PALETTE.secondary, title: "STRUCTURAL",
         items: "Ureteral obstruction (stricture, lymphocele, stone); renal artery stenosis (refractory HTN + Cr rise); DVT/RVT" },
       { color: PALETTE.warn, title: "RECURRENT DISEASE",
-        items: "FSGS (most common), IgA, MPGN, diabetic nephropathy — usually ≥ 1 yr post-transplant" },
+        items: "IgA (most common on biopsy), FSGS (can recur within days; most graft loss), C3G/MPGN, diabetic nephropathy (years)" },
     ];
 
     buckets.forEach((b, i) => {

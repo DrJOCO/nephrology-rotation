@@ -5,6 +5,7 @@ import {
   calculateCorrectedSodium,
   calculateCorrectionTarget,
   calculateEffectiveOsmolality,
+  calculateEstimatedDailySolute,
   calculateFractionalExcretionUricAcid,
   DEFAULT_HYPO_INPUTS,
   type HyponatremiaInputs,
@@ -78,9 +79,9 @@ describe("Hyponatremia tool calculators", () => {
     expect(target.highOdsRisk).toBe(true);
   });
 
-  it("uses the standard 10 mEq/L per 24h cap with no ODS modifiers and Na ≥120", () => {
+  it("keeps the 8 mEq/L per 24h cap even with no ODS modifiers and Na ≥120", () => {
     const target = calculateCorrectionTarget(baseInputs({ serumNa: "127" }));
-    expect(target.perDayCap).toBe(10);
+    expect(target.perDayCap).toBe(8);
     expect(target.highOdsRisk).toBe(false);
   });
 
@@ -97,6 +98,15 @@ describe("Hyponatremia tool calculators", () => {
   it("returns null Adrogue–Madias rows when weight or Na is missing", () => {
     const rows = calculateAdrogueMadias(baseInputs({ serumNa: "" }));
     expect(rows.every((r) => r.changePerLiter === null)).toBe(true);
+  });
+
+  it("estimates daily urea excretion in mmol/d from urine urea nitrogen and urine Cr", () => {
+    // UCr 100 mg/dL -> ~1 L/day; UUN 700 mg/dL / 2.8 = 250 mmol/L -> 250 mmol/d.
+    expect(calculateEstimatedDailySolute(baseInputs({ urineUreaNitrogen: "700", urineCr: "100" })).value).toBeCloseTo(250, 0);
+    // Beer-potomania pattern: dilute urine (UCr 20 -> ~5 L/day), UUN 56 mg/dL -> 100 mmol/d.
+    const low = calculateEstimatedDailySolute(baseInputs({ urineUreaNitrogen: "56", urineCr: "20" }));
+    expect(low.value).toBeCloseTo(100, 0);
+    expect(low.note).toMatch(/<150 mmol\/d/);
   });
 });
 

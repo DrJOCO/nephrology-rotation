@@ -243,17 +243,22 @@ service cloud.firestore {
 
       // Any rotation admin may edit content/metadata, but ONLY the owner may
       // change ownership fields (ownerUid / ownerEmail / adminUids).
+      // studySheets / clinicGuideTemplates / contentCustomizations are what the
+      // admin Publish button writes — without them a study sheet or clinic
+      // guide edit was rejected and never reached students.
       allow update: if (
                       isRotationAdmin(rotationCode)
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['curriculum', 'articles', 'announcements', 'settings',
-                                   'clinicGuides', 'name', 'location', 'dates',
+                                   'clinicGuides', 'studySheets', 'clinicGuideTemplates',
+                                   'contentCustomizations', 'name', 'location', 'dates',
                                    'archived', 'archivedAt'])
                     ) || (
                       isRotationOwner(rotationCode)
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['curriculum', 'articles', 'announcements', 'settings',
-                                   'clinicGuides', 'name', 'location', 'dates',
+                                   'clinicGuides', 'studySheets', 'clinicGuideTemplates',
+                                   'contentCustomizations', 'name', 'location', 'dates',
                                    'archived', 'archivedAt', 'ownerUid', 'ownerEmail', 'adminUids'])
                     );
 

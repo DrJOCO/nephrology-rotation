@@ -1,6 +1,7 @@
 # Cloud Functions (WS-4)
 
-Server-side foundation for the nephrology-rotation app. Node 20,
+Server-side foundation for the nephrology-rotation app. Node 22 (Google
+decommissions the Node 20 runtime on 2026-10-30),
 `firebase-functions` v2 API, its own npm workspace (not wired into the root
 `package.json`'s workspaces — the root stays a plain Vite app).
 
@@ -54,7 +55,7 @@ trigger wrapper. The cores are tested against an in-memory Firestore double
 This is deliberate: the Firestore emulator needs **Java 11+**, and the current
 build machine has **Java 1.8** (too old — `firebase emulators:exec` fails to
 boot Firestore there). CI (`.github/workflows/ci.yml`, `functions` job) runs
-build + these unit tests on Node 20. If you later want true end-to-end emulator
+build + these unit tests on Node 22. If you later want true end-to-end emulator
 integration tests, run them on a machine/CI runner with Java 11+ via
 `firebase emulators:exec --only firestore,functions "npm test"` and gate them
 behind that toolchain — the pure-core design keeps that additive.
