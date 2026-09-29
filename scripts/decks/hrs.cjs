@@ -287,7 +287,7 @@ async function build() {
       ],
       ["Sort et al.",      "1999", "Albumin + ceftriaxone vs ceftriaxone alone in SBP — ↓ HRS, ↓ mortality."],
       ["OT-0401",          "2008", "Terlipressin + albumin vs albumin — first positive US trial."],
-      ["REVERSE",          "2016", "Terlipressin reduced HRS reversal vs placebo (~19% vs ~12%, did not meet FDA)."],
+      ["REVERSE",          "2016", "Terlipressin ↑ HRS reversal vs placebo (~20% vs ~13%), not significant — no FDA approval."],
       ["CONFIRM",          "2021", "Terlipressin + albumin vs placebo + albumin — verified HRS reversal 32% vs 17%. FDA approval 2022."],
       ["Cavallin et al.",  "2015", "Terlipressin continuous infusion vs boluses — similar efficacy, fewer AEs."],
       ["MARS / Prometheus", "2012", "Artificial liver support — no survival benefit in HRS."],
@@ -372,7 +372,7 @@ async function build() {
       trials: [
         "Sort et al. — NEJM 1999 (SBP albumin)",
         "OT-0401 — Gastroenterology 2008",
-        "REVERSE — Hepatology 2016",
+        "REVERSE — Gastroenterology 2016",
         "CONFIRM — NEJM 2021",
         "Cavallin et al. — Hepatology 2015",
         "MARS / Prometheus — Hepatology 2012",

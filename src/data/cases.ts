@@ -307,18 +307,18 @@ Physical exam: Appears euvolemic, no edema, JVP normal, mucous membranes moist.`
           q: "Given that this patient is having seizures, what is the correct initial management?",
           choices: [
             "Fluid restriction to 1L/day and recheck sodium in 24 hours",
-            "3% hypertonic saline 100-150 mL bolus over 10-20 minutes, may repeat x2 if symptoms persist",
+            "3% hypertonic saline 100 mL bolus over 10 minutes, may repeat x2 if symptoms persist",
             "Normal saline infusion at 150 mL/hr with serial sodium checks",
             "Tolvaptan 15 mg orally"
           ],
           answer: 1,
-          explanation: "Symptomatic hyponatremia with seizures is a medical emergency. Current guidelines recommend a bolus of 100-150 mL of 3% hypertonic saline over 10-20 minutes, which can be repeated up to 2 additional times if severe symptoms persist. The goal is to raise sodium by 4-6 mEq/L in the first few hours to stop seizures, NOT to normalize sodium. Fluid restriction and tolvaptan are too slow for acute symptoms. Tolvaptan should not be used in severe symptomatic hyponatremia."
+          explanation: "Symptomatic hyponatremia with seizures is a medical emergency. Current guidelines recommend a bolus of 100 mL of 3% hypertonic saline over 10 minutes, which can be repeated up to 2 additional times if severe symptoms persist. The goal is to raise sodium by 4-6 mEq/L in the first few hours to stop seizures, NOT to normalize sodium. Fluid restriction and tolvaptan are too slow for acute symptoms. Tolvaptan should not be used in severe symptomatic hyponatremia."
         },
         {
           q: "What is the maximum safe rate of sodium correction to avoid osmotic demyelination syndrome (ODS)?",
           choices: [
             "4-6 mEq/L per 24 hours",
-            "6-8 mEq/L per 24 hours",
+            "≤8 mEq/L per 24 hours",
             "12-14 mEq/L per 24 hours",
             "No limit if the patient is symptomatic"
           ],
@@ -636,7 +636,7 @@ His renal function has been stable over the past year. He asks about "new kidney
           explanation: "SGLT2 inhibitors have revolutionized CKD management. The DAPA-CKD trial demonstrated that dapagliflozin reduced the composite of sustained eGFR decline, ESRD, and renal/CV death by 39% in patients with CKD (eGFR 25-75) regardless of diabetes status. The CREDENCE trial showed similar benefits with canagliflozin. KDIGO 2024 recommends an SGLT2i (1A) for adults with CKD and eGFR ≥20 who have type 2 diabetes, UACR ≥200 mg/g, or heart failure — this patient qualifies on the first two. Dual RAAS blockade is harmful (ONTARGET, VA NEPHRON-D)."
         },
         {
-          q: "When starting an SGLT2 inhibitor, an initial dip in eGFR of 10-15% is expected. What is the mechanism?",
+          q: "When starting an SGLT2 inhibitor, an initial eGFR dip of about 3-5 mL/min is expected. What is the mechanism?",
           choices: [
             "Direct tubular toxicity",
             "Acute interstitial nephritis",

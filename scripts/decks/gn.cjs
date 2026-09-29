@@ -40,7 +40,7 @@ async function build() {
     s.addText(bulletBlock([
       "Active sediment: RBC casts, dysmorphic RBCs",
       "Hematuria + proteinuria + rising Cr",
-      "Nephrotic range (UPCR > 3 or 3.5 g/day)",
+      "Nephrotic range (> 3.5 g/day or UPCR > 3.5 g/g)",
       "Pulmonary-renal syndrome",
       "Rash + arthritis + kidney disease",
       "Unexplained AKI with active UA",
@@ -85,7 +85,7 @@ async function build() {
       header: "NEPHROTIC  —  barrier loss", body: "",
     });
     s.addText(bulletBlock([
-      "Proteinuria > 3.5 g/day (or UPCR > 3)",
+      "Proteinuria > 3.5 g/day (or UPCR > 3.5 g/g)",
       "Hypoalbuminemia (< 3 g/dL)",
       "Edema — often generalized, anasarca",
       "Hyperlipidemia, hypercoagulability (renal vein thrombosis, DVT)",
@@ -117,7 +117,7 @@ async function build() {
       "  Moderate A2 = 30–300",
       "  Severe A3 = > 300",
       { text: "UPCR (g/g) ≈ g/day proteinuria", bold: true },
-      { text: "Nephrotic range: UPCR > 3 or > 3.5 g/day", bold: true, color: PALETTE.accent },
+      { text: "Nephrotic range: > 3.5 g/day or UPCR > 3.5 g/g", bold: true, color: PALETTE.accent },
       "24-h urine: gold standard but often impractical",
     ], { fontSize: 11.5, paraSpaceAfter: 5 }), {
       x: 0.7, y: 1.9, w: 4.1, h: 3.0, margin: 0, valign: "top",
@@ -259,7 +259,7 @@ async function build() {
       ],
       [
         { text: "ASO, anti-DNase B", options: { bold: true, color: PALETTE.primary, fontFace: FONT.body } },
-        "Recent strep infection (2–4 weeks)",
+        "Recent strep infection (1–3 wk throat, 3–6 wk skin)",
         "Post-streptococcal GN",
       ],
     ];

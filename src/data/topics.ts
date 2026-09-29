@@ -83,7 +83,7 @@ export const TOPIC_RESOURCE_MAP: Record<string, { studySheets: string[]; quizWee
   "Urinalysis":           { studySheets: ["gfr-urinalysis-cheatsheet"],     quizWeeks: [1] },
   "GFR Assessment":       { studySheets: ["gfr-urinalysis-cheatsheet"],     quizWeeks: [1] },
   "Hypertension":         { studySheets: ["ckd-sglt2i-cheatsheet"],         quizWeeks: [3] },
-  "Diuretics":            { studySheets: ["dialysis-cheatsheet"],           quizWeeks: [4] },
+  "Diuretics":            { studySheets: ["cardiorenal-cheatsheet"],        quizWeeks: [4] },
   "Fluid Management":     { studySheets: ["sodium-cheatsheet"],             quizWeeks: [2] },
   "Calcium/Phosphorus":   { studySheets: ["potassium-acidbase-cheatsheet"], quizWeeks: [2] },
   "Proteinuria":          { studySheets: ["gn-nephrotic-cheatsheet"],       quizWeeks: [3] },

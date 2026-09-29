@@ -210,7 +210,7 @@ async function build() {
     });
     s.addText(bulletBlock([
       "Brain has adapted — correcting fast causes ODS",
-      { text: "Target: ≤ 8 mEq/L per 24 h  (6 if high risk: alcoholism, malnutrition, hypoK)", bold: true, color: PALETTE.primary },
+      { text: "Cap: ≤ 8 mEq/L per 24 h for everyone (aim 4–6 if high risk: alcoholism, malnutrition, hypoK)", bold: true, color: PALETTE.primary },
       "Check Na⁺ every 2 h initially",
       "If overshooting: DDAVP 2–4 µg IV q6h + D5W",
       "'DDAVP clamp' — pre-empt overcorrection in high-risk patients",
@@ -304,7 +304,7 @@ async function build() {
       header: "PREVENTION / RESCUE", body: "",
     });
     s.addText(bulletBlock([
-      { text: "Prevention: limit Na⁺ rise to ≤ 8 mEq/L/24 h (6 in high risk)", bold: true },
+      { text: "Prevention: limit Na⁺ rise to ≤ 8 mEq/L/24 h (aim 4–6 in high risk)", bold: true },
       "Check Na⁺ q2h during active correction",
       "Replete K⁺ into the Na budget (K rises raise Na too)",
       { text: "Rescue: if overshooting, DDAVP 2–4 µg IV + D5W 3 mL/kg over 1 h", bold: true, color: PALETTE.primary },
@@ -367,7 +367,7 @@ async function build() {
   // Clinical case — answer
   addCaseAnswerSlide(pres, {
     topic: TOPIC, slideNumber: 11, totalSlides: TOTAL,
-    answer: "SIADH secondary to small-cell lung cancer; chronic hyponatremia (> 48 h); target Na+ rise ≤ 6–8 mEq/L per 24 h to avoid ODS.",
+    answer: "SIADH secondary to small-cell lung cancer; chronic hyponatremia (> 48 h); cap the Na+ rise at ≤ 8 mEq/L per 24 h (aim 4–6) to avoid ODS.",
     teaching: "Classic SIADH: hypotonic hyponatremia, inappropriately concentrated urine, urine Na > 30, euvolemic, normal TSH/cortisol. Isotonic saline can worsen SIADH via desalination. Treatment: fluid restriction (800-1000 mL/day) ± salt tabs; consider inpatient tolvaptan only if refractory and closely monitored. Na+ q2h during correction. If overcorrecting, rescue with DDAVP 2-4 µg IV + D5W 3 mL/kg. High-risk for ODS: alcoholism, malnutrition, hypokalemia, Na+ < 120.",
   });
 

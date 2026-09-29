@@ -336,7 +336,7 @@ async function build() {
     });
     s.addText(bulletBlock([
       "Discuss: in-center HD, home HD, PD, transplant, conservative care",
-      "Access planning at eGFR < 20: arteriovenous fistula (AVF) cannulation minimum 6–8 weeks, but plan ≥ 6 months ahead (maturation + possible salvage)",
+      "Access planning around eGFR 15–20 (earlier if rapid decline): an AVF needs ≥ 6–8 weeks, often months, to mature (KDOQI 2019 Life-Plan)",
       "Protect non-dominant arm veins — no PICC, no IVs from now",
       "Patient preferences, caregiver support, home environment",
       "Social work + dietitian involvement",

@@ -606,7 +606,7 @@ export const PRO_TIPS = [
   "Uric acid stones form in acidic urine — the primary treatment is urinary alkalinization with potassium citrate, not allopurinol.",
   // Secrets 18-26: CKD & Management
   "Enteric hyperoxaluria requires an intact colon — it results from increased oxalate absorption in the setting of fat malabsorption.",
-  "Low-calcium diets are NOT recommended for calcium stone formers — they can worsen bone health without reducing stone formation.",
+  "Low-calcium diets are NOT recommended for calcium stone formers — they raise oxalate absorption and stone risk and worsen bone health; keep normal dietary calcium (~1,000–1,200 mg/day) with meals.",
   "Diabetes and hypertension are the leading causes of CKD, with glomerular diseases and hereditary disorders such as ADPKD also important.",
   "ESA therapy: target hemoglobin should be individualized and should not exceed 12 g/dL. Higher targets increase cardiovascular risk.",
   "Most patients on ESAs need iron supplementation. Oral iron often fails due to poor absorption — IV iron is frequently necessary.",
@@ -685,7 +685,7 @@ export const PRO_TIPS = [
   "Unexplained hypokalemia or bicarb abnormalities with difficult-to-treat HTN \u2192 workup for secondary causes like primary aldosteronism.",
   "Hypotonic hyponatremia: inadequate solute intake, excess free water intake, or impaired free water excretion. Urine osmolality helps distinguish them.",
   "Acute hyponatremia can be corrected faster, but chronic hyponatremia must be corrected slowly (\u2264 8 mEq/L per 24h) to prevent osmotic demyelination.",
-  "In severely symptomatic hyponatremia, raising Na\u207a by just 3-4 mEq/L with 100 mL boluses of 3% saline can stop seizures and herniation.",
+  "In severely symptomatic hyponatremia, raising Na\u207a by just 4-6 mEq/L with 100 mL boluses of 3% saline can stop seizures and herniation.",
   "Prediction formulas for sodium correction don't account for ongoing water losses — always measure serum sodium frequently to avoid overcorrection.",
   "When in doubt, assume hyponatremia is chronic — especially for patients presenting from outside the hospital with no clear time of onset.",
   // Secrets 93-100: Potassium, Phosphorus, Acid-Base, Palliative

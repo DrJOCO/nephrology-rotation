@@ -135,7 +135,7 @@ async function build() {
       topic: TOPIC, slideNumber: 5, totalSlides: TOTAL,
       title: "Decongestion — the strategy that works",
       subtitle: "Loop first, sequential nephron blockade if stuck. Watch markers, not just Cr.",
-      source: "DOSE (NEJM 2011). CLOROTIC (JAMA Intern Med 2023). ACC/AHA 2022 HF.",
+      source: "DOSE (NEJM 2011). CLOROTIC (Eur Heart J 2023). ACC/AHA 2022 HF.",
     });
 
     addCard(s, {
@@ -381,7 +381,7 @@ async function build() {
       trials: [
         "DOSE — NEJM 2011",
         "CARRESS-HF — NEJM 2012",
-        "CLOROTIC — JAMA IM 2023",
+        "CLOROTIC — Eur Heart J 2023",
         "ADVOR — NEJM 2022",
         "DAPA-HF — NEJM 2019",
         "EMPEROR-Reduced — NEJM 2020",

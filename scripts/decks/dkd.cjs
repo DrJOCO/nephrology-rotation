@@ -39,7 +39,7 @@ async function build() {
       "Confirm DKD (not another CKD cause)",
       "Annual UACR + eGFR in all diabetics",
       "4 pillars: ACEi/ARB, SGLT2i, finerenone, GLP-1 RA",
-      "A1c 7–8% individualized",
+      "A1c <6.5–8% individualized (KDIGO 2022)",
       "Standardized SBP < 120 if tolerated",
       "Statin + lifestyle",
       "Transplant planning by eGFR trend",

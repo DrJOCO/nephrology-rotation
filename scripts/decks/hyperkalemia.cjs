@@ -337,7 +337,7 @@ async function build() {
       "Re-check K⁺ — fasting, non-hemolyzed sample",
       "Low-K⁺ diet counseling (not salt substitutes!)",
       "Diuretic if volume-tolerant (loop ± thiazide)",
-      "Treat metabolic acidosis: HCO₃⁻ if < 18–20",
+      "Treat metabolic acidosis: oral NaHCO₃ if HCO₃⁻ < 18 (KDIGO 2024)",
       "Stop K-sparing supplements, NSAIDs, bactrim",
       { text: "Only after this — try a binder", bold: true, color: PALETTE.primary },
     ], { fontSize: 11.5, paraSpaceAfter: 5 }), {

@@ -159,7 +159,7 @@ export const STUDY_SHEETS = {
         {
           heading: "Correction Rate Limits (Critical!)",
           items: [
-            "Symptomatic (seizures, obtundation, herniation risk): repeated 3% saline boluses (100\u2013150 mL over 10 min, up to 3 doses) to get an early 4\u20136 mEq/L rise \u2014 endpoint is symptom resolution, not an hourly rate",
+            "Symptomatic (seizures, obtundation, herniation risk): repeated 3% saline boluses (100 mL over 10 min, up to 3 doses) to get an early 4\u20136 mEq/L rise \u2014 endpoint is symptom resolution, not an hourly rate",
             "Chronic (>48h or unknown): target 4\u20136 mEq/L in 24h, and do NOT exceed 8 mEq/L in any 24h period (cap at 8 is enough \u2014 lower threshold if high-risk for ODS: Na \u2264105, liver disease, alcohol use, malnutrition, hypokalemia)",
             "Overcorrection beyond these limits risks osmotic demyelination syndrome (ODS)",
             "If overcorrecting: DDAVP 1\u20132 mcg IV/SC q6\u20138h + D5W to re-lower sodium (proactive DDAVP clamp + 3% saline is a reasonable strategy in high-risk patients)",
@@ -450,7 +450,7 @@ export const STUDY_SHEETS = {
             "Pillar 2 \u2014 SGLT2i: Dapagliflozin or empagliflozin. KDIGO 2024 strong (1A) recommendation for T2D + CKD with eGFR \u226520 at any albuminuria, and for any CKD with UACR \u2265200 mg/g or heart failure",
             "Pillar 3 \u2014 Finerenone (non-steroidal MRA): Add on top of ACEi/ARB in eligible DKD. 18% kidney risk reduction (FIDELIO-DKD); monitor K+ because hyperkalemia still occurs.",
             "Pillar 4 \u2014 GLP-1 RA (semaglutide): FLOW trial showed 24% kidney risk reduction. Stopped early for efficacy. The newest pillar",
-            "BP target: standardized office SBP <120 mmHg if tolerated (SPRINT/KDIGO); routine/home targets are often closer to <130/80. HbA1c target: <7% for many, but avoid hypoglycemia and individualize.",
+            "BP target: standardized office SBP <120 mmHg if tolerated (SPRINT/KDIGO); routine/home targets are often closer to <130/80. HbA1c target: individualize between <6.5% and <8.0% (KDIGO 2022) \u2014 <7% suits many; avoid hypoglycemia.",
             "Statin (KDIGO lipid guidance): recommended for non-dialysis CKD adults \u226550 y; for ages 18\u201349 with CKD, use standard ASCVD risk assessment (SHARP-informed). Do NOT start a statin de novo after the patient is already on dialysis (no benefit); if already on a statin when dialysis starts, it is reasonable to continue.",
           ],
         },
@@ -576,7 +576,7 @@ export const STUDY_SHEETS = {
       icon: "\u{1FA78}",
       title: "Dialysis Essentials",
       subtitle: "When, how, and what kind \u2014 the attending will quiz you",
-      topics: ["Dialysis", "Dialysis Access", "Diuretics"],
+      topics: ["Dialysis", "Dialysis Access"],
       sections: [
         {
           heading: "When to Start Dialysis",
@@ -592,7 +592,7 @@ export const STUDY_SHEETS = {
             "HD (hemodialysis): 3\u20134h sessions, 3\u00d7/week. Standard for most ESRD. Requires vascular access (AVF > AVG > TDC)",
             "PD (peritoneal dialysis): Patient does at home, daily exchanges. Better initial quality of life, preserves residual renal function longer",
             "CRRT: ICU only, for hemodynamically unstable patients. Slower fluid/solute removal = less hypotension",
-            "Standard Kt/V target: \u22651.2 (HEMO Study showed no benefit to higher doses)",
+            "Kt/V (KDOQI 2015): minimum delivered spKt/V 1.2 per session, target ~1.4 (HEMO Study showed no benefit to higher doses)",
           ],
         },
         {
@@ -600,7 +600,7 @@ export const STUDY_SHEETS = {
           items: [
             "Hierarchy in most patients: AVF (fistula) > AVG (graft) > TDC (tunneled catheter). The older \u2018Fistula First\u2019 slogan has been replaced by the KDOQI 2019 \u2018ESKD Life-Plan\u2019 \u2014 choose access based on the whole patient (anatomy, life expectancy, preferences), but avoid TDCs for long-term use whenever possible.",
             "AVF: Best long-term patency, lowest infection. Needs 2\u20133 months to mature. Thrill on palpation, bruit on auscultation",
-            "AVG: Use in 2\u20133 weeks. Higher thrombosis/infection risk than AVF",
+            "AVG: Use in 2\u20134 weeks. Higher thrombosis/infection risk than AVF",
             "TDC: Immediate use but highest infection and mortality risk. Bridge only",
             "Assess access every encounter: Check for thrill, bruit, signs of infection, steal syndrome",
           ],
@@ -629,7 +629,7 @@ export const STUDY_SHEETS = {
       ],
       trialCallouts: [
         { trial: "IDEAL", pearl: "In 828 CKD patients, early dialysis start (eGFR 10\u201314) vs late (5\u20137) gave NO mortality difference. 76% of the late group started above the eGFR target because symptoms came first \u2014 start by symptoms/indications, not eGFR." },
-        { trial: "HEMO Study", pearl: "In 1846 chronic HD patients, higher Kt/V (eKt/V 1.53 vs 1.16) did NOT reduce all-cause mortality. Standard per-session Kt/V \u22651.2 is the target." },
+        { trial: "HEMO Study", pearl: "In 1846 chronic HD patients, higher dose (achieved eKt/V 1.53 vs 1.16) did NOT reduce all-cause mortality. Minimum delivered spKt/V 1.2 per session (target ~1.4) is the standard." },
         { trial: "FHN", pearl: "In 245 HD patients, 6\u00d7/week in-center HD improved LV mass and physical-health scores vs 3\u00d7/week, but with more vascular access events. No mortality difference \u2014 benefit is QOL/LV remodeling." },
         { trial: "ADEMEX", pearl: "In 965 PD patients, increasing peritoneal Kt/V above ~1.7/week did NOT improve 2-year survival. Confirms the standard weekly Kt/V 1.7 adequacy target." },
       ],
@@ -647,7 +647,7 @@ export const STUDY_SHEETS = {
             "Best RRT option: better survival and QOL than dialysis. Living donor > deceased donor.",
             "Induction (modern US practice per OPTN/SRTR): rATG (thymoglobulin) for moderate\u2013high immunologic risk (~70% of US recipients); basiliximab (Simulect) for low risk. Belatacept is an alternative to CNIs in EBV-seropositive recipients.",
             "Maintenance: low-dose tacrolimus + MPAA (MMF or EC-MPS) + steroids (SYMPHONY-era framework). Envarsus XR is an extended-release tacrolimus option with more stable troughs.",
-            "Post-transplant surveillance: tacrolimus troughs (center-specific, typically 8\u201310 ng/mL first 3 mo \u2192 5\u20138 \u2192 4\u20136), Cr, DSA, plasma BK PCR monthly through month 9 then q3 mo through year 2 (per 2024 international BK consensus), CMV PCR per serostatus (letermovir prophylaxis in D+/R\u2212 was noninferior to valganciclovir with less leukopenia \u2014 Limaye, JAMA 2023), PTDM screening (preferred term over NODAT).",
+            "Post-transplant surveillance: tacrolimus troughs (center-specific; a typical reference is 9\u201312 ng/mL in month 1 \u2192 8\u201310 in months 1\u20133 \u2192 6\u20138 in months 3\u201312 \u2192 5\u20137 after year 1), Cr, DSA, plasma BK PCR monthly through month 9 then q3 mo through year 2 (per 2024 international BK consensus), CMV PCR per serostatus (letermovir prophylaxis in D+/R\u2212 was noninferior to valganciclovir with less leukopenia \u2014 Limaye, JAMA 2023), PTDM screening (preferred term over NODAT).",
             "Rejection types: Hyperacute (minutes, preformed DSA); acute T-cell mediated rejection (TCMR, weeks\u2013months, Banff i/t scores); active antibody-mediated rejection (AMR \u2014 donor-specific antibodies from plasma cells, g+ptc microvascular injury \u00b1 C4d, circulating DSA, Banff 2019/2022); chronic active AMR; chronic TCMR / IF/TA.",
           ],
         },

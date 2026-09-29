@@ -182,7 +182,7 @@ export function calculateQuantitative(inputs: GnToolInputs): GnQuantitative {
 
   let proteinTier: GnQuantitative["proteinTier"] = "unknown";
   if (proteinGramsPerDay !== null) {
-    // UpToDate threshold for nephrotic syndrome: >3.5 g/24h or UPCR >3000 mg/g.
+    // Nephrotic-range threshold used across the app: >3.5 g/24h (UPCR >3.5 g/g).
     if (proteinGramsPerDay > 3.5) proteinTier = "nephrotic_range";
     else if (proteinGramsPerDay >= 0.5) proteinTier = "subnephrotic";
     else proteinTier = "minimal";
@@ -340,7 +340,7 @@ function reasonForTest(testId: string, syndrome: GnSyndrome): string {
   if (testId === "anti_gbm") return "Anti-GBM disease — must not miss; biopsy + plasmapheresis if positive.";
   if (testId === "anti_pla2r") return "Primary membranous (~70–80% of cases positive). UpToDate allows deferring biopsy in nephrotic-range patients with a positive anti-PLA2R titer.";
   if (testId === "anti_thsd7a") return "Membranous variant when anti-PLA2R is negative; raises suspicion for paraneoplastic MN.";
-  if (testId === "aso_dnaseB") return "Post-infectious GN — UpToDate: synpharyngitic gross hematuria (concurrent with URI) suggests IgA, while a 7–10 day latency after pharyngitis suggests PSGN. Anti-DNase B is more sensitive after skin infection.";
+  if (testId === "aso_dnaseB") return "Post-infectious GN — synpharyngitic gross hematuria (concurrent with URI) suggests IgA, while a 1–3 week latency after pharyngitis (3–6 weeks after skin infection) suggests PSGN. Anti-DNase B is more sensitive after skin infection.";
   if (testId === "cryoglobulin") return "Cryoglobulinemic GN (typically HCV-associated); send fresh, kept warm.";
   if (testId === "hbv") return "HBV-related GN: classically MN (paraneoplastic-like) and PAN; sometimes MPGN.";
   if (testId === "hcv") return "HCV-related GN: cryoglobulinemic MPGN; reflex to RNA if Ab positive.";
@@ -480,7 +480,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
     add("iga", "IgA nephropathy", "Normal complement / mesangial", 4, "Most common primary GN worldwide; nephritic or asymptomatic hematuria with normal complement is the typical pattern.", igaNext);
   }
   if (has(history, "synpharyngitic")) {
-    add("iga", "IgA nephropathy", "Normal complement / mesangial", 5, "Synpharyngitic gross hematuria (concurrent with URI) is the IgA fingerprint — distinguishes from PSGN's 7–10 day latency. UpToDate notes it can also occur in C3 glomerulopathy and Alport.", igaNext);
+    add("iga", "IgA nephropathy", "Normal complement / mesangial", 5, "Synpharyngitic gross hematuria (concurrent with URI) is the IgA fingerprint — distinguishes from PSGN's 1–3 week latency. UpToDate notes it can also occur in C3 glomerulopathy and Alport.", igaNext);
   }
   if (inputs.rbc === "dysmorphic" && cNormal) {
     add("iga", "IgA nephropathy", "Normal complement / mesangial", 1, "Dysmorphic RBCs with normal complement supports a glomerular hematuria of mesangial type.", igaNext);
@@ -504,7 +504,7 @@ export function buildGnAssessment(inputs: GnToolInputs): GnAssessmentResult {
     add("post_infectious", "Post-infectious GN (PSGN / IRGN)", "Low C3, normal C4 (alternative pathway)", 5, "Isolated low C3 with a nephritic syndrome is the textbook post-infectious pattern (C3 normalizes by ~8 weeks).", psgnNext);
   }
   if (has(history, "recent_strep_skin")) {
-    add("post_infectious", "Post-infectious GN (PSGN / IRGN)", "Low C3, normal C4 (alternative pathway)", 5, "Recent streptococcal infection: UpToDate cites a 7–10 day latency after pharyngitis (vs synpharyngitic for IgA), longer (3–6 weeks) after skin infection.", psgnNext);
+    add("post_infectious", "Post-infectious GN (PSGN / IRGN)", "Low C3, normal C4 (alternative pathway)", 5, "Recent streptococcal infection: typically a 1–3 week latency after pharyngitis (vs synpharyngitic for IgA), longer (3–6 weeks) after skin infection.", psgnNext);
   }
   if (has(history, "synpharyngitic")) {
     add("c3g", "C3 glomerulopathy (C3GN / dense deposit disease)", "Low C3, normal C4 (alternative pathway)", 1, "UpToDate notes synpharyngitic gross hematuria can also occur in C3 glomerulopathy.", [

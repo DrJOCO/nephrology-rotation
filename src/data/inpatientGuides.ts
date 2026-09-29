@@ -852,7 +852,7 @@ export const INPATIENT_GUIDES: Record<
       "2. If atypical → consider biopsy to rule out non-diabetic kidney disease",
       "3. Audit the 4 pillars: ACEi/ARB (max dose?), SGLT2i (started?), Finerenone (eligible?), GLP-1 RA (started?)",
       "4. BP optimization: standardized office SBP <120 if tolerated; routine clinic/home targets are often closer to <130/80",
-      "5. Glycemic control: HbA1c <7% (individualize in elderly/CKD)",
+      "5. Glycemic control: individualized HbA1c target, <6.5% to <8.0% (KDIGO 2022); <7% suits many, looser in elderly or hypoglycemia-prone patients",
       "6. Cardiovascular risk: statin per KDIGO lipid guidance (non-dialysis CKD adults ≥50 y; age 18–49 by standard ASCVD risk) — do NOT start de novo once on dialysis; aspirin per usual ASCVD indications",
     ],
     discussionQuestions: [

@@ -142,7 +142,7 @@ const NEGATIVE_SEROLOGY_OPTIONS: Option[] = [
 ];
 
 const HISTORY_OPTIONS: Option[] = [
-  { id: "recent_strep_skin", label: "Recent strep / skin infection (1–4 wk)" },
+  { id: "recent_strep_skin", label: "Recent strep / skin infection (1–6 wk)" },
   { id: "synpharyngitic", label: "URI + synpharyngitic gross hematuria" },
   { id: "hemoptysis", label: "Hemoptysis / pulmonary hemorrhage" },
   { id: "sinus_ent_chronic", label: "Sinusitis / saddle nose / septal perforation" },
@@ -237,7 +237,7 @@ export default function GnToolView({ onBack }: { onBack: () => void }) {
 
   const proteinTierLabel =
     assessment.quantitative.proteinTier === "nephrotic_range"
-      ? "Nephrotic range (≥3.5 g/d)"
+      ? "Nephrotic range (>3.5 g/d)"
       : assessment.quantitative.proteinTier === "subnephrotic"
         ? "Subnephrotic (0.5–3.5 g/d)"
         : assessment.quantitative.proteinTier === "minimal"

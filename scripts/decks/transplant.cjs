@@ -78,7 +78,7 @@ async function build() {
       [
         { text: "Maintenance", options: { bold: true, color: PALETTE.primary, fontFace: FONT.body } },
         "Tacrolimus (CNI)",
-        "Trough 5–10 ng/mL (yr 1), 4–8 long-term",
+        "Trough ~9–12 ng/mL month 1 → 5–7 after yr 1 (center-specific)",
         "Nephrotoxicity, DM, tremor, HTN, hypoMg",
       ],
       [
@@ -172,7 +172,7 @@ async function build() {
       [
         { text: "BK virus", options: { bold: true, color: PALETTE.primary, fontFace: FONT.body } },
         "First 2 yr; lifelong surveillance",
-        "Screen PCR monthly × 6 mo, then q3 mo × 2 yr; reduce IS if viremia",
+        "Screen PCR monthly to month 9, then q3 mo to 2 yr; reduce IS if viremia",
       ],
       [
         { text: "EBV / PTLD", options: { bold: true, color: PALETTE.primary, fontFace: FONT.body } },
