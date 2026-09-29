@@ -171,7 +171,7 @@ export const STUDY_SHEETS = {
             "Always means free water deficit (even if total body sodium is high)",
             "Common: Inadequate water intake (elderly, intubated), diabetes insipidus, osmotic diuresis",
             "Free water deficit = TBW \u00d7 [(Na/140) \u2212 1]. Replace deficit over 48\u201372h",
-            "Correction rate: \u226410 mEq/L per 24h to avoid cerebral edema",
+            "Correction rate: aim for \u226410 mEq/L per 24h \u2014 a guide, not a strict cap. Recent adult studies found faster correction was not linked to cerebral edema or higher mortality (unlike overcorrecting hyponatremia)",
           ],
         },
       ],

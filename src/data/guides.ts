@@ -148,11 +148,11 @@ export const QUICK_REFS: QuickRef[] = [
       if (na <= 145) {
         interp = "Na⁺ is within or near normal range — no significant free water deficit.";
       } else if (na <= 150) {
-        interp = `Mild hypernatremia. Free water deficit ≈ ${fwd.toFixed(1)} L.\nReplace deficit over 48-72 hours. Aim to lower Na⁺ by ≤10 mEq/L per 24h.`;
+        interp = `Mild hypernatremia. Free water deficit ≈ ${fwd.toFixed(1)} L.\nReplace deficit over 48-72 hours. Aim to lower Na⁺ by ≤10 mEq/L per 24h (a guide, not a strict cap in adults).`;
       } else if (na <= 160) {
-        interp = `Moderate hypernatremia. Free water deficit ≈ ${fwd.toFixed(1)} L.\nReplace over 48-72 hours. Lower Na⁺ ≤10 mEq/L per 24h to avoid cerebral edema.`;
+        interp = `Moderate hypernatremia. Free water deficit ≈ ${fwd.toFixed(1)} L.\nReplace over 48-72 hours. Aim to lower Na⁺ by ≤10 mEq/L per 24h (a guide, not a strict cap in adults).`;
       } else {
-        interp = `Severe hypernatremia. Free water deficit ≈ ${fwd.toFixed(1)} L.\nCorrect slowly over 48-72 hours. Rapid correction risks cerebral edema.`;
+        interp = `Severe hypernatremia. Free water deficit ≈ ${fwd.toFixed(1)} L.\nReplace over 48-72 hours with frequent Na checks. Aim for ≤10 mEq/L per 24h (a guide, not a strict cap in adults).`;
       }
       interp += `\n\nTBW = ${weight} × ${tbwFactor} = ${tbw.toFixed(1)} L`;
       return {

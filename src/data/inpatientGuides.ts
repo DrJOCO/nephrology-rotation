@@ -1107,7 +1107,6 @@ export const INPATIENT_GUIDES: Record<
       "Confusion, seizures, or coma",
       "Polyuria >3 L/day with dilute urine (diabetes insipidus) — Na can climb fast",
       "Shock — restore circulation with isotonic fluid before free water",
-      "Correcting chronic hypernatremia too fast (cerebral edema)",
     ],
 
     commonMistakes: [
@@ -1115,7 +1114,7 @@ export const INPATIENT_GUIDES: Record<
       "Calculating the deficit but forgetting ongoing losses (urine, stool, insensible)",
       "Not checking urine osm — it separates water loss from diabetes insipidus",
       "Using a TBW factor of 0.6 for everyone (older women are ~0.45)",
-      "Lowering chronic hypernatremia faster than ~10 mEq/L in 24 h",
+      "Treating ≤10 mEq/L per 24 h as a hard cap and under-replacing water — in adults it is a guide, not a strict limit",
       "Forgetting free water flushes in tube-fed patients",
     ],
 
@@ -1142,7 +1141,7 @@ export const INPATIENT_GUIDES: Record<
         items: [
           "1. Free water deficit = TBW × (Na ÷ 140 − 1). TBW = weight × 0.6 (young men), 0.5 (young women and older men), 0.45 (older women).",
           "2. Add ongoing losses: urine free water, stool, and about 0.8–1 L/day of insensible loss (more with fever or tachypnea).",
-          "3. Rate: for chronic hypernatremia, lower Na by no more than 10 mEq/L in 24 h and replace the deficit over about 48–72 h. Acute hypernatremia (<48 h, e.g., a salt load) can be corrected faster.",
+          "3. Rate: for chronic hypernatremia, aim to lower Na by about 10 mEq/L or less in 24 h and replace the deficit over about 48–72 h. This is a guide, not a strict cap — recent adult studies found faster correction was not linked to cerebral edema or higher mortality. Acute hypernatremia (<48 h, e.g., a salt load) can be corrected faster.",
           "4. Route: water by mouth or free water flushes when the gut works; D5W IV otherwise (watch the glucose). If the patient is in shock, restore circulation with isotonic fluid first.",
           "5. Check the effect of one liter: change in Na = (fluid Na − serum Na) ÷ (TBW + 1). D5W in a 50-kg older woman with Na 160: (0 − 160) ÷ (22.5 + 1) ≈ −6.8 mEq/L per liter.",
           "6. Recheck Na every 4–6 h and adjust — formulas are only estimates.",
